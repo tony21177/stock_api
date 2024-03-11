@@ -1,0 +1,81 @@
+﻿{
+   "CodeGenerationMode": 4,
+   "ContextClassName": "HandoverContext",
+   "ContextNamespace": null,
+   "DefaultDacpacSchema": null,
+   "FilterSchemas": false,
+   "IncludeConnectionString": false,
+   "ModelNamespace": null,
+   "OutputContextPath": null,
+   "OutputPath": "Models",
+   "PreserveCasingWithRegex": true,
+   "ProjectRootNamespace": "stock_api",
+   "Schemas": null,
+   "SelectedHandlebarsLanguage": 0,
+   "SelectedToBeGenerated": 0,
+   "T4TemplatePath": null,
+   "Tables": [
+      {
+         "Name": "annouce_reader",
+         "ObjectType": 0
+      },
+      {
+         "Name": "announce_attachment",
+         "ObjectType": 0
+      },
+      {
+         "Name": "announcement",
+         "ObjectType": 0
+      },
+      {
+         "Name": "announcement_history",
+         "ObjectType": 0
+      },
+      {
+         "Name": "authlayer",
+         "ObjectType": 0
+      },
+      {
+         "Name": "handover_sheet_group",
+         "ObjectType": 0
+      },
+      {
+         "Name": "handover_sheet_main",
+         "ObjectType": 0
+      },
+      {
+         "Name": "handover_sheet_row",
+         "ObjectType": 0
+      },
+      {
+         "Name": "member",
+         "ObjectType": 0
+      },
+      {
+         "Name": "my_announcement",
+         "ObjectType": 0
+      }
+   ],
+   "UiHint": "handover",
+   "UncountableWords": null,
+   "UseBoolPropertiesWithoutDefaultSql": false,
+   "UseDatabaseNames": false,
+   "UseDateOnlyTimeOnly": false,
+   "UseDbContextSplitting": false,
+   "UseDecimalDataAnnotationForSprocResult": true,
+   "UseFluentApiOnly": false,
+   "UseHandleBars": false,
+   "UseHierarchyId": false,
+   "UseInflector": true,
+   "UseLegacyPluralizer": false,
+   "UseManyToManyEntity": false,
+   "UseNoDefaultConstructor": false,
+   "UseNoNavigations": false,
+   "UseNoObjectFilter": false,
+   "UseNodaTime": false,
+   "UseNullableReferences": false,
+   "UseSchemaFolders": false,
+   "UseSchemaNamespaces": false,
+   "UseSpatial": false,
+   "UseT4": false
+}

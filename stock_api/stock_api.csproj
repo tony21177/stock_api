@@ -1,0 +1,65 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>
+	<OutputPath>../output/</OutputPath>
+	<Nullable>enable</Nullable>
+	<ImplicitUsings>enable</ImplicitUsings>  
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Remove="DataDB\**" />
+    <Compile Remove="Migrations\**" />
+    <Compile Remove="Model\**" />
+    <Compile Remove="Service\NewFolder1\**" />
+    <Compile Remove="Service\NewFolder2\**" />
+    <Compile Remove="Sql\**" />
+    <Content Remove="DataDB\**" />
+    <Content Remove="Migrations\**" />
+    <Content Remove="Model\**" />
+    <Content Remove="Service\NewFolder1\**" />
+    <Content Remove="Service\NewFolder2\**" />
+    <Content Remove="Sql\**" />
+    <EmbeddedResource Remove="DataDB\**" />
+    <EmbeddedResource Remove="Migrations\**" />
+    <EmbeddedResource Remove="Model\**" />
+    <EmbeddedResource Remove="Service\NewFolder1\**" />
+    <EmbeddedResource Remove="Service\NewFolder2\**" />
+    <EmbeddedResource Remove="Sql\**" />
+    <None Remove="DataDB\**" />
+    <None Remove="Migrations\**" />
+    <None Remove="Model\**" />
+    <None Remove="Service\NewFolder1\**" />
+    <None Remove="Service\NewFolder2\**" />
+    <None Remove="Sql\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="AutoMapper" Version="12.0.1" />
+    <PackageReference Include="AutoMapper.Extensions.Microsoft.DependencyInjection" Version="12.0.1" />
+    <PackageReference Include="FluentValidation" Version="11.9.0" />
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="6.0.26" />
+    <PackageReference Include="Microsoft.AspNetCore.Cors" Version="2.2.0" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="7.0.11" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="7.0.0" />
+    <PackageReference Include="Microsoft.IdentityModel.JsonWebTokens" Version="7.2.0" />
+    <PackageReference Include="Mysql.Data" Version="8.1.0" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+    <PackageReference Include="Pomelo.EntityFrameworkCore.MySql" Version="7.0.0" />
+    <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="7.2.0" />
+    
+  </ItemGroup>
+
+
+  <ItemGroup>
+    <None Remove="DataDB\" />
+    <None Remove="Model\" />
+    <None Remove="uploads\" />
+    <None Remove="SixLabors.ImageSharp" />
+    <None Remove="System.Drawing.Common" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Models\" />
+    <Folder Include="uploads\" />
+  </ItemGroup>
+</Project>
