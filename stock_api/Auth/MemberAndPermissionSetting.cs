@@ -1,29 +1,68 @@
 ﻿using stock_api.Models;
+using stock_api.Service.ValueObject;
 
 namespace stock_api.Utils
 {
     public class MemberAndPermissionSetting
     {
-        public MemberAndPermissionSetting(Member member, PermissionSetting permissionSetting)
+        public MemberAndPermissionSetting(WarehouseMember member, PermissionSetting permissionSetting, CompanyWithUnitVo companyWithUnit)
         {
             Member = member;
             PermissionSetting = permissionSetting;
+            CompanyWithUnit = companyWithUnit;
         }
 
-        public Member Member { get; set; }
+        public WarehouseMember Member { get; set; }
         public PermissionSetting PermissionSetting { get; set; }
+
+        public CompanyWithUnitVo CompanyWithUnit { get; set; }
     }
     public class PermissionSetting
     {
-        public bool IsCreateAnnouce { get; set; }
-        public bool IsUpdateAnnouce { get; set; }
-        public bool IsDeleteAnnouce { get; set; }
-        public bool IsHideAnnouce { get; set; }
-        public bool IsCreateHandover { get; set; }
-        public bool IsUpdateHandover { get; set; }
-        public bool IsDeleteHandover { get; set; }
-        public bool IsMemberControl { get; set; }
-        public bool IsCheckReport { get; set; }
+        /// <summary>
+        /// 是否可以申請新增品項
+        /// </summary>
+        public bool IsApplyItemManage { get; set; }
+
+        /// <summary>
+        /// 是否可以進行群組管理
+        /// </summary>
+        public bool IsGroupManage { get; set; }
+
+        /// <summary>
+        /// 是否可以進行入庫作業
+        /// </summary>
+        public bool IsInBoundManage { get; set; }
+
+        /// <summary>
+        /// 是否可以進行出庫作業
+        /// </summary>
+        public bool IsOutBoundManage { get; set; }
+
+        /// <summary>
+        /// 是否可以進行庫存管理
+        /// </summary>
+        public bool IsInventoryManage { get; set; }
+
+        /// <summary>
+        /// 是否可以進行品項管理
+        /// </summary>
+        public bool IsItemManage { get; set; }
+
+        /// <summary>
+        /// 是否可以進行成員管理
+        /// </summary>
+        public bool IsMemberManage { get; set; }
+
+        /// <summary>
+        /// 是否可以進行盤點
+        /// </summary>
+        public bool IsRestockManage { get; set; }
+
+        /// <summary>
+        /// 是否可以進行抽點
+        /// </summary>
+        public bool IsVerifyManage { get; set; }
     }
 
 

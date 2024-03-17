@@ -20,34 +20,28 @@ namespace stock_api.Controllers.Validator
                 RuleFor(x => x.DisplayName).NotEmpty().WithMessage("displayName為必須");
                 RuleFor(x => x.IsActive).NotEmpty().WithMessage("isActive為必須");
                 RuleFor(x => x.AuthValue).NotEmpty().WithMessage("authValue為必須");
-                RuleFor(x => x.Uid).NotEmpty().WithMessage("uid為必須");
-                RuleFor(x => x.Uid).Must(UidUnique).WithMessage("uID已存在");
+                RuleFor(x => x.CompId).NotEmpty().WithMessage("compId為必須");
             }
             if (action == ActionTypeEnum.Update)
             {
-                RuleFor(x => x.UserID).NotEmpty().WithMessage("userId為必須");
+                RuleFor(x => x.UserId).NotEmpty().WithMessage("userId為必須");
             }
             _authLayerService = authLayerService;
             _memberService = memberService;
 
             ClassLevelCascadeMode = CascadeMode.Stop;
-            // 驗證相對應的Workspace,Space,Folder,List是否存在
-            RuleFor(x => x.AuthValue).Must(ExistAuthValue).WithMessage("此階層不存在");
+            RuleFor(x => x).Must(ExistAuthValue).WithMessage("此階層不存在");
         }
 
         private bool AccountUnique(string? account)
         {
             return _memberService.IsAccountNotExist(account!);
         }
-        private bool UidUnique(string? uid)
-        {
-            return _memberService.IsUidNotExist(uid!);
-        }
 
-        private bool ExistAuthValue(short? authValue)
+        private bool ExistAuthValue(CreateOrUpdateMemberRequest request)
         {
-            if (authValue == null) return false;
-            var existAuthLayer = _authLayerService.GetByAuthValue(authValue.Value);
+            if (request.AuthValue == null || request.CompId == null) return false;
+            var existAuthLayer = _authLayerService.GetByAuthValue(request.AuthValue.Value, request.CompId);
             return existAuthLayer != null;
         }
 

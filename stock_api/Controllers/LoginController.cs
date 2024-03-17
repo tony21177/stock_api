@@ -4,6 +4,7 @@ using stock_api.Service;
 using stock_api.Utils;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using ZstdSharp.Unsafe;
 
 namespace stock_api.Controllers
 {
@@ -13,12 +14,14 @@ namespace stock_api.Controllers
     {
         private readonly AuthHelpers _authHelpers;
         private readonly MemberService _memberService;
+        private readonly CompanyService _companyService;
         private readonly AuthLayerService _authLayerService;
 
-        public LoginController(AuthHelpers authHelpers, MemberService memberService, AuthLayerService authLayerService)
+        public LoginController(AuthHelpers authHelpers, MemberService memberService,CompanyService companyService, AuthLayerService authLayerService)
         {
             _authHelpers = authHelpers;
             _memberService = memberService;
+            _companyService = companyService;
             _authLayerService = authLayerService;
         }
 
@@ -52,27 +55,28 @@ namespace stock_api.Controllers
 
         MemberAndPermissionSetting? ValidateUser(LoginRequest loginRequest)
         {
-            var member = _memberService.GetMemberByAccount(loginRequest.Account);
-            if (member == null) return null;
+            var member = _memberService.GetMemberByAccount(loginRequest.Account,loginRequest.CompId);
+            var compWithUnit = _companyService.GetCompanyWithUnit(loginRequest.CompId);
+            if (member == null|| compWithUnit == null) return null;
             if (member.Password != loginRequest.Password) return null;
 
-            var authLayer = _authLayerService.GetByAuthValue(member.AuthValue);
+            var authLayer = _authLayerService.GetByAuthValue(member.AuthValue,loginRequest.CompId);
             if (authLayer == null) return null;
-            PermissionSetting permissionSetting = new PermissionSetting
+            PermissionSetting permissionSetting = new()
             {
-                IsCheckReport = authLayer.IsCheckReport,
-                IsCreateAnnouce = authLayer.IsCreateAnnouce,
-                IsDeleteAnnouce = authLayer.IsDeleteAnnouce,
-                IsCreateHandover = authLayer.IsCreateHandover,
-                IsDeleteHandover = authLayer.IsDeleteHandover,
-                IsHideAnnouce = authLayer.IsHideAnnouce,
-                IsMemberControl = authLayer.IsMemberControl,
-                IsUpdateAnnouce = authLayer.IsUpdateAnnouce,
-                IsUpdateHandover = authLayer.IsUpdateHandover,
+                IsApplyItemManage = authLayer.IsApplyItemManage,
+                IsGroupManage = authLayer.IsGroupManage,
+                IsInBoundManage = authLayer.IsInBoundManage,
+                IsInventoryManage = authLayer.IsInventoryManage,
+                IsItemManage = authLayer.IsItemManage,
+                IsMemberManage = authLayer.IsMemberManage,
+                IsOutBoundManage = authLayer.IsOutBoundManage,
+                IsRestockManage = authLayer.IsRestockManage,
+                IsVerifyManage = authLayer.IsVerifyManage,
             };
 
 
-            return new MemberAndPermissionSetting(member, permissionSetting);
+            return new MemberAndPermissionSetting(member, permissionSetting, compWithUnit);
 
         }
     }

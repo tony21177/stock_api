@@ -9,46 +9,42 @@ using Microsoft.EntityFrameworkCore;
 namespace stock_api.Models;
 
 /// <summary>
-/// 上傳檔案
+/// 醫院院區關係資料
 /// </summary>
-[Table("file_detail_info")]
-[Index("AttId", Name = "AttID_UNIQUE", IsUnique = true)]
-public partial class FileDetailInfo
+[Table("company_unit")]
+[Index("UnitId", "CompId", Name = "ComId_UnitId_UNIQUE", IsUnique = true)]
+[Index("CompId", Name = "CompId_UNIQUE", IsUnique = true)]
+public partial class CompanyUnit
 {
     [Key]
-    [Column("id")]
     public int Id { get; set; }
 
+    /// <summary>
+    /// 如果是同一單位，就會是一樣的 UnitID
+    /// </summary>
     [Required]
-    [Column("AttID")]
     [StringLength(100)]
-    public string AttId { get; set; }
-
-    [StringLength(200)]
-    public string FileName { get; set; }
-
-    [StringLength(200)]
-    public string FilePath { get; set; }
-
-    [StringLength(45)]
-    public string FileType { get; set; }
-
-    [StringLength(45)]
-    public string FileSizeText { get; set; }
-
-    public double? FileSizeNumber { get; set; }
+    public string UnitId { get; set; }
 
     /// <summary>
-    /// member.UserId
+    /// 單位名稱
     /// </summary>
-    [StringLength(45)]
-    public string CreatorId { get; set; }
+    [StringLength(100)]
+    public string UnitName { get; set; }
 
     /// <summary>
-    /// member.UserId
+    /// 組織ID
     /// </summary>
-    [StringLength(45)]
+    [Required]
+    [StringLength(100)]
     public string CompId { get; set; }
+
+    /// <summary>
+    /// 組織名稱
+    /// </summary>
+    [Required]
+    [StringLength(100)]
+    public string CompName { get; set; }
 
     [Column(TypeName = "timestamp")]
     public DateTime? CreatedAt { get; set; }

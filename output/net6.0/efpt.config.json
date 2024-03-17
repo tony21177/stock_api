@@ -1,6 +1,6 @@
 ﻿{
    "CodeGenerationMode": 3,
-   "ContextClassName": "HandoverContext",
+   "ContextClassName": "StockDbContext",
    "ContextNamespace": null,
    "DefaultDacpacSchema": null,
    "FilterSchemas": false,
@@ -16,23 +16,31 @@
    "T4TemplatePath": null,
    "Tables": [
       {
-         "Name": "annouce_reader",
+         "Name": "acceptance_item",
          "ObjectType": 0
       },
       {
-         "Name": "announce_attachment",
+         "Name": "apply_new_product_flow",
          "ObjectType": 0
       },
       {
-         "Name": "announcement",
+         "Name": "apply_new_product_main",
          "ObjectType": 0
       },
       {
-         "Name": "announcement_history",
+         "Name": "apply_product_flow_log",
          "ObjectType": 0
       },
       {
-         "Name": "authlayer",
+         "Name": "apply_product_flow_setting",
+         "ObjectType": 0
+      },
+      {
+         "Name": "company",
+         "ObjectType": 0
+      },
+      {
+         "Name": "company_unit",
          "ObjectType": 0
       },
       {
@@ -40,39 +48,71 @@
          "ObjectType": 0
       },
       {
-         "Name": "handover_detail",
+         "Name": "in_stock_item_record",
          "ObjectType": 0
       },
       {
-         "Name": "handover_detail_history",
+         "Name": "inventory_adjust_main",
          "ObjectType": 0
       },
       {
-         "Name": "handover_detail_readers",
+         "Name": "manufacturer",
          "ObjectType": 0
       },
       {
-         "Name": "handover_sheet_group",
+         "Name": "out_stock_record",
          "ObjectType": 0
       },
       {
-         "Name": "handover_sheet_main",
+         "Name": "purchase_flow",
          "ObjectType": 0
       },
       {
-         "Name": "handover_sheet_row",
+         "Name": "purchase_flow_log",
          "ObjectType": 0
       },
       {
-         "Name": "member",
+         "Name": "purchase_flow_setting",
          "ObjectType": 0
       },
       {
-         "Name": "my_announcement",
+         "Name": "purchase_main_sheet",
+         "ObjectType": 0
+      },
+      {
+         "Name": "purchase_sub_item",
+         "ObjectType": 0
+      },
+      {
+         "Name": "supplier",
+         "ObjectType": 0
+      },
+      {
+         "Name": "temp_in_stock_item_record",
+         "ObjectType": 0
+      },
+      {
+         "Name": "temp_out_stock_record",
+         "ObjectType": 0
+      },
+      {
+         "Name": "warehouse_authlayer",
+         "ObjectType": 0
+      },
+      {
+         "Name": "warehouse_group",
+         "ObjectType": 0
+      },
+      {
+         "Name": "warehouse_member",
+         "ObjectType": 0
+      },
+      {
+         "Name": "warehouse_product",
          "ObjectType": 0
       }
    ],
-   "UiHint": "Mysql_Gary",
+   "UiHint": "stock",
    "UncountableWords": null,
    "UseBoolPropertiesWithoutDefaultSql": false,
    "UseDatabaseNames": false,

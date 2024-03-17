@@ -5,28 +5,28 @@ namespace stock_api.Service
 {
     public class AuthLayerService
     {
-        private readonly HandoverContext _dbContext;
+        private readonly StockDbContext _dbContext;
 
-        public AuthLayerService(HandoverContext dbContext)
+        public AuthLayerService(StockDbContext dbContext)
         {
             _dbContext = dbContext;
         }
 
-        public List<Authlayer> GetAllAuthlayers()
+        public List<WarehouseAuthlayer> GetAllAuthlayers(string compId)
         {
-            return _dbContext.Authlayers.ToList();
+            return _dbContext.WarehouseAuthlayers.Where(al=>al.CompId==compId).ToList();
         }
-        public Authlayer? GetByAuthValue(short authValue)
+        public WarehouseAuthlayer? GetByAuthValue(short authValue, string compId)
         {
-            return _dbContext.Authlayers.Where(authLayer => authLayer.AuthValue == authValue).First();
+            return _dbContext.WarehouseAuthlayers.Where(authLayer => authLayer.AuthValue == authValue&&authLayer.CompId==compId).First();
         }
 
-        public List<Authlayer> UpdateAuthlayers(List<Authlayer> authlayers)
+        public List<WarehouseAuthlayer> UpdateAuthlayers(List<WarehouseAuthlayer> authlayers)
         {
-            var updatedAuthLayers = new List<Authlayer>();
+            var updatedAuthLayers = new List<WarehouseAuthlayer>();
             authlayers.ForEach(authlayer =>
             {
-                var existingAuthLayer = _dbContext.Authlayers.Find(authlayer.Id);
+                var existingAuthLayer = _dbContext.WarehouseAuthlayers.Find(authlayer.AuthId);
                 if (existingAuthLayer != null)
                 {
                     // 使用 SetValues 來只更新不為 null 的屬性
@@ -39,16 +39,16 @@ namespace stock_api.Service
             return updatedAuthLayers;
         }
 
-        public Authlayer AddAuthlayer(Authlayer newAuthlayer)
+        public WarehouseAuthlayer AddAuthlayer(WarehouseAuthlayer newAuthlayer)
         {
-            _dbContext.Authlayers.Add(newAuthlayer);
+            _dbContext.WarehouseAuthlayers.Add(newAuthlayer);
             _dbContext.SaveChanges(true);
             return newAuthlayer;
         }
 
         public void DeleteAuthLayer(int id)
         {
-            var authLayerToDelete = new Authlayer { Id = id };
+            var authLayerToDelete = new WarehouseAuthlayer { AuthId = id };
             // 將實體的狀態設置為 'Deleted'
             _dbContext.Entry(authLayerToDelete).State = EntityState.Deleted;
 

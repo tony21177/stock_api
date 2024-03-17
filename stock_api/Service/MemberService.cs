@@ -6,42 +6,42 @@ namespace stock_api.Service
 {
     public class MemberService
     {
-        private readonly HandoverContext _dbContext;
+        private readonly StockDbContext _dbContext;
         private readonly IMapper _mapper;
 
-        public MemberService(HandoverContext dbContext, IMapper mapper)
+        public MemberService(StockDbContext dbContext, IMapper mapper)
         {
             _dbContext = dbContext;
             _mapper = mapper;
         }
 
-        public Member? GetMemberByUserId(string userId)
+        public WarehouseMember? GetMemberByUserId(string userId, string compId)
         {
-            return _dbContext.Members.Where(member => member.UserId == userId).FirstOrDefault();
+            return _dbContext.WarehouseMembers.Where(member => member.UserId == userId && member.CompId==compId).FirstOrDefault();
         }
 
-        public List<Member> GetMembersByUserIdList(List<string> userIdList)
+        public List<WarehouseMember> GetMembersByUserIdList(List<string> userIdList, string compId)
         {
-            return _dbContext.Members.Where(member => userIdList.Contains(member.UserId)).ToList();
+            return _dbContext.WarehouseMembers.Where(member => userIdList.Contains(member.UserId) && member.CompId == compId).ToList();
         }
 
-        public List<Member> GetActiveMembersByUserIds(List<string> userIdList)
+        public List<WarehouseMember> GetActiveMembersByUserIds(List<string> userIdList, string compId)
         {
             if (userIdList == null || userIdList.Count == 0)
             {
-                return new List<Member>();
+                return new List<WarehouseMember>();
             }
 
-            return _dbContext.Members.Where(member => userIdList.Contains(member.UserId) && member.IsActive == true).ToList();
+            return _dbContext.WarehouseMembers.Where(member => userIdList.Contains(member.UserId) && member.IsActive == true && member.CompId==compId).ToList();
         }
 
-        public Member? GetMemberByAccount(string account)
+        public WarehouseMember? GetMemberByAccount(string account,string compId)
         {
-            var member = _dbContext.Members.Where(member => member.Account == account).FirstOrDefault();
+            var member = _dbContext.WarehouseMembers.Where(member => member.Account == account && member.CompId == compId).FirstOrDefault();
             return member;
         }
 
-        public List<string> GetDisplayNameByUserIdList(List<string> userIdList)
+        public List<string> GetDisplayNameByUserIdList(List<string> userIdList, string compId)
         {
             // 宣告一個空的 DisplayName 列表
             var displayNames = new List<string>();
@@ -50,8 +50,8 @@ namespace stock_api.Service
             if (userIdList != null && userIdList.Any())
             {
                 // 從資料庫中查詢對應的 DisplayName
-                var members = _dbContext.Members
-                    .Where(member => userIdList.Contains(member.UserId)) // 篩選出指定的 UserId
+                var members = _dbContext.WarehouseMembers
+                    .Where(member => userIdList.Contains(member.UserId) && member.CompId == compId) // 篩選出指定的 UserId
                     .ToList();
 
                 // 提取 DisplayName
@@ -61,17 +61,22 @@ namespace stock_api.Service
             return displayNames;
         }
 
-        public List<Member> GetAllMembers()
+        public List<WarehouseMember> GetAllMembersOfComp(string compId)
         {
-            return _dbContext.Members.ToList();
+            return _dbContext.WarehouseMembers.Where(member=>member.CompId==compId).ToList();
         }
 
-        public List<Recipient> GetAlRecipients()
+        public List<WarehouseMember> GetAllMembersOfCompList(List<string> compIdList)
         {
-            var result = from member in _dbContext.Members
-                         join authLayer in _dbContext.Authlayers
+            return _dbContext.WarehouseMembers.Where(member => compIdList.Contains(member.CompId)).ToList();
+        }
+
+        public List<Recipient> GetAlRecipientsOfComp(string compId)
+        {
+            var result = from member in _dbContext.WarehouseMembers
+                         join authLayer in _dbContext.WarehouseAuthlayers
                          on member.AuthValue equals authLayer.AuthValue
-                         where member.IsActive == true
+                         where member.IsActive == true && member.CompId == compId
                          select new Recipient
                          {
                              UserId = member.UserId,
@@ -85,9 +90,9 @@ namespace stock_api.Service
             return result.ToList();
         }
 
-        public Member? UpdateMember(Member member)
+        public WarehouseMember? UpdateMember(WarehouseMember member)
         {
-            var toBeUpdateMember = _dbContext.Members.FirstOrDefault(_member => _member.UserId == member.UserId);
+            var toBeUpdateMember = _dbContext.WarehouseMembers.FirstOrDefault(_member => _member.UserId == member.UserId);
             if (toBeUpdateMember == null) return null;
             _mapper.Map(member, toBeUpdateMember);
 
@@ -96,27 +101,27 @@ namespace stock_api.Service
             return member;
         }
 
-        public Member CreateMember(Member newMember)
+        public WarehouseMember CreateMember(WarehouseMember newMember)
         {
-            _dbContext.Members.Add(newMember);
+            _dbContext.WarehouseMembers.Add(newMember);
             _dbContext.SaveChanges(true);
             return newMember;
         }
 
         public void DeleteMember(string userId)
         {
-            var membersToDelete = _dbContext.Members.Where(member => member.UserId == userId).ToList();
+            var membersToDelete = _dbContext.WarehouseMembers.Where(member => member.UserId == userId).ToList();
 
             if (membersToDelete.Any())
             {
-                _dbContext.Members.RemoveRange(membersToDelete);
+                _dbContext.WarehouseMembers.RemoveRange(membersToDelete);
                 _dbContext.SaveChanges();
             }
         }
 
         public bool IsAccountNotExist(string account)
         {
-            var existMemeber = _dbContext.Members.Where(member => member.Account == account).FirstOrDefault();
+            var existMemeber = _dbContext.WarehouseMembers.Where(member => member.Account == account).FirstOrDefault();
             if (existMemeber == null)
             {
                 return true;
@@ -127,17 +132,6 @@ namespace stock_api.Service
             }
         }
 
-        public bool IsUidNotExist(string uid)
-        {
-            var existMemeber = _dbContext.Members.Where(member => member.Uid == uid).FirstOrDefault();
-            if (existMemeber == null)
-            {
-                return true;
-            }
-            else
-            {
-                return false;
-            }
-        }
+      
     }
 }

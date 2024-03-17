@@ -27,17 +27,17 @@ namespace stock_api.Controllers
             _jwtHelpers = jwtHelpers;
         }
 
-        [HttpGet("list")]
+        [HttpGet("list/{compId}")]
         //[Authorize(Roles = "1")]
         [AuthorizeRoles("1")]
-        public IActionResult List()
+        public IActionResult List(string compId)
         {
             // 以下這段不需要===>[Authorize(Roles = "1")]搭配CustomAuthorizationMiddlewareResultHandler即可
 
             //var authValueAndPermissionSetting = _jwtHelpers.GetMemberAndPermissionSetting(User);
             //if (authValueAndPermissionSetting == null || authValueAndPermissionSetting.Member.AuthValue != (short)1)
             //{
-            //    return Unauthorized(new CommonResponse<List<Authlayer>>()
+            //    return Unauthorized(new CommonResponse<List<WarehouseAuthlayer>>()
             //    {
             //        Result = false,
             //        Message = "沒有權限",
@@ -45,8 +45,8 @@ namespace stock_api.Controllers
             //    });
             //}
 
-            var data = _authLayerService.GetAllAuthlayers();
-            var response = new CommonResponse<List<Authlayer>>()
+            var data = _authLayerService.GetAllAuthlayers(compId);
+            var response = new CommonResponse<List<WarehouseAuthlayer>>()
             {
                 Result = true,
                 Message = "",
@@ -57,12 +57,12 @@ namespace stock_api.Controllers
 
         [HttpPost("update")]
         [AuthorizeRoles("1")]
-        public CommonResponse<List<Authlayer>> Update(List<UpdateAuthlayerRequest> updateAuthlayerListRequest)
+        public CommonResponse<List<WarehouseAuthlayer>> Update(List<UpdateAuthlayerRequest> updateAuthlayerListRequest)
         {
-            var authlayerList = _mapper.Map<List<Authlayer>>(updateAuthlayerListRequest);
+            var authlayerList = _mapper.Map<List<WarehouseAuthlayer>>(updateAuthlayerListRequest);
             var data = _authLayerService.UpdateAuthlayers(authlayerList);
 
-            var response = new CommonResponse<List<Authlayer>>()
+            var response = new CommonResponse<List<WarehouseAuthlayer>>()
             {
                 Result = true,
                 Message = "",
@@ -73,13 +73,13 @@ namespace stock_api.Controllers
 
         [HttpPost("create")]
         [AuthorizeRoles("1")]
-        public CommonResponse<Authlayer> Create(CreateAuthlayerRequest createAuthlayerRequest)
+        public CommonResponse<WarehouseAuthlayer> Create(CreateAuthlayerRequest createAuthlayerRequest)
         {
-            var newAuthLayer = _mapper.Map<Authlayer>(createAuthlayerRequest);
+            var newAuthLayer = _mapper.Map<WarehouseAuthlayer>(createAuthlayerRequest);
             // TODO
             var data = _authLayerService.AddAuthlayer(newAuthLayer);
 
-            var response = new CommonResponse<Authlayer>()
+            var response = new CommonResponse<WarehouseAuthlayer>()
             {
                 Result = true,
                 Message = "",
@@ -95,7 +95,7 @@ namespace stock_api.Controllers
 
             _authLayerService.DeleteAuthLayer(id);
 
-            var response = new CommonResponse<Authlayer>()
+            var response = new CommonResponse<WarehouseAuthlayer>()
             {
                 Result = true,
                 Message = "",

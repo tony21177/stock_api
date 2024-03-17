@@ -59,6 +59,7 @@
     <None Remove="System.Drawing.Common" />
   </ItemGroup>
   <ItemGroup>
+    <Folder Include="Common\Constant\" />
     <Folder Include="Models\" />
     <Folder Include="uploads\" />
   </ItemGroup>

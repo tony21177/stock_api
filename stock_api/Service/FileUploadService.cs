@@ -11,11 +11,11 @@ namespace stock_api.Service
         private readonly ILogger<FileUploadService> _logger;
         //private readonly IFileProvider _fileProvider;
         private readonly IWebHostEnvironment _webHostEnvironment;
-        private readonly HandoverContext _dbContext;
+        private readonly StockDbContext _dbContext;
         private readonly IMapper _mapper;
 
 
-        public FileUploadService(ILogger<FileUploadService> logger, IWebHostEnvironment webHostEnvironment, HandoverContext dbContext, IMapper mapper)
+        public FileUploadService(ILogger<FileUploadService> logger, IWebHostEnvironment webHostEnvironment, StockDbContext dbContext, IMapper mapper)
         {
             _logger = logger;
             //_fileProvider = fileProvider;

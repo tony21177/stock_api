@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using stock_api.Auth;
 using stock_api.Service;
+using stock_api.Utils;
 using System.Reflection;
 
 namespace stock_api.Common.IoC.Configuration.DI
@@ -15,10 +16,9 @@ namespace stock_api.Common.IoC.Configuration.DI
                 services.AddScoped<AuthLayerService>();
                 services.AddScoped<MemberService>();
                 services.AddScoped<AuthHelpers>();
-                services.AddScoped<AnnouncementService>();
+                services.AddScoped<CompanyService>();
                 services.AddScoped<FileUploadService>();
                 services.AddScoped<IAuthorizationMiddlewareResultHandler, CustomAuthorizationMiddlewareResultHandler>();
-                services.AddScoped<HandoverService>();
             }
         }
 

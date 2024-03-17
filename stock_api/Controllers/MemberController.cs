@@ -41,7 +41,9 @@ namespace stock_api.Controllers
         [AuthorizeRoles("1", "3", "5")]
         public CommonResponse<List<MemberDto>> List()
         {
-            var data = _memberService.GetAllMembers();
+            var memberAndPermissionSetting = _authHelpers.GetMemberAndPermissionSetting(User);
+
+            var data = _memberService.GetAllMembersOfComp(memberAndPermissionSetting.CompanyWithUnit.CompId);
             var memberDtos = _mapper.Map<List<MemberDto>>(data);
             var response = new CommonResponse<List<MemberDto>>()
             {
@@ -52,29 +54,29 @@ namespace stock_api.Controllers
             return response;
         }
 
-        [HttpGet("recipients")]
-        [Authorize]
-        public IActionResult ListRecipients()
-        {
-            var memberAndPermissionSetting = _authHelpers.GetMemberAndPermissionSetting(User);
-            var permissionSetting = memberAndPermissionSetting?.PermissionSetting;
+        //[HttpGet("recipients")]
+        //[Authorize]
+        //public IActionResult ListRecipients()
+        //{
+        //    var memberAndPermissionSetting = _authHelpers.GetMemberAndPermissionSetting(User);
+        //    var permissionSetting = memberAndPermissionSetting?.PermissionSetting;
 
-            if (memberAndPermissionSetting == null || permissionSetting == null || !permissionSetting.IsCreateAnnouce)
-            {
-                return Unauthorized(CommonResponse<dynamic>.BuildNotAuthorizeResponse());
-            }
+        //    if (memberAndPermissionSetting == null || permissionSetting == null || !permissionSetting.IsCreateAnnouce)
+        //    {
+        //        return Unauthorized(CommonResponse<dynamic>.BuildNotAuthorizeResponse());
+        //    }
 
-            var recipients = _memberService.GetAlRecipients();
+        //    var recipients = _memberService.GetAlRecipients();
 
 
-            var response = new CommonResponse<List<Recipient>>()
-            {
-                Result = true,
-                Message = "",
-                Data = recipients
-            };
-            return Ok(response);
-        }
+        //    var response = new CommonResponse<List<Recipient>>()
+        //    {
+        //        Result = true,
+        //        Message = "",
+        //        Data = recipients
+        //    };
+        //    return Ok(response);
+        //}
 
         [HttpPost("create")]
         [Authorize]
@@ -82,7 +84,7 @@ namespace stock_api.Controllers
         {
             var memberAndPermissionSetting = _authHelpers.GetMemberAndPermissionSetting(User);
             var permissionSetting = memberAndPermissionSetting?.PermissionSetting;
-            if (memberAndPermissionSetting == null || permissionSetting == null || !permissionSetting.IsMemberControl)
+            if (memberAndPermissionSetting == null || permissionSetting == null || !permissionSetting.IsMemberManage)
             {
                 return Unauthorized(CommonResponse<dynamic>.BuildNotAuthorizeResponse());
             }
@@ -93,7 +95,7 @@ namespace stock_api.Controllers
             {
                 return BadRequest(CommonResponse<dynamic>.BuildValidationFailedResponse(validationResult));
             }
-            var newMember = _mapper.Map<Member>(createMemberRequset);
+            var newMember = _mapper.Map<WarehouseMember>(createMemberRequset);
             newMember.UserId = Guid.NewGuid().ToString();
 
             newMember = _memberService.CreateMember(newMember!);
@@ -112,7 +114,7 @@ namespace stock_api.Controllers
         {
             var memberAndPermissionSetting = _authHelpers.GetMemberAndPermissionSetting(User);
             var permissionSetting = memberAndPermissionSetting?.PermissionSetting;
-            if (memberAndPermissionSetting == null || permissionSetting == null || !permissionSetting.IsMemberControl)
+            if (memberAndPermissionSetting == null || permissionSetting == null || !permissionSetting.IsMemberManage)
             {
                 return Unauthorized(CommonResponse<dynamic>.BuildNotAuthorizeResponse());
             }
@@ -122,7 +124,7 @@ namespace stock_api.Controllers
                 return BadRequest(CommonResponse<dynamic>.BuildValidationFailedResponse(validationResult));
             }
 
-            var updateMember = _mapper.Map<Member>(updateMemberRequset);
+            var updateMember = _mapper.Map<WarehouseMember>(updateMemberRequset);
             var updatedMember = _memberService.UpdateMember(updateMember);
             var updateedMemberDto = _mapper.Map<MemberDto>(updatedMember);
             var response = new CommonResponse<MemberDto>
@@ -139,13 +141,13 @@ namespace stock_api.Controllers
         {
             var memberAndPermissionSetting = _authHelpers.GetMemberAndPermissionSetting(User);
             var permissionSetting = memberAndPermissionSetting?.PermissionSetting;
-            if (memberAndPermissionSetting == null || permissionSetting == null || !permissionSetting.IsMemberControl)
+            if (memberAndPermissionSetting == null || permissionSetting == null || !permissionSetting.IsMemberManage)
             {
                 return Unauthorized(CommonResponse<dynamic>.BuildNotAuthorizeResponse());
             }
             _memberService.DeleteMember(userId);
 
-            var response = new CommonResponse<Member>()
+            var response = new CommonResponse<WarehouseMember>()
             {
                 Result = true,
                 Message = "",

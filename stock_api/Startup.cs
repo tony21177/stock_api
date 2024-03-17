@@ -20,17 +20,9 @@ builder.Services.AddCors(options =>
     });
 });
 
-// Add DBContext
-//var serverVersion = new MySqlServerVersion(new Version(5, 7, 29));
-//builder.Services.AddEntityFrameworkMySQL().AddDbContext<HandoverContext>(options =>
-//{
-//    options.UseMySQL(builder.Configuration.GetConnectionString("DefaultConnection"), serverVersion);
-//    options.UseLoggerFactory(LoggerFactory.Create(builder => builder.AddConsole()))
-//           .EnableSensitiveDataLogging();
-//}, ServiceLifetime.Scoped);
 
 var serverVersion = new MySqlServerVersion(new Version(5, 7, 29));
-builder.Services.AddEntityFrameworkMySql().AddDbContext<HandoverContext>(options =>
+builder.Services.AddEntityFrameworkMySql().AddDbContext<StockDbContext>(options =>
 {
     options.UseMySql(builder.Configuration.GetConnectionString("DefaultConnection"), serverVersion);
     options.UseLoggerFactory(LoggerFactory.Create(builder => builder.AddConsole()))
