@@ -94,7 +94,7 @@ namespace stock_api.Utils
             var account = userClaims.FirstOrDefault(c => c.Type == "account");
             var compId = userClaims.FirstOrDefault(c => c.Type == "compId");
             if (account == null||compId==null) return null;
-            var member = _memberService.GetMemberByAccount(account.Value, compId.Value);
+            var member = _memberService.GetMemberByAccount(account.Value);
             if (member == null) return null;
             var compWithUnit = _companyService.GetCompanyWithUnit(compId.Value);
             if (compWithUnit == null) return null;
