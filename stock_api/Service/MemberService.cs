@@ -35,9 +35,9 @@ namespace stock_api.Service
             return _dbContext.WarehouseMembers.Where(member => userIdList.Contains(member.UserId) && member.IsActive == true && member.CompId==compId).ToList();
         }
 
-        public WarehouseMember? GetMemberByAccount(string account,string compId)
+        public WarehouseMember? GetMemberByAccount(string account)
         {
-            var member = _dbContext.WarehouseMembers.Where(member => member.Account == account && member.CompId == compId).FirstOrDefault();
+            var member = _dbContext.WarehouseMembers.Where(member => member.Account == account ).FirstOrDefault();
             return member;
         }
 

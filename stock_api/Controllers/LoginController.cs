@@ -55,12 +55,13 @@ namespace stock_api.Controllers
 
         MemberAndPermissionSetting? ValidateUser(LoginRequest loginRequest)
         {
-            var member = _memberService.GetMemberByAccount(loginRequest.Account,loginRequest.CompId);
-            var compWithUnit = _companyService.GetCompanyWithUnit(loginRequest.CompId);
-            if (member == null|| compWithUnit == null) return null;
+            var member = _memberService.GetMemberByAccount(loginRequest.Account);
+            if (member == null ) return null;
+            var compWithUnit = _companyService.GetCompanyWithUnit(member.CompId);
+            if (compWithUnit == null) return null;
             if (member.Password != loginRequest.Password) return null;
 
-            var authLayer = _authLayerService.GetByAuthValue(member.AuthValue,loginRequest.CompId);
+            var authLayer = _authLayerService.GetByAuthValue(member.AuthValue, member.CompId);
             if (authLayer == null) return null;
             PermissionSetting permissionSetting = new()
             {
