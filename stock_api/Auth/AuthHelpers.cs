@@ -93,10 +93,11 @@ namespace stock_api.Utils
 
             var account = userClaims.FirstOrDefault(c => c.Type == "account");
             var compId = userClaims.FirstOrDefault(c => c.Type == "compId");
-            if (account == null||compId==null) return null;
+            var unitId = userClaims.FirstOrDefault(c => c.Type == "unitId");
+            if (account == null||compId==null||unitId==null) return null;
             var member = _memberService.GetMemberByAccount(account.Value);
             if (member == null) return null;
-            var compWithUnit = _companyService.GetCompanyWithUnit(compId.Value);
+            var compWithUnit = _companyService.GetCompanyWithUnitByCompanyId(compId.Value);
             if (compWithUnit == null) return null;
 
             string permissionSettingString = permissionClaim.Value;

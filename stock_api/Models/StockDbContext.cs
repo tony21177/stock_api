@@ -181,7 +181,9 @@ public partial class StockDbContext : DbContext
             entity.Property(e => e.CreatedAt)
                 .HasDefaultValueSql("CURRENT_TIMESTAMP")
                 .HasComment("建立時間");
-            entity.Property(e => e.IsActive).HasComment("是否激活狀態");
+            entity.Property(e => e.IsActive)
+                .HasDefaultValueSql("'1'")
+                .HasComment("是否激活狀態");
             entity.Property(e => e.Name).HasComment("顯示名稱");
             entity.Property(e => e.Type).HasComment("類型\nOWNER : 系統擁有者（廠商）\nORGANIZATION : 機構（醫院）");
             entity.Property(e => e.UpdatedAt)

@@ -6,7 +6,7 @@ namespace stock_api.Common
 {
     public class CommonResponse<T>
     {
-        public bool Result { get; set; }
+        public bool Result { get; set; } = false;
         public string Message { get; set; } = "";
 
         public T? Data { get; set; }

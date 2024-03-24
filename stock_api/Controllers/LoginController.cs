@@ -59,7 +59,7 @@ namespace stock_api.Controllers
         {
             var member = _memberService.GetMemberByAccount(loginRequest.Account);
             if (member == null ) return null;
-            var compWithUnit = _companyService.GetCompanyWithUnit(member.CompId);
+            var compWithUnit = _companyService.GetCompanyWithUnitByCompanyId(member.CompId);
             if (compWithUnit == null) return null;
             if (member.Password != loginRequest.Password) return null;
 

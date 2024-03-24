@@ -11,6 +11,7 @@ namespace stock_api.Common.AutoMapper
     {
         public APIMappingProfile()
         {
+            // member
             CreateMap<CreateAuthlayerRequest, WarehouseAuthlayer>()
                 .ForAllMembers(opt => opt.Condition((src, dest, srcMember) => srcMember != null));
             CreateMap<UpdateAuthlayerRequest, WarehouseAuthlayer>()
@@ -23,13 +24,18 @@ namespace stock_api.Common.AutoMapper
             //.ForMember(dest => dest.PhotoUrl, opt => opt.MapFrom(src =>
             //    src.PhotoUrl != null ? src.PhotoUrl.Split(",", StringSplitOptions.RemoveEmptyEntries).ToList() : null))
             .ForAllMembers(opt => opt.Condition((src, dest, srcMember) => srcMember != null));
-            
             CreateMap<WarehouseMember, WarehouseMember>()
                 .ForAllMembers(opt => opt.Condition((src, dest, srcMember) => srcMember != null));
-            
+
+            // company
+            CreateMap<CreateCompanyRequest, Company>()
+                .ForAllMembers(opt => opt.Condition((src, dest, srcMember) => srcMember != null));
+            CreateMap<UpdateCompanyRequest, Company>()
+                .ForAllMembers(opt => opt.Condition((src, dest, srcMember) => srcMember != null));
+            //CreateMap<Company, Company>()
+            //    .ForAllMembers(opt => opt.Condition((src, dest, srcMember) => srcMember != null));
 
 
-            
         }
 
 

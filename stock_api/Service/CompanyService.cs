@@ -1,4 +1,6 @@
 ﻿using AutoMapper;
+using stock_api.Common.Constant;
+using stock_api.Controllers.Request;
 using stock_api.Models;
 using stock_api.Service.ValueObject;
 using System.ComponentModel.Design;
@@ -16,14 +18,56 @@ namespace stock_api.Service
             _mapper = mapper;
         }
 
-        public void AddCompany(Company company)
+
+        public List<CompanyWithUnitVo> GetAllCompanyWithUnitByUnitId(string unitId)
         {
-            _dbContext.Companies.Add(company);
-            _dbContext.SaveChanges();
-            return;
+            var query = from c in _dbContext.Companies
+                        join cu in _dbContext.CompanyUnits on c.CompId equals cu.CompId
+                        where cu.UnitId == unitId
+                        select new CompanyWithUnitVo
+                        {
+                            CompId = c.CompId,
+                            Name = c.Name,
+                            IsActive = c.IsActive,
+                            Type = c.Type,
+                            CreatedAt = c.CreatedAt,
+                            UpdatedAt = c.UpdatedAt,
+                            UnitId = cu.UnitId,
+                            UnitName = cu.UnitName
+                        };
+
+            var result = query.ToList();
+            
+            return result;
         }
 
-        public CompanyWithUnitVo? GetCompanyWithUnit(string compId)
+        public List<CompanyWithUnitVo> GetAllCompanyWithUnit()
+        {
+            var query = from c in _dbContext.Companies
+                        join cu in _dbContext.CompanyUnits on c.CompId equals cu.CompId
+                        select new CompanyWithUnitVo
+                        {
+                            CompId = c.CompId,
+                            Name = c.Name,
+                            IsActive = c.IsActive,
+                            Type = c.Type,
+                            CreatedAt = c.CreatedAt,
+                            UpdatedAt = c.UpdatedAt,
+                            UnitId = cu.UnitId,
+                            UnitName = cu.UnitName
+                        };
+
+            var result = query.ToList();
+
+            return result;
+        }
+
+        public Company? GetCompanyByCompId(string compId)
+        {
+            return _dbContext.Companies.Where(cp => cp.CompId == compId).FirstOrDefault();
+        }
+
+        public CompanyWithUnitVo? GetCompanyWithUnitByCompanyId(string compId)
         {
             var query = from c in _dbContext.Companies
                         join cu in _dbContext.CompanyUnits on c.CompId equals cu.CompId
@@ -48,6 +92,23 @@ namespace stock_api.Service
             return null;
         }
 
+        public void AddCompany(Company company,String unitId,String unitName)
+        {
+            company.CompId = Guid.NewGuid().ToString();
+            company.Type = CommonConstants.CompanyType.Organization;
+            _dbContext.Companies.Add(company);
+            var companyUnit = new CompanyUnit()
+            {
+                CompId = company.CompId,
+                CompName = company.Name,
+                UnitId = unitId,
+                UnitName = unitName
+            };
+            _dbContext.CompanyUnits.Add(companyUnit);
+            _dbContext.SaveChanges();
+            return;
+        }
+
 
         public void AddCompanyUnit(CompanyUnit companyUnit)
         {
@@ -56,6 +117,12 @@ namespace stock_api.Service
             return ;
         }
 
+        public void UpdateCompany(UpdateCompanyRequest updateCompanyRequest,Company existingCompany)
+        {
+            _mapper.Map(updateCompanyRequest, existingCompany);
+            _dbContext.SaveChanges();
+            return;
+        }
 
     }
 }

@@ -31,7 +31,8 @@ public partial class Company
     /// <summary>
     /// 是否激活狀態
     /// </summary>
-    public bool IsActive { get; set; }
+    [Required]
+    public bool? IsActive { get; set; }
 
     /// <summary>
     /// 類型
@@ -50,9 +51,4 @@ public partial class Company
 
     [Column(TypeName = "timestamp")]
     public DateTime UpdatedAt { get; set; }
-
-    [Required]
-    [Column("companycol")]
-    [StringLength(45)]
-    public string Companycol { get; set; }
 }

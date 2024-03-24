@@ -66,6 +66,36 @@ namespace stock_api.Service
             return _dbContext.WarehouseMembers.Where(member=>member.CompId==compId).ToList();
         }
 
+        public List<MemberWithCompanyUnitVo> GetAllMembersForOwner()
+        {
+            var result = from member in _dbContext.WarehouseMembers
+                         join company in _dbContext.Companies
+                         on member.CompId equals company.CompId
+                         join companyUnit in _dbContext.CompanyUnits
+                         on member.CompId equals companyUnit.CompId
+                         select new MemberWithCompanyUnitVo
+                         {
+                             Account = member.Account,
+                             Password = member.Password,
+                             AuthValue = member.AuthValue,
+                             DisplayName = member.DisplayName,
+                             GroupId = member.GroupId,
+                             PhotoUrl = member.PhotoUrl,
+                             CompId = member.CompId,
+                             UserId = member.UserId,
+                             IsActive = member.IsActive,
+                             CreatedAt = member.CreatedAt,
+                             UpdatedAt = member.UpdatedAt,
+                             Name = company.Name,
+                             Type = company.Type,
+                             UnitId = companyUnit.UnitId,
+                             UnitName = companyUnit.UnitName,
+                         };
+
+
+            return result.ToList();
+        }
+
         public List<WarehouseMember> GetAllMembersOfCompList(List<string> compIdList)
         {
             return _dbContext.WarehouseMembers.Where(member => compIdList.Contains(member.CompId)).ToList();

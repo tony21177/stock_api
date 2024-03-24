@@ -62,6 +62,7 @@ public partial class WarehouseMember
     [StringLength(100)]
     public string UserId { get; set; }
 
+    [Required]
     public bool? IsActive { get; set; }
 
     [Column(TypeName = "timestamp")]

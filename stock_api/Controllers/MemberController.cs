@@ -12,6 +12,7 @@ using stock_api.Utils;
 using MaiBackend.PublicApi.Consts;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using stock_api.Common.Constant;
 
 namespace stock_api.Controllers
 {
@@ -54,29 +55,26 @@ namespace stock_api.Controllers
             return response;
         }
 
-        //[HttpGet("recipients")]
-        //[Authorize]
-        //public IActionResult ListRecipients()
-        //{
-        //    var memberAndPermissionSetting = _authHelpers.GetMemberAndPermissionSetting(User);
-        //    var permissionSetting = memberAndPermissionSetting?.PermissionSetting;
+        [HttpGet("owner/list")]
+        [AuthorizeRoles("1", "3", "5")]
+        public IActionResult ListAll()
+        {
+            var memberAndPermissionSetting = _authHelpers.GetMemberAndPermissionSetting(User);
+            if (memberAndPermissionSetting.CompanyWithUnit == null || memberAndPermissionSetting.CompanyWithUnit.Type != CommonConstants.CompanyType.Owner)
+            {
+                return BadRequest(CommonResponse<dynamic>.BuildNotAuthorizeResponse());
+            }
+            var data = _memberService.GetAllMembersForOwner();
+            var response = new CommonResponse<List<MemberWithCompanyUnitVo>>()
+            {
+                Result = true,
+                Message = "",
+                Data = data
+            };
+            return Ok(response);
+        }
 
-        //    if (memberAndPermissionSetting == null || permissionSetting == null || !permissionSetting.IsCreateAnnouce)
-        //    {
-        //        return Unauthorized(CommonResponse<dynamic>.BuildNotAuthorizeResponse());
-        //    }
 
-        //    var recipients = _memberService.GetAlRecipients();
-
-
-        //    var response = new CommonResponse<List<Recipient>>()
-        //    {
-        //        Result = true,
-        //        Message = "",
-        //        Data = recipients
-        //    };
-        //    return Ok(response);
-        //}
 
         [HttpPost("create")]
         [Authorize]
