@@ -17,6 +17,7 @@ namespace stock_api.Common.IoC.Configuration.DI
                 services.AddScoped<MemberService>();
                 services.AddScoped<AuthHelpers>();
                 services.AddScoped<CompanyService>();
+                services.AddScoped<GroupService>();
                 services.AddScoped<FileUploadService>();
                 services.AddScoped<IAuthorizationMiddlewareResultHandler, CustomAuthorizationMiddlewareResultHandler>();
             }

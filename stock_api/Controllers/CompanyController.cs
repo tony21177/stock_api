@@ -37,7 +37,7 @@ namespace stock_api.Controllers
             _updateCompanyRequestValidator = new UpdateCompanyValidator();
         }
 
-        [HttpGet("listAllCompanies")]
+        [HttpGet("list")]
         [Authorize]
         public IActionResult ListAllCompany()
         {
@@ -54,7 +54,7 @@ namespace stock_api.Controllers
             };
             return Ok(response);
         }
-        [HttpGet("owner/listAllCompanies")]
+        [HttpGet("owner/list")]
         [Authorize]
         public IActionResult ListAllCompanyForOwner()
         {
