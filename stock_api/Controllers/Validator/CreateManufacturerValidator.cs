@@ -4,11 +4,10 @@ using stock_api.Controllers.Request;
 
 namespace stock_api.Controllers.Validator
 {
-    public class CreateManufacturerValidator : AbstractValidator<CreateManufacturerRequest>
+    public class CreateCompanyValidator : AbstractValidator<CreateCompanyRequest>
     {
-        public CreateManufacturerValidator()
+        public CreateCompanyValidator()
         {
-            RuleFor(x => x.Code).NotEmpty().WithMessage("code為必須");
             RuleFor(x => x.Name).NotEmpty().WithMessage("name為必須");
             RuleFor(x => x.IsActive).NotEmpty().WithMessage("isActive為必須");
         }

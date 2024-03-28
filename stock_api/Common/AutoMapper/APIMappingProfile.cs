@@ -41,6 +41,12 @@ namespace stock_api.Common.AutoMapper
             CreateMap<UpdateGroupRequest, WarehouseGroup>()
                 .ForAllMembers(opt => opt.Condition((src, dest, srcMember) => srcMember != null));
 
+            // manufacturer
+            CreateMap<CreateManufacturerRequest, Manufacturer>()
+                .ForAllMembers(opt => opt.Condition((src, dest, srcMember) => srcMember != null));
+            CreateMap<UpdateManufacturerRequest, Manufacturer>()
+                .ForAllMembers(opt => opt.Condition((src, dest, srcMember) => srcMember != null));
+
         }
 
 
