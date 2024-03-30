@@ -39,7 +39,7 @@ namespace stock_api.Controllers
         }
 
         [HttpGet("list")]
-        [AuthorizeRoles("1", "3", "5")]
+        [Authorize]
         public CommonResponse<List<MemberDto>> List()
         {
             var memberAndPermissionSetting = _authHelpers.GetMemberAndPermissionSetting(User);
@@ -56,7 +56,7 @@ namespace stock_api.Controllers
         }
 
         [HttpGet("owner/list")]
-        [AuthorizeRoles("1", "3", "5")]
+        [Authorize]
         public IActionResult ListAll()
         {
             var memberAndPermissionSetting = _authHelpers.GetMemberAndPermissionSetting(User);

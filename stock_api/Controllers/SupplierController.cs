@@ -17,32 +17,36 @@ namespace stock_api.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    public class ManufacturerController : ControllerBase
+    public class SupplierController : ControllerBase
     {
         private readonly AuthLayerService _authLayerService;
         private readonly IMapper _mapper;
         private readonly AuthHelpers _authHelpers;
-        private readonly ManufacturerService _manufacturerService;
-        private readonly IValidator<CreateManufacturerRequest> _createManufacturerValidator;
-        private readonly IValidator<UpdateManufacturerRequest> _updateManufacturerValidator;
+        private readonly SupplierService _supplierService;
+        private readonly CompanyService _companyService;
+        private readonly IValidator<CreateSupplierRequest> _createSupplierValidator;
+        private readonly IValidator<UpdateSupplierRequest> _updateSupplierValidator;
 
-        public ManufacturerController(AuthLayerService authLayerService, IMapper mapper, AuthHelpers authHelpers, ManufacturerService manufacturerService)
+        public SupplierController(AuthLayerService authLayerService, IMapper mapper, AuthHelpers authHelpers, SupplierService supplierService, CompanyService companyService)
         {
             _authLayerService = authLayerService;
             _mapper = mapper;
             _authHelpers = authHelpers;
-            _manufacturerService = manufacturerService;
-            _createManufacturerValidator = new CreateManufacturerValidator();
-            _updateManufacturerValidator= new UpdateManufacturerValidator();
+            _supplierService = supplierService;
+            _companyService = companyService;
+            _createSupplierValidator = new CreateSupplierValidator(companyService);
+            _updateSupplierValidator = new UpdateSupplierValidator(companyService);
+            _companyService = companyService;
         }
 
         [HttpGet("list")]
         [Authorize]
         public IActionResult ListAll()
         {
-            var memberAndPermissionSettingList = _manufacturerService.GetAllManufacturer();
+            var memberAndPermissionSetting = _authHelpers.GetMemberAndPermissionSetting(User);
+            var memberAndPermissionSettingList = _supplierService.GetAllSupplierByCompId(memberAndPermissionSetting.CompanyWithUnit.CompId);
 
-            var response = new CommonResponse<List<Manufacturer>>()
+            var response = new CommonResponse<List<Supplier>>()
             {
                 Result = true,
                 Message = "",
@@ -51,33 +55,59 @@ namespace stock_api.Controllers
             return Ok(response);
         }
 
-        [HttpGet("{id}")]
+        [HttpGet("owner/list")]
         [Authorize]
-        public IActionResult GetById(string id)
+        public IActionResult ListAllForOwner()
         {
-            var manufacturer = _manufacturerService.GetManufacturerById(id);
-
-            var response = new CommonResponse<Manufacturer>()
+            var memberAndPermissionSetting = _authHelpers.GetMemberAndPermissionSetting(User);
+            if (memberAndPermissionSetting.CompanyWithUnit == null || memberAndPermissionSetting.CompanyWithUnit.Type != CommonConstants.CompanyType.Owner)
+            {
+                return BadRequest(CommonResponse<dynamic>.BuildNotAuthorizeResponse());
+            }
+            var data = _supplierService.GetAllSupplier();
+            var response = new CommonResponse<List<Supplier>>()
             {
                 Result = true,
                 Message = "",
-                Data = manufacturer
+                Data = data
+            };
+            return Ok(response);
+        }
+
+        [HttpGet("{id}")]
+        [Authorize]
+        public IActionResult GetById(int id)
+        {
+
+            var supplier = _supplierService.GetSupplierById(id);
+
+            var response = new CommonResponse<Supplier>()
+            {
+                Result = true,
+                Message = "",
+                Data = supplier
             };
             return Ok(response);
         }
 
         [HttpPost("create")]
         [Authorize]
-        public IActionResult CreateManufacturer(CreateManufacturerRequest request)
+        public IActionResult CreateSupplier(CreateSupplierRequest request)
         {
             var memberAndPermissionSetting = _authHelpers.GetMemberAndPermissionSetting(User);
             if (memberAndPermissionSetting.CompanyWithUnit.Type != CommonConstants.CompanyType.Owner)
             {
                 return BadRequest(CommonResponse<dynamic>.BuildNotAuthorizeResponse());
             }
+            var validationResult = _createSupplierValidator.Validate(request);
 
-            var newManufacturer = _mapper.Map<Manufacturer>(request);
-            _manufacturerService.AddManufacturer(newManufacturer);
+            if (!validationResult.IsValid)
+            {
+                return BadRequest(CommonResponse<dynamic>.BuildValidationFailedResponse(validationResult));
+            }
+
+            var newSupplier = _mapper.Map<Supplier>(request);
+            _supplierService.AddSupplier(newSupplier);
 
             var response = new CommonResponse<dynamic>()
             {
@@ -90,9 +120,9 @@ namespace stock_api.Controllers
 
         [HttpPost("update")]
         [Authorize]
-        public IActionResult UpdateManufacturer(UpdateManufacturerRequest  request)
+        public IActionResult UpdateSupplier(UpdateSupplierRequest  request)
         {
-            var validationResult = _updateManufacturerValidator.Validate(request);
+            var validationResult = _updateSupplierValidator.Validate(request);
 
             if (!validationResult.IsValid)
             {
@@ -105,17 +135,17 @@ namespace stock_api.Controllers
                 return BadRequest(CommonResponse<dynamic>.BuildNotAuthorizeResponse());
             }
 
-            var existingManufacturer = _manufacturerService.GetManufacturerById(request.Id);
-            if (existingManufacturer == null)
+            var existingSupplier = _supplierService.GetSupplierById(request.Id);
+            if (existingSupplier == null)
             {
                 return BadRequest(new CommonResponse<dynamic>()
                 {
                     Result = false,
-                    Message = "製造商不存在"
+                    Message = "供應商不存在"
                 });
             }
 
-            _manufacturerService.UpdateManufacturer(request, existingManufacturer);
+            _supplierService.UpdateSupplier(request, existingSupplier);
 
             var response = new CommonResponse<dynamic>()
             {
@@ -128,7 +158,7 @@ namespace stock_api.Controllers
 
         [HttpDelete("{id}")]
         [Authorize]
-        public IActionResult InActiveManufacturer(string id)
+        public IActionResult InActiveSupplier(int id)
         {
 
             var memberAndPermissionSetting = _authHelpers.GetMemberAndPermissionSetting(User);
@@ -136,21 +166,21 @@ namespace stock_api.Controllers
             {
                 return BadRequest(CommonResponse<dynamic>.BuildNotAuthorizeResponse());
             }
-            var existingManufacturer = _manufacturerService.GetManufacturerById(id);
-            if (existingManufacturer == null)
+            var existingSupplier = _supplierService.GetSupplierById(id);
+            if (existingSupplier == null)
             {
                 return BadRequest(new CommonResponse<dynamic>()
                 {
                     Result = false,
-                    Message = "製造商不存在"
+                    Message = "供應商不存在"
                 });
             }
 
-            _manufacturerService.UpdateManufacturer(new UpdateManufacturerRequest()
+            _supplierService.UpdateSupplier(new UpdateSupplierRequest()
             {
                Id=id,
                 IsActive = false,
-            }, existingManufacturer);
+            }, existingSupplier);
 
             var response = new CommonResponse<dynamic>()
             {
