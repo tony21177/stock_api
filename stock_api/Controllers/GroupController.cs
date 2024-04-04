@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 using Org.BouncyCastle.Asn1.Ocsp;
 using stock_api.Auth;
 using stock_api.Common;
+using stock_api.Common.Constant;
 using stock_api.Controllers.Request;
 using stock_api.Controllers.Validator;
 using stock_api.Models;
@@ -19,15 +20,17 @@ namespace stock_api.Controllers
     public class GroupController:ControllerBase
     {
         private readonly AuthLayerService _authLayerService;
+        private readonly CompanyService _companyService;
         private readonly IMapper _mapper;
         private readonly AuthHelpers _authHelpers;
         private readonly GroupService _groupService;
         private readonly IValidator<CreateGroupRequest> _createGroupRequestValidator;
         private readonly IValidator<UpdateGroupRequest> _updateGroupRequestValidator;
 
-        public GroupController(AuthLayerService authLayerService, IMapper mapper, AuthHelpers authHelpers, GroupService groupService)
+        public GroupController(AuthLayerService authLayerService,CompanyService companyService, IMapper mapper, AuthHelpers authHelpers, GroupService groupService)
         {
             _authLayerService = authLayerService;
+            _companyService = companyService;
             _mapper = mapper;
             _authHelpers = authHelpers;
             _groupService = groupService;
@@ -72,13 +75,37 @@ namespace stock_api.Controllers
             var memberAndPermissionSetting = _authHelpers.GetMemberAndPermissionSetting(User);
             var compId = memberAndPermissionSetting.CompanyWithUnit.CompId;
             var data = _groupService.GetGroups(compId);
+            var sortedData = data.OrderByDescending(e => e.CreatedAt).ToList();
 
 
             var response = new CommonResponse<List<WarehouseGroup>>()
             {
                 Result = true,
                 Message = "",
-                Data = data
+                Data = sortedData
+            };
+            return Ok(response);
+        }
+
+        [HttpPost("listByCompId")]
+        [Authorize]
+        public IActionResult ListGroupsByCompId(ListGroupRequest request)
+        {
+            var memberAndPermissionSetting = _authHelpers.GetMemberAndPermissionSetting(User);
+            var loginUserCompId = memberAndPermissionSetting.CompanyWithUnit.CompId;
+            var companyWithUnitVo = _companyService.GetCompanyWithUnitByCompanyId(request.CompId);
+            if(loginUserCompId!=companyWithUnitVo.CompId && memberAndPermissionSetting.CompanyWithUnit.Type != CommonConstants.CompanyType.Owner)
+            {
+                return BadRequest(CommonResponse<dynamic>.BuildNotAuthorizeResponse());
+            }
+            var data = _groupService.GetGroupsByCompId(request.CompId);
+            var sortedData = data.OrderByDescending(_e => _e.CreatedAt).ToList();   
+
+            var response = new CommonResponse<List<WarehouseGroup>>()
+            {
+                Result = true,
+                Message = "",
+                Data = sortedData
             };
             return Ok(response);
         }

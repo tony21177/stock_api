@@ -44,13 +44,13 @@ namespace stock_api.Controllers
             var memberAndPermissionSetting = _authHelpers.GetMemberAndPermissionSetting(User);
             var unitId = memberAndPermissionSetting.CompanyWithUnit.UnitId;
             var data = _companyService.GetAllCompanyWithUnitByUnitId(unitId);
+            var sortedData = data.OrderByDescending(dto => dto.CreatedAt).ToList();
 
-            
             var response = new CommonResponse<List<CompanyWithUnitVo>>()
             {
                 Result = true,
                 Message = "",
-                Data = data
+                Data = sortedData
             };
             return Ok(response);
         }
@@ -65,12 +65,17 @@ namespace stock_api.Controllers
 
             var data = _companyService.GetAllCompanyWithUnit();
 
+            List<CompanyWithUnitVo> sortedData = data
+            .OrderByDescending(item => item.Type == CommonConstants.CompanyType.Owner)
+            .ThenByDescending(item => item.CreatedAt)
+            .ThenBy(item => item.Type)
+            .ToList();
 
             var response = new CommonResponse<List<CompanyWithUnitVo>>()
             {
                 Result = true,
                 Message = "",
-                Data = data
+                Data = sortedData
             };
             return Ok(response);
         }

@@ -13,6 +13,7 @@ using MaiBackend.PublicApi.Consts;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using stock_api.Common.Constant;
+using AutoMapper.Execution;
 
 namespace stock_api.Controllers
 {
@@ -21,20 +22,22 @@ namespace stock_api.Controllers
     public class MemberController : ControllerBase
     {
         private readonly MemberService _memberService;
+        private readonly GroupService _groupService;
         private readonly AuthLayerService _authLayerService;
         private readonly IMapper _mapper;
         private readonly ILogger<MemberController> _logger;
         private readonly AuthHelpers _authHelpers;
         private readonly IValidator<CreateOrUpdateMemberRequest> _createMemberRequestValidator;
         private readonly IValidator<CreateOrUpdateMemberRequest> _updateMemberRequestValidator;
-        public MemberController(MemberService memberService, AuthLayerService authLayerService, IMapper mapper, ILogger<MemberController> logger, AuthHelpers authHelpers)
+        public MemberController(MemberService memberService,GroupService groupService, AuthLayerService authLayerService, IMapper mapper, ILogger<MemberController> logger, AuthHelpers authHelpers)
         {
             _memberService = memberService;
+            _groupService = groupService;
             _authLayerService = authLayerService;
             _mapper = mapper;
             _logger = logger;
-            _createMemberRequestValidator = new CreateOrUpdateMemberValidator(ActionTypeEnum.Create, authLayerService, memberService);
-            _updateMemberRequestValidator = new CreateOrUpdateMemberValidator(ActionTypeEnum.Update, authLayerService, memberService);
+            _createMemberRequestValidator = new CreateOrUpdateMemberValidator(ActionTypeEnum.Create, authLayerService, memberService,groupService);
+            _updateMemberRequestValidator = new CreateOrUpdateMemberValidator(ActionTypeEnum.Update, authLayerService, memberService, groupService );
             _authHelpers = authHelpers;
         }
 
@@ -44,13 +47,28 @@ namespace stock_api.Controllers
         {
             var memberAndPermissionSetting = _authHelpers.GetMemberAndPermissionSetting(User);
 
-            var data = _memberService.GetAllMembersOfComp(memberAndPermissionSetting.CompanyWithUnit.CompId);
-            var memberDtos = _mapper.Map<List<MemberDto>>(data);
+            var memberList = _memberService.GetAllMembersOfComp(memberAndPermissionSetting.CompanyWithUnit.CompId);
+            List<string> distinctGroupIds = memberList
+            .SelectMany(member =>
+                (member.GroupIds ?? "")
+                .Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries))
+            .Distinct()
+            .ToList();
+            var memberDtos = _mapper.Map<List<MemberDto>>(memberList);
+            var groups = _groupService.GetGroupsByIdList(distinctGroupIds);
+
+            memberDtos.ForEach(dto =>
+            {
+                var matchedGroups = groups.Where(g => dto.GroupIds.Contains(g.GroupId)).ToList();
+                dto.Groups = matchedGroups;
+            });
+            var data = memberDtos.OrderByDescending(dto => dto.CreatedTime).ToList();
+
             var response = new CommonResponse<List<MemberDto>>()
             {
                 Result = true,
                 Message = "",
-                Data = memberDtos
+                Data = data
             };
             return response;
         }
@@ -64,7 +82,21 @@ namespace stock_api.Controllers
             {
                 return BadRequest(CommonResponse<dynamic>.BuildNotAuthorizeResponse());
             }
-            var data = _memberService.GetAllMembersForOwner();
+            var memberList = _memberService.GetAllMembersForOwner();
+
+            List<string> distinctGroupIds = memberList
+           .SelectMany(member =>member.GroupIds)
+           .Distinct()
+           .ToList();
+            var groups = _groupService.GetGroupsByIdList(distinctGroupIds);
+
+            memberList.ForEach(dto =>
+            {
+                var matchedGroups = groups.Where(g => dto.GroupIds.Contains(g.GroupId)).ToList();
+                dto.Groups = matchedGroups;
+            });
+            var data = memberList.OrderByDescending(dto => dto.CreatedAt).ToList();
+
             var response = new CommonResponse<List<MemberWithCompanyUnitVo>>()
             {
                 Result = true,
@@ -86,6 +118,11 @@ namespace stock_api.Controllers
             {
                 return Unauthorized(CommonResponse<dynamic>.BuildNotAuthorizeResponse());
             }
+            if (createMemberRequset.CompId == null)
+            {
+                createMemberRequset.CompId = memberAndPermissionSetting.CompanyWithUnit.CompId;
+            }
+
 
             var validationResult = await _createMemberRequestValidator.ValidateAsync(createMemberRequset);
 
@@ -116,19 +153,31 @@ namespace stock_api.Controllers
             {
                 return Unauthorized(CommonResponse<dynamic>.BuildNotAuthorizeResponse());
             }
+
+            var existingMember = _memberService.GetMemberByUserId(updateMemberRequset.UserId);
+            if (existingMember == null)
+            {
+                return BadRequest(new CommonResponse<dynamic>
+                {
+                    Result = false,
+                    Message = "使用者不存在"
+                });
+            }
+
+            updateMemberRequset.CompId = existingMember.CompId;
             var validationResult = await _updateMemberRequestValidator.ValidateAsync(updateMemberRequset);
             if (!validationResult.IsValid)
             {
                 return BadRequest(CommonResponse<dynamic>.BuildValidationFailedResponse(validationResult));
             }
 
-            var updateMember = _mapper.Map<WarehouseMember>(updateMemberRequset);
-            var updatedMember = _memberService.UpdateMember(updateMember);
-            var updateedMemberDto = _mapper.Map<MemberDto>(updatedMember);
-            var response = new CommonResponse<MemberDto>
+            
+
+            
+            _memberService.UpdateMember(updateMemberRequset, existingMember);
+            var response = new CommonResponse<dynamic>
             {
                 Result = true,
-                Data = updateedMemberDto
             };
             return Ok(response);
         }

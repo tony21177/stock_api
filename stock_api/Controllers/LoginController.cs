@@ -48,7 +48,7 @@ namespace stock_api.Controllers
             result.Result = true;
             result.Message = "登入成功";
             result.Data = new Dictionary<string, string> { { "token", token }, { "displayName", memberAndPermissionSetting.Member.DisplayName },{ "userId", memberAndPermissionSetting.Member.UserId }
-            ,{ "compId", memberAndPermissionSetting.Member.CompId } ,{ "compName", memberAndPermissionSetting.CompanyWithUnit.Name },{ "unitId", memberAndPermissionSetting.CompanyWithUnit.UnitId }
+            ,{ "compId", memberAndPermissionSetting.Member.CompId } ,{ "compName", memberAndPermissionSetting.CompanyWithUnit.Name },{ "compType", memberAndPermissionSetting.CompanyWithUnit.Type },{ "unitId", memberAndPermissionSetting.CompanyWithUnit.UnitId }
             ,{ "unitName", memberAndPermissionSetting.CompanyWithUnit.UnitName }};
             return Ok(result);
 

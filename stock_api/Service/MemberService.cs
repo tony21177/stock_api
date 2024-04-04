@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using stock_api.Controllers.Request;
 using stock_api.Models;
 using stock_api.Service.ValueObject;
 
@@ -15,9 +16,9 @@ namespace stock_api.Service
             _mapper = mapper;
         }
 
-        public WarehouseMember? GetMemberByUserId(string userId, string compId)
+        public WarehouseMember? GetMemberByUserId(string userId)
         {
-            return _dbContext.WarehouseMembers.Where(member => member.UserId == userId && member.CompId==compId).FirstOrDefault();
+            return _dbContext.WarehouseMembers.Where(member => member.UserId == userId ).FirstOrDefault();
         }
 
         public List<WarehouseMember> GetMembersByUserIdList(List<string> userIdList, string compId)
@@ -79,7 +80,7 @@ namespace stock_api.Service
                              Password = member.Password,
                              AuthValue = member.AuthValue,
                              DisplayName = member.DisplayName,
-                             GroupId = member.GroupId,
+                             GroupIds = member.GroupIds.Split(",", StringSplitOptions.RemoveEmptyEntries).ToList(),
                              PhotoUrl = member.PhotoUrl,
                              CompId = member.CompId,
                              UserId = member.UserId,
@@ -120,15 +121,14 @@ namespace stock_api.Service
             return result.ToList();
         }
 
-        public WarehouseMember? UpdateMember(WarehouseMember member)
+        public void UpdateMember(CreateOrUpdateMemberRequest request,WarehouseMember toBeUpdateMember)
         {
-            var toBeUpdateMember = _dbContext.WarehouseMembers.FirstOrDefault(_member => _member.UserId == member.UserId);
-            if (toBeUpdateMember == null) return null;
-            _mapper.Map(member, toBeUpdateMember);
+            var updateMember = _mapper.Map<WarehouseMember>(request);
+            _mapper.Map(updateMember, toBeUpdateMember);
 
             // 將變更保存到資料庫
             _dbContext.SaveChanges();
-            return member;
+            return ;
         }
 
         public WarehouseMember CreateMember(WarehouseMember newMember)

@@ -34,8 +34,8 @@ public partial class WarehouseMember
     /// <summary>
     /// 屬於數個組別
     /// </summary>
-    [Column(TypeName = "json")]
-    public string GroupId { get; set; }
+    [StringLength(1000)]
+    public string GroupIds { get; set; }
 
     /// <summary>
     /// 登入密碼

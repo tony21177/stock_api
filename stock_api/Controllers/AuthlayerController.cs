@@ -18,32 +18,21 @@ namespace stock_api.Controllers
         private readonly AuthLayerService _authLayerService;
         private readonly IMapper _mapper;
         private readonly ILogger<AuthlayerController> _logger;
-        private readonly AuthHelpers _jwtHelpers;
-        public AuthlayerController(AuthLayerService authLayerService, IMapper mapper, ILogger<AuthlayerController> logger, AuthHelpers jwtHelpers)
+        private readonly AuthHelpers _authHelpers;
+        public AuthlayerController(AuthLayerService authLayerService, IMapper mapper, ILogger<AuthlayerController> logger, AuthHelpers authHelper)
         {
             _authLayerService = authLayerService;
             _mapper = mapper;
             _logger = logger;
-            _jwtHelpers = jwtHelpers;
+            _authHelpers = authHelper;
         }
 
-        [HttpGet("list/{compId}")]
-        //[Authorize(Roles = "1")]
+        [HttpGet("list")]
         [AuthorizeRoles("1")]
-        public IActionResult List(string compId)
+        public IActionResult List()
         {
-            // 以下這段不需要===>[Authorize(Roles = "1")]搭配CustomAuthorizationMiddlewareResultHandler即可
-
-            //var authValueAndPermissionSetting = _jwtHelpers.GetMemberAndPermissionSetting(User);
-            //if (authValueAndPermissionSetting == null || authValueAndPermissionSetting.Member.AuthValue != (short)1)
-            //{
-            //    return Unauthorized(new CommonResponse<List<WarehouseAuthlayer>>()
-            //    {
-            //        Result = false,
-            //        Message = "沒有權限",
-            //        Data = null
-            //    });
-            //}
+            var memberAndPermissionSetting = _authHelpers.GetMemberAndPermissionSetting(User);
+            var compId = memberAndPermissionSetting.CompanyWithUnit.CompId;
 
             var data = _authLayerService.GetAllAuthlayers(compId);
             var response = new CommonResponse<List<WarehouseAuthlayer>>()
@@ -59,8 +48,9 @@ namespace stock_api.Controllers
         [AuthorizeRoles("1")]
         public CommonResponse<List<WarehouseAuthlayer>> Update(List<UpdateAuthlayerRequest> updateAuthlayerListRequest)
         {
-            var authlayerList = _mapper.Map<List<WarehouseAuthlayer>>(updateAuthlayerListRequest);
-            var data = _authLayerService.UpdateAuthlayers(authlayerList);
+            var memberAndPermissionSetting = _authHelpers.GetMemberAndPermissionSetting(User);
+            var compId = memberAndPermissionSetting.CompanyWithUnit.CompId;
+            var data = _authLayerService.UpdateAuthlayers(updateAuthlayerListRequest);
 
             var response = new CommonResponse<List<WarehouseAuthlayer>>()
             {
@@ -76,7 +66,9 @@ namespace stock_api.Controllers
         public CommonResponse<WarehouseAuthlayer> Create(CreateAuthlayerRequest createAuthlayerRequest)
         {
             var newAuthLayer = _mapper.Map<WarehouseAuthlayer>(createAuthlayerRequest);
-            // TODO
+            var memberAndPermissionSetting = _authHelpers.GetMemberAndPermissionSetting(User);
+            var compId = memberAndPermissionSetting.CompanyWithUnit.CompId;
+            newAuthLayer.CompId = compId;
             var data = _authLayerService.AddAuthlayer(newAuthLayer);
 
             var response = new CommonResponse<WarehouseAuthlayer>()

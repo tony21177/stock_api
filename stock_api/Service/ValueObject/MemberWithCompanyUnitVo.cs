@@ -20,5 +20,8 @@ namespace stock_api.Service.ValueObject
         [Column("UnitName")]
         [JsonPropertyName("nnitName")]
         public string UnitName { get; set; }
+
+        public List<string> GroupIds { get; set; }
+        public List<WarehouseGroup> Groups { get; set; }
     }
 }

@@ -34,9 +34,19 @@ namespace stock_api.Service
             return _dbContext.WarehouseGroups.Where(wg=>wg.CompId == compId).ToList();
         }
 
+        public List<WarehouseGroup> GetGroupsByIdList(List<string> groupIdList)
+        {
+            return _dbContext.WarehouseGroups.Where(wg => groupIdList.Contains(wg.GroupId)).ToList();
+        }
+
         public WarehouseGroup? GetGroupByGroupId(string groupId)
         {
             return _dbContext.WarehouseGroups.Where(wg=>wg.GroupId==groupId).FirstOrDefault();
+        }
+
+        public List<WarehouseGroup> GetGroupsByCompId(string compId)
+        {
+            return _dbContext.WarehouseGroups.Where(wg => wg.CompId == compId).ToList();
         }
     }
 }

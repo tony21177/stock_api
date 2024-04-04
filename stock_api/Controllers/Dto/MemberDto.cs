@@ -1,4 +1,5 @@
-﻿using System.Text.Json.Serialization;
+﻿using stock_api.Models;
+using System.Text.Json.Serialization;
 
 namespace stock_api.Controllers.Dto
 {
@@ -15,5 +16,9 @@ namespace stock_api.Controllers.Dto
         [JsonPropertyName("photoUrls")]
         public string PhotoUrl { get; set; }
         public string Uid { get; set; }
+
+        public List<string> GroupIds {  get; set; }
+
+        public List<WarehouseGroup> Groups { get; set; }
     }
 }

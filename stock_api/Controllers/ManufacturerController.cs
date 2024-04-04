@@ -40,7 +40,7 @@ namespace stock_api.Controllers
         [Authorize]
         public IActionResult ListAll()
         {
-            var memberAndPermissionSettingList = _manufacturerService.GetAllManufacturer();
+            var memberAndPermissionSettingList = _manufacturerService.GetAllManufacturer().OrderByDescending(e=>e.CreatedAt).ToList();
 
             var response = new CommonResponse<List<Manufacturer>>()
             {

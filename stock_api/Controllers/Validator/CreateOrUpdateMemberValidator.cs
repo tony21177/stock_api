@@ -9,8 +9,9 @@ namespace stock_api.Controllers.Validator
     {
         private readonly AuthLayerService _authLayerService;
         private readonly MemberService _memberService;
+        private readonly GroupService _groupService;
 
-        public CreateOrUpdateMemberValidator(ActionTypeEnum action, AuthLayerService authLayerService, MemberService memberService)
+        public CreateOrUpdateMemberValidator(ActionTypeEnum action, AuthLayerService authLayerService, MemberService memberService, GroupService groupService)
         {
             if (action == ActionTypeEnum.Create)
             {
@@ -28,9 +29,14 @@ namespace stock_api.Controllers.Validator
             }
             _authLayerService = authLayerService;
             _memberService = memberService;
+            _groupService = groupService;
+
 
             ClassLevelCascadeMode = CascadeMode.Stop;
             RuleFor(x => x).Must(ExistAuthValue).WithMessage("此階層不存在");
+            RuleFor(x => x.GroupIds)
+                .Must((request, groupIds, context) => BeValidGroupList(groupIds, context))
+                .WithMessage("以下 groupId 為無效的 group: {InvalidGroupIds}");
         }
 
         private bool AccountUnique(string? account)
@@ -48,6 +54,27 @@ namespace stock_api.Controllers.Validator
         private static bool BeValidValue(string? userId)
         {
             return userId != null;
+        }
+
+        private bool BeValidGroupList(List<string> groupIds, ValidationContext<CreateOrUpdateMemberRequest> context)
+        {
+            if (groupIds == null || groupIds.Count == 0)
+            {
+                return true; // 允許空的 groupIds
+            }
+
+            var groupList = _groupService.GetGroupsByIdList(groupIds);
+            var activeGroupList = groupList.Where(g => g.IsActive ==true).ToList(); 
+
+            var notExistGroupIds = groupIds.Except(activeGroupList.Select(m => m.GroupId)).ToList();
+
+            if (notExistGroupIds.Any())
+            {
+                var errorMessage = $"{string.Join(",", notExistGroupIds)}";
+                context.MessageFormatter.AppendArgument("InvalidGroupIds", errorMessage);
+                return false;
+            }
+            return true;
         }
     }
 }

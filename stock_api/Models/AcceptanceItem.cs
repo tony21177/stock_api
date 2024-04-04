@@ -19,7 +19,7 @@ public partial class AcceptanceItem
     public string AcceptId { get; set; }
 
     /// <summary>
-    /// 驗收接受入量，不可大於 OrderQuantity
+    /// 驗收接受數量，不可大於 OrderQuantity
     /// </summary>
     public int AcceptQuantity { get; set; }
 

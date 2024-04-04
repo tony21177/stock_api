@@ -1,5 +1,6 @@
 ﻿using stock_api.Models;
 using Microsoft.EntityFrameworkCore;
+using stock_api.Controllers.Request;
 
 namespace stock_api.Service
 {
@@ -21,16 +22,16 @@ namespace stock_api.Service
             return _dbContext.WarehouseAuthlayers.Where(authLayer => authLayer.AuthValue == authValue&&authLayer.CompId==compId).First();
         }
 
-        public List<WarehouseAuthlayer> UpdateAuthlayers(List<WarehouseAuthlayer> authlayers)
+        public List<WarehouseAuthlayer> UpdateAuthlayers(List<UpdateAuthlayerRequest> requestList)
         {
             var updatedAuthLayers = new List<WarehouseAuthlayer>();
-            authlayers.ForEach(authlayer =>
+            requestList.ForEach(request =>
             {
-                var existingAuthLayer = _dbContext.WarehouseAuthlayers.Find(authlayer.AuthId);
+                var existingAuthLayer = _dbContext.WarehouseAuthlayers.Find(request.AuthId);
                 if (existingAuthLayer != null)
                 {
                     // 使用 SetValues 來只更新不為 null 的屬性
-                    _dbContext.Entry(existingAuthLayer).CurrentValues.SetValues(authlayer);
+                    _dbContext.Entry(existingAuthLayer).CurrentValues.SetValues(request);
                     updatedAuthLayers.Add(existingAuthLayer);
                 }
             });

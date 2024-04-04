@@ -44,7 +44,7 @@ namespace stock_api.Controllers
         public IActionResult ListAll()
         {
             var memberAndPermissionSetting = _authHelpers.GetMemberAndPermissionSetting(User);
-            var memberAndPermissionSettingList = _supplierService.GetAllSupplierByCompId(memberAndPermissionSetting.CompanyWithUnit.CompId);
+            var memberAndPermissionSettingList = _supplierService.GetAllSupplierByCompId(memberAndPermissionSetting.CompanyWithUnit.CompId).OrderByDescending(e=>e.CreatedAt).ToList();
 
             var response = new CommonResponse<List<Supplier>>()
             {
@@ -64,7 +64,7 @@ namespace stock_api.Controllers
             {
                 return BadRequest(CommonResponse<dynamic>.BuildNotAuthorizeResponse());
             }
-            var data = _supplierService.GetAllSupplier();
+            var data = _supplierService.GetAllSupplier().OrderByDescending(e => e.CreatedAt).ToList();
             var response = new CommonResponse<List<Supplier>>()
             {
                 Result = true,

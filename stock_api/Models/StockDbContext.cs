@@ -73,7 +73,7 @@ public partial class StockDbContext : DbContext
 
             entity.ToTable("acceptance_item", tb => tb.HasComment("各採購項目驗收紀錄"));
 
-            entity.Property(e => e.AcceptQuantity).HasComment("驗收接受入量，不可大於 OrderQuantity");
+            entity.Property(e => e.AcceptQuantity).HasComment("驗收接受數量，不可大於 OrderQuantity");
             entity.Property(e => e.AcceptUserId).HasComment("驗收允收者的UserID");
             entity.Property(e => e.Comment).HasComment("初驗驗收填寫相關原因");
             entity.Property(e => e.CompId).HasComment("所屬組織ID");
@@ -549,7 +549,7 @@ public partial class StockDbContext : DbContext
             entity.Property(e => e.CompId).HasComment("屬於庫存系統裡面的哪一個組織所有");
             entity.Property(e => e.CreatedAt).HasDefaultValueSql("CURRENT_TIMESTAMP");
             entity.Property(e => e.DisplayName).HasComment("顯示名稱");
-            entity.Property(e => e.GroupId).HasComment("屬於數個組別");
+            entity.Property(e => e.GroupIds).HasComment("屬於數個組別");
             entity.Property(e => e.IsActive).HasDefaultValueSql("'1'");
             entity.Property(e => e.Password).HasComment("登入密碼");
             entity.Property(e => e.PhotoUrl).HasComment("大頭貼");
