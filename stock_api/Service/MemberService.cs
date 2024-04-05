@@ -2,6 +2,7 @@
 using stock_api.Controllers.Request;
 using stock_api.Models;
 using stock_api.Service.ValueObject;
+using System.Linq;
 
 namespace stock_api.Service
 {
@@ -160,6 +161,13 @@ namespace stock_api.Service
             {
                 return false;
             }
+        }
+
+        public void UpdateMemberGroupIds(WarehouseMember member,List<string> groupIdList)
+        {
+            member.GroupIds = string.Join(",", groupIdList);
+            _dbContext.SaveChanges();
+            return;
         }
 
       

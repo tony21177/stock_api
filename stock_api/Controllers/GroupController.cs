@@ -17,25 +17,29 @@ namespace stock_api.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    public class GroupController:ControllerBase
+    public class GroupController : ControllerBase
     {
         private readonly AuthLayerService _authLayerService;
         private readonly CompanyService _companyService;
+        private readonly MemberService _memberService;
         private readonly IMapper _mapper;
         private readonly AuthHelpers _authHelpers;
         private readonly GroupService _groupService;
         private readonly IValidator<CreateGroupRequest> _createGroupRequestValidator;
         private readonly IValidator<UpdateGroupRequest> _updateGroupRequestValidator;
 
-        public GroupController(AuthLayerService authLayerService,CompanyService companyService, IMapper mapper, AuthHelpers authHelpers, GroupService groupService)
+
+        public GroupController(AuthLayerService authLayerService, CompanyService companyService, MemberService memberService, IMapper mapper, AuthHelpers authHelpers, GroupService groupService)
         {
             _authLayerService = authLayerService;
             _companyService = companyService;
+            _memberService = memberService;
             _mapper = mapper;
             _authHelpers = authHelpers;
             _groupService = groupService;
             _createGroupRequestValidator = new CreateGroupValidator();
             _updateGroupRequestValidator = new UpdateGroupValidator();
+
         }
 
         [HttpPost("create")]
@@ -94,12 +98,12 @@ namespace stock_api.Controllers
             var memberAndPermissionSetting = _authHelpers.GetMemberAndPermissionSetting(User);
             var loginUserCompId = memberAndPermissionSetting.CompanyWithUnit.CompId;
             var companyWithUnitVo = _companyService.GetCompanyWithUnitByCompanyId(request.CompId);
-            if(loginUserCompId!=companyWithUnitVo.CompId && memberAndPermissionSetting.CompanyWithUnit.Type != CommonConstants.CompanyType.Owner)
+            if (loginUserCompId != companyWithUnitVo.CompId && memberAndPermissionSetting.CompanyWithUnit.Type != CommonConstants.CompanyType.Owner)
             {
                 return BadRequest(CommonResponse<dynamic>.BuildNotAuthorizeResponse());
             }
             var data = _groupService.GetGroupsByCompId(request.CompId);
-            var sortedData = data.OrderByDescending(_e => _e.CreatedAt).ToList();   
+            var sortedData = data.OrderByDescending(_e => _e.CreatedAt).ToList();
 
             var response = new CommonResponse<List<WarehouseGroup>>()
             {
@@ -192,4 +196,5 @@ namespace stock_api.Controllers
             return Ok(response);
         }
     }
+        
 }

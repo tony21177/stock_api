@@ -29,6 +29,7 @@ namespace stock_api.Controllers
         private readonly AuthHelpers _authHelpers;
         private readonly IValidator<CreateOrUpdateMemberRequest> _createMemberRequestValidator;
         private readonly IValidator<CreateOrUpdateMemberRequest> _updateMemberRequestValidator;
+        private readonly IValidator<UpdateMemberGroupRequest> _updateMemberGroupRequestRequestValidator;
         public MemberController(MemberService memberService,GroupService groupService, AuthLayerService authLayerService, IMapper mapper, ILogger<MemberController> logger, AuthHelpers authHelpers)
         {
             _memberService = memberService;
@@ -39,6 +40,7 @@ namespace stock_api.Controllers
             _createMemberRequestValidator = new CreateOrUpdateMemberValidator(ActionTypeEnum.Create, authLayerService, memberService,groupService);
             _updateMemberRequestValidator = new CreateOrUpdateMemberValidator(ActionTypeEnum.Update, authLayerService, memberService, groupService );
             _authHelpers = authHelpers;
+            _updateMemberGroupRequestRequestValidator = new UpdateMemberGroupValidator(_groupService);
         }
 
         [HttpGet("list")]
@@ -195,6 +197,42 @@ namespace stock_api.Controllers
             _memberService.DeleteMember(userId);
 
             var response = new CommonResponse<WarehouseMember>()
+            {
+                Result = true,
+                Message = "",
+                Data = null
+            };
+            return Ok(response);
+        }
+
+        [HttpPost("updateMemberGroup")]
+        [Authorize]
+        public IActionResult UpdateMemberGroup(UpdateMemberGroupRequest updateMemberGroup)
+        {
+            var memberAndPermissionSetting = _authHelpers.GetMemberAndPermissionSetting(User);
+            if (memberAndPermissionSetting.PermissionSetting.IsGroupManage != true)
+            {
+                return BadRequest(CommonResponse<dynamic>.BuildNotAuthorizeResponse());
+            }
+            var memberList = _memberService.GetActiveMembersByUserIds(new List<string> { updateMemberGroup.UserId},memberAndPermissionSetting.CompanyWithUnit.CompId);
+            if (memberList.Count == 0)
+            {
+                return BadRequest(new CommonResponse<dynamic>
+                {
+                    Result = false,
+                    Message = "該使用者不存在"
+                });
+            }
+
+            var validationResult = _updateMemberGroupRequestRequestValidator.Validate(updateMemberGroup);
+            if (!validationResult.IsValid)
+            {
+                return BadRequest(CommonResponse<dynamic>.BuildValidationFailedResponse(validationResult));
+            }
+
+            _memberService.UpdateMemberGroupIds(memberList[0], updateMemberGroup.GroupIds);
+
+            var response = new CommonResponse<dynamic>()
             {
                 Result = true,
                 Message = "",
