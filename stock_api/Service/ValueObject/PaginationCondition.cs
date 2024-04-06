@@ -6,7 +6,7 @@
 
         public int Page { get; set; } = 1;
 
-        public string OrderByField { get; set; } = "createdTime";
+        public string OrderByField { get; set; } = "CreatedAt";
 
         public bool IsDescOrderBy { get; set; } = true;
 

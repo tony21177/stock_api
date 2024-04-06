@@ -9,7 +9,7 @@
         public string? FileType { get; set; }
         public string? FileSizeText { get; set; }
         public long? FileSizeNumber { get; set; }
-        public long? CreatedTime { get; set; }
+        public long? CreatedAt { get; set; }
         public long? UpdatedTime { get; set; }
     }
 }

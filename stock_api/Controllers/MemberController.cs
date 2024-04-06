@@ -64,7 +64,7 @@ namespace stock_api.Controllers
                 var matchedGroups = groups.Where(g => dto.GroupIds.Contains(g.GroupId)).ToList();
                 dto.Groups = matchedGroups;
             });
-            var data = memberDtos.OrderByDescending(dto => dto.CreatedTime).ToList();
+            var data = memberDtos.OrderByDescending(dto => dto.CreatedAt).ToList();
 
             var response = new CommonResponse<List<MemberDto>>()
             {

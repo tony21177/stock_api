@@ -65,7 +65,7 @@ namespace stock_api.Service
                         FilePath = filePath,
                         FileType = formFile.ContentType,
 
-                        CreatedTime = nowTimestamp,
+                        CreatedAt = nowTimestamp,
                     };
                     using var stream = File.Create(filePath);
                     await formFile.CopyToAsync(stream);

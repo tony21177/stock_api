@@ -12,7 +12,7 @@ namespace stock_api.Controllers.Dto
         public string UserId { get; set; }
         public bool? IsActive { get; set; }
         public short? AuthValue { get; set; }
-        public DateTime? CreatedTime { get; set; }
+        public DateTime? CreatedAt { get; set; }
         [JsonPropertyName("photoUrls")]
         public string PhotoUrl { get; set; }
         public string Uid { get; set; }
