@@ -64,13 +64,14 @@ namespace stock_api.Controllers
             }
 
 
-            var data = _warehouseProductService.SearchProduct(searchRequest);
+            var (data,totalPages) = _warehouseProductService.SearchProduct(searchRequest);
 
             var response = new CommonResponse<List<WarehouseProduct>>()
             {
                 Result = true,
                 Message = "",
-                Data = data
+                Data = data,
+                TotalPages = totalPages
             };
             return Ok(response);
 

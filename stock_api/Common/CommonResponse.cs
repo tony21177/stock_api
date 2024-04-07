@@ -10,6 +10,7 @@ namespace stock_api.Common
         public string Message { get; set; } = "";
 
         public T? Data { get; set; }
+        public int? TotalPages { get; set; } = 0;
         public static CommonResponse<dynamic> BuildNotAuthorizeResponse()
         {
             return new CommonResponse<dynamic>

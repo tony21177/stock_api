@@ -15,8 +15,6 @@ namespace stock_api.Models;
 /// 例如 單位訂購某品項10組 但UnitCoonversion欄位設定為4 則換算結果10/4=2.5 則無條件進位 意即訂購此品項變為3
 /// </summary>
 [Table("warehouse_product")]
-[Index("ManufacturerId", Name = "ManufacturerId_UNIQUE", IsUnique = true)]
-[Index("UdiserialCode", Name = "UDISerialCode_UNIQUE", IsUnique = true)]
 public partial class WarehouseProduct
 {
     /// <summary>

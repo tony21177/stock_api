@@ -16,7 +16,7 @@ namespace stock_api.Service
             _mapper = mapper;
         }
 
-        public List<WarehouseProduct> SearchProduct(WarehouseProductSearchRequest searchRequest)
+        public (List<WarehouseProduct> Results, int TotalPages) SearchProduct(WarehouseProductSearchRequest searchRequest)
         {
             IQueryable<WarehouseProduct> query = _dbContext.WarehouseProducts;
 
@@ -70,19 +70,18 @@ namespace stock_api.Service
             {
                 query = searchRequest.PaginationCondition.OrderByField switch
                 {
-                    "inStockQuantity" => query.OrderByDescending(h => h.InStockQuantity),
-                    "maxSafeQuantity" => query.OrderByDescending(h => h.MaxSafeQuantity),
-                    "lastAbleDate" => query.OrderByDescending(h => h.LastAbleDate),
-                    "lastOutStockDate" => query.OrderByDescending(h => h.LastOutStockDate),
-                    "openDeadline" => query.OrderByDescending(h => h.OpenDeadline),
-                    "originalDeadline" => query.OrderByDescending(h => h.OriginalDeadline),
-                    "ppenDeadline" => query.OrderByDescending(h => h.OpenDeadline),
-                    "preDeadline" => query.OrderByDescending(h => h.PreDeadline),
-                    "preOrderDays" => query.OrderByDescending(h => h.PreOrderDays),
-                    "safeQuantity" => query.OrderByDescending(h => h.SafeQuantity),
-                    "allowReceiveDateRange" => query.OrderByDescending(h => h.AllowReceiveDateRange),
-                    "createdAt" => query.OrderByDescending(h => h.CreatedAt),
-                    "updatedAt" => query.OrderByDescending(h => h.UpdatedAt),
+                    "InStockQuantity" => query.OrderByDescending(h => h.InStockQuantity),
+                    "MaxSafeQuantity" => query.OrderByDescending(h => h.MaxSafeQuantity),
+                    "LastAbleDate" => query.OrderByDescending(h => h.LastAbleDate),
+                    "LastOutStockDate" => query.OrderByDescending(h => h.LastOutStockDate),
+                    "OpenDeadline" => query.OrderByDescending(h => h.OpenDeadline),
+                    "OriginalDeadline" => query.OrderByDescending(h => h.OriginalDeadline),
+                    "PreDeadline" => query.OrderByDescending(h => h.PreDeadline),
+                    "PreOrderDays" => query.OrderByDescending(h => h.PreOrderDays),
+                    "SafeQuantity" => query.OrderByDescending(h => h.SafeQuantity),
+                    "AllowReceiveDateRange" => query.OrderByDescending(h => h.AllowReceiveDateRange),
+                    "CreatedAt" => query.OrderByDescending(h => h.CreatedAt),
+                    "UpdatedAt" => query.OrderByDescending(h => h.UpdatedAt),
                     _ => query.OrderByDescending(h => h.UpdatedAt),
                 };
             }
@@ -90,25 +89,26 @@ namespace stock_api.Service
             {
                 query = searchRequest.PaginationCondition.OrderByField switch
                 {
-                    "inStockQuantity" => query.OrderBy(h => h.InStockQuantity),
-                    "maxSafeQuantity" => query.OrderBy(h => h.MaxSafeQuantity),
-                    "lastAbleDate" => query.OrderBy(h => h.LastAbleDate),
-                    "lastOutStockDate" => query.OrderBy(h => h.LastOutStockDate),
-                    "openDeadline" => query.OrderBy(h => h.OpenDeadline),
-                    "originalDeadline" => query.OrderBy(h => h.OriginalDeadline),
-                    "ppenDeadline" => query.OrderBy(h => h.OpenDeadline),
-                    "preDeadline" => query.OrderBy(h => h.PreDeadline),
-                    "preOrderDays" => query.OrderBy(h => h.PreOrderDays),
-                    "safeQuantity" => query.OrderBy(h => h.SafeQuantity),
-                    "allowReceiveDateRange" => query.OrderBy(h => h.AllowReceiveDateRange),
-                    "createdAt" => query.OrderBy(h => h.CreatedAt),
-                    "updatedAt" => query.OrderBy(h => h.UpdatedAt),
-                    _ => query.OrderBy(h => h.UpdatedAt),
+                    "InStockQuantity" => query.OrderByDescending(h => h.InStockQuantity),
+                    "MaxSafeQuantity" => query.OrderByDescending(h => h.MaxSafeQuantity),
+                    "LastAbleDate" => query.OrderByDescending(h => h.LastAbleDate),
+                    "LastOutStockDate" => query.OrderByDescending(h => h.LastOutStockDate),
+                    "OpenDeadline" => query.OrderByDescending(h => h.OpenDeadline),
+                    "OriginalDeadline" => query.OrderByDescending(h => h.OriginalDeadline),
+                    "PreDeadline" => query.OrderByDescending(h => h.PreDeadline),
+                    "PreOrderDays" => query.OrderByDescending(h => h.PreOrderDays),
+                    "SafeQuantity" => query.OrderByDescending(h => h.SafeQuantity),
+                    "AllowReceiveDateRange" => query.OrderByDescending(h => h.AllowReceiveDateRange),
+                    "CreatedAt" => query.OrderByDescending(h => h.CreatedAt),
+                    "UpdatedAt" => query.OrderByDescending(h => h.UpdatedAt),
+                    _ => query.OrderByDescending(h => h.UpdatedAt),
                 };
             }
+            int totalItems = query.Count();
+            int totalPages = (int)Math.Ceiling((double)totalItems / searchRequest.PaginationCondition.PageSize);
 
             query = query.Skip((searchRequest.PaginationCondition.Page - 1) * searchRequest.PaginationCondition.PageSize).Take(searchRequest.PaginationCondition.PageSize);
-            return query.ToList();
+            return (query.ToList(), totalPages);
 
         }
     }

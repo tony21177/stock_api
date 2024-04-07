@@ -363,6 +363,7 @@ public partial class StockDbContext : DbContext
             entity.Property(e => e.CompId).HasComment("所屬組織ID");
             entity.Property(e => e.CreatedAt).HasDefaultValueSql("CURRENT_TIMESTAMP");
             entity.Property(e => e.FlowName).HasComment("流程名稱");
+            entity.Property(e => e.IsActive).HasDefaultValueSql("'1'");
             entity.Property(e => e.Sequence).HasComment("流程順序");
             entity.Property(e => e.UpdatedAt)
                 .ValueGeneratedOnAddOrUpdate()

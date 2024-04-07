@@ -12,6 +12,7 @@ namespace stock_api.Models;
 /// 系統先行設定採購的審核流程
 /// </summary>
 [Table("purchase_flow_setting")]
+[Index("CompId", "Sequence", Name = "unique_comp_seq", IsUnique = true)]
 public partial class PurchaseFlowSetting
 {
     [Key]
@@ -49,4 +50,7 @@ public partial class PurchaseFlowSetting
 
     [Column(TypeName = "timestamp")]
     public DateTime? UpdatedAt { get; set; }
+
+    [Required]
+    public bool? IsActive { get; set; }
 }
