@@ -562,7 +562,7 @@ public partial class StockDbContext : DbContext
         {
             entity.HasKey(e => e.ProductId).HasName("PRIMARY");
 
-            entity.ToTable("warehouse_product", tb => tb.HasComment("庫存品項基本資料，因為要考慮到調撥這件事情，也就是從醫院單位A把項目移動部分庫存量到醫院單位B；所以，任一相同品項，在不同的醫院單位內的 ProductID 應該是一制，在這條件下，Product 表格的 PK 應是 CompID + ProductID"));
+            entity.ToTable("warehouse_product", tb => tb.HasComment("1. 庫存品項基本資料，因為要考慮到調撥這件事情，也就是從醫院單位A把項目移動部分庫存量到醫院單位B；所以，任一相同品項，在不同的醫院單位內的 ProductID 應該是一制，在這條件下，Product 表格的 PK 應是 CompID + ProductID\n2. 目前最大庫存量與最小安庫量跟庫存數量(InStockQuantity)這個欄位去做判斷就好 不要牽扯到TestCount 這樣感覺比較單純 ，TestCount這個欄位僅用來呈現目前尚存TEST用就好\n3. 用無條件進位的方式去轉換成訂購數量\n例如 單位訂購某品項10組 但UnitCoonversion欄位設定為4 則換算結果10/4=2.5 則無條件進位 意即訂購此品項變為3"));
 
             entity.Property(e => e.AllowReceiveDateRange).HasComment("該品項期限距離現在的最小天數");
             entity.Property(e => e.CompId).HasComment("品項所屬的組織ID");
@@ -600,11 +600,17 @@ public partial class StockDbContext : DbContext
             entity.Property(e => e.ProductSpec).HasComment("品項規格");
             entity.Property(e => e.SafeQuantity).HasComment("最小安庫量");
             entity.Property(e => e.SavingFunction).HasComment("儲存環境條件");
+            entity.Property(e => e.TestCount)
+                .HasDefaultValueSql("'1'")
+                .HasComment("在總覽表與目前庫存數量(InStockQuantity)相乘顯示給使用者知道目前可用的數量用的欄位");
             entity.Property(e => e.UdibatchCode).HasComment("UDI 碼");
             entity.Property(e => e.UdicreateCode).HasComment("UDI 碼");
             entity.Property(e => e.UdiserialCode).HasComment("UDI 碼");
             entity.Property(e => e.UdiverifyDateCode).HasComment("UDI 碼");
             entity.Property(e => e.Unit).HasComment("單位");
+            entity.Property(e => e.UnitConversion)
+                .HasDefaultValueSql("'1'")
+                .HasComment("用來在訂購時將最小單位轉為訂購規格及驗收時 將訂購規格轉為最小單位數量用的欄位");
             entity.Property(e => e.UpdatedAt)
                 .ValueGeneratedOnAddOrUpdate()
                 .HasDefaultValueSql("CURRENT_TIMESTAMP");

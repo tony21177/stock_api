@@ -32,19 +32,21 @@ namespace stock_api.Service
             {
                 query = query.Where(h => h.OpenDeadline == searchRequest.OpenDeadline);
             }
-            if (searchRequest.GroupIds != null)
+            if (searchRequest.GroupId != null)
             {
-                query = query.Where(h => h.GroupIds.Split(",",StringSplitOptions.None).Contains(searchRequest.GroupIds));
+                query = query.Where(h => h.GroupIds.Contains(searchRequest.GroupId));
             }
+            query.Where(h => h.CompId == searchRequest.CompId);
 
             if (!string.IsNullOrEmpty(searchRequest.Keywords))
             {
+                var groupNameList = 
                 query = query.Where(h => h.LotNumberBatch.Contains(searchRequest.Keywords)
                 || h.LotNumber.Contains(searchRequest.Keywords)
                 || h.ManufacturerName.Contains(searchRequest.Keywords)
                 || h.DeadlineRule.Contains(searchRequest.Keywords)
                 || h.DeliverFunction.Contains(searchRequest.Keywords)
-                || h.GroupNames.Split(",", StringSplitOptions.None).Any(groupName => groupName.Contains(searchRequest.Keywords))
+                || h.GroupNames.Contains(searchRequest.Keywords)
                 || h.Manager.Contains(searchRequest.Keywords)
                 || h.OpenedSealName.Contains(searchRequest.Keywords)
                 || h.PackageWay.Contains(searchRequest.Keywords)

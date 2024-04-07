@@ -2,10 +2,11 @@
 {
     public class WarehouseProductSearchRequest: BaseSearchRequest
     {
+        public string? CompId { get; set; }
         public string? ProductCategory { get; set; }
         public string? ProductMachine { get; set;}
         public int? OpenDeadline { get; set;}
-        public string? GroupIds { get; set;}
+        public string? GroupId { get; set;}
 
         public string? Keywords { get; set;}
     }

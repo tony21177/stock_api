@@ -9,7 +9,10 @@ using Microsoft.EntityFrameworkCore;
 namespace stock_api.Models;
 
 /// <summary>
-/// 庫存品項基本資料，因為要考慮到調撥這件事情，也就是從醫院單位A把項目移動部分庫存量到醫院單位B；所以，任一相同品項，在不同的醫院單位內的 ProductID 應該是一制，在這條件下，Product 表格的 PK 應是 CompID + ProductID
+/// 1. 庫存品項基本資料，因為要考慮到調撥這件事情，也就是從醫院單位A把項目移動部分庫存量到醫院單位B；所以，任一相同品項，在不同的醫院單位內的 ProductID 應該是一制，在這條件下，Product 表格的 PK 應是 CompID + ProductID
+/// 2. 目前最大庫存量與最小安庫量跟庫存數量(InStockQuantity)這個欄位去做判斷就好 不要牽扯到TestCount 這樣感覺比較單純 ，TestCount這個欄位僅用來呈現目前尚存TEST用就好
+/// 3. 用無條件進位的方式去轉換成訂購數量
+/// 例如 單位訂購某品項10組 但UnitCoonversion欄位設定為4 則換算結果10/4=2.5 則無條件進位 意即訂購此品項變為3
 /// </summary>
 [Table("warehouse_product")]
 [Index("ManufacturerId", Name = "ManufacturerId_UNIQUE", IsUnique = true)]
@@ -263,4 +266,14 @@ public partial class WarehouseProduct
 
     [Column(TypeName = "timestamp")]
     public DateTime? UpdatedAt { get; set; }
+
+    /// <summary>
+    /// 用來在訂購時將最小單位轉為訂購規格及驗收時 將訂購規格轉為最小單位數量用的欄位
+    /// </summary>
+    public int UnitConversion { get; set; }
+
+    /// <summary>
+    /// 在總覽表與目前庫存數量(InStockQuantity)相乘顯示給使用者知道目前可用的數量用的欄位
+    /// </summary>
+    public int TestCount { get; set; }
 }
