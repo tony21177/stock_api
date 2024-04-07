@@ -1,7 +1,9 @@
 ﻿using AutoMapper;
 using Org.BouncyCastle.Asn1.Ocsp;
+using stock_api.Controllers.Dto;
 using stock_api.Controllers.Request;
 using stock_api.Models;
+using stock_api.Service.ValueObject;
 
 namespace stock_api.Service
 {
@@ -23,7 +25,24 @@ namespace stock_api.Service
 
         public PurchaseFlowSetting? GetPurchaseFlowSettingByFlowId(string flowId)
         {
-            return _dbContext.PurchaseFlowSettings.Where(pfs=>pfs.FlowId==flowId).FirstOrDefault();
+            var result = from pfs in _dbContext.PurchaseFlowSettings
+                         join member in _dbContext.WarehouseMembers
+                         on pfs.UserId equals member.UserId
+                         where pfs.FlowId == flowId
+                         select new PurchaseFlowSettingVo
+                         {
+                             FlowId = pfs.FlowId,
+                             CompId = pfs.CompId,
+                             FlowName = pfs.FlowName,
+                             Sequence = pfs.Sequence,
+                             UserId = pfs.UserId,
+                             IsActive = pfs.IsActive,
+                             CreatedAt = pfs.CreatedAt,
+                             UpdatedAt = pfs.UpdatedAt,
+                             UserDisplayName = member.DisplayName
+                         };
+
+            return result.FirstOrDefault();
         }
 
         public void AddPurchaseFlowSetting(PurchaseFlowSetting newPurchaseFlowSetting)
@@ -48,12 +67,28 @@ namespace stock_api.Service
             return;
         }
 
-        public List<PurchaseFlowSetting> GetAllPurchaseFlowSettingsByCompId(string compId)
+        public List<PurchaseFlowSettingVo> GetAllPurchaseFlowSettingsByCompId(string compId)
         {
-            return _dbContext.PurchaseFlowSettings.Where(_pfs=>_pfs.CompId==compId).ToList();  
-            
-        }
+            var result = from pfs in _dbContext.PurchaseFlowSettings
+                         join member in _dbContext.WarehouseMembers
+                         on pfs.UserId equals member.UserId
+                         where pfs.CompId == compId
+                         select new PurchaseFlowSettingVo
+                         {
+                             FlowId = pfs.FlowId,
+                             CompId = pfs.CompId,
+                             FlowName = pfs.FlowName,
+                             Sequence = pfs.Sequence,
+                             UserId = pfs.UserId,
+                             IsActive = pfs.IsActive,
+                             CreatedAt = pfs.CreatedAt,
+                             UpdatedAt = pfs.UpdatedAt,
+                             UserDisplayName = member.DisplayName 
+                         };
 
+
+            return result.ToList();
+        }
        
     }
 }
