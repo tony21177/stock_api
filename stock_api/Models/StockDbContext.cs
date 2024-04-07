@@ -572,8 +572,8 @@ public partial class StockDbContext : DbContext
             entity.Property(e => e.DefaultSupplierName).HasComment("預設供應商名稱");
             entity.Property(e => e.DeliverFunction).HasComment("運送條件");
             entity.Property(e => e.DeliverRemarks).HasComment("運送備註");
-            entity.Property(e => e.GroupId).HasComment("屬於數個組別");
-            entity.Property(e => e.GroupName).HasComment("組別名稱");
+            entity.Property(e => e.GroupIds).HasComment("屬於數個組別");
+            entity.Property(e => e.GroupNames).HasComment("組別名稱");
             entity.Property(e => e.InStockQuantity).HasComment("庫存數量");
             entity.Property(e => e.IsNeedAcceptProcess)
                 .HasDefaultValueSql("'0'")

@@ -19,7 +19,7 @@ namespace stock_api.Service
         }
         public WarehouseAuthlayer? GetByAuthValue(short authValue, string compId)
         {
-            return _dbContext.WarehouseAuthlayers.Where(authLayer => authLayer.AuthValue == authValue&&authLayer.CompId==compId).First();
+            return _dbContext.WarehouseAuthlayers.Where(authLayer => authLayer.AuthValue == authValue&&authLayer.CompId==compId).FirstOrDefault();
         }
 
         public List<WarehouseAuthlayer> UpdateAuthlayers(List<UpdateAuthlayerRequest> requestList)

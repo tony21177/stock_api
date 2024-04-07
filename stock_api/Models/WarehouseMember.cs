@@ -34,7 +34,7 @@ public partial class WarehouseMember
     /// <summary>
     /// 屬於數個組別
     /// </summary>
-    [StringLength(1000)]
+    [StringLength(2000)]
     public string GroupIds { get; set; }
 
     /// <summary>

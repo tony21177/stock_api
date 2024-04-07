@@ -72,14 +72,14 @@ public partial class WarehouseProduct
     /// <summary>
     /// 屬於數個組別
     /// </summary>
-    [Column(TypeName = "json")]
-    public string GroupId { get; set; }
+    [StringLength(2000)]
+    public string GroupIds { get; set; }
 
     /// <summary>
     /// 組別名稱
     /// </summary>
-    [StringLength(100)]
-    public string GroupName { get; set; }
+    [StringLength(2000)]
+    public string GroupNames { get; set; }
 
     /// <summary>
     /// 庫存數量
