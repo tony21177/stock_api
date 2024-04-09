@@ -561,12 +561,14 @@ public partial class StockDbContext : DbContext
 
         modelBuilder.Entity<WarehouseProduct>(entity =>
         {
-            entity.HasKey(e => e.ProductId).HasName("PRIMARY");
+            entity.HasKey(e => new { e.ProductId, e.CompId })
+                .HasName("PRIMARY")
+                .HasAnnotation("MySql:IndexPrefixLength", new[] { 0, 0 });
 
             entity.ToTable("warehouse_product", tb => tb.HasComment("1. 庫存品項基本資料，因為要考慮到調撥這件事情，也就是從醫院單位A把項目移動部分庫存量到醫院單位B；所以，任一相同品項，在不同的醫院單位內的 ProductID 應該是一制，在這條件下，Product 表格的 PK 應是 CompID + ProductID\n2. 目前最大庫存量與最小安庫量跟庫存數量(InStockQuantity)這個欄位去做判斷就好 不要牽扯到TestCount 這樣感覺比較單純 ，TestCount這個欄位僅用來呈現目前尚存TEST用就好\n3. 用無條件進位的方式去轉換成訂購數量\n例如 單位訂購某品項10組 但UnitCoonversion欄位設定為4 則換算結果10/4=2.5 則無條件進位 意即訂購此品項變為3"));
 
-            entity.Property(e => e.AllowReceiveDateRange).HasComment("該品項期限距離現在的最小天數");
             entity.Property(e => e.CompId).HasComment("品項所屬的組織ID");
+            entity.Property(e => e.AllowReceiveDateRange).HasComment("該品項期限距離現在的最小天數");
             entity.Property(e => e.CreatedAt).HasDefaultValueSql("CURRENT_TIMESTAMP");
             entity.Property(e => e.DeadlineRule).HasComment("有效期限規範");
             entity.Property(e => e.DefaultSupplierId).HasComment("預設供應商");
@@ -576,6 +578,7 @@ public partial class StockDbContext : DbContext
             entity.Property(e => e.GroupIds).HasComment("屬於數個組別");
             entity.Property(e => e.GroupNames).HasComment("組別名稱");
             entity.Property(e => e.InStockQuantity).HasComment("庫存數量");
+            entity.Property(e => e.IsActive).HasDefaultValueSql("'1'");
             entity.Property(e => e.IsNeedAcceptProcess)
                 .HasDefaultValueSql("'0'")
                 .HasComment("該品項出庫時，是否需要經過二次驗收");

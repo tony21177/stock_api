@@ -14,6 +14,7 @@ namespace stock_api.Models;
 /// 3. 用無條件進位的方式去轉換成訂購數量
 /// 例如 單位訂購某品項10組 但UnitCoonversion欄位設定為4 則換算結果10/4=2.5 則無條件進位 意即訂購此品項變為3
 /// </summary>
+[PrimaryKey("ProductId", "CompId")]
 [Table("warehouse_product")]
 public partial class WarehouseProduct
 {
@@ -34,7 +35,7 @@ public partial class WarehouseProduct
     /// <summary>
     /// 品項所屬的組織ID
     /// </summary>
-    [Required]
+    [Key]
     [StringLength(45)]
     public string CompId { get; set; }
 
@@ -274,4 +275,7 @@ public partial class WarehouseProduct
     /// 在總覽表與目前庫存數量(InStockQuantity)相乘顯示給使用者知道目前可用的數量用的欄位
     /// </summary>
     public int TestCount { get; set; }
+
+    [Required]
+    public bool? IsActive { get; set; }
 }

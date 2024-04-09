@@ -16,6 +16,11 @@ namespace stock_api.Service
             _mapper = mapper;
         }
 
+        public WarehouseProduct? GetProductByProductIdAndCompId(string productId,string compId)
+        {
+            return _dbContext.WarehouseProducts.Where(p => p.ProductId == productId && p.CompId == compId).FirstOrDefault();
+        }
+
         public (List<WarehouseProduct> Results, int TotalPages) SearchProduct(WarehouseProductSearchRequest searchRequest)
         {
             IQueryable<WarehouseProduct> query = _dbContext.WarehouseProducts;
