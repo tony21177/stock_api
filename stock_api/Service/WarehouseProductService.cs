@@ -36,7 +36,7 @@ namespace stock_api.Service
             {
                 query = query.Where(h => h.GroupIds.Contains(searchRequest.GroupId));
             }
-            query.Where(h => h.CompId == searchRequest.CompId);
+            query = query.Where(h => h.CompId == searchRequest.CompId);
 
             if (!string.IsNullOrEmpty(searchRequest.Keywords))
             {
