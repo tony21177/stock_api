@@ -384,7 +384,7 @@ public partial class StockDbContext : DbContext
             entity.Property(e => e.CreatedAt).HasDefaultValueSql("CURRENT_TIMESTAMP");
             entity.Property(e => e.CurrentStatus).HasComment("目前狀態\nAPPLY : 申請中\nAGREE : 同意\nREJECT : 拒絕\nCLOSE : 結案");
             entity.Property(e => e.DemandDate).HasComment("需求日期");
-            entity.Property(e => e.GroupId).HasComment("設定此單據所屬的組別，參考 Warehouse_Group");
+            entity.Property(e => e.GroupIds).HasComment("設定此單據所屬的組別，參考 Warehouse_Group");
             entity.Property(e => e.ReceiveStatus).HasComment("送單到金萬林後，目前狀態\nNONE : 尚未收到結果\nDELIVERED : 金萬林已出貨\nIN_ACCEPTANCE_CHECK : 驗收中\nPART_ACCEPT : 部分驗收入庫\nALL_ACCEPT : 全部驗收入庫");
             entity.Property(e => e.Remarks).HasComment("備註內容");
             entity.Property(e => e.Type).HasComment("採購單類型\nGENERAL : 一般訂單\nURGENT : 緊急訂單");
@@ -406,7 +406,7 @@ public partial class StockDbContext : DbContext
             entity.Property(e => e.CompId).HasComment("所屬組織ID");
             entity.Property(e => e.CreatedAt).HasDefaultValueSql("CURRENT_TIMESTAMP");
             entity.Property(e => e.CurrentInStockQuantity).HasComment("採購單項目在建立當下的庫存數量");
-            entity.Property(e => e.GroupId).HasComment("品項可以設定組別ID\n在醫院端可以依照組別拆單顯示");
+            entity.Property(e => e.GroupIds).HasComment("品項可以設定組別ID\\n在醫院端可以依照組別拆單顯示");
             entity.Property(e => e.ProductCategory).HasComment("品項的 ProductCategory, 用來醫院拆單用");
             entity.Property(e => e.ProductId).HasComment("品項的PK，\n參考 Product Table");
             entity.Property(e => e.ProductName).HasComment("品項名稱");

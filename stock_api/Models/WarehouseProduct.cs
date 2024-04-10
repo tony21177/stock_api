@@ -86,7 +86,7 @@ public partial class WarehouseProduct
     /// <summary>
     /// 庫存數量
     /// </summary>
-    public double? InStockQuantity { get; set; }
+    public int? InStockQuantity { get; set; }
 
     /// <summary>
     /// 管理者
@@ -97,7 +97,7 @@ public partial class WarehouseProduct
     /// <summary>
     /// 最高安庫量
     /// </summary>
-    public double? MaxSafeQuantity { get; set; }
+    public int? MaxSafeQuantity { get; set; }
 
     /// <summary>
     /// 最後可使用日期
@@ -183,7 +183,7 @@ public partial class WarehouseProduct
     /// <summary>
     /// 最小安庫量
     /// </summary>
-    public double? SafeQuantity { get; set; }
+    public int? SafeQuantity { get; set; }
 
     /// <summary>
     /// 儲存環境條件
@@ -278,4 +278,7 @@ public partial class WarehouseProduct
 
     [Required]
     public bool? IsActive { get; set; }
+
+    [StringLength(200)]
+    public string StockLocation { get; set; }
 }

@@ -50,8 +50,8 @@ public partial class PurchaseMainSheet
     /// <summary>
     /// 設定此單據所屬的組別，參考 Warehouse_Group
     /// </summary>
-    [Column(TypeName = "json")]
-    public string GroupId { get; set; }
+    [StringLength(2000)]
+    public string GroupIds { get; set; }
 
     /// <summary>
     /// 備註內容
@@ -91,4 +91,6 @@ public partial class PurchaseMainSheet
 
     [Column(TypeName = "timestamp")]
     public DateTime? UpdatedAt { get; set; }
+
+    public bool IsActive { get; set; }
 }

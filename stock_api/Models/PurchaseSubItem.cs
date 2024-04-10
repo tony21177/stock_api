@@ -81,14 +81,13 @@ public partial class PurchaseSubItem
     public string ReceiveStatus { get; set; }
 
     /// <summary>
-    /// 品項可以設定組別ID
-    /// 在醫院端可以依照組別拆單顯示
+    /// 品項可以設定組別ID\n在醫院端可以依照組別拆單顯示
     /// </summary>
-    [Column(TypeName = "json")]
-    public string GroupId { get; set; }
+    [StringLength(2000)]
+    public string GroupIds { get; set; }
 
-    [Column(TypeName = "json")]
-    public string GroupName { get; set; }
+    [StringLength(2000)]
+    public string GroupNames { get; set; }
 
     /// <summary>
     /// 品項的 ProductCategory, 用來醫院拆單用
