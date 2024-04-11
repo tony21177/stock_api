@@ -31,7 +31,7 @@ namespace stock_api.Controllers.Validator
             if (action == ActionTypeEnum.Update)
             {
                 RuleFor(x => x.FlowId).NotEmpty().WithMessage("flowId為必須");
-                RuleFor(x => x.Sequence).Must((request, sequence, context) => SequenceUniqueOrNull(request, sequence)).WithMessage("sequence已存在");
+                // RuleFor(x => x.Sequence).Must((request, sequence, context) => SequenceUniqueOrNull(request, sequence)).WithMessage("sequence已存在");
                 RuleFor(x => x.UserId).Must((request, userId, context) => BeValidUserOrNull(request, userId)).WithMessage("userId不存在");
             }
         }
