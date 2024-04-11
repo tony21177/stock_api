@@ -30,6 +30,7 @@ namespace stock_api.Controllers
         private readonly WarehouseProductService _warehouseProductService;
         private readonly GroupService _groupService;
         private readonly IValidator<CreatePurchaseRequest> _createPurchaseValidator;
+        private readonly IValidator<ListPurchaseRequest> _listPurchaseRequestValidator;
 
         public PurchaseController(IMapper mapper, AuthHelpers authHelpers, PurchaseFlowSettingService purchaseFlowSettingService, MemberService memberService, CompanyService companyService, PurchaseService purchaseService, WarehouseProductService warehouseProductService,GroupService groupService)
         {
@@ -42,6 +43,7 @@ namespace stock_api.Controllers
             _warehouseProductService = warehouseProductService;
             _groupService = groupService;
             _createPurchaseValidator = new CreatePurchaseValidator(warehouseProductService, groupService);
+            _listPurchaseRequestValidator = new ListPurchaseValidator(warehouseProductService, groupService);
         }
 
         [HttpPost("create")]
@@ -50,7 +52,7 @@ namespace stock_api.Controllers
         {
             var memberAndPermissionSetting = _authHelpers.GetMemberAndPermissionSetting(User);
             var compId = memberAndPermissionSetting.CompanyWithUnit.CompId;
-            if (createRequest.CompId != null && createRequest.CompId != compId && memberAndPermissionSetting.CompanyWithUnit.Type != CommonConstants.CompanyType.Owner)
+            if (createRequest.CompId != null && createRequest.CompId != compId && memberAndPermissionSetting.CompanyWithUnit.Type != CommonConstants.CompanyType.OWNER)
             {
                 // 非OWNER不可幫其他組織申請單
                 return BadRequest(CommonResponse<dynamic>.BuildNotAuthorizeResponse());
@@ -150,7 +152,7 @@ namespace stock_api.Controllers
         //        return BadRequest(CommonResponse<dynamic>.BuildValidationFailedResponse(validationResult));
         //    }
 
-            
+
         //    _purchaseFlowSettingService.UpdatePurchaseFlowSetting(updateRequest, existingPurchaseFlowSetting);
         //    var response = new CommonResponse<dynamic>
         //    {
@@ -160,20 +162,32 @@ namespace stock_api.Controllers
         //    return Ok(response);
         //}
 
-        //[HttpGet("list")]
-        //[Authorize]
-        //public IActionResult ListPurchaseFlowSettings()
-        //{
-        //    var memberAndPermissionSetting = _authHelpers.GetMemberAndPermissionSetting(User);
-        //    var compId = memberAndPermissionSetting.CompanyWithUnit.CompId;
-        //    var data = _purchaseFlowSettingService.GetAllPurchaseFlowSettingsByCompId(compId).OrderBy(pfs => pfs.Sequence);
-        //    var response = new CommonResponse<dynamic>
-        //    {
-        //        Result = true,
-        //        Data = data
-        //    };
-        //    return Ok(response);
-        //}
+        [HttpPost("list")]
+        [Authorize]
+        public IActionResult ListPurchases(ListPurchaseRequest request)
+        {
+            var memberAndPermissionSetting = _authHelpers.GetMemberAndPermissionSetting(User);
+            var compId = memberAndPermissionSetting.CompanyWithUnit.CompId;
+
+            if(request.CompId==null) request.CompId = compId;
+            if (request.CompId != null && request.CompId != compId && memberAndPermissionSetting.CompanyWithUnit.Type != CommonConstants.CompanyType.OWNER)
+            {
+                return BadRequest(CommonResponse<dynamic>.BuildNotAuthorizeResponse());
+            }
+            var validationResult = _listPurchaseRequestValidator.Validate(request);
+
+            if (!validationResult.IsValid)
+            {
+                return BadRequest(CommonResponse<dynamic>.BuildValidationFailedResponse(validationResult));
+            }
+            var data = _purchaseService.ListPurchase(request);
+            var response = new CommonResponse<dynamic>
+            {
+                Result = true,
+                Data = data
+            };
+            return Ok(response);
+        }
 
         //[HttpGet("get/{flowId}")]
         //[Authorize]

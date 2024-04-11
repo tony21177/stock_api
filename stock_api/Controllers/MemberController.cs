@@ -80,7 +80,7 @@ namespace stock_api.Controllers
         public IActionResult ListAll()
         {
             var memberAndPermissionSetting = _authHelpers.GetMemberAndPermissionSetting(User);
-            if (memberAndPermissionSetting.CompanyWithUnit == null || memberAndPermissionSetting.CompanyWithUnit.Type != CommonConstants.CompanyType.Owner)
+            if (memberAndPermissionSetting.CompanyWithUnit == null || memberAndPermissionSetting.CompanyWithUnit.Type != CommonConstants.CompanyType.OWNER)
             {
                 return BadRequest(CommonResponse<dynamic>.BuildNotAuthorizeResponse());
             }

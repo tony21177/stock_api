@@ -95,7 +95,7 @@ namespace stock_api.Service
         public void AddCompany(Company company,String unitId,String unitName)
         {
             company.CompId = Guid.NewGuid().ToString();
-            company.Type = CommonConstants.CompanyType.Organization;
+            company.Type = CommonConstants.CompanyType.ORGANIZATION;
             _dbContext.Companies.Add(company);
             var companyUnit = new CompanyUnit()
             {

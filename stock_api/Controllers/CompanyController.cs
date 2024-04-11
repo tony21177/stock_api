@@ -59,14 +59,14 @@ namespace stock_api.Controllers
         public IActionResult ListAllCompanyForOwner()
         {
             var memberAndPermissionSetting = _authHelpers.GetMemberAndPermissionSetting(User);
-            if (memberAndPermissionSetting.CompanyWithUnit==null||memberAndPermissionSetting.CompanyWithUnit.Type!=CommonConstants.CompanyType.Owner) {
+            if (memberAndPermissionSetting.CompanyWithUnit==null||memberAndPermissionSetting.CompanyWithUnit.Type!=CommonConstants.CompanyType.OWNER) {
                 return BadRequest(CommonResponse<dynamic>.BuildNotAuthorizeResponse());
             }
 
             var data = _companyService.GetAllCompanyWithUnit();
 
             List<CompanyWithUnitVo> sortedData = data
-            .OrderByDescending(item => item.Type == CommonConstants.CompanyType.Owner)
+            .OrderByDescending(item => item.Type == CommonConstants.CompanyType.OWNER)
             .ThenByDescending(item => item.CreatedAt)
             .ThenBy(item => item.Type)
             .ToList();

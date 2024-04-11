@@ -52,7 +52,7 @@ namespace stock_api.Controllers
                 searchRequest.CompId = compId;
             }
 
-            if(searchRequest.CompId!=null&& searchRequest.CompId != compId && compType != CommonConstants.CompanyType.Owner)
+            if(searchRequest.CompId!=null&& searchRequest.CompId != compId && compType != CommonConstants.CompanyType.OWNER)
             {
                 return BadRequest(CommonResponse<dynamic>.BuildNotAuthorizeResponse());
             }
@@ -89,7 +89,7 @@ namespace stock_api.Controllers
                 request.CompId = compId;
             }
 
-            if (request.CompId != null && request.CompId != compId && compType != CommonConstants.CompanyType.Owner)
+            if (request.CompId != null && request.CompId != compId && compType != CommonConstants.CompanyType.OWNER)
             {
                 return BadRequest(CommonResponse<dynamic>.BuildNotAuthorizeResponse());
             }

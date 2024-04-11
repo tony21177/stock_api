@@ -110,6 +110,10 @@
       {
          "Name": "warehouse_product",
          "ObjectType": 0
+      },
+      {
+         "Name": "purchase_item_list_view",
+         "ObjectType": 3
       }
    ],
    "UiHint": "stock",

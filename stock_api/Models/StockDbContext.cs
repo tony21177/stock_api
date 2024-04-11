@@ -43,6 +43,8 @@ public partial class StockDbContext : DbContext
 
     public virtual DbSet<PurchaseFlowSetting> PurchaseFlowSettings { get; set; }
 
+    public virtual DbSet<PurchaseItemListView> PurchaseItemListViews { get; set; }
+
     public virtual DbSet<PurchaseMainSheet> PurchaseMainSheets { get; set; }
 
     public virtual DbSet<PurchaseSubItem> PurchaseSubItems { get; set; }
@@ -369,6 +371,39 @@ public partial class StockDbContext : DbContext
                 .ValueGeneratedOnAddOrUpdate()
                 .HasDefaultValueSql("CURRENT_TIMESTAMP");
             entity.Property(e => e.UserId).HasComment("此審核流程的審核者");
+        });
+
+        modelBuilder.Entity<PurchaseItemListView>(entity =>
+        {
+            entity.ToView("purchase_item_list_view");
+
+            entity.Property(e => e.ApplyDate)
+                .HasDefaultValueSql("CURRENT_TIMESTAMP")
+                .HasComment("申請日期");
+            entity.Property(e => e.ArrangeSupplierId).HasComment("這部分是由得標廠商（金萬林），在收到這張單子的品項後，可以指派該品項的供應商，再進行拆單");
+            entity.Property(e => e.ArrangeSupplierName).HasComment("這部分是由得標廠商（金萬林），在收到這張單子的品項後，可以指派該品項的供應商，再進行拆單");
+            entity.Property(e => e.Comment).HasComment("品項備註內容");
+            entity.Property(e => e.CompId).HasComment("所屬公司ID");
+            entity.Property(e => e.CreatedAt).HasDefaultValueSql("CURRENT_TIMESTAMP");
+            entity.Property(e => e.CurrentInStockQuantity).HasComment("採購單項目在建立當下的庫存數量");
+            entity.Property(e => e.CurrentStatus).HasComment("目前狀態\nAPPLY : 申請中\nAGREE : 同意\nREJECT : 拒絕\nCLOSE : 結案");
+            entity.Property(e => e.DemandDate).HasComment("需求日期");
+            entity.Property(e => e.GroupIds).HasComment("設定此單據所屬的組別，參考 Warehouse_Group");
+            entity.Property(e => e.ItemGroupIds).HasComment("品項可以設定組別ID\\n在醫院端可以依照組別拆單顯示");
+            entity.Property(e => e.ItemReceiveStatus).HasComment("送單到金萬林後，目前狀態\nNONE : 尚未收到結果\nPART : 部分驗收入庫\nDONE : 全部驗收入庫");
+            entity.Property(e => e.ProductCategory).HasComment("品項的 ProductCategory, 用來醫院拆單用");
+            entity.Property(e => e.ProductId).HasComment("品項的PK，\n參考 Product Table");
+            entity.Property(e => e.ProductName).HasComment("品項名稱");
+            entity.Property(e => e.ProductSpec).HasComment("品項規格");
+            entity.Property(e => e.Quantity).HasComment("數量");
+            entity.Property(e => e.ReceiveQuantity).HasComment("已收到的數量");
+            entity.Property(e => e.ReceiveStatus).HasComment("送單到金萬林後，目前狀態\nNONE : 尚未收到結果\nDELIVERED : 金萬林已出貨\nIN_ACCEPTANCE_CHECK : 驗收中\nPART_ACCEPT : 部分驗收入庫\nALL_ACCEPT : 全部驗收入庫");
+            entity.Property(e => e.Remarks).HasComment("備註內容");
+            entity.Property(e => e.Type).HasComment("採購單類型\nGENERAL : 一般訂單\nURGENT : 緊急訂單");
+            entity.Property(e => e.UpdatedAt)
+                .ValueGeneratedOnAddOrUpdate()
+                .HasDefaultValueSql("CURRENT_TIMESTAMP");
+            entity.Property(e => e.UserId).HasComment("此採購單據的建立者");
         });
 
         modelBuilder.Entity<PurchaseMainSheet>(entity =>

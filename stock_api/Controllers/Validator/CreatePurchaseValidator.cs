@@ -1,4 +1,5 @@
 ﻿using FluentValidation;
+using stock_api.Common.Constant;
 using stock_api.Common.Utils;
 using stock_api.Controllers.Request;
 using stock_api.Service;
@@ -27,6 +28,11 @@ namespace stock_api.Controllers.Validator
             RuleFor(x => x)
                 .Must((request, x, context) => BeValidProductList(request, context))
                 .WithMessage("以下 productId 為無效的 product: {InvalidProdcutIds}");
+
+            RuleFor(request => request.Type)
+                .Cascade(CascadeMode.Stop) // Stop on first failure
+                .Must(type => CommonConstants.PurchaseType.GetAllValues().Contains(type)).When(request => !string.IsNullOrEmpty(request.Type)) // Only validate when Type is not empty
+                    .WithMessage($"type必須為{string.Join(",", CommonConstants.PurchaseType.GetAllValues())}");
 
         }
 

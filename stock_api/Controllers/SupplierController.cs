@@ -60,7 +60,7 @@ namespace stock_api.Controllers
         public IActionResult ListAllForOwner()
         {
             var memberAndPermissionSetting = _authHelpers.GetMemberAndPermissionSetting(User);
-            if (memberAndPermissionSetting.CompanyWithUnit == null || memberAndPermissionSetting.CompanyWithUnit.Type != CommonConstants.CompanyType.Owner)
+            if (memberAndPermissionSetting.CompanyWithUnit == null || memberAndPermissionSetting.CompanyWithUnit.Type != CommonConstants.CompanyType.OWNER)
             {
                 return BadRequest(CommonResponse<dynamic>.BuildNotAuthorizeResponse());
             }
@@ -95,7 +95,7 @@ namespace stock_api.Controllers
         public IActionResult CreateSupplier(CreateSupplierRequest request)
         {
             var memberAndPermissionSetting = _authHelpers.GetMemberAndPermissionSetting(User);
-            if (memberAndPermissionSetting.CompanyWithUnit.Type != CommonConstants.CompanyType.Owner)
+            if (memberAndPermissionSetting.CompanyWithUnit.Type != CommonConstants.CompanyType.OWNER)
             {
                 return BadRequest(CommonResponse<dynamic>.BuildNotAuthorizeResponse());
             }
@@ -130,7 +130,7 @@ namespace stock_api.Controllers
             }
 
             var memberAndPermissionSetting = _authHelpers.GetMemberAndPermissionSetting(User);
-            if (memberAndPermissionSetting.CompanyWithUnit.Type != CommonConstants.CompanyType.Owner)
+            if (memberAndPermissionSetting.CompanyWithUnit.Type != CommonConstants.CompanyType.OWNER)
             {
                 return BadRequest(CommonResponse<dynamic>.BuildNotAuthorizeResponse());
             }
@@ -162,7 +162,7 @@ namespace stock_api.Controllers
         {
 
             var memberAndPermissionSetting = _authHelpers.GetMemberAndPermissionSetting(User);
-            if (memberAndPermissionSetting.CompanyWithUnit.Type != CommonConstants.CompanyType.Owner)
+            if (memberAndPermissionSetting.CompanyWithUnit.Type != CommonConstants.CompanyType.OWNER)
             {
                 return BadRequest(CommonResponse<dynamic>.BuildNotAuthorizeResponse());
             }
