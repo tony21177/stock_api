@@ -149,7 +149,7 @@ namespace stock_api.Controllers
             {
                 return BadRequest(CommonResponse<dynamic>.BuildNotAuthorizeResponse());
             }
-            _purchaseFlowSettingService.UpdatePurchaseFlowSetting(new CreateOrUpdatePurchaseFlowSettingRequest() { FlowId=flowId,IsActive=false}, existPurchaseFlowSetting);
+            _purchaseFlowSettingService.InactivePurchaseFlowSetting(existPurchaseFlowSetting.FlowId,false);
 
             var response = new CommonResponse<dynamic>
             {

@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using Microsoft.EntityFrameworkCore;
 using Org.BouncyCastle.Asn1.Ocsp;
 using stock_api.Controllers.Dto;
 using stock_api.Controllers.Request;
@@ -55,10 +56,7 @@ namespace stock_api.Service
 
         public void UpdatePurchaseFlowSetting(CreateOrUpdatePurchaseFlowSettingRequest updateRequest,PurchaseFlowSetting existingPurchaseFlowSetting)
         {
-            if (updateRequest.Sequence == null)
-            {
-                updateRequest.Sequence = existingPurchaseFlowSetting.Sequence;
-            }
+            updateRequest.Sequence ??= existingPurchaseFlowSetting.Sequence;
             var updatePurchaseFlowSetting = _mapper.Map<PurchaseFlowSetting>(updateRequest);
             _mapper.Map(updatePurchaseFlowSetting, existingPurchaseFlowSetting);
             
@@ -66,6 +64,12 @@ namespace stock_api.Service
             _dbContext.SaveChanges();
             return;
         }
+
+        public void InactivePurchaseFlowSetting(String flowId,bool isActive)
+        {
+            _dbContext.PurchaseFlowSettings.Where(f => f.FlowId == flowId).ExecuteUpdate(f => f.SetProperty(f => f.IsActive, false));
+        }
+
 
         public List<PurchaseFlowSettingVo> GetAllPurchaseFlowSettingsByCompId(string compId)
         {
