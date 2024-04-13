@@ -14,6 +14,7 @@ using stock_api.Service;
 using stock_api.Service.ValueObject;
 using stock_api.Utils;
 using System;
+using System.Linq;
 
 namespace stock_api.Controllers
 {
@@ -123,44 +124,6 @@ namespace stock_api.Controllers
             return Ok(response);
         }
 
-        //[HttpPost("update")]
-        //[Authorize]
-        //public IActionResult UpdatePurchaseFlowSetting(CreateOrUpdatePurchaseFlowSettingRequest updateRequest)
-        //{
-        //    var memberAndPermissionSetting = _authHelpers.GetMemberAndPermissionSetting(User);
-        //    var compId = memberAndPermissionSetting.CompanyWithUnit.CompId;
-        //    var flowId = updateRequest.FlowId;
-        //    var existingPurchaseFlowSetting =_purchaseFlowSettingService.GetPurchaseFlowSettingByFlowId(flowId);
-        //    if (existingPurchaseFlowSetting==null)
-        //    {
-        //        return BadRequest(new CommonResponse<dynamic>
-        //        {
-        //            Result = false,
-        //            Message = "此審核流程不存在"
-        //        });
-        //    }
-        //    if (compId != existingPurchaseFlowSetting.CompId)
-        //    {
-        //        return BadRequest(CommonResponse<dynamic>.BuildNotAuthorizeResponse());
-        //    }
-
-        //    updateRequest.CompId = compId;
-        //    var validationResult = _updatePurchaseFlowSettingValidator.Validate(updateRequest);
-
-        //    if (!validationResult.IsValid)
-        //    {
-        //        return BadRequest(CommonResponse<dynamic>.BuildValidationFailedResponse(validationResult));
-        //    }
-
-
-        //    _purchaseFlowSettingService.UpdatePurchaseFlowSetting(updateRequest, existingPurchaseFlowSetting);
-        //    var response = new CommonResponse<dynamic>
-        //    {
-        //        Result = true,
-        //        Data = null
-        //    };
-        //    return Ok(response);
-        //}
 
         [HttpPost("list")]
         [Authorize]
@@ -189,46 +152,87 @@ namespace stock_api.Controllers
             return Ok(response);
         }
 
-        //[HttpGet("get/{flowId}")]
-        //[Authorize]
-        //public IActionResult GetPurchaseFlowSettingDetail(string flowId)
-        //{
-        //    var memberAndPermissionSetting = _authHelpers.GetMemberAndPermissionSetting(User);
-        //    var compId = memberAndPermissionSetting.CompanyWithUnit.CompId;
-        //    var data = _purchaseFlowSettingService.GetPurchaseFlowSettingByFlowId(flowId);
-        //    if (data != null&&data.CompId!=compId)
-        //    {
-        //        return BadRequest(CommonResponse<dynamic>.BuildNotAuthorizeResponse());
-        //    }
+
+        [HttpGet("detail/{purchaseMainId}")]
+        [Authorize]
+        public IActionResult GetPurchasesDetail(string purchaseMainId)
+        {
+            var memberAndPermissionSetting = _authHelpers.GetMemberAndPermissionSetting(User);
+            var compId = memberAndPermissionSetting.CompanyWithUnit.CompId;
+            var purchaseMain = _purchaseService.GetPurchaseMainByMainId(purchaseMainId);
+            if (purchaseMain == null)
+            {
+                return Ok(new CommonResponse<dynamic>
+                {
+                    Result = true,
+                    Data = purchaseMain
+                });
+            }
+
+            if (compId != purchaseMain.CompId && memberAndPermissionSetting.CompanyWithUnit.Type != CommonConstants.CompanyType.OWNER)
+            {
+                return BadRequest(CommonResponse<dynamic>.BuildNotAuthorizeResponse());
+            }
+
+            List<PurchaseSubItem> purchaseSubItems = _purchaseService.GetPurchaseSubItemsByMainId(purchaseMainId);
+            List<PurchaseFlow> purchaseFlows = _purchaseService.GetPurchaseFlowsByMainId(purchaseMainId).OrderBy(f=>f.Sequence).ToList();
+            List<PurchaseFlowLog> purchaseFlowLogs = _purchaseService.GetPurchaseFlowLogsByMainId(purchaseMainId).OrderBy(fl => fl.UpdatedAt).ToList();
+            var purchaseAndSubItemVo = _mapper.Map<PurchaseMainAndSubItemVo>(purchaseMain);
+            var purchaseSubItemVoList = _mapper.Map<List<PurchaseSubItemVo>>(purchaseSubItems);
+            purchaseAndSubItemVo.Items = purchaseSubItemVoList;
+            purchaseAndSubItemVo.flows = purchaseFlows;
+            purchaseAndSubItemVo.flowLogs = purchaseFlowLogs;
+
+            var response = new CommonResponse<PurchaseMainAndSubItemVo>
+            {
+                Result = true,
+                Data = purchaseAndSubItemVo
+            };
+            return Ok(response);
+        }
+
+        [HttpGet("flows/my")]
+        [Authorize]
+        public IActionResult GetFlowsSignedByMy()
+        {
+            var memberAndPermissionSetting = _authHelpers.GetMemberAndPermissionSetting(User);
+            var compId = memberAndPermissionSetting.CompanyWithUnit.CompId;
 
 
-        //    var response = new CommonResponse<dynamic>
-        //    {
-        //        Result = true,
-        //        Data = data
-        //    };
-        //    return Ok(response);
-        //}
+            var purchaseFlowsSignedByMe = _purchaseService.GetFlowsByUserId(memberAndPermissionSetting.Member.UserId);
+            
 
-        //[HttpDelete("delete/{flowId}")]
-        //[Authorize]
-        //public IActionResult InActivePurchaseFlowSetting(string flowId)
-        //{
-        //    var memberAndPermissionSetting = _authHelpers.GetMemberAndPermissionSetting(User);
-        //    var compId = memberAndPermissionSetting.CompanyWithUnit.CompId;
-        //    var existPurchaseFlowSetting = _purchaseFlowSettingService.GetPurchaseFlowSettingByFlowId(flowId);
-        //    if (existPurchaseFlowSetting != null && existPurchaseFlowSetting.CompId != compId)
-        //    {
-        //        return BadRequest(CommonResponse<dynamic>.BuildNotAuthorizeResponse());
-        //    }
-        //    _purchaseFlowSettingService.UpdatePurchaseFlowSetting(new CreateOrUpdatePurchaseFlowSettingRequest() { FlowId=flowId,IsActive=false}, existPurchaseFlowSetting);
+            var distinctMainIdList = purchaseFlowsSignedByMe.Select(f=>f.PurchaseMainId).Distinct().ToList();
+            var purchaseMainList = _purchaseService.GetPurchaseMainsByMainIdList(distinctMainIdList).OrderByDescending(m=>m.UpdatedAt).ToList();
+            var purchaseSubItems = _purchaseService.GetPurchaseSubItemsByMainIdList(distinctMainIdList);
+            var purchaseFlows = _purchaseService.GetPurchaseFlowsByMainIdList(distinctMainIdList);
+            var purchaseFlowLogs = _purchaseService.GetPurchaseFlowLogsByMainIdList(distinctMainIdList);
 
-        //    var response = new CommonResponse<dynamic>
-        //    {
-        //        Result = true,
-        //        Data = null
-        //    };
-        //    return Ok(response);
-        //}
+            List <PurchaseMainAndSubItemVo> purchaseMainAndSubItemVoList = new List<PurchaseMainAndSubItemVo>();
+
+            purchaseMainList.ForEach(m =>
+            {
+                var purchaseMainAndSubItemVo = _mapper.Map<PurchaseMainAndSubItemVo>(m);
+
+                var matchedSubItems = purchaseSubItems.Where(s=>s.PurchaseMainId==m.PurchaseMainId).OrderBy(s=>s.UpdatedAt).ToList() ;
+                var items = _mapper.Map<List<PurchaseSubItemVo>>(matchedSubItems);
+                var matchedFlows = purchaseFlows.Where(f=>f.PurchaseMainId==m.PurchaseMainId).OrderBy(f => f.Sequence).ToList();
+                var matchedFlowLogs = purchaseFlowLogs.Where(l => l.PurchaseMainId == m.PurchaseMainId).OrderBy(l => l.UpdatedAt).ToList();
+
+                purchaseMainAndSubItemVo.Items = items;
+                purchaseMainAndSubItemVo.flows = matchedFlows;
+                purchaseMainAndSubItemVo.flowLogs = matchedFlowLogs;
+                purchaseMainAndSubItemVoList.Add(purchaseMainAndSubItemVo);
+            });
+            purchaseMainAndSubItemVoList = purchaseMainAndSubItemVoList.OrderBy(m => m.UpdatedAt).ToList();
+
+
+            var response = new CommonResponse<List<PurchaseMainAndSubItemVo>>
+            {
+                Result = true,
+                Data = purchaseMainAndSubItemVoList
+            };
+            return Ok(response);
+        }
     }
 }

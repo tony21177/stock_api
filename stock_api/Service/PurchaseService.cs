@@ -22,8 +22,46 @@ namespace stock_api.Service
             _logger = logger;
         }
 
+        public PurchaseMainSheet? GetPurchaseMainByMainId(string purchaseMainId)
+        {
+            return _dbContext.PurchaseMainSheets.Where(m=>m.PurchaseMainId==purchaseMainId).FirstOrDefault();
+        }
 
-        public bool CreatePurchase(PurchaseMainSheet newPurchasePurchaseMainSheet,List<Models.PurchaseSubItem> purchaseSubItemList, List<PurchaseFlowSettingVo> purchaseFlowSettingList)
+        public List<PurchaseMainSheet> GetPurchaseMainsByMainIdList(List<string> purchaseMainIdList)
+        {
+            return _dbContext.PurchaseMainSheets.Where(m => purchaseMainIdList.Contains(m.PurchaseMainId)).ToList();
+        }
+
+
+        public List<PurchaseSubItem> GetPurchaseSubItemsByMainId(string purchaseMainId)
+        {
+            return _dbContext.PurchaseSubItems.Where(s => s.PurchaseMainId == purchaseMainId).ToList();
+        }
+        public List<PurchaseSubItem> GetPurchaseSubItemsByMainIdList(List<string> purchaseMainIdList)
+        {
+            return _dbContext.PurchaseSubItems.Where(s => purchaseMainIdList.Contains(s.PurchaseMainId)).ToList();
+        }
+
+        public List<PurchaseFlow> GetPurchaseFlowsByMainId(string purchaseMainId)
+        {
+            return _dbContext.PurchaseFlows.Where(f => f.PurchaseMainId == purchaseMainId).ToList();
+        }
+        public List<PurchaseFlow> GetPurchaseFlowsByMainIdList(List<string> purchaseMainIdList)
+        {
+            return _dbContext.PurchaseFlows.Where(f => purchaseMainIdList.Contains(f.PurchaseMainId)).ToList();
+        }
+
+        public List<PurchaseFlowLog> GetPurchaseFlowLogsByMainId(string purchaseMainId)
+        {
+            return _dbContext.PurchaseFlowLogs.Where(l => l.PurchaseMainId == purchaseMainId).ToList();
+        }
+
+        public List<PurchaseFlowLog> GetPurchaseFlowLogsByMainIdList(List<string> purchaseMainIdList)
+        {
+            return _dbContext.PurchaseFlowLogs.Where(l => purchaseMainIdList.Contains(l.PurchaseMainId)).ToList();
+        }
+
+        public bool CreatePurchase(PurchaseMainSheet newPurchasePurchaseMainSheet,List<PurchaseSubItem> purchaseSubItemList, List<PurchaseFlowSettingVo> purchaseFlowSettingList)
         {
             using (var scope = new TransactionScope())
             {
@@ -202,6 +240,19 @@ namespace stock_api.Service
             return _dbContext.PurchaseFlows.Where(f=>purchaseMainIdList.Contains(f.PurchaseMainId)).ToList();
 
         }
+
+        public PurchaseFlow? GetFlowsByPurchaseMainId(string purchaseMainId)
+        {
+            return _dbContext.PurchaseFlows.Where(f => f.PurchaseMainId==purchaseMainId).FirstOrDefault();
+
+        }
+
+        public List<PurchaseFlow> GetFlowsByUserId(string userId)
+        {
+            return _dbContext.PurchaseFlows.Where(f => f.VerifyUserId == userId).ToList();
+
+        }
+
     }
 
     

@@ -11,11 +11,11 @@
 
         public string Type { get; set; }
 
-        public List<PurchaseSubItem> PurchaseSubItems { get; set; }
+        public List<SubItem> PurchaseSubItems { get; set; }
     }
 
 
-    public class PurchaseSubItem
+    public class SubItem
     {
         public string? Comment { get; set; }
 

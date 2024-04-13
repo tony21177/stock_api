@@ -61,6 +61,16 @@ namespace stock_api.Common.AutoMapper
             CreateMap<PurchaseFlowSetting, PurchaseFlowSettingVo>()
                 .ForAllMembers(opt => opt.Condition((src, dest, srcMember) => srcMember != null));
 
+            // purchase
+            CreateMap<PurchaseMainSheet, PurchaseMainAndSubItemVo>()
+           .ForMember(dest => dest.GroupIds, opt => opt.MapFrom(src =>
+               src.GroupIds != null ? src.GroupIds.Split(",", StringSplitOptions.RemoveEmptyEntries).ToList() : null));
+            CreateMap<PurchaseSubItem, PurchaseSubItemVo>()
+            .ForMember(dest => dest.GroupIds, opt => opt.MapFrom(src =>
+                src.GroupIds != null ? src.GroupIds.Split(",", StringSplitOptions.RemoveEmptyEntries).ToList() : null))
+            .ForMember(dest => dest.GroupNames, opt => opt.MapFrom(src =>
+                src.GroupNames != null ? src.GroupNames.Split(",", StringSplitOptions.RemoveEmptyEntries).ToList() : null));
+
         }
         
     }
