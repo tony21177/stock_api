@@ -66,6 +66,17 @@ namespace stock_api.Common.Constant
             }
         }
 
+        public static class AnswerPurchaseFlow
+        {
+            public const string AGREE = "AGREE";
+            public const string REJECT = "REJECT";
+            public const string BACK = "BACK";
+            public static List<string> GetAllValues()
+            {
+                return new List<string> { AGREE, REJECT, BACK };
+            }
+        }
+
         public static class PurchaseType
         {
             public const string GENERAL = "GENERAL";

@@ -5,6 +5,7 @@ using stock_api.Common.Utils;
 using stock_api.Controllers.Request;
 using stock_api.Models;
 using stock_api.Service.ValueObject;
+using stock_api.Utils;
 using System.Transactions;
 
 namespace stock_api.Service
@@ -247,11 +248,100 @@ namespace stock_api.Service
 
         }
 
+        public PurchaseFlow? GetFlowsByFlowId(string flowId)
+        {
+            return _dbContext.PurchaseFlows.Where(f => f.FlowId == flowId).FirstOrDefault();
+
+        }
+
         public List<PurchaseFlow> GetFlowsByUserId(string userId)
         {
             return _dbContext.PurchaseFlows.Where(f => f.VerifyUserId == userId).ToList();
 
         }
+
+        public void PurchaseFlowRead(PurchaseFlow flow)
+        {
+            flow.ReadAt = DateTime.Now;
+            _dbContext.SaveChanges();
+        }
+
+        public bool AnswerFlow(PurchaseFlow flow, MemberAndPermissionSetting verifierMemberAndPermission, string answer,string? reason)
+        {
+            string purchaseMainId = flow.PurchaseMainId;
+            PurchaseMainSheet purchaseMain = GetPurchaseMainByMainId(purchaseMainId);
+            List<PurchaseSubItem> purchaseSubItems = GetPurchaseSubItemsByMainId(purchaseMainId);
+            var (preFlow,nextFlow) = FindPreviousAndNextFlow(flow);
+            return AnswerFlowInTransactionScope(preFlow, nextFlow, flow, purchaseMain, verifierMemberAndPermission, answer, reason);
+        }
+
+        public (PurchaseFlow?, PurchaseFlow?) FindPreviousAndNextFlow(PurchaseFlow flow)
+        {
+            List<PurchaseFlow> purchaseFlows  = _dbContext.PurchaseFlows.Where(f=>f.PurchaseMainId == flow.PurchaseMainId).OrderBy(f=>f.Sequence).ToList();
+
+            return (purchaseFlows.FirstOrDefault(f => f.Sequence < flow.Sequence),purchaseFlows.FirstOrDefault(f => f.Sequence > flow.Sequence));
+        }
+
+        private bool AnswerFlowInTransactionScope(PurchaseFlow? preFlow, PurchaseFlow? nextPurchase,PurchaseFlow currentFlow, PurchaseMainSheet purchaseMain, MemberAndPermissionSetting verifierMemberAndPermission, string answer, string? reason)
+        {
+            WarehouseMember verifyMember = verifierMemberAndPermission.Member;
+            var verifyCompId = verifierMemberAndPermission.CompanyWithUnit.CompId;
+            using var scope = new TransactionScope();
+            try
+            {
+                // 更新Flow
+                currentFlow.Reason = reason;
+                // TODO
+                //flow.Status
+                currentFlow.VerifyCompId = verifyCompId;
+                currentFlow.VerifyUserId = verifyMember.UserId;
+                currentFlow.VerifyUserName = verifyMember.DisplayName;
+                currentFlow.Answer = answer;
+                currentFlow.SubmitAt = DateTime.Now;
+                
+                // 更新主單狀態
+                if (answer==CommonConstants.AnswerPurchaseFlow.AGREE&&nextPurchase == null)
+                {
+                    // 已完成所有flow 更新主單狀態
+                    purchaseMain.CurrentStatus = CommonConstants.PurchaseApplyStatus.AGREE;
+                }
+                if (answer == CommonConstants.AnswerPurchaseFlow.REJECT )
+                {
+                    purchaseMain.CurrentStatus = CommonConstants.PurchaseApplyStatus.REJECT;
+                }
+                if (answer == CommonConstants.AnswerPurchaseFlow.BACK)
+                {
+                    currentFlow.Answer = "";
+                    if (preFlow != null)
+                    {
+                        preFlow.Answer = "";
+                    }
+                }
+
+                // 新增log
+                var newFlowLog = new PurchaseFlowLog()
+                {
+                    LogId = Guid.NewGuid().ToString(),
+                    CompId = currentFlow.CompId,
+                    PurchaseMainId = currentFlow.PurchaseMainId,
+                    UserId = verifyMember.UserId,
+                    UserName = verifyMember.DisplayName,
+                    Sequence = currentFlow.Sequence,
+                    Action = answer,
+                    Remarks = reason
+                };
+                _dbContext.PurchaseFlowLogs.Add(newFlowLog);
+                _dbContext.SaveChanges();
+                scope.Complete();
+                return true;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError("事務失敗[AnswerFlow]：{msg}", ex);
+                return false;
+            }
+        }
+
 
     }
 

@@ -2,6 +2,7 @@
 using FluentValidation;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.IdentityModel.Tokens;
 using Org.BouncyCastle.Asn1.Ocsp;
 using stock_api.Common;
 using stock_api.Common.Constant;
@@ -32,6 +33,7 @@ namespace stock_api.Controllers
         private readonly GroupService _groupService;
         private readonly IValidator<CreatePurchaseRequest> _createPurchaseValidator;
         private readonly IValidator<ListPurchaseRequest> _listPurchaseRequestValidator;
+        private readonly IValidator<AnswerFlowRequest> _answerFlowRequestValidator;
 
         public PurchaseController(IMapper mapper, AuthHelpers authHelpers, PurchaseFlowSettingService purchaseFlowSettingService, MemberService memberService, CompanyService companyService, PurchaseService purchaseService, WarehouseProductService warehouseProductService,GroupService groupService)
         {
@@ -45,6 +47,7 @@ namespace stock_api.Controllers
             _groupService = groupService;
             _createPurchaseValidator = new CreatePurchaseValidator(warehouseProductService, groupService);
             _listPurchaseRequestValidator = new ListPurchaseValidator(warehouseProductService, groupService);
+            _answerFlowRequestValidator = new AnswerFlowValidator();
         }
 
         [HttpPost("create")]
@@ -183,10 +186,70 @@ namespace stock_api.Controllers
             purchaseAndSubItemVo.flows = purchaseFlows;
             purchaseAndSubItemVo.flowLogs = purchaseFlowLogs;
 
+            purchaseFlows.ForEach(f =>
+            {
+                if (f.VerifyUserId == memberAndPermissionSetting.Member.UserId)
+                {
+                    _purchaseService.PurchaseFlowRead(f);
+                }
+            });
+
             var response = new CommonResponse<PurchaseMainAndSubItemVo>
             {
                 Result = true,
                 Data = purchaseAndSubItemVo
+            };
+            return Ok(response);
+        }
+
+        [HttpPost("flow/answer")]
+        [Authorize]
+        public IActionResult FlowSign(AnswerFlowRequest request)
+        {
+            var memberAndPermissionSetting = _authHelpers.GetMemberAndPermissionSetting(User);
+            var verifier = memberAndPermissionSetting.Member;
+            var compId = memberAndPermissionSetting.CompanyWithUnit.CompId;
+
+            var validationResult = _answerFlowRequestValidator.Validate(request);
+
+            if (!validationResult.IsValid)
+            {
+                return BadRequest(CommonResponse<dynamic>.BuildValidationFailedResponse(validationResult));
+            }
+            var purchaseFlow = _purchaseService.GetFlowsByFlowId(request.FlowId);
+            if (purchaseFlow != null && purchaseFlow.CompId != compId)
+            {
+                return BadRequest(CommonResponse<dynamic>.BuildNotAuthorizeResponse());
+            }
+            if (purchaseFlow != null && purchaseFlow.VerifyUserId != verifier.UserId )
+            {
+                return BadRequest(CommonResponse<dynamic>.BuildNotAuthorizeResponse());
+            }
+            if (purchaseFlow != null && !purchaseFlow.Answer.IsNullOrEmpty())
+            {
+                return BadRequest(new CommonResponse<dynamic>(){
+                    Result = false,
+                    Message = "不能重複審核"
+                });
+            }
+
+            if (purchaseFlow == null)
+            {
+                return BadRequest(new CommonResponse<dynamic>()
+                {
+                    Result =false,
+                    Message = "審核流程不存在"
+                });
+            }
+
+
+            var result = _purchaseService.AnswerFlow(purchaseFlow, memberAndPermissionSetting,request.Answer,request.Reason);
+
+
+            var response = new CommonResponse<dynamic>
+            {
+                Result = result,
+                Data = null
             };
             return Ok(response);
         }
@@ -218,6 +281,7 @@ namespace stock_api.Controllers
                 var items = _mapper.Map<List<PurchaseSubItemVo>>(matchedSubItems);
                 var matchedFlows = purchaseFlows.Where(f=>f.PurchaseMainId==m.PurchaseMainId).OrderBy(f => f.Sequence).ToList();
                 var matchedFlowLogs = purchaseFlowLogs.Where(l => l.PurchaseMainId == m.PurchaseMainId).OrderBy(l => l.UpdatedAt).ToList();
+
 
                 purchaseMainAndSubItemVo.Items = items;
                 purchaseMainAndSubItemVo.flows = matchedFlows;
