@@ -292,7 +292,6 @@ namespace stock_api.Service
                 // 更新Flow
                 currentFlow.Reason = reason;
                 // TODO
-                //flow.Status
                 currentFlow.VerifyCompId = verifyCompId;
                 currentFlow.VerifyUserId = verifyMember.UserId;
                 currentFlow.VerifyUserName = verifyMember.DisplayName;
@@ -302,18 +301,23 @@ namespace stock_api.Service
                 // 更新主單狀態
                 if (answer==CommonConstants.AnswerPurchaseFlow.AGREE&&nextPurchase == null)
                 {
+                    currentFlow.Status = answer;
                     // 已完成所有flow 更新主單狀態
                     purchaseMain.CurrentStatus = CommonConstants.PurchaseApplyStatus.AGREE;
                 }
                 if (answer == CommonConstants.AnswerPurchaseFlow.REJECT )
                 {
+                    currentFlow.Status = answer;
                     purchaseMain.CurrentStatus = CommonConstants.PurchaseApplyStatus.REJECT;
                 }
                 if (answer == CommonConstants.AnswerPurchaseFlow.BACK)
                 {
+                    currentFlow.Status = answer;
+
                     currentFlow.Answer = "";
                     if (preFlow != null)
                     {
+                        preFlow.Status = "";
                         preFlow.Answer = "";
                     }
                 }
