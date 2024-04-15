@@ -16,6 +16,7 @@ using stock_api.Service.ValueObject;
 using stock_api.Utils;
 using System;
 using System.Linq;
+using System.Runtime.InteropServices;
 
 namespace stock_api.Controllers
 {
@@ -147,6 +148,23 @@ namespace stock_api.Controllers
                 return BadRequest(CommonResponse<dynamic>.BuildValidationFailedResponse(validationResult));
             }
             var data = _purchaseService.ListPurchase(request);
+            var distinctProductIdList = data
+            .SelectMany(item => item.Items) 
+            .Select(item => item.ProductId) 
+            .Distinct() 
+            .ToList();
+            var products = _warehouseProductService.GetProductsByProductIdsAndCompId(distinctProductIdList, compId);
+
+            foreach(var vo in data)
+            {
+                foreach (var item in vo.Items)
+                {
+                    var matchedProduct = products.Where(p=>p.ProductId==item.ProductId).FirstOrDefault();
+                    item.MaxSafeQuantity = matchedProduct?.MaxSafeQuantity;
+                }
+            }
+
+
             var response = new CommonResponse<dynamic>
             {
                 Result = true,
@@ -289,7 +307,6 @@ namespace stock_api.Controllers
                 {
                     var matchedProduct = products.Where(p => p.ProductId == item.ProductId).FirstOrDefault();
                     item.MaxSafeQuantity = matchedProduct?.MaxSafeQuantity;
-
                 });
 
                 purchaseMainAndSubItemVo.Items = items;
