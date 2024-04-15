@@ -204,6 +204,15 @@ namespace stock_api.Controllers
             purchaseAndSubItemVo.flows = purchaseFlows;
             purchaseAndSubItemVo.flowLogs = purchaseFlowLogs;
 
+            var distinctProductIdList = purchaseSubItems.Select(s => s.ProductId).Distinct().ToList();
+            var products = _warehouseProductService.GetProductsByProductIdsAndCompId(distinctProductIdList, compId);
+            purchaseSubItemVoList.ForEach(item =>
+            {
+                var matchedProduct = products.Where(p => p.ProductId == item.ProductId).FirstOrDefault();
+                item.MaxSafeQuantity = matchedProduct?.MaxSafeQuantity;
+            });
+
+
             purchaseFlows.ForEach(f =>
             {
                 if (f.VerifyUserId == memberAndPermissionSetting.Member.UserId)
