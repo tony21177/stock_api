@@ -291,7 +291,6 @@ namespace stock_api.Service
             {
                 // 更新Flow
                 currentFlow.Reason = reason;
-                // TODO
                 currentFlow.VerifyCompId = verifyCompId;
                 currentFlow.VerifyUserId = verifyMember.UserId;
                 currentFlow.VerifyUserName = verifyMember.DisplayName;

@@ -271,6 +271,9 @@ namespace stock_api.Controllers
             var purchaseFlows = _purchaseService.GetPurchaseFlowsByMainIdList(distinctMainIdList);
             var purchaseFlowLogs = _purchaseService.GetPurchaseFlowLogsByMainIdList(distinctMainIdList);
 
+            var distinctProductIdList = purchaseSubItems.Select(s=>s.ProductId).Distinct().ToList();
+            var products = _warehouseProductService.GetProductsByProductIdsAndCompId(distinctProductIdList, compId);
+
             List <PurchaseMainAndSubItemVo> purchaseMainAndSubItemVoList = new List<PurchaseMainAndSubItemVo>();
 
             purchaseMainList.ForEach(m =>
@@ -282,6 +285,12 @@ namespace stock_api.Controllers
                 var matchedFlows = purchaseFlows.Where(f=>f.PurchaseMainId==m.PurchaseMainId).OrderBy(f => f.Sequence).ToList();
                 var matchedFlowLogs = purchaseFlowLogs.Where(l => l.PurchaseMainId == m.PurchaseMainId).OrderBy(l => l.UpdatedAt).ToList();
 
+                items.ForEach(item =>
+                {
+                    var matchedProduct = products.Where(p => p.ProductId == item.ProductId).FirstOrDefault();
+                    item.MaxSafeQuantity = matchedProduct?.MaxSafeQuantity;
+
+                });
 
                 purchaseMainAndSubItemVo.Items = items;
                 purchaseMainAndSubItemVo.flows = matchedFlows;

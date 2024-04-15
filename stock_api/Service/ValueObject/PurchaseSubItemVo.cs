@@ -23,5 +23,7 @@ namespace stock_api.Service.ValueObject
         public int? CurrentInStockQuantity { get; set; }
         public DateTime CreatedAt { get; set; }
         public DateTime UpdatedAt { get; set; }
+
+        public int? MaxSafeQuantity { get; set; }
     }
 }
