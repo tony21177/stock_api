@@ -24,7 +24,7 @@ namespace stock_api.Service
             return _dbContext.PurchaseFlowSettings.Where(pfs => pfs.Sequence == seq && pfs.CompId == compId).ToList().Count > 0;
         }
 
-        public PurchaseFlowSetting? GetPurchaseFlowSettingByFlowId(string flowId)
+        public PurchaseFlowSettingVo? GetPurchaseFlowSettingVoByFlowId(string flowId)
         {
             var result = from pfs in _dbContext.PurchaseFlowSettings
                          join member in _dbContext.WarehouseMembers
@@ -44,6 +44,11 @@ namespace stock_api.Service
                          };
 
             return result.FirstOrDefault();
+        }
+
+        public PurchaseFlowSetting? GetPurchaseFlowSettingByFlowId(string flowId)
+        {
+            return _dbContext.PurchaseFlowSettings.Where(s => s.FlowId == flowId).FirstOrDefault();
         }
 
         public void AddPurchaseFlowSetting(PurchaseFlowSetting newPurchaseFlowSetting)

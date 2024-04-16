@@ -70,6 +70,7 @@ namespace stock_api.Controllers
             var memberAndPermissionSetting = _authHelpers.GetMemberAndPermissionSetting(User);
             var compId = memberAndPermissionSetting.CompanyWithUnit.CompId;
             var flowId = updateRequest.FlowId;
+            // TODO
             var existingPurchaseFlowSetting =_purchaseFlowSettingService.GetPurchaseFlowSettingByFlowId(flowId);
             if (existingPurchaseFlowSetting==null)
             {
@@ -123,7 +124,7 @@ namespace stock_api.Controllers
         {
             var memberAndPermissionSetting = _authHelpers.GetMemberAndPermissionSetting(User);
             var compId = memberAndPermissionSetting.CompanyWithUnit.CompId;
-            var data = _purchaseFlowSettingService.GetPurchaseFlowSettingByFlowId(flowId);
+            var data = _purchaseFlowSettingService.GetPurchaseFlowSettingVoByFlowId(flowId);
             if (data != null&&data.CompId!=compId)
             {
                 return BadRequest(CommonResponse<dynamic>.BuildNotAuthorizeResponse());
