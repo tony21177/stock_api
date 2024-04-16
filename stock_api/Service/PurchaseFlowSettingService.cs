@@ -21,7 +21,7 @@ namespace stock_api.Service
 
         public bool IsSequenceExist(int seq,string compId)
         {
-            return _dbContext.PurchaseFlowSettings.Where(pfs => pfs.Sequence == seq && pfs.CompId == compId).ToList().Count > 0;
+            return _dbContext.PurchaseFlowSettings.Where(pfs => pfs.Sequence == seq && pfs.CompId == compId&&pfs.IsActive==true).ToList().Count > 0;
         }
 
         public PurchaseFlowSettingVo? GetPurchaseFlowSettingVoByFlowId(string flowId)
