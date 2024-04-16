@@ -153,7 +153,7 @@ namespace stock_api.Controllers
             .Select(item => item.ProductId) 
             .Distinct() 
             .ToList();
-            var products = _warehouseProductService.GetProductsByProductIdsAndCompId(distinctProductIdList, compId);
+            var products = _warehouseProductService.GetProductsByProductIdsAndCompId(distinctProductIdList, request.CompId);
 
             foreach(var vo in data)
             {
@@ -161,12 +161,9 @@ namespace stock_api.Controllers
                 {
                     var matchedProduct = products.Where(p=>p.ProductId==item.ProductId).FirstOrDefault();
                     item.MaxSafeQuantity = matchedProduct?.MaxSafeQuantity;
-                    item.ProductModel = matchedProduct?.ProductModel;
-                    item.ManufacturerName = matchedProduct?.ManufacturerName;
-                    item.ProductMachine = matchedProduct?.ProductMachine;
                 }
             }
-
+            data = data.OrderByDescending(item=>item.ApplyDate).ToList();
 
             var response = new CommonResponse<dynamic>
             {
@@ -208,14 +205,11 @@ namespace stock_api.Controllers
             purchaseAndSubItemVo.flowLogs = purchaseFlowLogs;
 
             var distinctProductIdList = purchaseSubItems.Select(s => s.ProductId).Distinct().ToList();
-            var products = _warehouseProductService.GetProductsByProductIdsAndCompId(distinctProductIdList, compId);
+            var products = _warehouseProductService.GetProductsByProductIdsAndCompId(distinctProductIdList, purchaseMain.CompId);
             purchaseSubItemVoList.ForEach(item =>
             {
                 var matchedProduct = products.Where(p => p.ProductId == item.ProductId).FirstOrDefault();
                 item.MaxSafeQuantity = matchedProduct?.MaxSafeQuantity;
-                item.ProductModel = matchedProduct?.ProductModel;
-                item.ManufacturerName = matchedProduct?.ManufacturerName;
-                item.ProductMachine = matchedProduct?.ProductMachine;
             });
 
 
@@ -322,9 +316,6 @@ namespace stock_api.Controllers
                 {
                     var matchedProduct = products.Where(p => p.ProductId == item.ProductId).FirstOrDefault();
                     item.MaxSafeQuantity = matchedProduct?.MaxSafeQuantity;
-                    item.ProductModel = matchedProduct?.ProductModel;
-                    item.ManufacturerName = matchedProduct?.ManufacturerName;
-                    item.ProductMachine = matchedProduct?.ProductMachine;
                 });
 
                 purchaseMainAndSubItemVo.Items = items;

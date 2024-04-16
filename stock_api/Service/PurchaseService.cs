@@ -303,6 +303,9 @@ namespace stock_api.Service
                     currentFlow.Status = answer;
                     // 已完成所有flow 更新主單狀態
                     purchaseMain.CurrentStatus = CommonConstants.PurchaseApplyStatus.AGREE;
+                    List<AcceptanceItem> acceptanceItems = new List<AcceptanceItem>();
+
+
                 }
                 if (answer == CommonConstants.AnswerPurchaseFlow.REJECT )
                 {
