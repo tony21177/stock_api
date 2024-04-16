@@ -25,8 +25,8 @@ namespace stock_api.Service.ValueObject
         public DateTime UpdatedAt { get; set; }
 
         public int? MaxSafeQuantity { get; set; }
-        public string ProductModel { get; set; } 
-        public string ManufacturerName { get; set; }
-        public string ProductMachine { get; set; }
+        // public string ProductModel { get; set; } 
+        // public string ManufacturerName { get; set; }
+        // public string ProductMachine { get; set; }
     }
 }
