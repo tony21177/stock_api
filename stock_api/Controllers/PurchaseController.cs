@@ -32,11 +32,13 @@ namespace stock_api.Controllers
         private readonly PurchaseService _purchaseService;
         private readonly WarehouseProductService _warehouseProductService;
         private readonly GroupService _groupService;
+        private readonly SupplierService _supplierService;
         private readonly IValidator<CreatePurchaseRequest> _createPurchaseValidator;
         private readonly IValidator<ListPurchaseRequest> _listPurchaseRequestValidator;
         private readonly IValidator<AnswerFlowRequest> _answerFlowRequestValidator;
+        
 
-        public PurchaseController(IMapper mapper, AuthHelpers authHelpers, PurchaseFlowSettingService purchaseFlowSettingService, MemberService memberService, CompanyService companyService, PurchaseService purchaseService, WarehouseProductService warehouseProductService,GroupService groupService)
+        public PurchaseController(IMapper mapper, AuthHelpers authHelpers, PurchaseFlowSettingService purchaseFlowSettingService, MemberService memberService, CompanyService companyService,SupplierService supplierService, PurchaseService purchaseService, WarehouseProductService warehouseProductService, GroupService groupService)
         {
             _mapper = mapper;
             _authHelpers = authHelpers;
@@ -46,6 +48,7 @@ namespace stock_api.Controllers
             _purchaseService = purchaseService;
             _warehouseProductService = warehouseProductService;
             _groupService = groupService;
+            _supplierService = supplierService;
             _createPurchaseValidator = new CreatePurchaseValidator(warehouseProductService, groupService);
             _listPurchaseRequestValidator = new ListPurchaseValidator(warehouseProductService, groupService);
             _answerFlowRequestValidator = new AnswerFlowValidator();
@@ -95,7 +98,7 @@ namespace stock_api.Controllers
             var purchaseSubItemList = new List<Models.PurchaseSubItem>();
             createRequest.PurchaseSubItems.ForEach(purchaseSubItem =>
             {
-                var matchedProduct = products.Where(p=>p.ProductId == purchaseSubItem.ProductId).First();
+                var matchedProduct = products.Where(p => p.ProductId == purchaseSubItem.ProductId).First();
 
                 var matchedGroups = groups
                 .Where(g => purchaseSubItem.GroupIds?.Contains(g.GroupId) ?? false)
@@ -119,7 +122,7 @@ namespace stock_api.Controllers
                 purchaseSubItemList.Add(newPurchaseSubItem);
             });
             List<PurchaseFlowSettingVo> purchaseFlowSettingList = _purchaseFlowSettingService.GetAllPurchaseFlowSettingsByCompId(createRequest.CompId);
-            var result = _purchaseService.CreatePurchase(newPurchaseMain, purchaseSubItemList, purchaseFlowSettingList.Where(s=>s.IsActive==true).ToList());
+            var result = _purchaseService.CreatePurchase(newPurchaseMain, purchaseSubItemList, purchaseFlowSettingList.Where(s => s.IsActive == true).ToList());
             var response = new CommonResponse<dynamic>
             {
                 Result = result,
@@ -136,7 +139,7 @@ namespace stock_api.Controllers
             var memberAndPermissionSetting = _authHelpers.GetMemberAndPermissionSetting(User);
             var compId = memberAndPermissionSetting.CompanyWithUnit.CompId;
 
-            if(request.CompId==null) request.CompId = compId;
+            if (request.CompId == null) request.CompId = compId;
             if (request.CompId != null && request.CompId != compId && memberAndPermissionSetting.CompanyWithUnit.Type != CommonConstants.CompanyType.OWNER)
             {
                 return BadRequest(CommonResponse<dynamic>.BuildNotAuthorizeResponse());
@@ -149,21 +152,21 @@ namespace stock_api.Controllers
             }
             var data = _purchaseService.ListPurchase(request);
             var distinctProductIdList = data
-            .SelectMany(item => item.Items) 
-            .Select(item => item.ProductId) 
-            .Distinct() 
+            .SelectMany(item => item.Items)
+            .Select(item => item.ProductId)
+            .Distinct()
             .ToList();
             var products = _warehouseProductService.GetProductsByProductIdsAndCompId(distinctProductIdList, request.CompId);
 
-            foreach(var vo in data)
+            foreach (var vo in data)
             {
                 foreach (var item in vo.Items)
                 {
-                    var matchedProduct = products.Where(p=>p.ProductId==item.ProductId).FirstOrDefault();
+                    var matchedProduct = products.Where(p => p.ProductId == item.ProductId).FirstOrDefault();
                     item.MaxSafeQuantity = matchedProduct?.MaxSafeQuantity;
                 }
             }
-            data = data.OrderByDescending(item=>item.ApplyDate).ToList();
+            data = data.OrderByDescending(item => item.ApplyDate).ToList();
 
             var response = new CommonResponse<dynamic>
             {
@@ -196,7 +199,7 @@ namespace stock_api.Controllers
             }
 
             List<PurchaseSubItem> purchaseSubItems = _purchaseService.GetPurchaseSubItemsByMainId(purchaseMainId);
-            List<PurchaseFlow> purchaseFlows = _purchaseService.GetPurchaseFlowsByMainId(purchaseMainId).OrderBy(f=>f.Sequence).ToList();
+            List<PurchaseFlow> purchaseFlows = _purchaseService.GetPurchaseFlowsByMainId(purchaseMainId).OrderBy(f => f.Sequence).ToList();
             List<PurchaseFlowLog> purchaseFlowLogs = _purchaseService.GetPurchaseFlowLogsByMainId(purchaseMainId).OrderBy(fl => fl.UpdatedAt).ToList();
             var purchaseAndSubItemVo = _mapper.Map<PurchaseMainAndSubItemVo>(purchaseMain);
             var purchaseSubItemVoList = _mapper.Map<List<PurchaseSubItemVo>>(purchaseSubItems);
@@ -248,13 +251,13 @@ namespace stock_api.Controllers
             {
                 return BadRequest(CommonResponse<dynamic>.BuildNotAuthorizeResponse());
             }
-            if (purchaseFlow != null && purchaseFlow.VerifyUserId != verifier.UserId )
+            if (purchaseFlow != null && purchaseFlow.VerifyUserId != verifier.UserId)
             {
                 return BadRequest(CommonResponse<dynamic>.BuildNotAuthorizeResponse());
             }
             if (purchaseFlow != null && !purchaseFlow.Answer.IsNullOrEmpty())
             {
-                return BadRequest(new CommonResponse<dynamic>(){
+                return BadRequest(new CommonResponse<dynamic>() {
                     Result = false,
                     Message = "不能重複審核"
                 });
@@ -264,13 +267,13 @@ namespace stock_api.Controllers
             {
                 return BadRequest(new CommonResponse<dynamic>()
                 {
-                    Result =false,
+                    Result = false,
                     Message = "審核流程不存在"
                 });
             }
 
 
-            var result = _purchaseService.AnswerFlow(purchaseFlow, memberAndPermissionSetting,request.Answer,request.Reason);
+            var result = _purchaseService.AnswerFlow(purchaseFlow, memberAndPermissionSetting, request.Answer, request.Reason);
 
 
             var response = new CommonResponse<dynamic>
@@ -290,26 +293,26 @@ namespace stock_api.Controllers
 
 
             var purchaseFlowsSignedByMe = _purchaseService.GetFlowsByUserId(memberAndPermissionSetting.Member.UserId);
-            
 
-            var distinctMainIdList = purchaseFlowsSignedByMe.Select(f=>f.PurchaseMainId).Distinct().ToList();
-            var purchaseMainList = _purchaseService.GetPurchaseMainsByMainIdList(distinctMainIdList).OrderByDescending(m=>m.UpdatedAt).ToList();
+
+            var distinctMainIdList = purchaseFlowsSignedByMe.Select(f => f.PurchaseMainId).Distinct().ToList();
+            var purchaseMainList = _purchaseService.GetPurchaseMainsByMainIdList(distinctMainIdList).OrderByDescending(m => m.UpdatedAt).ToList();
             var purchaseSubItems = _purchaseService.GetPurchaseSubItemsByMainIdList(distinctMainIdList);
             var purchaseFlows = _purchaseService.GetPurchaseFlowsByMainIdList(distinctMainIdList);
             var purchaseFlowLogs = _purchaseService.GetPurchaseFlowLogsByMainIdList(distinctMainIdList);
 
-            var distinctProductIdList = purchaseSubItems.Select(s=>s.ProductId).Distinct().ToList();
+            var distinctProductIdList = purchaseSubItems.Select(s => s.ProductId).Distinct().ToList();
             var products = _warehouseProductService.GetProductsByProductIdsAndCompId(distinctProductIdList, compId);
 
-            List <PurchaseMainAndSubItemVo> purchaseMainAndSubItemVoList = new List<PurchaseMainAndSubItemVo>();
+            List<PurchaseMainAndSubItemVo> purchaseMainAndSubItemVoList = new List<PurchaseMainAndSubItemVo>();
 
             purchaseMainList.ForEach(m =>
             {
                 var purchaseMainAndSubItemVo = _mapper.Map<PurchaseMainAndSubItemVo>(m);
 
-                var matchedSubItems = purchaseSubItems.Where(s=>s.PurchaseMainId==m.PurchaseMainId).OrderBy(s=>s.UpdatedAt).ToList() ;
+                var matchedSubItems = purchaseSubItems.Where(s => s.PurchaseMainId == m.PurchaseMainId).OrderBy(s => s.UpdatedAt).ToList();
                 var items = _mapper.Map<List<PurchaseSubItemVo>>(matchedSubItems);
-                var matchedFlows = purchaseFlows.Where(f=>f.PurchaseMainId==m.PurchaseMainId).OrderBy(f => f.Sequence).ToList();
+                var matchedFlows = purchaseFlows.Where(f => f.PurchaseMainId == m.PurchaseMainId).OrderBy(f => f.Sequence).ToList();
                 var matchedFlowLogs = purchaseFlowLogs.Where(l => l.PurchaseMainId == m.PurchaseMainId).OrderBy(l => l.UpdatedAt).ToList();
 
                 items.ForEach(item =>
@@ -333,5 +336,61 @@ namespace stock_api.Controllers
             };
             return Ok(response);
         }
-    }
+
+        [HttpPost("updateItemSupplier")]
+        [Authorize]
+        public IActionResult ChangeItemsSupplier(UpdatePurchaseItemSupplierRequest request)
+        {
+            var memberAndPermissionSetting = _authHelpers.GetMemberAndPermissionSetting(User);
+            var compId = memberAndPermissionSetting.CompanyWithUnit.CompId;
+
+            if (memberAndPermissionSetting.CompanyWithUnit.Type != CommonConstants.CompanyType.OWNER)
+            {
+                return BadRequest(CommonResponse<dynamic>.BuildNotAuthorizeResponse());
+            }
+            var subItemIdList = request.UpdateItems.Select(i=>i.ItemId).ToList();
+
+            var subItems = _purchaseService.GetPurchaseSubItemListByItemList(subItemIdList);
+            var distinctMainIds = subItems.Select(s => s.PurchaseMainId).Distinct().ToList();
+            if (distinctMainIds.Count > 1)
+            {
+                return BadRequest(new CommonResponse<dynamic>
+                {
+                    Result = false,
+                    Message = "只能更新同一個主採購單內的品項,不可跨採購單更新"
+                });
+            }
+            var purchaseMain = _purchaseService.GetPurchaseMainByMainId(distinctMainIds[0]);
+            if (purchaseMain == null)
+            {
+                return BadRequest(new CommonResponse<dynamic>
+                {
+                    Result = false,
+                    Message = "沒有對應的採購單"
+                });
+            }
+            var suppliers = _supplierService.GetSuppliersByIdList(request.UpdateItems.Select(i=>i.ArrangeSupplierId).ToList());
+            foreach(var  item in request.UpdateItems){
+                if (!suppliers.Select(s => s.Id).ToList().Contains(item.ArrangeSupplierId))
+                {
+                    return BadRequest(new CommonResponse<dynamic>
+                    {
+                        Result = false,
+                        Message = $"此{item.ArrangeSupplierId}不存在"
+                    }); 
+                }
+            }
+
+            var productIdList = subItems.Select(i => i.ProductId).ToList();
+            var products = _warehouseProductService.GetProductsByProductIdsAndCompId(productIdList, purchaseMain.CompId);
+
+            var result = _purchaseService.UpdateItemsSupplier(request, subItems, products, suppliers);
+
+            var response = new CommonResponse<dynamic>
+            {
+                Result = result,
+            };
+            return Ok(response);
+        }
+    } 
 }

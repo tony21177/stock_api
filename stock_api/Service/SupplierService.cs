@@ -43,5 +43,10 @@ namespace stock_api.Service
         {
             return _dbContext.Suppliers.Where(s => s.Id==id).FirstOrDefault();
         }
+
+        public List<Supplier> GetSuppliersByIdList(List<int> supplierIdList)
+        {
+            return _dbContext.Suppliers.Where(s=>supplierIdList.Contains(s.Id)).ToList();
+        }
     }
 }

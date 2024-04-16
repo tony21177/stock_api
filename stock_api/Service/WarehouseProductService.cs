@@ -71,7 +71,6 @@ namespace stock_api.Service
                 || h.UdicreateCode.Contains(searchRequest.Keywords)
                 || h.UdiserialCode.Contains(searchRequest.Keywords)
                 || h.UdiverifyDateCode.Contains(searchRequest.Keywords)
-                || h.DefaultSupplierId.Contains(searchRequest.Keywords)
                 || h.DefaultSupplierName.Contains(searchRequest.Keywords));
             }
 

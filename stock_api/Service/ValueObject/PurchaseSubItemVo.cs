@@ -18,7 +18,7 @@ namespace stock_api.Service.ValueObject
         public List<string> GroupIds { get; set; }
         public List<string> GroupNames { get; set; }
         public string ProductCategory { get; set; }
-        public string ArrangeSupplierId { get; set; }
+        public int? ArrangeSupplierId { get; set; }
         public string ArrangeSupplierName { get; set; }
         public int? CurrentInStockQuantity { get; set; }
         public DateTime CreatedAt { get; set; }

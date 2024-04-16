@@ -98,8 +98,7 @@ public partial class PurchaseSubItem
     /// <summary>
     /// 這部分是由得標廠商（金萬林），在收到這張單子的品項後，可以指派該品項的供應商，再進行拆單
     /// </summary>
-    [StringLength(100)]
-    public string ArrangeSupplierId { get; set; }
+    public int? ArrangeSupplierId { get; set; }
 
     /// <summary>
     /// 這部分是由得標廠商（金萬林），在收到這張單子的品項後，可以指派該品項的供應商，再進行拆單

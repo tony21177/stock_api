@@ -241,8 +241,7 @@ public partial class WarehouseProduct
     /// 預設供應商
     /// </summary>
     [Column("DefaultSupplierID")]
-    [StringLength(200)]
-    public string DefaultSupplierId { get; set; }
+    public int? DefaultSupplierId { get; set; }
 
     /// <summary>
     /// 預設供應商名稱
