@@ -272,7 +272,7 @@ namespace stock_api.Service
             PurchaseMainSheet purchaseMain = GetPurchaseMainByMainId(purchaseMainId);
             List<PurchaseSubItem> purchaseSubItems = GetPurchaseSubItemsByMainId(purchaseMainId);
             var (preFlow, nextFlow) = FindPreviousAndNextFlow(flow);
-            return AnswerFlowInTransactionScope(preFlow, nextFlow, flow, purchaseMain, verifierMemberAndPermission, answer, reason);
+            return AnswerFlowInTransactionScope(preFlow, nextFlow, flow, purchaseMain, purchaseSubItems, verifierMemberAndPermission, answer, reason);
         }
 
         public (PurchaseFlow?, PurchaseFlow?) FindPreviousAndNextFlow(PurchaseFlow flow)
@@ -282,7 +282,7 @@ namespace stock_api.Service
             return (purchaseFlows.FirstOrDefault(f => f.Sequence < flow.Sequence), purchaseFlows.FirstOrDefault(f => f.Sequence > flow.Sequence));
         }
 
-        private bool AnswerFlowInTransactionScope(PurchaseFlow? preFlow, PurchaseFlow? nextPurchase, PurchaseFlow currentFlow, PurchaseMainSheet purchaseMain, MemberAndPermissionSetting verifierMemberAndPermission, string answer, string? reason)
+        private bool AnswerFlowInTransactionScope(PurchaseFlow? preFlow, PurchaseFlow? nextPurchase, PurchaseFlow currentFlow, PurchaseMainSheet purchaseMain,List<PurchaseSubItem> purchaseSubItems, MemberAndPermissionSetting verifierMemberAndPermission, string answer, string? reason)
         {
             WarehouseMember verifyMember = verifierMemberAndPermission.Member;
             var verifyCompId = verifierMemberAndPermission.CompanyWithUnit.CompId;
@@ -304,7 +304,23 @@ namespace stock_api.Service
                     // 已完成所有flow 更新主單狀態
                     purchaseMain.CurrentStatus = CommonConstants.PurchaseApplyStatus.AGREE;
                     List<AcceptanceItem> acceptanceItems = new List<AcceptanceItem>();
+                    foreach (var item in purchaseSubItems)
+                    {
+                        var acceptanceItem = new AcceptanceItem()
+                        {
+                            AcceptId = Guid.NewGuid().ToString(),
+                            CompId = item.CompId,
+                            ItemId = item.ItemId,
+                            OrderQuantity = item.Quantity??0,
+                            ProductId = item.ProductId,
+                            ProductName = item.ProductName,
+                            ProductSpec = item.ProductSpec,
+                            PurchaseMainId = purchaseMain.PurchaseMainId,
 
+                        };
+                        acceptanceItems.Add(acceptanceItem);
+                    }
+                    _dbContext.AcceptanceItems.AddRange(acceptanceItems);
 
                 }
                 if (answer == CommonConstants.AnswerPurchaseFlow.REJECT)

@@ -21,12 +21,11 @@ public partial class AcceptanceItem
     /// <summary>
     /// 驗收接受數量，不可大於 OrderQuantity
     /// </summary>
-    public int AcceptQuantity { get; set; }
+    public int? AcceptQuantity { get; set; }
 
     /// <summary>
     /// 驗收允收者的UserID
     /// </summary>
-    [Required]
     [Column("AcceptUserID")]
     [StringLength(100)]
     public string AcceptUserId { get; set; }
@@ -34,14 +33,12 @@ public partial class AcceptanceItem
     /// <summary>
     /// 批次
     /// </summary>
-    [Required]
     [StringLength(100)]
     public string LotNumberBatch { get; set; }
 
     /// <summary>
     /// 批號
     /// </summary>
-    [Required]
     [StringLength(100)]
     public string LotNumber { get; set; }
 
@@ -55,7 +52,7 @@ public partial class AcceptanceItem
     /// <summary>
     /// 保存期限
     /// </summary>
-    public DateOnly ExpirationDate { get; set; }
+    public DateOnly? ExpirationDate { get; set; }
 
     /// <summary>
     /// 對應 PurchaseSubItem 的 PK
@@ -118,7 +115,7 @@ public partial class AcceptanceItem
     /// <summary>
     /// 驗收入庫後，當下該品項的總庫存數量
     /// </summary>
-    public int CurrentTotalQuantity { get; set; }
+    public int? CurrentTotalQuantity { get; set; }
 
     /// <summary>
     /// 初驗驗收填寫相關原因
