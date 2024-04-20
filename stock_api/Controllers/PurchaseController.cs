@@ -179,6 +179,48 @@ namespace stock_api.Controllers
             return Ok(response);
         }
 
+        [HttpGet("owner/list")]
+        [Authorize]
+        public IActionResult OwnerListPurchases()
+        {
+            var memberAndPermissionSetting = _authHelpers.GetMemberAndPermissionSetting(User);
+            var compId = memberAndPermissionSetting.CompanyWithUnit.CompId;
+
+            if (memberAndPermissionSetting.CompanyWithUnit.Type != CommonConstants.CompanyType.OWNER)
+            {
+                return BadRequest(CommonResponse<dynamic>.BuildNotAuthorizeResponse());
+            }
+            ListPurchaseRequest request = new ListPurchaseRequest { CurrentStatus = CommonConstants.PurchaseFlowAnswer.AGREE,ReceiveStatus= CommonConstants.PurchaseReceiveStatus.NONE };
+
+            var data = _purchaseService.ListPurchase(request);
+            var distinctProductIdList = data
+            .SelectMany(item => item.Items)
+            .Select(item => item.ProductId)
+            .Distinct()
+            .ToList();
+            var products = _warehouseProductService.GetCommonProductsByProductIds(distinctProductIdList);
+
+            foreach (var vo in data)
+            {
+                foreach (var item in vo.Items)
+                {
+                    var matchedProduct = products.Where(p => p.ProductId == item.ProductId).FirstOrDefault();
+                    item.MaxSafeQuantity = matchedProduct?.MaxSafeQuantity;
+                    item.ProductModel = matchedProduct?.ProductModel;
+                    item.ManufacturerName = matchedProduct?.ManufacturerName;
+                    item.ProductMachine = matchedProduct?.ProductMachine;
+                }
+            }
+            data = data.OrderByDescending(item => item.ApplyDate).ToList();
+
+            var response = new CommonResponse<dynamic>
+            {
+                Result = true,
+                Data = data
+            };
+            return Ok(response);
+        }
+
 
         [HttpGet("detail/{purchaseMainId}")]
         [Authorize]
