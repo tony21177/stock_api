@@ -53,6 +53,10 @@ public partial class PurchaseSubItem
     [StringLength(300)]
     public string ProductSpec { get; set; }
 
+    [Column("UDISerialCode")]
+    [StringLength(300)]
+    public string UdiserialCode { get; set; }
+
     /// <summary>
     /// PurchaseMainSheet PK
     /// </summary>

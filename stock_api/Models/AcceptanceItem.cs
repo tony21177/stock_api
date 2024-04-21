@@ -95,6 +95,10 @@ public partial class AcceptanceItem
     [StringLength(300)]
     public string ProductSpec { get; set; }
 
+    [Column("UDISerialCode")]
+    [StringLength(300)]
+    public string UdiserialCode { get; set; }
+
     /// <summary>
     /// PurchaseMainSheet 的 PK
     /// </summary>

@@ -114,6 +114,7 @@ namespace stock_api.Controllers
                     ProductName = matchedProduct.ProductName,
                     ProductCategory = matchedProduct.ProductCategory,
                     ProductSpec = matchedProduct.ProductSpec,
+                    UdiserialCode = matchedProduct.UdiserialCode,
                     Quantity = purchaseSubItem.Quantity,
                     GroupIds = string.Join(",", matchedGroups.Select(g => g.GroupId).ToList()),
                     GroupNames = string.Join(",", matchedGroups.Select(g => g.GroupName).ToList()),

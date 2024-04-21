@@ -303,7 +303,7 @@ namespace stock_api.Service
                     currentFlow.Status = answer;
                     // 已完成所有flow 更新主單狀態
                     purchaseMain.CurrentStatus = CommonConstants.PurchaseApplyStatus.AGREE;
-                    List<AcceptanceItem> acceptanceItems = new List<AcceptanceItem>();
+                    List<AcceptanceItem> acceptanceItems = new();
                     foreach (var item in purchaseSubItems)
                     {
                         var acceptanceItem = new AcceptanceItem()
@@ -315,6 +315,7 @@ namespace stock_api.Service
                             ProductId = item.ProductId,
                             ProductName = item.ProductName,
                             ProductSpec = item.ProductSpec,
+                            UdiserialCode = item.UdiserialCode,
                             PurchaseMainId = purchaseMain.PurchaseMainId,
 
                         };
