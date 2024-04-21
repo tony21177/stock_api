@@ -28,5 +28,6 @@ namespace stock_api.Service.ValueObject
         public string ProductModel { get; set; } 
         public string ManufacturerName { get; set; }
         public string ProductMachine { get; set; }
+        public string ProductUnit { get; set; }
     }
 }

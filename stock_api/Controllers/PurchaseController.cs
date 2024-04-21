@@ -261,6 +261,7 @@ namespace stock_api.Controllers
                 item.ProductModel = matchedProduct?.ProductModel;
                 item.ManufacturerName = matchedProduct?.ManufacturerName;
                 item.ProductMachine = matchedProduct?.ProductMachine;
+                item.ProductUnit = matchedProduct?.Unit;
             });
 
 
