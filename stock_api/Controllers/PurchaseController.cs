@@ -74,6 +74,16 @@ namespace stock_api.Controllers
                 return BadRequest(CommonResponse<dynamic>.BuildValidationFailedResponse(validationResult));
             }
 
+            List<PurchaseFlowSettingVo> purchaseFlowSettingList = _purchaseFlowSettingService.GetAllPurchaseFlowSettingsByCompId(createRequest.CompId).Where(s => s.IsActive == true).ToList();
+            if (purchaseFlowSettingList.Count == 0)
+            {
+                return BadRequest(new CommonResponse<dynamic>
+                {
+                    Result = false,
+                    Message = "尚未建立採購審核流程關卡"
+                });
+            }
+
             var demandDateTime = DateTimeHelper.ParseDateString(createRequest.DemandDate);
 
             var newPurchaseMain = new PurchaseMainSheet()
@@ -122,7 +132,6 @@ namespace stock_api.Controllers
                 };
                 purchaseSubItemList.Add(newPurchaseSubItem);
             });
-            List<PurchaseFlowSettingVo> purchaseFlowSettingList = _purchaseFlowSettingService.GetAllPurchaseFlowSettingsByCompId(createRequest.CompId);
             var result = _purchaseService.CreatePurchase(newPurchaseMain, purchaseSubItemList, purchaseFlowSettingList.Where(s => s.IsActive == true).ToList());
             var response = new CommonResponse<dynamic>
             {
