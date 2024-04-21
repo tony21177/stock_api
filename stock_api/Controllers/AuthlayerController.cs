@@ -6,6 +6,10 @@ using stock_api.Models;
 using stock_api.Service;
 using stock_api.Utils;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
+using FluentValidation;
+using stock_api.Controllers.Validator;
+using stock_api.Common.Constant;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
@@ -16,15 +20,19 @@ namespace stock_api.Controllers
     public class AuthlayerController : Controller
     {
         private readonly AuthLayerService _authLayerService;
+        private readonly CompanyService _companyService;
         private readonly IMapper _mapper;
         private readonly ILogger<AuthlayerController> _logger;
         private readonly AuthHelpers _authHelpers;
-        public AuthlayerController(AuthLayerService authLayerService, IMapper mapper, ILogger<AuthlayerController> logger, AuthHelpers authHelper)
+        private readonly IValidator<ResetAllAuthRequest> _resetAllAuthRequestValidator;
+        public AuthlayerController(AuthLayerService authLayerService,CompanyService companyService, IMapper mapper, ILogger<AuthlayerController> logger, AuthHelpers authHelper)
         {
             _authLayerService = authLayerService;
+            _companyService = companyService;
             _mapper = mapper;
             _logger = logger;
             _authHelpers = authHelper;
+            _resetAllAuthRequestValidator = new ResetAllAuthValidator(companyService);
         }
 
         [HttpGet("list")]
@@ -95,6 +103,36 @@ namespace stock_api.Controllers
             };
             return Ok(response);
         }
+
+        [HttpPost("owner/resetAll")]
+        [Authorize]
+        public IActionResult ResetAll(ResetAllAuthRequest request)
+        {
+            var memberAndPermissionSetting = _authHelpers.GetMemberAndPermissionSetting(User);
+            if (memberAndPermissionSetting.CompanyWithUnit.Type != CommonConstants.CompanyType.OWNER)
+            {
+                return BadRequest(CommonResponse<dynamic>.BuildNotAuthorizeResponse());
+            }
+
+            var validationResult = _resetAllAuthRequestValidator.Validate(request);
+
+            if (!validationResult.IsValid)
+            {
+                return BadRequest(CommonResponse<dynamic>.BuildValidationFailedResponse(validationResult));
+            }
+
+
+            var result = _authLayerService.ResetAllAuthLayer(request.CompId);
+
+            var response = new CommonResponse<WarehouseAuthlayer>()
+            {
+                Result = result,
+                Message = "",
+                Data = null
+            };
+            return Ok(response);
+        }
+
 
     }
 }
