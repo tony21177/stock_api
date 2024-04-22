@@ -125,5 +125,29 @@ namespace stock_api.Service
             return (query.ToList(), totalPages);
 
         }
+
+
+        public List<WarehouseProduct> ListNotEnoughProducts(ListNotEnoughProductsRequest request)
+        {
+            IQueryable<WarehouseProduct> query = _dbContext.WarehouseProducts;
+            if (request.GroupId != null)
+            {
+                query = query.Where(h => h.GroupIds.Contains(request.GroupId));
+            }
+
+            if (request.ProductMachine != null)
+            {
+                query = query.Where(h => h.ProductMachine==request.ProductMachine);
+            }
+
+            if (request.SupplierId != null)
+            {
+                query = query.Where(h => h.DefaultSupplierId == request.SupplierId);
+            }
+            query = query.Where(h => h.CompId == request.CompId);
+            query = query.Where(h => h.SafeQuantity.HasValue && h.InStockQuantity < h.SafeQuantity);
+            return query.ToList();
+
+        }
     }
 }

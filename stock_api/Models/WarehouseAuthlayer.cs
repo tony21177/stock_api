@@ -44,47 +44,56 @@ public partial class WarehouseAuthlayer
     /// <summary>
     /// 是否可以申請新增品項
     /// </summary>
-    public bool IsApplyItemManage { get; set; }
+    [Required]
+    public bool? IsApplyItemManage { get; set; }
 
     /// <summary>
     /// 是否可以進行群組管理
     /// </summary>
-    public bool IsGroupManage { get; set; }
+    [Required]
+    public bool? IsGroupManage { get; set; }
 
     /// <summary>
     /// 是否可以進行入庫作業
     /// </summary>
-    public bool IsInBoundManage { get; set; }
+    [Required]
+    public bool? IsInBoundManage { get; set; }
 
     /// <summary>
     /// 是否可以進行出庫作業
     /// </summary>
-    public bool IsOutBoundManage { get; set; }
+    [Required]
+    public bool? IsOutBoundManage { get; set; }
 
     /// <summary>
     /// 是否可以進行庫存管理
     /// </summary>
-    public bool IsInventoryManage { get; set; }
+    [Required]
+    public bool? IsInventoryManage { get; set; }
 
     /// <summary>
     /// 是否可以進行品項管理
     /// </summary>
-    public bool IsItemManage { get; set; }
+    [Required]
+    public bool? IsItemManage { get; set; }
 
     /// <summary>
     /// 是否可以進行成員管理
     /// </summary>
-    public bool IsMemberManage { get; set; }
+    [Required]
+    public bool? IsMemberManage { get; set; }
 
     /// <summary>
     /// 是否可以進行盤點
     /// </summary>
-    public bool IsRestockManage { get; set; }
+    [Required]
+    public bool? IsRestockManage { get; set; }
 
     /// <summary>
     /// 是否可以進行抽點
     /// </summary>
-    public bool IsVerifyManage { get; set; }
+    [Required]
+    public bool? IsVerifyManage { get; set; }
 
     /// <summary>
     /// 屬於庫存系統裡面的哪一個公司內所有\\n對應 -&gt; Company Table&quot;

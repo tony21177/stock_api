@@ -3,6 +3,7 @@ using FluentValidation;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
+using MySqlX.XDevAPI.Common;
 using Org.BouncyCastle.Asn1.Ocsp;
 using stock_api.Common;
 using stock_api.Common.Constant;
@@ -453,6 +454,23 @@ namespace stock_api.Controllers
                 Result = result,
             };
             return Ok(response);
+        }
+
+        [HttpPost("products/notEnoughQuantity")]
+        [Authorize]
+        public IActionResult ListNotEnoughProducts(ListNotEnoughProductsRequest request)
+        {
+            var memberAndPermissionSetting = _authHelpers.GetMemberAndPermissionSetting(User);
+            var compId = memberAndPermissionSetting.CompanyWithUnit.CompId;
+            request.CompId = compId;
+            var data = _warehouseProductService.ListNotEnoughProducts(request);
+            var response = new CommonResponse<dynamic>
+            {
+                Result = true,
+                Data = data,
+            };
+            return Ok(response);
+
         }
     } 
 }

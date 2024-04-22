@@ -67,15 +67,15 @@ namespace stock_api.Controllers
             if (authLayer == null) return null;
             PermissionSetting permissionSetting = new()
             {
-                IsApplyItemManage = authLayer.IsApplyItemManage,
-                IsGroupManage = authLayer.IsGroupManage,
-                IsInBoundManage = authLayer.IsInBoundManage,
-                IsInventoryManage = authLayer.IsInventoryManage,
-                IsItemManage = authLayer.IsItemManage,
-                IsMemberManage = authLayer.IsMemberManage,
-                IsOutBoundManage = authLayer.IsOutBoundManage,
-                IsRestockManage = authLayer.IsRestockManage,
-                IsVerifyManage = authLayer.IsVerifyManage,
+                IsApplyItemManage = authLayer.IsApplyItemManage.Value,
+                IsGroupManage = authLayer.IsGroupManage.Value,
+                IsInBoundManage = authLayer.IsInBoundManage.Value,
+                IsInventoryManage = authLayer.IsInventoryManage.Value,
+                IsItemManage = authLayer.IsItemManage.Value,
+                IsMemberManage = authLayer.IsMemberManage.Value,
+                IsOutBoundManage = authLayer.IsOutBoundManage.Value,
+                IsRestockManage = authLayer.IsRestockManage.Value,
+                IsVerifyManage = authLayer.IsVerifyManage.Value,
             };
 
 

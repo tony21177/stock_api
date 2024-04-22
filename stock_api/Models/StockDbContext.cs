@@ -544,15 +544,33 @@ public partial class StockDbContext : DbContext
             entity.Property(e => e.AuthValue).HasComment("權限值\n1: 得標廠商\n3: 最高層級\n5: 第一層級\n7: 第二層級\n9: 第三層級");
             entity.Property(e => e.CompId).HasComment("屬於庫存系統裡面的哪一個公司內所有\\\\n對應 -> Company Table\"");
             entity.Property(e => e.CreatedAt).HasDefaultValueSql("CURRENT_TIMESTAMP");
-            entity.Property(e => e.IsApplyItemManage).HasComment("是否可以申請新增品項");
-            entity.Property(e => e.IsGroupManage).HasComment("是否可以進行群組管理");
-            entity.Property(e => e.IsInBoundManage).HasComment("是否可以進行入庫作業");
-            entity.Property(e => e.IsInventoryManage).HasComment("是否可以進行庫存管理");
-            entity.Property(e => e.IsItemManage).HasComment("是否可以進行品項管理");
-            entity.Property(e => e.IsMemberManage).HasComment("是否可以進行成員管理");
-            entity.Property(e => e.IsOutBoundManage).HasComment("是否可以進行出庫作業");
-            entity.Property(e => e.IsRestockManage).HasComment("是否可以進行盤點");
-            entity.Property(e => e.IsVerifyManage).HasComment("是否可以進行抽點");
+            entity.Property(e => e.IsApplyItemManage)
+                .HasDefaultValueSql("'1'")
+                .HasComment("是否可以申請新增品項");
+            entity.Property(e => e.IsGroupManage)
+                .HasDefaultValueSql("'1'")
+                .HasComment("是否可以進行群組管理");
+            entity.Property(e => e.IsInBoundManage)
+                .HasDefaultValueSql("'1'")
+                .HasComment("是否可以進行入庫作業");
+            entity.Property(e => e.IsInventoryManage)
+                .HasDefaultValueSql("'1'")
+                .HasComment("是否可以進行庫存管理");
+            entity.Property(e => e.IsItemManage)
+                .HasDefaultValueSql("'1'")
+                .HasComment("是否可以進行品項管理");
+            entity.Property(e => e.IsMemberManage)
+                .HasDefaultValueSql("'1'")
+                .HasComment("是否可以進行成員管理");
+            entity.Property(e => e.IsOutBoundManage)
+                .HasDefaultValueSql("'1'")
+                .HasComment("是否可以進行出庫作業");
+            entity.Property(e => e.IsRestockManage)
+                .HasDefaultValueSql("'1'")
+                .HasComment("是否可以進行盤點");
+            entity.Property(e => e.IsVerifyManage)
+                .HasDefaultValueSql("'1'")
+                .HasComment("是否可以進行抽點");
             entity.Property(e => e.UpdatedAt)
                 .ValueGeneratedOnAddOrUpdate()
                 .HasDefaultValueSql("CURRENT_TIMESTAMP");
@@ -610,6 +628,9 @@ public partial class StockDbContext : DbContext
             entity.Property(e => e.DeadlineRule).HasComment("有效期限規範");
             entity.Property(e => e.DefaultSupplierId).HasComment("預設供應商");
             entity.Property(e => e.DefaultSupplierName).HasComment("預設供應商名稱");
+            entity.Property(e => e.Delievery)
+                .HasDefaultValueSql("'VENDOR'")
+                .HasComment("VENDOR:廠商直寄,\nOWNER:得標廠商(金萬林)供貨");
             entity.Property(e => e.DeliverFunction).HasComment("運送條件");
             entity.Property(e => e.DeliverRemarks).HasComment("運送備註");
             entity.Property(e => e.GroupIds).HasComment("屬於數個組別");
@@ -669,6 +690,9 @@ public partial class StockDbContext : DbContext
             entity.Property(e => e.DeadlineRule).HasComment("有效期限規範");
             entity.Property(e => e.DefaultSupplierId).HasComment("預設供應商");
             entity.Property(e => e.DefaultSupplierName).HasComment("預設供應商名稱");
+            entity.Property(e => e.Delievery)
+                .HasDefaultValueSql("'VENDOR'")
+                .HasComment("VENDOR:廠商直寄,\nOWNER:得標廠商(金萬林)供貨");
             entity.Property(e => e.DeliverFunction).HasComment("運送條件");
             entity.Property(e => e.DeliverRemarks).HasComment("運送備註");
             entity.Property(e => e.GroupIds).HasComment("屬於數個組別");

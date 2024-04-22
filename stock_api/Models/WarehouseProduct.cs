@@ -280,4 +280,11 @@ public partial class WarehouseProduct
 
     [StringLength(200)]
     public string StockLocation { get; set; }
+
+    /// <summary>
+    /// VENDOR:廠商直寄,
+    /// OWNER:得標廠商(金萬林)供貨
+    /// </summary>
+    [StringLength(200)]
+    public string Delievery { get; set; }
 }
