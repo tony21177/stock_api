@@ -173,7 +173,6 @@ namespace stock_api.Service
             updateProduct.AllowReceiveDateRange = existingProduct.AllowReceiveDateRange;
             updateProduct.TestCount = existingProduct.TestCount;
             updateProduct.UnitConversion = existingProduct.UnitConversion;
-            updateProduct.SafeQuantity = existingProduct.SafeQuantity;
             updateProduct.IsActive = existingProduct.IsActive;
             _mapper.Map(updateProduct, existingProduct);
             if (groups.Count > 0)
