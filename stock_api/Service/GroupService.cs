@@ -34,8 +34,9 @@ namespace stock_api.Service
             return _dbContext.WarehouseGroups.Where(wg=>wg.CompId == compId).ToList();
         }
 
-        public List<WarehouseGroup> GetGroupsByIdList(List<string> groupIdList)
+        public List<WarehouseGroup> GetGroupsByIdList(List<string>? groupIdList)
         {
+            if (groupIdList == null) return new();
             return _dbContext.WarehouseGroups.Where(wg => groupIdList.Contains(wg.GroupId)).ToList();
         }
 

@@ -27,6 +27,18 @@ namespace stock_api.Common.Utils
             return null;
         }
 
+        public static DateTime? ParseDateStringForDash(string? dateString)
+        {
+
+            if (DateTime.TryParseExact(dateString, "yyyy-M-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out DateTime result)
+        || DateTime.TryParseExact(dateString, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out result))
+            {
+                return result;
+            }
+            return null;
+        }
+
+
         public static DateTime? ParseDateTimeFromUnixTime(long? dateTime)
         {
             if (dateTime.HasValue)

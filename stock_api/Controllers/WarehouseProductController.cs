@@ -10,6 +10,7 @@ using stock_api.Models;
 using FluentValidation;
 using Org.BouncyCastle.Asn1.Ocsp;
 using stock_api.Controllers.Validator;
+using stock_api.Auth;
 
 namespace stock_api.Controllers
 {
@@ -22,21 +23,30 @@ namespace stock_api.Controllers
         private readonly CompanyService _companyService;
         private readonly GroupService _groupService;
         private readonly WarehouseProductService _warehouseProductService;
+        private readonly SupplierService _supplierService;
+        private readonly ManufacturerService _manufacturerService;
         private readonly IMapper _mapper;
         private readonly ILogger<AuthlayerController> _logger;
         private readonly AuthHelpers _authHelpers;
         private readonly IValidator<WarehouseProductSearchRequest> _searchProductRequestValidator;
+        private readonly IValidator<UpdateProductRequest> _updateProductValidator;
+        private readonly IValidator<AdminUpdateProductRequest> _adminUpdateProductValidator;
 
-        public WarehouseProductController(AuthLayerService authLayerService, WarehouseProductService warehouseProductService,CompanyService companyService, GroupService groupService,IMapper mapper, ILogger<AuthlayerController> logger, AuthHelpers authHelpers)
+        public WarehouseProductController(AuthLayerService authLayerService, WarehouseProductService warehouseProductService,CompanyService companyService, GroupService groupService,SupplierService supplierService,
+            ManufacturerService manufacturerService,IMapper mapper, ILogger<AuthlayerController> logger, AuthHelpers authHelpers)
         {
             _authLayerService = authLayerService;
             _warehouseProductService = warehouseProductService;
             _groupService = groupService;
+            _supplierService = supplierService;
+            _manufacturerService = manufacturerService;
             _mapper = mapper;
             _logger = logger;
             _authHelpers = authHelpers;
             _companyService = companyService;
             _searchProductRequestValidator = new SearchProductRequestValidator(companyService, groupService);
+            _updateProductValidator = new UpdateProductValidator(supplierService,groupService);
+            _adminUpdateProductValidator = new AdminUpdateProductValidator(supplierService, groupService,manufacturerService);
         }
 
         [HttpPost("search")]
@@ -102,6 +112,98 @@ namespace stock_api.Controllers
                 Result = true,
                 Message = "",
                 Data = data
+            };
+            return Ok(response);
+
+        }
+
+        [HttpPost("update")]
+        [Authorize]
+        public IActionResult UpdateProduct(UpdateProductRequest request)
+        {
+            var memberAndPermissionSetting = _authHelpers.GetMemberAndPermissionSetting(User);
+            var compId = memberAndPermissionSetting.CompanyWithUnit.CompId;
+            var compType = memberAndPermissionSetting.CompanyWithUnit.Type;
+            if (memberAndPermissionSetting.PermissionSetting.IsItemManage == false)
+            {
+                return BadRequest(CommonResponse<dynamic>.BuildNotAuthorizeResponse());
+            }
+
+            var validationResult =  _updateProductValidator.Validate(request);
+
+            if (!validationResult.IsValid)
+            {
+                return BadRequest(CommonResponse<dynamic>.BuildValidationFailedResponse(validationResult));
+            }
+
+
+            var existingProduct = _warehouseProductService.GetProductByProductIdAndCompId(request.ProductId,compId);
+            if (existingProduct == null)
+            {
+                return BadRequest(new CommonResponse<dynamic>(){
+                    Result = false,
+                    Message = "品項不存在"
+                });
+            }
+            var groups = _groupService.GetGroupsByIdList(request.GroupIds);
+
+            _warehouseProductService.UpdateProduct(request,existingProduct,groups);
+
+
+            var response = new CommonResponse<WarehouseProduct>()
+            {
+                Result = true,
+                Message = "",
+            };
+            return Ok(response);
+
+        }
+
+        [HttpPost("adminUpdate")]
+        [AuthorizeRoles("1")]
+        public IActionResult AdminUpdateProduct(AdminUpdateProductRequest request)
+        {
+            var memberAndPermissionSetting = _authHelpers.GetMemberAndPermissionSetting(User);
+            var compId = memberAndPermissionSetting.CompanyWithUnit.CompId;
+            if (memberAndPermissionSetting.PermissionSetting.IsItemManage == false)
+            {
+                return BadRequest(CommonResponse<dynamic>.BuildNotAuthorizeResponse());
+            }
+
+            var validationResult = _adminUpdateProductValidator.Validate(request);
+
+            if (!validationResult.IsValid)
+            {
+                return BadRequest(CommonResponse<dynamic>.BuildValidationFailedResponse(validationResult));
+            }
+            var existingProduct = _warehouseProductService.GetProductByProductIdAndCompId(request.ProductId, compId);
+            if (existingProduct == null)
+            {
+                return BadRequest(new CommonResponse<dynamic>()
+                {
+                    Result = false,
+                    Message = "品項不存在"
+                });
+            }
+            var groups = _groupService.GetGroupsByIdList(request.GroupIds);
+            Supplier? supplier = null;
+            if (request.DefaultSupplierId != null)
+            {
+                supplier = _supplierService.GetSupplierById(request.DefaultSupplierId.Value);
+            }
+            Manufacturer? manufacturer = null;
+            if (request.ManufacturerId != null)
+            {
+                manufacturer = _manufacturerService.GetManufacturerById(request.ManufacturerId);
+            }
+
+            _warehouseProductService.AdminUpdateProduct(request, existingProduct, supplier, manufacturer, groups);
+
+
+            var response = new CommonResponse<WarehouseProduct>()
+            {
+                Result = true,
+                Message = "",
             };
             return Ok(response);
 

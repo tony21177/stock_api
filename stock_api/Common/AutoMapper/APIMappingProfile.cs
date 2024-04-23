@@ -4,6 +4,7 @@ using stock_api.Models;
 using stock_api.Controllers.Dto;
 using stock_api.Service.ValueObject;
 using System.Globalization;
+using stock_api.Common.Utils;
 
 namespace stock_api.Common.AutoMapper
 {
@@ -70,6 +71,20 @@ namespace stock_api.Common.AutoMapper
                 src.GroupIds != null ? src.GroupIds.Split(",", StringSplitOptions.RemoveEmptyEntries).ToList() : null))
             .ForMember(dest => dest.GroupNames, opt => opt.MapFrom(src =>
                 src.GroupNames != null ? src.GroupNames.Split(",", StringSplitOptions.RemoveEmptyEntries).ToList() : null));
+
+            // product
+            CreateMap<UpdateProductRequest, WarehouseProduct>()
+            .ForMember(dest => dest.GroupIds, opt => opt.MapFrom(src => string.Join(",", src.GroupIds)))
+            .ForAllMembers(opt => opt.Condition((src, dest, srcMember) => srcMember != null));
+            CreateMap<AdminUpdateProductRequest, WarehouseProduct>()
+            .ForMember(dest => dest.GroupIds, opt => opt.MapFrom(src => string.Join(",", src.GroupIds)))
+            .ForMember(dest => dest.LastAbleDate, opt => opt.MapFrom(src =>DateOnly.FromDateTime(DateTimeHelper.ParseDateString(src.LastAbleDate).Value)))
+            .ForMember(dest => dest.LastOutStockDate, opt => opt.MapFrom(src => DateOnly.FromDateTime(DateTimeHelper.ParseDateString(src.LastOutStockDate).Value)))
+            .ForMember(dest => dest.OriginalDeadline, opt => opt.MapFrom(src => DateOnly.FromDateTime(DateTimeHelper.ParseDateString(src.OriginalDeadline).Value)))
+            .ForAllMembers(opt => opt.Condition((src, dest, srcMember) => srcMember != null));
+            
+            CreateMap<WarehouseProduct, WarehouseProduct>()
+            .ForAllMembers(opt => opt.Condition((src, dest, srcMember) => srcMember != null));
 
         }
         
