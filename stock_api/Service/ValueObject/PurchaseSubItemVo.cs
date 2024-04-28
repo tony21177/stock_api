@@ -29,5 +29,7 @@ namespace stock_api.Service.ValueObject
         public string ManufacturerName { get; set; }
         public string ProductMachine { get; set; }
         public string ProductUnit { get; set; }
+        public int? UnitConversion { get; set; }
+        public int? TestCount { get; set; }
     }
 }
