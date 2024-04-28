@@ -212,13 +212,13 @@ namespace stock_api.Controllers
             .Select(item => item.ProductId)
             .Distinct()
             .ToList();
-            var products = _warehouseProductService.GetCommonProductsByProductIds(distinctProductIdList);
+            var products = _warehouseProductService.GetProductsByProductIds(distinctProductIdList);
 
             foreach (var vo in data)
             {
                 foreach (var item in vo.Items)
                 {
-                    var matchedProduct = products.Where(p => p.ProductId == item.ProductId).FirstOrDefault();
+                    var matchedProduct = products.Where(p => p.ProductId == item.ProductId&&item.CompId == p.CompId).FirstOrDefault();
                     item.MaxSafeQuantity = matchedProduct?.MaxSafeQuantity;
                     item.ProductModel = matchedProduct?.ProductModel;
                     item.ManufacturerName = matchedProduct?.ManufacturerName;

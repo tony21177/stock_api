@@ -61,6 +61,8 @@ namespace stock_api.Service
                 || h.ProductSpec.Contains(request.Keywords)
                 || h.UdiserialCode.Contains(request.Keywords));
             }
+
+            return query.ToList();
         }
     }
 }
