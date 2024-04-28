@@ -230,7 +230,7 @@ namespace stock_api.Controllers
             var response = new CommonResponse<dynamic>
             {
                 Result = true,
-                Data = products
+                Data = data
             };
             return Ok(response);
         }
