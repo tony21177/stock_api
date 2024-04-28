@@ -207,7 +207,7 @@ namespace stock_api.Controllers
             var distinctProductIdList = data
             .SelectMany(item => item.Items)
             .Select(item => item.ProductId)
-            // .Distinct()
+            .Distinct()
             .ToList();
             var products = _warehouseProductService.GetCommonProductsByProductIds(distinctProductIdList);
 
@@ -230,7 +230,7 @@ namespace stock_api.Controllers
             var response = new CommonResponse<dynamic>
             {
                 Result = true,
-                Data = data
+                Data = products
             };
             return Ok(response);
         }
