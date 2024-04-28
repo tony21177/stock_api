@@ -37,6 +37,8 @@ public partial class StockDbContext : DbContext
 
     public virtual DbSet<OutStockRecord> OutStockRecords { get; set; }
 
+    public virtual DbSet<PurchaseAcceptanceItemsView> PurchaseAcceptanceItemsViews { get; set; }
+
     public virtual DbSet<PurchaseFlow> PurchaseFlows { get; set; }
 
     public virtual DbSet<PurchaseFlowLog> PurchaseFlowLogs { get; set; }
@@ -314,6 +316,46 @@ public partial class StockDbContext : DbContext
                 .HasDefaultValueSql("CURRENT_TIMESTAMP");
             entity.Property(e => e.UserId).HasComment("執行出庫人員的UserID");
             entity.Property(e => e.UserName).HasComment("執行出庫人員的UserName");
+        });
+
+        modelBuilder.Entity<PurchaseAcceptanceItemsView>(entity =>
+        {
+            entity.ToView("purchase_acceptance_items_view");
+
+            entity.Property(e => e.AcceptCreatedAt).HasDefaultValueSql("CURRENT_TIMESTAMP");
+            entity.Property(e => e.AcceptQuantity).HasComment("驗收接受數量，不可大於 OrderQuantity");
+            entity.Property(e => e.AcceptUpdatedAt)
+                .ValueGeneratedOnAddOrUpdate()
+                .HasDefaultValueSql("CURRENT_TIMESTAMP");
+            entity.Property(e => e.AcceptUserId).HasComment("驗收允收者的UserID");
+            entity.Property(e => e.ApplyDate)
+                .HasDefaultValueSql("CURRENT_TIMESTAMP")
+                .HasComment("申請日期");
+            entity.Property(e => e.Comment).HasComment("初驗驗收填寫相關原因");
+            entity.Property(e => e.CompId).HasComment("所屬公司ID");
+            entity.Property(e => e.CreatedAt).HasDefaultValueSql("CURRENT_TIMESTAMP");
+            entity.Property(e => e.CurrentStatus).HasComment("目前狀態\nAPPLY : 申請中\nAGREE : 同意\nREJECT : 拒絕\nCLOSE : 結案");
+            entity.Property(e => e.CurrentTotalQuantity).HasComment("驗收入庫後，當下該品項的總庫存數量");
+            entity.Property(e => e.DemandDate).HasComment("需求日期");
+            entity.Property(e => e.ExpirationDate).HasComment("保存期限");
+            entity.Property(e => e.GroupIds).HasComment("設定此單據所屬的組別，參考 Warehouse_Group");
+            entity.Property(e => e.ItemId).HasComment("對應 PurchaseSubItem 的 PK");
+            entity.Property(e => e.LotNumber).HasComment("批號");
+            entity.Property(e => e.LotNumberBatch).HasComment("批次");
+            entity.Property(e => e.OrderQuantity).HasComment("訂購數量，對應 PurchaseSubItem 的 Quantity");
+            entity.Property(e => e.PackagingStatus).HasComment("外觀包裝\nNORMAL : 完成\nBREAK : 破損");
+            entity.Property(e => e.ProductId).HasComment("品項PK");
+            entity.Property(e => e.ProductName).HasComment("品項名稱");
+            entity.Property(e => e.ProductSpec).HasComment("品項規格");
+            entity.Property(e => e.QcComment).HasComment("二次驗收填寫相關原因");
+            entity.Property(e => e.QcStatus).HasComment("驗收測試品管結果\nPASS : 通過\nFAIL : 不通過\nNONEED : 不需側\nOTHER : 其他");
+            entity.Property(e => e.ReceiveStatus).HasComment("送單到金萬林後，目前狀態\nNONE : 尚未收到結果\nDELIVERED : 金萬林已出貨\nIN_ACCEPTANCE_CHECK : 驗收中\nPART_ACCEPT : 部分驗收入庫\nALL_ACCEPT : 全部驗收入庫");
+            entity.Property(e => e.Remarks).HasComment("備註內容");
+            entity.Property(e => e.Type).HasComment("採購單類型\nGENERAL : 一般訂單\nURGENT : 緊急訂單");
+            entity.Property(e => e.UpdatedAt)
+                .ValueGeneratedOnAddOrUpdate()
+                .HasDefaultValueSql("CURRENT_TIMESTAMP");
+            entity.Property(e => e.UserId).HasComment("此採購單據的建立者");
         });
 
         modelBuilder.Entity<PurchaseFlow>(entity =>
@@ -635,7 +677,9 @@ public partial class StockDbContext : DbContext
             entity.Property(e => e.DeliverRemarks).HasComment("運送備註");
             entity.Property(e => e.GroupIds).HasComment("屬於數個組別");
             entity.Property(e => e.GroupNames).HasComment("組別名稱");
-            entity.Property(e => e.InStockQuantity).HasComment("庫存數量");
+            entity.Property(e => e.InStockQuantity)
+                .HasDefaultValueSql("'0'")
+                .HasComment("庫存數量");
             entity.Property(e => e.IsActive).HasDefaultValueSql("'1'");
             entity.Property(e => e.IsNeedAcceptProcess)
                 .HasDefaultValueSql("'0'")
@@ -652,6 +696,7 @@ public partial class StockDbContext : DbContext
             entity.Property(e => e.OpenedSealName).HasComment("開封列印名稱");
             entity.Property(e => e.OriginalDeadline).HasComment("原始有效期限");
             entity.Property(e => e.PackageWay).HasComment("包裝方式");
+            entity.Property(e => e.PreDeadline).HasComment("已入庫未使用，當前日期在末效日期前幾天通知用");
             entity.Property(e => e.PreOrderDays).HasComment("前置天數");
             entity.Property(e => e.ProductCategory).HasComment("產品類別\n[耗材, 試劑, 其他]");
             entity.Property(e => e.ProductCode).HasComment("產品編碼");
@@ -662,6 +707,7 @@ public partial class StockDbContext : DbContext
             entity.Property(e => e.ProductSpec).HasComment("品項規格");
             entity.Property(e => e.SafeQuantity).HasComment("最小安庫量");
             entity.Property(e => e.SavingFunction).HasComment("儲存環境條件");
+            entity.Property(e => e.SupplierUnitConvertsion).HasDefaultValueSql("'1'");
             entity.Property(e => e.TestCount)
                 .HasDefaultValueSql("'1'")
                 .HasComment("在總覽表與目前庫存數量(InStockQuantity)相乘顯示給使用者知道目前可用的數量用的欄位");

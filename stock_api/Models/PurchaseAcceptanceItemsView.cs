@@ -8,22 +8,92 @@ using Microsoft.EntityFrameworkCore;
 
 namespace stock_api.Models;
 
-/// <summary>
-/// 各採購項目驗收紀錄
-/// </summary>
-[Table("acceptance_item")]
-public partial class AcceptanceItem
+[Keyless]
+public partial class PurchaseAcceptanceItemsView
 {
-    [Key]
-    [StringLength(100)]
-    public string AcceptId { get; set; }
-
-    /// <summary>
-    /// PurchaseMainSheet 的 PK
-    /// </summary>
     [Required]
     [StringLength(100)]
     public string PurchaseMainId { get; set; }
+
+    /// <summary>
+    /// 申請日期
+    /// </summary>
+    [Column(TypeName = "timestamp")]
+    public DateTime ApplyDate { get; set; }
+
+    /// <summary>
+    /// 所屬公司ID
+    /// </summary>
+    [Required]
+    [StringLength(100)]
+    public string CompId { get; set; }
+
+    /// <summary>
+    /// 目前狀態
+    /// APPLY : 申請中
+    /// AGREE : 同意
+    /// REJECT : 拒絕
+    /// CLOSE : 結案
+    /// </summary>
+    [Required]
+    [StringLength(45)]
+    public string CurrentStatus { get; set; }
+
+    /// <summary>
+    /// 需求日期
+    /// </summary>
+    public DateOnly? DemandDate { get; set; }
+
+    /// <summary>
+    /// 設定此單據所屬的組別，參考 Warehouse_Group
+    /// </summary>
+    [StringLength(2000)]
+    public string GroupIds { get; set; }
+
+    /// <summary>
+    /// 備註內容
+    /// </summary>
+    [StringLength(300)]
+    public string Remarks { get; set; }
+
+    /// <summary>
+    /// 此採購單據的建立者
+    /// </summary>
+    [Required]
+    [StringLength(100)]
+    public string UserId { get; set; }
+
+    /// <summary>
+    /// 送單到金萬林後，目前狀態
+    /// NONE : 尚未收到結果
+    /// DELIVERED : 金萬林已出貨
+    /// IN_ACCEPTANCE_CHECK : 驗收中
+    /// PART_ACCEPT : 部分驗收入庫
+    /// ALL_ACCEPT : 全部驗收入庫
+    /// </summary>
+    [Required]
+    [StringLength(100)]
+    public string ReceiveStatus { get; set; }
+
+    /// <summary>
+    /// 採購單類型
+    /// GENERAL : 一般訂單
+    /// URGENT : 緊急訂單
+    /// </summary>
+    [StringLength(45)]
+    public string Type { get; set; }
+
+    [Column(TypeName = "timestamp")]
+    public DateTime? CreatedAt { get; set; }
+
+    [Column(TypeName = "timestamp")]
+    public DateTime? UpdatedAt { get; set; }
+
+    public bool IsActive { get; set; }
+
+    [Required]
+    [StringLength(100)]
+    public string AcceptId { get; set; }
 
     /// <summary>
     /// 驗收接受數量，不可大於 OrderQuantity
@@ -48,13 +118,6 @@ public partial class AcceptanceItem
     /// </summary>
     [StringLength(100)]
     public string LotNumber { get; set; }
-
-    /// <summary>
-    /// 所屬組織ID
-    /// </summary>
-    [Required]
-    [StringLength(100)]
-    public string CompId { get; set; }
 
     /// <summary>
     /// 保存期限
@@ -134,8 +197,8 @@ public partial class AcceptanceItem
     public string QcComment { get; set; }
 
     [Column(TypeName = "timestamp")]
-    public DateTime? CreatedAt { get; set; }
+    public DateTime? AcceptCreatedAt { get; set; }
 
     [Column(TypeName = "timestamp")]
-    public DateTime? UpdatedAt { get; set; }
+    public DateTime? AcceptUpdatedAt { get; set; }
 }

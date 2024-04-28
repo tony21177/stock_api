@@ -1,14 +1,15 @@
 ﻿using FluentValidation;
+using stock_api.Controllers.Request;
 using stock_api.Service;
 
-namespace stock_api.Controllers.Request
+namespace stock_api.Controllers.Validator
 {
     public class SearchProductRequestValidator : AbstractValidator<WarehouseProductSearchRequest>
     {
         private readonly CompanyService _companyService;
         private readonly GroupService _groupService;
 
-        public SearchProductRequestValidator(CompanyService companyService,GroupService groupService)
+        public SearchProductRequestValidator(CompanyService companyService, GroupService groupService)
         {
             _companyService = companyService;
             _groupService = groupService;
@@ -16,7 +17,7 @@ namespace stock_api.Controllers.Request
                 .Must((request, compId, context) => BeValidCompany(compId, context))
                 .WithMessage("該組織不存在");
             RuleFor(x => x.GroupId)
-                .Must((request, groupId, context) => BeValidGroup(groupId,context))
+                .Must((request, groupId, context) => BeValidGroup(groupId, context))
                 .WithMessage("該群組不存在");
         }
 

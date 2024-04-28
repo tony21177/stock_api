@@ -132,6 +132,9 @@ public partial class WarehouseProduct
     [StringLength(100)]
     public string PackageWay { get; set; }
 
+    /// <summary>
+    /// 已入庫未使用，當前日期在末效日期前幾天通知用
+    /// </summary>
     public int? PreDeadline { get; set; }
 
     /// <summary>
@@ -287,4 +290,9 @@ public partial class WarehouseProduct
     /// </summary>
     [StringLength(200)]
     public string Delievery { get; set; }
+
+    public int SupplierUnitConvertsion { get; set; }
+
+    [StringLength(100)]
+    public string SupplierUnit { get; set; }
 }

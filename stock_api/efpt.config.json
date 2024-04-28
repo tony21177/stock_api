@@ -116,6 +116,10 @@
          "ObjectType": 0
       },
       {
+         "Name": "purchase_acceptance_items_view",
+         "ObjectType": 3
+      },
+      {
          "Name": "purchase_item_list_view",
          "ObjectType": 3
       }
