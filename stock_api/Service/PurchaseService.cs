@@ -124,6 +124,16 @@ namespace stock_api.Service
             {
                 query = query.Where(h => h.CompId == listPurchaseRequest.CompId);
             }
+            //if (listPurchaseRequest.StartDate != null)
+            //{
+            //    var startDateTime = DateTimeHelper.ParseDateString(listPurchaseRequest.StartDate);
+            //    query = query.Where(h => h.UpdatedAt >= startDateTime);
+            //}
+            //if (listPurchaseRequest.EndDate != null)
+            //{
+            //    var endDateTime = DateTimeHelper.ParseDateString(listPurchaseRequest.EndDate).Value.AddDays(1);
+            //    query = query.Where(h => h.UpdatedAt < endDateTime);
+            //}
             if (listPurchaseRequest.StartDate != null)
             {
                 var startDateTime = DateTimeHelper.ParseDateString(listPurchaseRequest.StartDate);

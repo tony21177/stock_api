@@ -86,6 +86,15 @@ namespace stock_api.Common.AutoMapper
             CreateMap<WarehouseProduct, WarehouseProduct>()
             .ForAllMembers(opt => opt.Condition((src, dest, srcMember) => srcMember != null));
 
+            // stockin & accept
+            CreateMap<PurchaseAcceptanceItemsView, AcceptanceItem>()
+            .ForMember(dest => dest.CreatedAt, opt => opt.MapFrom(src => src.AcceptCreatedAt))
+            .ForMember(dest => dest.UpdatedAt, opt => opt.MapFrom(src => src.AcceptUpdatedAt))
+            .ForAllMembers(opt => opt.Condition((src, dest, srcMember) => srcMember != null));
+            CreateMap<PurchaseAcceptanceItemsView, AcceptItem>()
+            .ForAllMembers(opt => opt.Condition((src, dest, srcMember) => srcMember != null));
+            CreateMap<PurchaseAcceptanceItemsView, PurchaseAcceptItemsVo>()
+            .ForAllMembers(opt => opt.Condition((src, dest, srcMember) => srcMember != null));
         }
         
     }
