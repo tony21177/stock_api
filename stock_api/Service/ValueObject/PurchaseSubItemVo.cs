@@ -32,5 +32,6 @@ namespace stock_api.Service.ValueObject
         public int? UnitConversion { get; set; }
         public int? TestCount { get; set; }
         public string PackageWay { get; set; }
+        public string ProductCode { get; set; }
     }
 }

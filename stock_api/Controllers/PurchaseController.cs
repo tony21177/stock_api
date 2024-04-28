@@ -227,6 +227,7 @@ namespace stock_api.Controllers
                     item.UnitConversion = matchedProduct?.UnitConversion;
                     item.TestCount = matchedProduct?.TestCount;
                     item.PackageWay = matchedProduct?.PackageWay;
+                    item.ProductCode = matchedProduct?.ProductCode;
                 }
             }
             data = data.OrderByDescending(item => item.ApplyDate).ToList();
