@@ -178,6 +178,9 @@ namespace stock_api.Controllers
                     item.ProductModel = matchedProduct?.ProductModel;
                     item.ManufacturerName = matchedProduct?.ManufacturerName;
                     item.ProductMachine = matchedProduct?.ProductMachine;
+                    item.ProductUnit = matchedProduct?.Unit;
+                    item.UnitConversion = matchedProduct?.UnitConversion;
+                    item.TestCount = matchedProduct?.TestCount;
                 }
             }
             data = data.OrderByDescending(item => item.ApplyDate).ToList();
