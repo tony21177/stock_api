@@ -207,7 +207,7 @@ namespace stock_api.Controllers
             var distinctProductIdList = data
             .SelectMany(item => item.Items)
             .Select(item => item.ProductId)
-            .Distinct()
+            // .Distinct()
             .ToList();
             var products = _warehouseProductService.GetCommonProductsByProductIds(distinctProductIdList);
 
