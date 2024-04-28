@@ -273,6 +273,8 @@ namespace stock_api.Controllers
                 item.ManufacturerName = matchedProduct?.ManufacturerName;
                 item.ProductMachine = matchedProduct?.ProductMachine;
                 item.ProductUnit = matchedProduct?.Unit;
+                item.UnitConversion = matchedProduct?.UnitConversion;
+                item.TestCount = matchedProduct?.TestCount;
             });
 
 
