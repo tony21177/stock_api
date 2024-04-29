@@ -62,17 +62,7 @@ namespace stock_api.Service
                 query = query.Where(h => h.Type == request.Type);
             }
             query = query.Where(h => h.CompId == request.CompId);
-            if (!string.IsNullOrEmpty(request.Keywords))
-            {
-                query = query.Where(h =>
-                h.Remarks.Contains(request.Keywords)
-                || h.LotNumberBatch.Contains(request.Keywords)
-                || h.LotNumber.Contains(request.Keywords)
-                || h.ProductId.Contains(request.Keywords)
-                || h.ProductName.Contains(request.Keywords)
-                || h.ProductSpec.Contains(request.Keywords)
-                || h.UdiserialCode.Contains(request.Keywords));
-            }
+            
 
             return query.ToList();
         }

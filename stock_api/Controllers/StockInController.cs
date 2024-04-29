@@ -65,8 +65,19 @@ namespace stock_api.Controllers
                 List<PurchaseAcceptanceItemsView> purchaseAcceptanceItemViewList = keyValuePair.Value;
                 PurchaseAcceptItemsVo purchaseAcceptItemsVo = _mapper.Map<PurchaseAcceptItemsVo>(purchaseAcceptanceItemViewList[0]);
                 List<AcceptItem> acceptItems = _mapper.Map<List<AcceptItem>>(purchaseAcceptanceItemViewList);
-                purchaseAcceptItemsVo.AcceptItems = acceptItems;
-                data.Add(purchaseAcceptItemsVo);
+                if (request.Keywords == null)
+                {
+                    purchaseAcceptItemsVo.AcceptItems = acceptItems;
+                    data.Add(purchaseAcceptItemsVo);
+                    continue;
+                }
+                if (request.Keywords!=null && (purchaseAcceptItemsVo.IsContainKeywords(request.Keywords)|| acceptItems.Any(acceptItem => acceptItem.IsContainKeywords(request.Keywords))))
+                {
+                    purchaseAcceptItemsVo.AcceptItems = acceptItems;
+                    data.Add(purchaseAcceptItemsVo);
+                    continue;
+                }
+                
             }
             data = data.OrderByDescending(item => item.ApplyDate).ToList();
 

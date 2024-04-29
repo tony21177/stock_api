@@ -19,6 +19,12 @@ namespace stock_api.Service.ValueObject
         public DateTime? UpdatedAt { get; set; }
         public bool IsActive { get; set; }
         public List<AcceptItem> AcceptItems { get; set; }
+
+        public bool IsContainKeywords(string keywords)
+        {
+            return $"{this.CurrentStatus} {this.GroupIds} {this.Remarks} {this.UserId} {this.ReceiveStatus} {this.Type}".Contains(keywords);
+            
+        }
     }
     public class AcceptItem
     {
@@ -41,5 +47,12 @@ namespace stock_api.Service.ValueObject
         public string QcComment { get; set; }
         public DateTime? AcceptCreatedAt { get; set; }
         public DateTime? AcceptUpdatedAt { get; set; }
+
+        public bool IsContainKeywords(string keywords)
+        {
+            return ($"{this.AcceptId} {this.AcceptUserId} {this.LotNumberBatch} {this.LotNumber} {this.PackagingStatus} {this.ProductId} {this.ProductName} {this.ProductSpec} {this.UdiserialCode}" +
+                $"{this.QcStatus} {this.Comment}").Contains(keywords);
+
+        }
     }
 }
