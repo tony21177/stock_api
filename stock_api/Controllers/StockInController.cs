@@ -23,7 +23,7 @@ namespace stock_api.Controllers
         private readonly StockInService _stockInService;
         private readonly IValidator<SearchPurchaseAcceptItemRequest> _searchPurchaseAcceptItemValidator;
 
-        public StockInController(IMapper mapper, AuthHelpers authHelpers,GroupService groupService, StockInService stockInService)
+        public StockInController(IMapper mapper, AuthHelpers authHelpers, GroupService groupService, StockInService stockInService)
         {
             _mapper = mapper;
             _authHelpers = authHelpers;
@@ -40,7 +40,7 @@ namespace stock_api.Controllers
             var compId = memberAndPermissionSetting.CompanyWithUnit.CompId;
 
             request.CompId = compId;
-            
+
             var validationResult = _searchPurchaseAcceptItemValidator.Validate(request);
 
             if (!validationResult.IsValid)
@@ -48,7 +48,7 @@ namespace stock_api.Controllers
                 return BadRequest(CommonResponse<dynamic>.BuildValidationFailedResponse(validationResult));
             }
             List<PurchaseAcceptanceItemsView> purchaseAcceptanceItemsViewList = _stockInService.SearchPurchaseAcceptanceItems(request);
-            Dictionary<string, List<PurchaseAcceptanceItemsView>> purchaseMainIdAndAcceptionItemListMap = new Dictionary<string, List<PurchaseAcceptanceItemsView>>();
+            Dictionary<string, List<PurchaseAcceptanceItemsView>> purchaseMainIdAndAcceptionItemListMap = new();
             purchaseAcceptanceItemsViewList.ForEach(item =>
             {
                 if (!purchaseMainIdAndAcceptionItemListMap.ContainsKey(item.PurchaseMainId))
@@ -58,9 +58,9 @@ namespace stock_api.Controllers
                 purchaseMainIdAndAcceptionItemListMap[item.PurchaseMainId].Add(item);
             });
 
-            List<PurchaseAcceptItemsVo> data = new List<PurchaseAcceptItemsVo>();
+            List<PurchaseAcceptItemsVo> data = new();
 
-            foreach(var keyValuePair in purchaseMainIdAndAcceptionItemListMap)
+            foreach (var keyValuePair in purchaseMainIdAndAcceptionItemListMap)
             {
                 List<PurchaseAcceptanceItemsView> purchaseAcceptanceItemViewList = keyValuePair.Value;
                 PurchaseAcceptItemsVo purchaseAcceptItemsVo = _mapper.Map<PurchaseAcceptItemsVo>(purchaseAcceptanceItemViewList[0]);
@@ -71,13 +71,13 @@ namespace stock_api.Controllers
                     data.Add(purchaseAcceptItemsVo);
                     continue;
                 }
-                if (request.Keywords!=null && (purchaseAcceptItemsVo.IsContainKeywords(request.Keywords)|| acceptItems.Any(acceptItem => acceptItem.IsContainKeywords(request.Keywords))))
+                if (request.Keywords != null && (purchaseAcceptItemsVo.IsContainKeywords(request.Keywords) || acceptItems.Any(acceptItem => acceptItem.IsContainKeywords(request.Keywords))))
                 {
                     purchaseAcceptItemsVo.AcceptItems = acceptItems;
                     data.Add(purchaseAcceptItemsVo);
                     continue;
                 }
-                
+
             }
             data = data.OrderByDescending(item => item.ApplyDate).ToList();
 
@@ -87,6 +87,31 @@ namespace stock_api.Controllers
                 Data = data
             };
             return Ok(response);
+        }
+
+        [HttpPost("acceptItems/update")]
+        [Authorize]
+        public IActionResult UpdateAcceptItems(UpdateAcceptItemRequest request)
+        {
+            var memberAndPermissionSetting = _authHelpers.GetMemberAndPermissionSetting(User);
+            var compId = memberAndPermissionSetting.CompanyWithUnit.CompId;
+
+            var acceptIdList = request.UpdateAcceptItemList.Select(i=>i.AcceptId).ToList();
+            var exsitingAcceptItems = _stockInService.GetAcceptanceItemsByAccepIdList(acceptIdList,compId);
+            var existingAcceptIdList = exsitingAcceptItems.Select(i => i.AcceptId).ToList();    
+            var notExistAcceptIdList = acceptIdList.Except(existingAcceptIdList);
+            if (notExistAcceptIdList.Any())
+            {
+                return BadRequest(new CommonResponse<dynamic>
+                {
+                    Result = false,
+                    Message = $"{String.Join(",", notExistAcceptIdList)} 不存在"
+                });
+            }
+
+
+
+
         }
     }
 }

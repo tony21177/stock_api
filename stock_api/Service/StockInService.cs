@@ -66,5 +66,10 @@ namespace stock_api.Service
 
             return query.ToList();
         }
+
+        public List<AcceptanceItem> GetAcceptanceItemsByAccepIdList(List<string> acceptIdList,string compId)
+        {
+            return _dbContext.AcceptanceItems.Where(ai=>ai.CompId==compId&&acceptIdList.Contains(ai.AcceptId)).ToList();
+        }
     }
 }
