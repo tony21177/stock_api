@@ -218,7 +218,7 @@ namespace stock_api.Controllers
             {
                 foreach (var item in vo.Items)
                 {
-                    var matchedProduct = products.Where(p => p.ProductId == item.ProductId&&item.CompId == p.CompId).FirstOrDefault();
+                    var matchedProduct = products.Where(p => p.ProductId == item.ProductId).FirstOrDefault();
                     item.MaxSafeQuantity = matchedProduct?.MaxSafeQuantity;
                     item.ProductModel = matchedProduct?.ProductModel;
                     item.ManufacturerName = matchedProduct?.ManufacturerName;
