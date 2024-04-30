@@ -269,9 +269,6 @@ namespace stock_api.Controllers
             List<PurchaseFlowLog> purchaseFlowLogs = _purchaseService.GetPurchaseFlowLogsByMainId(purchaseMainId).OrderBy(fl => fl.UpdatedAt).ToList();
             var purchaseAndSubItemVo = _mapper.Map<PurchaseMainAndSubItemVo>(purchaseMain);
             var purchaseSubItemVoList = _mapper.Map<List<PurchaseSubItemVo>>(purchaseSubItems);
-            purchaseAndSubItemVo.Items = purchaseSubItemVoList;
-            purchaseAndSubItemVo.flows = purchaseFlows;
-            purchaseAndSubItemVo.flowLogs = purchaseFlowLogs;
 
             var distinctProductIdList = purchaseSubItems.Select(s => s.ProductId).Distinct().ToList();
             var products = _warehouseProductService.GetProductsByProductIdsAndCompId(distinctProductIdList, purchaseMain.CompId);
@@ -287,7 +284,9 @@ namespace stock_api.Controllers
                 item.TestCount = matchedProduct?.TestCount;
                 item.Delivery = matchedProduct?.Delievery;
             });
-
+            purchaseAndSubItemVo.Items = purchaseSubItemVoList;
+            purchaseAndSubItemVo.flows = purchaseFlows;
+            purchaseAndSubItemVo.flowLogs = purchaseFlowLogs;
 
             purchaseFlows.ForEach(f =>
             {
