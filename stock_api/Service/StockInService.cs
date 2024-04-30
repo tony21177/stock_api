@@ -24,45 +24,52 @@ namespace stock_api.Service
             {
                 query = query.Where(h => h.ReceiveStatus == request.ReceiveStatus);
             }
+            //if (request.DemandDateStart != null)
+            //{
+            //    DateOnly startDate = DateOnly.FromDateTime(DateTimeHelper.ParseDateString(request.DemandDateStart).Value);
+            //    query = query.Where(h => h.DemandDate >= startDate);
+            //}
+            //if (request.DemandDateEnd != null)
+            //{
+            //    DateOnly endDate = DateOnly.FromDateTime(DateTimeHelper.ParseDateString(request.DemandDateStart).Value).AddDays(1);
+            //    query = query.Where(h => h.DemandDate < endDate);
+            //}
             if (request.DemandDateStart != null)
             {
-                DateOnly startDate = DateOnly.FromDateTime(DateTimeHelper.ParseDateString(request.DemandDateStart).Value);
-                query = query.Where(h => h.DemandDate >= startDate);
+                var startDateTime = DateTimeHelper.ParseDateString(request.DemandDateStart).Value;
+                query = query.Where(h => h.DemandDate.Value.ToDateTime(new TimeOnly(0,0)) >= startDateTime);
             }
             if (request.DemandDateEnd != null)
             {
-                DateOnly endDate = DateOnly.FromDateTime(DateTimeHelper.ParseDateString(request.DemandDateStart).Value).AddDays(1);
-                query = query.Where(h => h.DemandDate < endDate);
+                var endDateTime = DateTimeHelper.ParseDateString(request.DemandDateEnd).Value.AddDays(1);
+                query = query.Where(h => h.DemandDate.Value.ToDateTime(new TimeOnly(0, 0)) < endDateTime);
             }
             if (request.ApplyDateStart != null)
             {
-                DateOnly startDate = DateOnly.FromDateTime(DateTimeHelper.ParseDateString(request.ApplyDateStart).Value);
-                query = query.Where(h => h.DemandDate >= startDate);
+                query = query.Where(h => h.ApplyDate >= DateTimeHelper.ParseDateString(request.ApplyDateStart).Value);
             }
             if (request.ApplyDateEnd != null)
             {
-                DateOnly endDate = DateOnly.FromDateTime(DateTimeHelper.ParseDateString(request.ApplyDateEnd).Value).AddDays(1);
-                query = query.Where(h => h.DemandDate < endDate);
+                DateTime endDateTime =DateTimeHelper.ParseDateString(request.ApplyDateEnd).Value.AddDays(1);
+                query = query.Where(h => h.ApplyDate < endDateTime);
+            }
+            if (request.GroupId != null)
+            {
+                query = query.Where(h => h.GroupIds.Contains(request.GroupId));
             }
             if (request.Type != null)
             {
                 query = query.Where(h => h.Type == request.Type);
             }
             query = query.Where(h => h.CompId == request.CompId);
-            if (!string.IsNullOrEmpty(request.Keywords))
-            {
-                var groupNameList =
-                query = query.Where(h =>
-                h.Remarks.Contains(request.Keywords)
-                || h.LotNumberBatch.Contains(request.Keywords)
-                || h.LotNumber.Contains(request.Keywords)
-                || h.ProductId.Contains(request.Keywords)
-                || h.ProductName.Contains(request.Keywords)
-                || h.ProductSpec.Contains(request.Keywords)
-                || h.UdiserialCode.Contains(request.Keywords));
-            }
+            
 
             return query.ToList();
+        }
+
+        public List<AcceptanceItem> GetAcceptanceItemsByAccepIdList(List<string> acceptIdList,string compId)
+        {
+            return _dbContext.AcceptanceItems.Where(ai=>ai.CompId==compId&&acceptIdList.Contains(ai.AcceptId)).ToList();
         }
     }
 }
