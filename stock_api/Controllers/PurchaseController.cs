@@ -285,6 +285,7 @@ namespace stock_api.Controllers
                 item.ProductUnit = matchedProduct?.Unit;
                 item.UnitConversion = matchedProduct?.UnitConversion;
                 item.TestCount = matchedProduct?.TestCount;
+                item.Delivery = matchedProduct?.Delievery;
             });
 
 
