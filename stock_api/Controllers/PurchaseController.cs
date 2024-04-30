@@ -204,7 +204,7 @@ namespace stock_api.Controllers
             {
                 return BadRequest(CommonResponse<dynamic>.BuildNotAuthorizeResponse());
             }
-            ListPurchaseRequest request = new ListPurchaseRequest { CurrentStatus = CommonConstants.PurchaseFlowAnswer.AGREE,ReceiveStatus= CommonConstants.PurchaseReceiveStatus.NONE };
+            ListPurchaseRequest request = new() { CurrentStatus = CommonConstants.PurchaseFlowAnswer.AGREE,ReceiveStatus= CommonConstants.PurchaseReceiveStatus.NONE };
 
             var data = _purchaseService.ListPurchase(request);
             var distinctProductIdList = data

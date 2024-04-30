@@ -89,29 +89,29 @@ namespace stock_api.Controllers
             return Ok(response);
         }
 
-        [HttpPost("acceptItems/update")]
-        [Authorize]
-        public IActionResult UpdateAcceptItems(UpdateAcceptItemRequest request)
-        {
-            var memberAndPermissionSetting = _authHelpers.GetMemberAndPermissionSetting(User);
-            var compId = memberAndPermissionSetting.CompanyWithUnit.CompId;
+        //[HttpPost("acceptItems/update")]
+        //[Authorize]
+        //public IActionResult UpdateAcceptItems(UpdateAcceptItemRequest request)
+        //{
+        //    var memberAndPermissionSetting = _authHelpers.GetMemberAndPermissionSetting(User);
+        //    var compId = memberAndPermissionSetting.CompanyWithUnit.CompId;
 
-            var acceptIdList = request.UpdateAcceptItemList.Select(i=>i.AcceptId).ToList();
-            var exsitingAcceptItems = _stockInService.GetAcceptanceItemsByAccepIdList(acceptIdList,compId);
-            var existingAcceptIdList = exsitingAcceptItems.Select(i => i.AcceptId).ToList();    
-            var notExistAcceptIdList = acceptIdList.Except(existingAcceptIdList);
-            if (notExistAcceptIdList.Any())
-            {
-                return BadRequest(new CommonResponse<dynamic>
-                {
-                    Result = false,
-                    Message = $"{String.Join(",", notExistAcceptIdList)} 不存在"
-                });
-            }
-
-
+        //    var acceptIdList = request.UpdateAcceptItemList.Select(i=>i.AcceptId).ToList();
+        //    var exsitingAcceptItems = _stockInService.GetAcceptanceItemsByAccepIdList(acceptIdList,compId);
+        //    var existingAcceptIdList = exsitingAcceptItems.Select(i => i.AcceptId).ToList();    
+        //    var notExistAcceptIdList = acceptIdList.Except(existingAcceptIdList);
+        //    if (notExistAcceptIdList.Any())
+        //    {
+        //        return BadRequest(new CommonResponse<dynamic>
+        //        {
+        //            Result = false,
+        //            Message = $"{String.Join(",", notExistAcceptIdList)} 不存在"
+        //        });
+        //    }
 
 
-        }
+
+
+        //}
     }
 }
