@@ -181,6 +181,11 @@ namespace stock_api.Controllers
                     item.ProductUnit = matchedProduct?.Unit;
                     item.UnitConversion = matchedProduct?.UnitConversion;
                     item.TestCount = matchedProduct?.TestCount;
+                    item.Delivery = matchedProduct?.Delievery;
+                    item.PackageWay = matchedProduct?.PackageWay;
+                    item.ProductCode = matchedProduct?.ProductCode;
+                    item.SupplierUnitConvertsion = matchedProduct?.SupplierUnitConvertsion;
+                    item.SupplierUnit = matchedProduct?.SupplierUnit;
                 }
             }
             data = data.OrderByDescending(item => item.ApplyDate).ToList();
@@ -226,6 +231,7 @@ namespace stock_api.Controllers
                     item.ProductUnit = matchedProduct?.Unit;
                     item.UnitConversion = matchedProduct?.UnitConversion;
                     item.TestCount = matchedProduct?.TestCount;
+                    item.Delivery = matchedProduct?.Delievery;
                     item.PackageWay = matchedProduct?.PackageWay;
                     item.ProductCode = matchedProduct?.ProductCode;
                     item.SupplierUnitConvertsion = matchedProduct?.SupplierUnitConvertsion;
@@ -283,6 +289,10 @@ namespace stock_api.Controllers
                 item.UnitConversion = matchedProduct?.UnitConversion;
                 item.TestCount = matchedProduct?.TestCount;
                 item.Delivery = matchedProduct?.Delievery;
+                item.PackageWay = matchedProduct?.PackageWay;
+                item.ProductCode = matchedProduct?.ProductCode;
+                item.SupplierUnit = matchedProduct?.SupplierUnit;
+                item.SupplierUnitConvertsion = matchedProduct?.SupplierUnitConvertsion;
             });
             purchaseAndSubItemVo.Items = purchaseSubItemVoList;
             purchaseAndSubItemVo.flows = purchaseFlows;
