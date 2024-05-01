@@ -17,6 +17,11 @@ namespace stock_api.Service
             _mapper = mapper;
         }
 
+        public WarehouseProduct? GetProductByProductId(string productId)
+        {
+            return _dbContext.WarehouseProducts.Where(p => p.ProductId == productId).FirstOrDefault();
+        }
+
         public WarehouseProduct? GetProductByProductIdAndCompId(string productId,string compId)
         {
             return _dbContext.WarehouseProducts.Where(p => p.ProductId == productId && p.CompId == compId).FirstOrDefault();

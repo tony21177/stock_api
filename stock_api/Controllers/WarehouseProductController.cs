@@ -87,6 +87,23 @@ namespace stock_api.Controllers
 
         }
 
+        [HttpPost("adminDetail")]
+        [Authorize]
+        public IActionResult GetWarehouseProductAdminDetail(ProductDetailRequest request)
+        {
+            var data = _warehouseProductService.GetProductByProductId(request.ProductId);
+
+
+            var response = new CommonResponse<WarehouseProduct>()
+            {
+                Result = true,
+                Message = "",
+                Data = data
+            };
+            return Ok(response);
+
+        }
+
         [HttpPost("detail")]
         [Authorize]
         public IActionResult GetWarehouseProductDetail(ProductDetailRequest request)
