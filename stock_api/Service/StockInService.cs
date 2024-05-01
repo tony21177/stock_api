@@ -1,7 +1,10 @@
 ﻿using AutoMapper;
+using stock_api.Common.Constant;
 using stock_api.Common.Utils;
 using stock_api.Controllers.Request;
 using stock_api.Models;
+using System.Security.AccessControl;
+using System.Transactions;
 
 namespace stock_api.Service
 {
@@ -9,11 +12,13 @@ namespace stock_api.Service
     {
         private readonly StockDbContext _dbContext;
         private readonly IMapper _mapper;
+        private readonly ILogger<StockInService> _logger;
 
-        public StockInService(StockDbContext dbContext, IMapper mapper)
+        public StockInService(StockDbContext dbContext, IMapper mapper, ILogger<StockInService> logger)
         {
             _dbContext = dbContext;
             _mapper = mapper;
+            _logger = logger;
         }
 
         public List<PurchaseAcceptanceItemsView> SearchPurchaseAcceptanceItems(SearchPurchaseAcceptItemRequest request)
@@ -37,7 +42,7 @@ namespace stock_api.Service
             if (request.DemandDateStart != null)
             {
                 var startDateTime = DateTimeHelper.ParseDateString(request.DemandDateStart).Value;
-                query = query.Where(h => h.DemandDate.Value.ToDateTime(new TimeOnly(0,0)) >= startDateTime);
+                query = query.Where(h => h.DemandDate.Value.ToDateTime(new TimeOnly(0, 0)) >= startDateTime);
             }
             if (request.DemandDateEnd != null)
             {
@@ -50,7 +55,7 @@ namespace stock_api.Service
             }
             if (request.ApplyDateEnd != null)
             {
-                DateTime endDateTime =DateTimeHelper.ParseDateString(request.ApplyDateEnd).Value.AddDays(1);
+                DateTime endDateTime = DateTimeHelper.ParseDateString(request.ApplyDateEnd).Value.AddDays(1);
                 query = query.Where(h => h.ApplyDate < endDateTime);
             }
             if (request.GroupId != null)
@@ -62,14 +67,262 @@ namespace stock_api.Service
                 query = query.Where(h => h.Type == request.Type);
             }
             query = query.Where(h => h.CompId == request.CompId);
-            
+
 
             return query.ToList();
         }
 
-        public List<AcceptanceItem> GetAcceptanceItemsByAccepIdList(List<string> acceptIdList,string compId)
+        public List<AcceptanceItem> GetAcceptanceItemsByAccepIdList(List<string> acceptIdList, string compId)
         {
-            return _dbContext.AcceptanceItems.Where(ai=>ai.CompId==compId&&acceptIdList.Contains(ai.AcceptId)).ToList();
+            return _dbContext.AcceptanceItems.Where(ai => ai.CompId == compId && acceptIdList.Contains(ai.AcceptId)).ToList();
+        }
+
+
+        public bool UpdateAccepItems(PurchaseMainSheet purchaseMain,List<AcceptanceItem> existingAcceptanceItems, List<UpdateAcceptItemRequest> updateAcceptItems, List<WarehouseProduct> products, string compId, WarehouseMember acceptMember)
+        {
+            using var scope = new TransactionScope();
+            try
+            {
+                foreach (var existItem in existingAcceptanceItems)
+                {
+                    var matchedUpdateAcceptItem = updateAcceptItems.Where(u => u.AcceptId == existItem.AcceptId).FirstOrDefault();
+                    var matchedProduct = products.Where(p => p.ProductId == existItem.ProductId && p.CompId == compId).FirstOrDefault();
+                    if (matchedUpdateAcceptItem != null)
+                    {
+                        if (matchedUpdateAcceptItem.AcceptQuantity.HasValue)
+                        {
+                            existItem.AcceptQuantity = matchedUpdateAcceptItem.AcceptQuantity.Value;
+                        }
+                        if (matchedUpdateAcceptItem.AcceptUserId != null)
+                        {
+                            existItem.AcceptUserId = matchedUpdateAcceptItem.AcceptUserId;
+                        }
+                        if (matchedUpdateAcceptItem.LotNumber != null)
+                        {
+                            existItem.LotNumber = matchedUpdateAcceptItem.LotNumber;
+                        }
+                        var now = DateTime.Now;
+                        existItem.LotNumberBatch = $"{existItem.LotNumber}_{now.Year}{now.Month}{now.Day}";
+                        if (matchedUpdateAcceptItem.ExpirationDate != null)
+                        {
+                            existItem.ExpirationDate = DateOnly.FromDateTime(DateTimeHelper.ParseDateString(matchedUpdateAcceptItem.ExpirationDate).Value);
+                        }
+                        if (matchedUpdateAcceptItem.PackagingStatus != null)
+                        {
+                            existItem.PackagingStatus = matchedUpdateAcceptItem.PackagingStatus;
+                        }
+                        if (matchedUpdateAcceptItem.QcStatus != null)
+                        {
+                            existItem.QcStatus = matchedUpdateAcceptItem.QcStatus;
+                        }
+                        if (existItem.AcceptQuantity != null && existItem.QcStatus != CommonConstants.QcStatus.FAIL)
+                        {
+                            existItem.CurrentTotalQuantity = matchedProduct.InStockQuantity + existItem.AcceptQuantity; // 驗收入庫後，當下該品項的總庫存數量
+                        }
+
+                        if (matchedUpdateAcceptItem.Comment != null)
+                        {
+                            existItem.Comment = matchedUpdateAcceptItem.Comment;
+                        }
+                        if (matchedUpdateAcceptItem.QcComment != null)
+                        {
+                            existItem.QcComment = matchedUpdateAcceptItem.QcComment;
+                        }
+
+                        if (existItem.AcceptQuantity != null && existItem.QcStatus != CommonConstants.QcStatus.FAIL)
+                        {
+                            var tempInStockItemRecord = new TempInStockItemRecord()
+                            {
+                                InStockId = Guid.NewGuid().ToString(),
+                                LotNumberBatch = existItem.LotNumberBatch,
+                                LotNumber = matchedUpdateAcceptItem.LotNumber,
+                                CompId = compId,
+                                OriginalQuantity = matchedProduct.InStockQuantity.Value,
+                                ExpirationDate = existItem.ExpirationDate,
+                                InStockQuantity = existItem.AcceptQuantity.Value,
+                                ProductId = matchedProduct.ProductId,
+                                ProductName = matchedProduct.ProductName,
+                                ProductSpec = matchedProduct.ProductSpec,
+                                Type = CommonConstants.StockInType.PURCHASE,
+                                UserId = acceptMember.UserId,
+                                UserName = acceptMember.DisplayName,
+                                IsTransfer = true,
+                                InventoryId = existItem.PurchaseMainId
+                            };
+
+                            var inStockItemRecord = new InStockItemRecord()
+                            {
+                                InStockId = Guid.NewGuid().ToString(),
+                                LotNumberBatch = existItem.LotNumberBatch,
+                                LotNumber = matchedUpdateAcceptItem.LotNumber,
+                                CompId = compId,
+                                OriginalQuantity = matchedProduct.InStockQuantity.Value,
+                                ExpirationDate = existItem.ExpirationDate,
+                                ItemId = existItem.ItemId,
+                                InStockQuantity = existItem.AcceptQuantity.Value,
+                                ProductId = matchedProduct.ProductId,
+                                ProductName = matchedProduct.ProductName,
+                                ProductSpec = matchedProduct.ProductSpec,
+                                Type = CommonConstants.StockInType.PURCHASE,
+                                BarCodeNumber = "", //TODO
+                                UserId = acceptMember.UserId,
+                                UserName = acceptMember.DisplayName,
+                                AfterQuantity = matchedProduct.InStockQuantity.Value + existItem.AcceptQuantity.Value,
+                            };
+                            //
+                            matchedProduct.InStockQuantity = inStockItemRecord.AfterQuantity;
+                            matchedProduct.LotNumber = matchedUpdateAcceptItem.LotNumber;
+                            matchedProduct.LotNumberBatch = existItem.LotNumberBatch;
+
+                            _dbContext.TempInStockItemRecords.Add(tempInStockItemRecord);
+                            _dbContext.InStockItemRecords.Add(inStockItemRecord);
+                        }
+                    };
+                }
+                if(existingAcceptanceItems.All(item=>item.QcStatus!=null && item.QcStatus != CommonConstants.QcStatus.FAIL))
+                {
+                    purchaseMain.ReceiveStatus = CommonConstants.PurchaseReceiveStatus.ALL_ACCEPT;
+                }else if (existingAcceptanceItems.Any(item => item.QcStatus != null && item.QcStatus != CommonConstants.QcStatus.FAIL))
+                {
+                    purchaseMain.ReceiveStatus = CommonConstants.PurchaseReceiveStatus.PART_ACCEPT;
+                }
+                _dbContext.SaveChanges();
+                scope.Complete();
+                return true;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError("事務失敗[UpdateAccepItems]：{msg}", ex);
+                return false;
+            }
+
+        }
+
+        public bool UpdateAccepItem(PurchaseMainSheet purchaseMain, AcceptanceItem existingAcceptanceItem, UpdateAcceptItemRequest updateAcceptItem, WarehouseProduct product, string compId, WarehouseMember acceptMember)
+        {
+            using var scope = new TransactionScope();
+            try
+            {
+                
+                if (updateAcceptItem.AcceptQuantity.HasValue)
+                {
+                    existingAcceptanceItem.AcceptQuantity = updateAcceptItem.AcceptQuantity.Value;
+                }
+                if (updateAcceptItem.AcceptUserId != null)
+                {
+                    existingAcceptanceItem.AcceptUserId = updateAcceptItem.AcceptUserId;
+                }
+                if (updateAcceptItem.LotNumber != null)
+                {
+                    existingAcceptanceItem.LotNumber = updateAcceptItem.LotNumber;
+                }
+                var now = DateTime.Now;
+                existingAcceptanceItem.LotNumberBatch = $"{existingAcceptanceItem.LotNumber}_{now.Year}{now.Month}{now.Day}";
+                if (updateAcceptItem.ExpirationDate != null)
+                {
+                    existingAcceptanceItem.ExpirationDate = DateOnly.FromDateTime(DateTimeHelper.ParseDateString(updateAcceptItem.ExpirationDate).Value);
+                }
+                if (updateAcceptItem.PackagingStatus != null)
+                {
+                    existingAcceptanceItem.PackagingStatus = updateAcceptItem.PackagingStatus;
+                }
+                if (updateAcceptItem.QcStatus != null)
+                {
+                    existingAcceptanceItem.QcStatus = updateAcceptItem.QcStatus;
+                }
+                if (existingAcceptanceItem.AcceptQuantity != null && existingAcceptanceItem.QcStatus != CommonConstants.QcStatus.FAIL)
+                {
+                    existingAcceptanceItem.CurrentTotalQuantity = product.InStockQuantity + existingAcceptanceItem.AcceptQuantity; // 驗收入庫後，當下該品項的總庫存數量
+                }
+
+                if (updateAcceptItem.Comment != null)
+                {
+                    existingAcceptanceItem.Comment = updateAcceptItem.Comment;
+                }
+                if (updateAcceptItem.QcComment != null)
+                {
+                    existingAcceptanceItem.QcComment = updateAcceptItem.QcComment;
+                }
+
+                if (existingAcceptanceItem.AcceptQuantity != null && existingAcceptanceItem.QcStatus != CommonConstants.QcStatus.FAIL)
+                {
+                    var tempInStockItemRecord = new TempInStockItemRecord()
+                    {
+                        InStockId = Guid.NewGuid().ToString(),
+                        LotNumberBatch = existingAcceptanceItem.LotNumberBatch,
+                        LotNumber = updateAcceptItem.LotNumber,
+                        CompId = compId,
+                        OriginalQuantity = product.InStockQuantity.Value,
+                        ExpirationDate = existingAcceptanceItem.ExpirationDate,
+                        InStockQuantity = existingAcceptanceItem.AcceptQuantity.Value,
+                        ProductId = product.ProductId,
+                        ProductName = product.ProductName,
+                        ProductSpec = product.ProductSpec,
+                        Type = CommonConstants.StockInType.PURCHASE,
+                        UserId = acceptMember.UserId,
+                        UserName = acceptMember.DisplayName,
+                        IsTransfer = true,
+                        InventoryId = existingAcceptanceItem.PurchaseMainId
+                    };
+
+                    var inStockItemRecord = new InStockItemRecord()
+                    {
+                        InStockId = Guid.NewGuid().ToString(),
+                        LotNumberBatch = existingAcceptanceItem.LotNumberBatch,
+                        LotNumber = updateAcceptItem.LotNumber,
+                        CompId = compId,
+                        OriginalQuantity = product.InStockQuantity.Value,
+                        ExpirationDate = existingAcceptanceItem.ExpirationDate,
+                        ItemId = existingAcceptanceItem.ItemId,
+                        InStockQuantity = existingAcceptanceItem.AcceptQuantity.Value,
+                        ProductId = product.ProductId,
+                        ProductName = product.ProductName,
+                        ProductSpec = product.ProductSpec,
+                        Type = CommonConstants.StockInType.PURCHASE,
+                        BarCodeNumber = existingAcceptanceItem.LotNumberBatch,
+                        UserId = acceptMember.UserId,
+                        UserName = acceptMember.DisplayName,
+                        AfterQuantity = product.InStockQuantity.Value + existingAcceptanceItem.AcceptQuantity.Value,
+                    };
+                    //更新庫存品項
+                    product.InStockQuantity = inStockItemRecord.AfterQuantity;
+                    product.LotNumber = updateAcceptItem.LotNumber;
+                    product.LotNumberBatch = existingAcceptanceItem.LotNumberBatch;
+
+                    _dbContext.TempInStockItemRecords.Add(tempInStockItemRecord);
+                    _dbContext.InStockItemRecords.Add(inStockItemRecord);
+                }
+                //更新採購主單
+                List<AcceptanceItem> existingAcceptanceItems = _dbContext.AcceptanceItems.Where(i=>i.PurchaseMainId == purchaseMain.PurchaseMainId && i.CompId==compId).ToList();
+
+                if (existingAcceptanceItems.All(item => item.QcStatus != null && item.QcStatus != CommonConstants.QcStatus.FAIL))
+                {
+                    purchaseMain.ReceiveStatus = CommonConstants.PurchaseReceiveStatus.ALL_ACCEPT;
+                }
+                else if (existingAcceptanceItems.Any(item => item.QcStatus != null && item.QcStatus != CommonConstants.QcStatus.FAIL))
+                {
+                    purchaseMain.ReceiveStatus = CommonConstants.PurchaseReceiveStatus.PART_ACCEPT;
+                }
+                _dbContext.SaveChanges();
+                scope.Complete();
+                return true;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError("事務失敗[UpdateAccepItem]：{msg}", ex);
+                return false;
+            }
+
+        }
+
+        public List<AcceptanceItem> acceptanceItemsByUdiSerialCode(string udiserialCode,string compId)
+        {
+            return _dbContext.AcceptanceItems.Where(i=>i.UdiserialCode==udiserialCode&&i.CompId==compId).ToList();
+        }
+
+        public AcceptanceItem? GetAcceptanceItemByAcceptId(string acceptId)
+        {
+            return _dbContext.AcceptanceItems.Where(i => i.AcceptId == acceptId).FirstOrDefault();
         }
     }
 }

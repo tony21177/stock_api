@@ -87,6 +87,32 @@ namespace stock_api.Common.Constant
                 return new List<string> { GENERAL, URGENT };
             } 
         }
+
+        public static class QcStatus
+        {
+            public const string PASS = "PASS";
+            public const string FAIL = "FAIL";
+            public const string NONEED = "NONEED";
+            public const string OTHER = "OTHER";
+
+            public static List<string> GetAllValues()
+            {
+                return new List<string> { PASS, FAIL, NONEED, OTHER };
+            }
+        }
+
+        public static class StockInType
+        {
+            public const string PURCHASE = "PURCHASE";
+            public const string SHIFT = "SHIFT";
+            public const string ADJUST = "ADJUST";
+            public const string RETURN = "RETURN";
+
+            public static List<string> GetAllValues()
+            {
+                return new List<string> { PURCHASE, SHIFT, ADJUST, RETURN };
+            }
+        }
     }
 
     
