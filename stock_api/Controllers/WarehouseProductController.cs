@@ -193,7 +193,7 @@ namespace stock_api.Controllers
             {
                 return BadRequest(CommonResponse<dynamic>.BuildValidationFailedResponse(validationResult));
             }
-            var existingProduct = _warehouseProductService.GetProductByProductIdAndCompId(request.ProductId, compId);
+            var existingProduct = _warehouseProductService.GetProductByProductId(request.ProductId);
             if (existingProduct == null)
             {
                 return BadRequest(new CommonResponse<dynamic>()
