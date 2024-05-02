@@ -10,6 +10,7 @@ using stock_api.Service;
 using stock_api.Utils;
 using stock_api.Service.ValueObject;
 using stock_api.Models;
+using MySqlX.XDevAPI.Common;
 
 namespace stock_api.Controllers
 {
@@ -25,9 +26,10 @@ namespace stock_api.Controllers
         private readonly PurchaseService _purchaseService;
         private readonly IValidator<SearchPurchaseAcceptItemRequest> _searchPurchaseAcceptItemValidator;
         private readonly IValidator<UpdateBatchAcceptItemsRequest> _updateBatchAcceptItemsRequestValidator;
-        private readonly IValidator<UpdateAcceptItemRequest> _updateAcceptItemRequestValidator; 
+        private readonly IValidator<UpdateAcceptItemRequest> _updateAcceptItemRequestValidator;
+        private readonly IValidator<ListStockInRecordsRequest> _listStockInRecordsValidator;
 
-        public StockInController(IMapper mapper, AuthHelpers authHelpers, GroupService groupService, StockInService stockInService,WarehouseProductService warehouseProductService,PurchaseService purchaseService)
+        public StockInController(IMapper mapper, AuthHelpers authHelpers, GroupService groupService, StockInService stockInService, WarehouseProductService warehouseProductService, PurchaseService purchaseService)
         {
             _mapper = mapper;
             _authHelpers = authHelpers;
@@ -38,6 +40,7 @@ namespace stock_api.Controllers
             _searchPurchaseAcceptItemValidator = new SearchPurchaseAcceptItemValidator(groupService);
             _updateBatchAcceptItemsRequestValidator = new UpdateBatchAcceptItemsRequestValidator();
             _updateAcceptItemRequestValidator = new UpdateAcceptItemValidator();
+            _listStockInRecordsValidator = new ListStockInRecordsValidator();
         }
 
         [HttpPost("purchaseAndAcceptItems/list")]
@@ -116,7 +119,8 @@ namespace stock_api.Controllers
 
             var acceptIdList = request.UpdateAcceptItemList.Select(i => i.AcceptId).ToList();
             var exsitingAcceptItems = _stockInService.GetAcceptanceItemsByAccepIdList(acceptIdList, compId);
-            if (exsitingAcceptItems.Any(i=>i.CompId!=compId)) {
+            if (exsitingAcceptItems.Any(i => i.CompId != compId))
+            {
                 return BadRequest(CommonResponse<dynamic>.BuildNotAuthorizeResponse());
             }
 
@@ -137,7 +141,7 @@ namespace stock_api.Controllers
 
             return Ok(new CommonResponse<dynamic>
             {
-                Result =result,
+                Result = result,
             });
         }
 
@@ -150,8 +154,8 @@ namespace stock_api.Controllers
             var userId = memberAndPermissionSetting.Member.UserId;
 
 
-            List<AcceptanceItem> acceptanceItems = _stockInService.acceptanceItemsByUdiSerialCode(request.UdiserialCode, compId).Where(i=>i.QcStatus==null).ToList();
-            var result = acceptanceItems.OrderByDescending(i=>i.UpdatedAt).FirstOrDefault();
+            List<AcceptanceItem> acceptanceItems = _stockInService.acceptanceItemsByUdiSerialCode(request.UdiserialCode, compId).Where(i => i.QcStatus == null).ToList();
+            var result = acceptanceItems.OrderByDescending(i => i.UpdatedAt).FirstOrDefault();
             return Ok(new CommonResponse<AcceptanceItem>
             {
                 Result = true,
@@ -183,9 +187,13 @@ namespace stock_api.Controllers
                     Message = "驗收品項不存在"
                 });
             }
+            if(existingAcceptItem.CompId != compId)
+            {
+                return BadRequest(CommonResponse<dynamic>.BuildNotAuthorizeResponse());
+            }
 
 
-            var product = _warehouseProductService.GetProductByProductIdAndCompId(existingAcceptItem.ProductId,compId);
+            var product = _warehouseProductService.GetProductByProductIdAndCompId(existingAcceptItem.ProductId, compId);
             if (product == null)
             {
                 return BadRequest(new CommonResponse<dynamic>
@@ -205,11 +213,34 @@ namespace stock_api.Controllers
                 });
             }
 
-            var result = _stockInService.UpdateAccepItem(purchaseMain, existingAcceptItem, request, product,compId,memberAndPermissionSetting.Member);
+            var result = _stockInService.UpdateAccepItem(purchaseMain, existingAcceptItem, request, product, compId, memberAndPermissionSetting.Member);
 
             return Ok(new CommonResponse<dynamic>
             {
                 Result = result,
+            });
+        }
+
+        [HttpPost("records/list")]
+        [Authorize]
+        public IActionResult ListStockInRecords(ListStockInRecordsRequest request)
+        {
+            var memberAndPermissionSetting = _authHelpers.GetMemberAndPermissionSetting(User);
+            var compId = memberAndPermissionSetting.CompanyWithUnit.CompId;
+            var userId = memberAndPermissionSetting.Member.UserId;
+            var validationResult = _listStockInRecordsValidator.Validate(request);
+
+            if (!validationResult.IsValid)
+            {
+                return BadRequest(CommonResponse<dynamic>.BuildValidationFailedResponse(validationResult));
+            }
+
+            request.CompId = compId;
+            var data = _stockInService.ListStockInRecords(request);
+            return Ok(new CommonResponse<dynamic>
+            {
+                Result = true,
+                Data = data
             });
         }
     }

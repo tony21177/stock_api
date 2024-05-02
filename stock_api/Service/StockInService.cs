@@ -324,5 +324,42 @@ namespace stock_api.Service
         {
             return _dbContext.AcceptanceItems.Where(i => i.AcceptId == acceptId).FirstOrDefault();
         }
+
+        public List<InStockItemRecord> ListStockInRecords(ListStockInRecordsRequest request)
+        {
+            IQueryable<InStockItemRecord> query = _dbContext.InStockItemRecords;
+            if (request.LotNumberBatch != null)
+            {
+                query = query.Where(h => h.LotNumberBatch == request.LotNumberBatch);
+            }
+            if (request.LotNumber != null)
+            {
+                query = query.Where(h => h.LotNumber == request.LotNumber);
+            }
+            if (request.ItemId != null)
+            {
+                query = query.Where(h => h.ItemId == request.ItemId);
+            }
+            if (request.ProductId != null)
+            {
+                query = query.Where(h => h.ProductId == request.ProductId);
+            }
+            if (request.ProductName != null)
+            {
+                query = query.Where(h => h.ProductName == request.ProductName);
+            }
+            if (request.UserId != null)
+            {
+                query = query.Where(h => h.UserId == request.UserId);
+            }
+            if (request.Type != null)
+            {
+                query = query.Where(h => h.Type == request.Type);
+            }
+            query = query.Where(h => h.CompId == request.CompId);
+
+            return query.ToList();
+
+        }
     }
 }
