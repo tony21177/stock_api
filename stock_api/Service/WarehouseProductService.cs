@@ -198,46 +198,51 @@ namespace stock_api.Service
         {
             var groupIds = request.GroupIds;
             var matchedGroups = groups.Where(g => groupIds.Contains(g.GroupId)).ToList();
+            var updateProduct = new WarehouseProduct()
+            {
+                CompId = existingProduct.CompId,
+                ProductId = existingProduct.ProductId,
+            };
 
-            var updateProduct = _mapper.Map<WarehouseProduct>(request);
+            _mapper.Map(request, updateProduct);
             updateProduct.InStockQuantity = existingProduct.InStockQuantity;
-            if (request.MaxSafeQuantity != null)
+            if (request.MaxSafeQuantity == null)
             {
                 updateProduct.MaxSafeQuantity = existingProduct.MaxSafeQuantity;
             }
-            if(request.OpenDeadline != null)
+            if(request.OpenDeadline == null)
             {
                 updateProduct.OpenDeadline = existingProduct.OpenDeadline;
             }
-            if (request.PreDeadline != null)
+            if (request.PreDeadline == null)
             {
                 updateProduct.PreDeadline = existingProduct.PreDeadline;
             }
-            if (request.PreOrderDays != null)
+            if (request.PreOrderDays == null)
             {
                 updateProduct.PreOrderDays = existingProduct.PreOrderDays;
             }
-            if (request.SafeQuantity != null)
+            if (request.SafeQuantity == null)
             {
                 updateProduct.SafeQuantity = existingProduct.SafeQuantity;
             }
-            if (request.DefaultSupplierId != null)
+            if (request.DefaultSupplierId == null)
             {
                 updateProduct.DefaultSupplierId = existingProduct.DefaultSupplierId;
             }
-            if (request.IsNeedAcceptProcess != null)
+            if (request.IsNeedAcceptProcess == null)
             {
                 updateProduct.IsNeedAcceptProcess = existingProduct.IsNeedAcceptProcess;
             }
-            if (request.AllowReceiveDateRange != null)
+            if (request.AllowReceiveDateRange == null)
             {
                 updateProduct.AllowReceiveDateRange = existingProduct.AllowReceiveDateRange;
             }
-            if (request.UnitConversion != null)
+            if (request.UnitConversion == null)
             {
                 updateProduct.UnitConversion = existingProduct.UnitConversion;
             }
-            if (request.TestCount != null)
+            if (request.TestCount == null)
             {
                 updateProduct.TestCount = existingProduct.TestCount;
             }

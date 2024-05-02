@@ -77,10 +77,13 @@ namespace stock_api.Common.AutoMapper
             .ForMember(dest => dest.GroupIds, opt => opt.MapFrom(src => string.Join(",", src.GroupIds)))
             .ForAllMembers(opt => opt.Condition((src, dest, srcMember) => srcMember != null));
             CreateMap<AdminUpdateProductRequest, WarehouseProduct>()
-            .ForMember(dest => dest.GroupIds, opt => opt.MapFrom(src => string.Join(",", src.GroupIds)))
-            .ForMember(dest => dest.LastAbleDate, opt => opt.MapFrom(src =>DateOnly.FromDateTime(DateTimeHelper.ParseDateString(src.LastAbleDate).Value)))
-            .ForMember(dest => dest.LastOutStockDate, opt => opt.MapFrom(src => DateOnly.FromDateTime(DateTimeHelper.ParseDateString(src.LastOutStockDate).Value)))
-            .ForMember(dest => dest.OriginalDeadline, opt => opt.MapFrom(src => DateOnly.FromDateTime(DateTimeHelper.ParseDateString(src.OriginalDeadline).Value)))
+            .ForMember(dest => dest.GroupIds, opt => opt.MapFrom(src => src.GroupIds != null ? string.Join(",", src.GroupIds):null))
+            .ForMember(dest => dest.LastAbleDate, opt => opt.MapFrom(src =>
+        src.LastAbleDate != null ? DateTimeHelper.ParseDateString(src.LastAbleDate) : (DateTime?)null))
+            .ForMember(dest => dest.LastOutStockDate, opt => opt.MapFrom(src =>
+        src.LastOutStockDate != null ? DateTimeHelper.ParseDateString(src.LastOutStockDate) : (DateTime?)null))
+    .ForMember(dest => dest.OriginalDeadline, opt => opt.MapFrom(src =>
+        src.OriginalDeadline != null ? DateTimeHelper.ParseDateString(src.OriginalDeadline) : (DateTime?)null))
             .ForAllMembers(opt => opt.Condition((src, dest, srcMember) => srcMember != null));
             
             CreateMap<WarehouseProduct, WarehouseProduct>()
