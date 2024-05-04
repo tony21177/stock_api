@@ -14,7 +14,7 @@ namespace stock_api.Models;
 /// 3. 用無條件進位的方式去轉換成訂購數量
 /// 例如 單位訂購某品項10組 但UnitCoonversion欄位設定為4 則換算結果10/4=2.5 則無條件進位 意即訂購此品項變為3
 /// </summary>
-[PrimaryKey("ProductId", "CompId")]
+[PrimaryKey("CompId", "ProductId")]
 [Table("warehouse_product")]
 public partial class WarehouseProduct
 {
@@ -54,12 +54,6 @@ public partial class WarehouseProduct
     /// </summary>
     [StringLength(500)]
     public string? DeadlineRule { get; set; }
-
-    /// <summary>
-    /// 運送條件
-    /// </summary>
-    [StringLength(500)]
-    public string? DeliverFunction { get; set; }
 
     /// <summary>
     /// 運送備註
@@ -185,12 +179,6 @@ public partial class WarehouseProduct
     public int? SafeQuantity { get; set; }
 
     /// <summary>
-    /// 儲存環境條件
-    /// </summary>
-    [StringLength(300)]
-    public string? SavingFunction { get; set; }
-
-    /// <summary>
     /// UDI 碼
     /// </summary>
     [Column("UDIBatchCode")]
@@ -290,4 +278,14 @@ public partial class WarehouseProduct
 
     [StringLength(100)]
     public string? SupplierUnit { get; set; }
+
+    [StringLength(45)]
+    public string? DeliverFunction { get; set; }
+
+    public double? DeliverTemperature { get; set; }
+
+    [StringLength(45)]
+    public string? SavingFunction { get; set; }
+
+    public double? SavingTemperature { get; set; }
 }

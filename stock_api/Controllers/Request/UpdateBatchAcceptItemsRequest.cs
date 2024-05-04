@@ -19,5 +19,9 @@ namespace stock_api.Controllers.Request
         public string? QcStatus { get; set; }
         public string? Comment { get; set; }
         public string? QcComment { get; set; }
+        public string? DeliverFunction { get; set; }
+        public double? DeliverTemperature { get; set; }
+        public string? SavingFunction { get; set; }
+        public double? SavingTemperature { get; set; }
     }
 }

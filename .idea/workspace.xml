@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ChangeListManager">
+    <list default="true" id="c03767d5-3917-46bb-908a-051177d76e38" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/output/net6.0/stock_api.dll" beforeDir="false" afterPath="$PROJECT_DIR$/output/net6.0/stock_api.dll" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/output/net6.0/stock_api.exe" beforeDir="false" afterPath="$PROJECT_DIR$/output/net6.0/stock_api.exe" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/stock_api/Common/Constant/CommonConstants.cs" beforeDir="false" afterPath="$PROJECT_DIR$/stock_api/Common/Constant/CommonConstants.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/stock_api/Controllers/Request/UpdateBatchAcceptItemsRequest.cs" beforeDir="false" afterPath="$PROJECT_DIR$/stock_api/Controllers/Request/UpdateBatchAcceptItemsRequest.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/stock_api/Controllers/StockInController.cs" beforeDir="false" afterPath="$PROJECT_DIR$/stock_api/Controllers/StockInController.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/stock_api/Controllers/Validator/UpdateBatchAcceptItemsRequestValidator.cs" beforeDir="false" afterPath="$PROJECT_DIR$/stock_api/Controllers/Validator/UpdateBatchAcceptItemsRequestValidator.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/stock_api/Models/AcceptanceItem.cs" beforeDir="false" afterPath="$PROJECT_DIR$/stock_api/Models/AcceptanceItem.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/stock_api/Models/PurchaseAcceptanceItemsView.cs" beforeDir="false" afterPath="$PROJECT_DIR$/stock_api/Models/PurchaseAcceptanceItemsView.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/stock_api/Models/PurchaseItemListView.cs" beforeDir="false" afterPath="$PROJECT_DIR$/stock_api/Models/PurchaseItemListView.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/stock_api/Models/PurchaseSubItem.cs" beforeDir="false" afterPath="$PROJECT_DIR$/stock_api/Models/PurchaseSubItem.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/stock_api/Models/StockDbContext.cs" beforeDir="false" afterPath="$PROJECT_DIR$/stock_api/Models/StockDbContext.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/stock_api/Models/WarehouseProduct.cs" beforeDir="false" afterPath="$PROJECT_DIR$/stock_api/Models/WarehouseProduct.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/stock_api/Models/WarehouseProductCommon.cs" beforeDir="false" afterPath="$PROJECT_DIR$/stock_api/Models/WarehouseProductCommon.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/stock_api/Service/StockInService.cs" beforeDir="false" afterPath="$PROJECT_DIR$/stock_api/Service/StockInService.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/stock_api/Service/ValueObject/PurchaseAcceptItemsVo.cs" beforeDir="false" afterPath="$PROJECT_DIR$/stock_api/Service/ValueObject/PurchaseAcceptItemsVo.cs" afterDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="MarkdownSettingsMigration">
+    <option name="stateVersion" value="1" />
+  </component>
+  <component name="ProjectId" id="2g0TR1vAq2egsAVRxdX7Iy8Re87" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "WebServerToolWindowFactoryState": "false",
+    "vue.rearranger.settings.migration": "true"
+  }
+}]]></component>
+  <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="c03767d5-3917-46bb-908a-051177d76e38" name="Changes" comment="" />
+      <created>1714833483709</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1714833483709</updated>
+      <workItem from="1714833485650" duration="25000" />
+    </task>
+    <servers />
+  </component>
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="3" />
+  </component>
+</project>

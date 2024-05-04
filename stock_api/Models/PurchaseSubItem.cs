@@ -70,10 +70,7 @@ public partial class PurchaseSubItem
     public int? ReceiveQuantity { get; set; }
 
     /// <summary>
-    /// 送單到金萬林後，目前狀態
-    /// NONE : 尚未收到結果
-    /// PART : 部分驗收入庫
-    /// DONE : 全部驗收入庫
+    /// 送單到金萬林後，目前狀態\nNONE : 尚未收到結果\nPART : 部分驗收入庫\nDONE : 全部驗收入庫\nCLOSE:金萬林不同意拆單後的採購項目
     /// </summary>
     [StringLength(45)]
     public string ReceiveStatus { get; set; } = null!;

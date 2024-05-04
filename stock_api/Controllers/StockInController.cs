@@ -59,6 +59,9 @@ namespace stock_api.Controllers
                 return BadRequest(CommonResponse<dynamic>.BuildValidationFailedResponse(validationResult));
             }
             List<PurchaseAcceptanceItemsView> purchaseAcceptanceItemsViewList = _stockInService.SearchPurchaseAcceptanceItems(request);
+            List<string> distinctProductIdList = purchaseAcceptanceItemsViewList.Select(x => x.ProductId).Distinct().ToList();
+            List<WarehouseProduct> products = _warehouseProductService.GetProductsByProductIdsAndCompId(distinctProductIdList, compId);
+
             Dictionary<string, List<PurchaseAcceptanceItemsView>> purchaseMainIdAndAcceptionItemListMap = new();
             purchaseAcceptanceItemsViewList.ForEach(item =>
             {
@@ -76,6 +79,15 @@ namespace stock_api.Controllers
                 List<PurchaseAcceptanceItemsView> purchaseAcceptanceItemViewList = keyValuePair.Value;
                 PurchaseAcceptItemsVo purchaseAcceptItemsVo = _mapper.Map<PurchaseAcceptItemsVo>(purchaseAcceptanceItemViewList[0]);
                 List<AcceptItem> acceptItems = _mapper.Map<List<AcceptItem>>(purchaseAcceptanceItemViewList);
+                foreach (var item in acceptItems)
+                {
+                    var matchedProdcut = products.Where(p => p.ProductId == item.ProductId).FirstOrDefault();
+                    if (matchedProdcut != null)
+                    {
+                        item.Unit = matchedProdcut.Unit;
+                    }
+                }
+
                 if (request.Keywords == null)
                 {
                     purchaseAcceptItemsVo.AcceptItems = acceptItems;
@@ -91,6 +103,7 @@ namespace stock_api.Controllers
 
             }
             data = data.OrderByDescending(item => item.ApplyDate).ToList();
+
 
             var response = new CommonResponse<List<PurchaseAcceptItemsVo>>
             {
@@ -190,6 +203,13 @@ namespace stock_api.Controllers
             if(existingAcceptItem.CompId != compId)
             {
                 return BadRequest(CommonResponse<dynamic>.BuildNotAuthorizeResponse());
+            }
+            if (existingAcceptItem.QcStatus != null)
+            {
+                return BadRequest(new CommonResponse<dynamic>{
+                    Result = false,
+                    Message = $"此驗收單狀態已為{existingAcceptItem.QcStatus},不可重複驗收"
+                });
             }
 
 

@@ -18,18 +18,6 @@ namespace stock_api.Models;
 public partial class WarehouseProductCommon
 {
     /// <summary>
-    /// 批次
-    /// </summary>
-    [StringLength(100)]
-    public string LotNumberBatch { get; set; } = null!;
-
-    /// <summary>
-    /// 批號
-    /// </summary>
-    [StringLength(100)]
-    public string LotNumber { get; set; } = null!;
-
-    /// <summary>
     /// 品項所屬的製造商ID
     /// </summary>
     [StringLength(100)]
@@ -46,56 +34,6 @@ public partial class WarehouseProductCommon
     /// </summary>
     [StringLength(500)]
     public string? DeadlineRule { get; set; }
-
-    /// <summary>
-    /// 運送條件
-    /// </summary>
-    [StringLength(500)]
-    public string? DeliverFunction { get; set; }
-
-    /// <summary>
-    /// 運送備註
-    /// </summary>
-    [StringLength(500)]
-    public string? DeliverRemarks { get; set; }
-
-    /// <summary>
-    /// 屬於數個組別
-    /// </summary>
-    [StringLength(2000)]
-    public string? GroupIds { get; set; }
-
-    /// <summary>
-    /// 組別名稱
-    /// </summary>
-    [StringLength(2000)]
-    public string? GroupNames { get; set; }
-
-    /// <summary>
-    /// 庫存數量
-    /// </summary>
-    public int? InStockQuantity { get; set; }
-
-    /// <summary>
-    /// 管理者
-    /// </summary>
-    [StringLength(45)]
-    public string? Manager { get; set; }
-
-    /// <summary>
-    /// 最高安庫量
-    /// </summary>
-    public int? MaxSafeQuantity { get; set; }
-
-    /// <summary>
-    /// 最後可使用日期
-    /// </summary>
-    public DateOnly? LastAbleDate { get; set; }
-
-    /// <summary>
-    /// 最後出庫日期
-    /// </summary>
-    public DateOnly? LastOutStockDate { get; set; }
 
     /// <summary>
     /// 開封有效期限
@@ -137,12 +75,9 @@ public partial class WarehouseProductCommon
     /// <summary>
     /// 產品編碼
     /// </summary>
-    [StringLength(200)]
-    public string? ProductCode { get; set; }
-
     [Key]
-    [StringLength(100)]
-    public string ProductId { get; set; } = null!;
+    [StringLength(200)]
+    public string ProductCode { get; set; } = null!;
 
     /// <summary>
     /// 品項型號
@@ -167,17 +102,6 @@ public partial class WarehouseProductCommon
     /// </summary>
     [StringLength(300)]
     public string? ProductSpec { get; set; }
-
-    /// <summary>
-    /// 最小安庫量
-    /// </summary>
-    public int? SafeQuantity { get; set; }
-
-    /// <summary>
-    /// 儲存環境條件
-    /// </summary>
-    [StringLength(300)]
-    public string? SavingFunction { get; set; }
 
     /// <summary>
     /// UDI 碼
@@ -270,10 +194,13 @@ public partial class WarehouseProductCommon
     [StringLength(200)]
     public string? StockLocation { get; set; }
 
-    /// <summary>
-    /// VENDOR:廠商直寄,
-    /// OWNER:得標廠商(金萬林)供貨
-    /// </summary>
-    [StringLength(200)]
-    public string? Delievery { get; set; }
+    [StringLength(45)]
+    public string? DeliverFunction { get; set; }
+
+    public double? DeliverTemperature { get; set; }
+
+    [StringLength(45)]
+    public string? SavingFunction { get; set; }
+
+    public double? SavingTemperature { get; set; }
 }

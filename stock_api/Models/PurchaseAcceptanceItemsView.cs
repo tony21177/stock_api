@@ -191,4 +191,14 @@ public partial class PurchaseAcceptanceItemsView
 
     [Column(TypeName = "timestamp")]
     public DateTime? AcceptUpdatedAt { get; set; }
+
+    [StringLength(45)]
+    public string? DeliverFunction { get; set; }
+
+    public double? DeliverTemperature { get; set; }
+
+    [StringLength(45)]
+    public string? SavingFunction { get; set; }
+
+    public double? SavingTemperature { get; set; }
 }

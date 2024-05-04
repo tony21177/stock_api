@@ -37,9 +37,9 @@ namespace stock_api.Service
             return _dbContext.WarehouseProducts.Where(p => productIdList.Contains(p.ProductId)).ToList();
         }
 
-        public List<WarehouseProductCommon> GetCommonProductsByProductIds(List<string> productIdList)
+        public List<WarehouseProductCommon> GetCommonProductsByProductCodes(List<string> productCodeList)
         {
-            return _dbContext.WarehouseProductCommons.Where(p => productIdList.Contains(p.ProductId)).ToList();
+            return _dbContext.WarehouseProductCommons.Where(p => productCodeList.Contains(p.ProductCode)).ToList();
         }
 
         public (List<WarehouseProduct> Results, int TotalPages) SearchProduct(WarehouseProductSearchRequest searchRequest)

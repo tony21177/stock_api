@@ -47,6 +47,11 @@ namespace stock_api.Service.ValueObject
         public string QcComment { get; set; }
         public DateTime? AcceptCreatedAt { get; set; }
         public DateTime? AcceptUpdatedAt { get; set; }
+        public string? DeliverFunction { get; set; }
+        public double? DeliverTemperature { get; set; }
+        public string? SavingFunction { get; set; }
+        public double? SavingTemperature { get; set; }
+        public string? Unit { get; set; }
 
         public bool IsContainKeywords(string keywords)
         {

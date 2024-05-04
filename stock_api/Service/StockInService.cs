@@ -239,9 +239,21 @@ namespace stock_api.Service
                 {
                     existingAcceptanceItem.Comment = updateAcceptItem.Comment;
                 }
-                if (updateAcceptItem.QcComment != null)
+                if (updateAcceptItem.DeliverFunction != null)
                 {
-                    existingAcceptanceItem.QcComment = updateAcceptItem.QcComment;
+                    existingAcceptanceItem.DeliverFunction = updateAcceptItem.DeliverFunction;
+                }
+                if (updateAcceptItem.DeliverTemperature != null)
+                {
+                    existingAcceptanceItem.DeliverTemperature = updateAcceptItem.DeliverTemperature;
+                }
+                if (updateAcceptItem.SavingFunction != null)
+                {
+                    existingAcceptanceItem.SavingFunction = updateAcceptItem.SavingFunction;
+                }
+                if (updateAcceptItem.SavingTemperature != null)
+                {
+                    existingAcceptanceItem.SavingTemperature = updateAcceptItem.SavingTemperature;
                 }
 
                 if (existingAcceptanceItem.AcceptQuantity != null && existingAcceptanceItem.QcStatus != CommonConstants.QcStatus.FAIL)
@@ -262,7 +274,11 @@ namespace stock_api.Service
                         UserId = acceptMember.UserId,
                         UserName = acceptMember.DisplayName,
                         IsTransfer = true,
-                        InventoryId = existingAcceptanceItem.PurchaseMainId
+                        InventoryId = existingAcceptanceItem.PurchaseMainId,
+                        DeliverFunction = existingAcceptanceItem.DeliverFunction,
+                        DeliverTemperature = existingAcceptanceItem.DeliverTemperature,
+                        SavingFunction = existingAcceptanceItem.SavingFunction,
+                        SavingTemperature = existingAcceptanceItem.SavingTemperature,
                     };
 
                     var inStockItemRecord = new InStockItemRecord()
@@ -283,11 +299,19 @@ namespace stock_api.Service
                         UserId = acceptMember.UserId,
                         UserName = acceptMember.DisplayName,
                         AfterQuantity = product.InStockQuantity.Value + existingAcceptanceItem.AcceptQuantity.Value,
+                        DeliverFunction = existingAcceptanceItem.DeliverFunction,
+                        DeliverTemperature = existingAcceptanceItem.DeliverTemperature,
+                        SavingFunction = existingAcceptanceItem.SavingFunction,
+                        SavingTemperature = existingAcceptanceItem.SavingTemperature,
                     };
                     //更新庫存品項
                     product.InStockQuantity = inStockItemRecord.AfterQuantity;
                     product.LotNumber = updateAcceptItem.LotNumber;
                     product.LotNumberBatch = existingAcceptanceItem.LotNumberBatch;
+                    product.DeliverFunction = existingAcceptanceItem.DeliverFunction;
+                    product.DeliverTemperature = existingAcceptanceItem.DeliverTemperature;
+                    product.SavingFunction = existingAcceptanceItem.SavingFunction;
+                    product.SavingTemperature = existingAcceptanceItem.SavingTemperature;
 
                     _dbContext.TempInStockItemRecords.Add(tempInStockItemRecord);
                     _dbContext.InStockItemRecords.Add(inStockItemRecord);

@@ -101,6 +101,18 @@ namespace stock_api.Common.Constant
             }
         }
 
+        public static class PackagingStatus
+        {
+            public const string NORMAL = "NORMAL";
+            public const string BREAK = "BREAK";
+            
+
+            public static List<string> GetAllValues()
+            {
+                return new List<string> { NORMAL, BREAK };
+            }
+        }
+
         public static class StockInType
         {
             public const string PURCHASE = "PURCHASE";
@@ -111,6 +123,32 @@ namespace stock_api.Common.Constant
             public static List<string> GetAllValues()
             {
                 return new List<string> { PURCHASE, SHIFT, ADJUST, RETURN };
+            }
+        }
+
+        public static class DeliverFunctionType
+        {
+            public const string NORMAL = "NORMAL";
+            public const string REFRIGERATE = "REFRIGERATE";
+            public const string FREEZED = "FREEZED";
+            public const string OTHER = "OTHER";
+
+            public static List<string> GetAllValues()
+            {
+                return new List<string> { NORMAL, REFRIGERATE, FREEZED, OTHER };
+            }
+        }
+
+        public static class SavingFunctionType
+        {
+            public const string NORMAL = "NORMAL";
+            public const string REFRIGERATE = "REFRIGERATE";
+            public const string FREEZED = "FREEZED";
+            public const string OTHER = "OTHER";
+
+            public static List<string> GetAllValues()
+            {
+                return new List<string> { NORMAL, REFRIGERATE, FREEZED, OTHER };
             }
         }
     }

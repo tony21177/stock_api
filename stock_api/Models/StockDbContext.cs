@@ -434,7 +434,7 @@ public partial class StockDbContext : DbContext
             entity.Property(e => e.DemandDate).HasComment("需求日期");
             entity.Property(e => e.GroupIds).HasComment("設定此單據所屬的組別，參考 Warehouse_Group");
             entity.Property(e => e.ItemGroupIds).HasComment("品項可以設定組別ID\\n在醫院端可以依照組別拆單顯示");
-            entity.Property(e => e.ItemReceiveStatus).HasComment("送單到金萬林後，目前狀態\nNONE : 尚未收到結果\nPART : 部分驗收入庫\nDONE : 全部驗收入庫");
+            entity.Property(e => e.ItemReceiveStatus).HasComment("送單到金萬林後，目前狀態\\nNONE : 尚未收到結果\\nPART : 部分驗收入庫\\nDONE : 全部驗收入庫\\nCLOSE:金萬林不同意拆單後的採購項目");
             entity.Property(e => e.ProductCategory).HasComment("品項的 ProductCategory, 用來醫院拆單用");
             entity.Property(e => e.ProductId).HasComment("品項的PK，\n參考 Product Table");
             entity.Property(e => e.ProductName).HasComment("品項名稱");
@@ -493,7 +493,7 @@ public partial class StockDbContext : DbContext
             entity.Property(e => e.PurchaseMainId).HasComment("PurchaseMainSheet PK");
             entity.Property(e => e.Quantity).HasComment("數量");
             entity.Property(e => e.ReceiveQuantity).HasComment("已收到的數量");
-            entity.Property(e => e.ReceiveStatus).HasComment("送單到金萬林後，目前狀態\nNONE : 尚未收到結果\nPART : 部分驗收入庫\nDONE : 全部驗收入庫");
+            entity.Property(e => e.ReceiveStatus).HasComment("送單到金萬林後，目前狀態\\nNONE : 尚未收到結果\\nPART : 部分驗收入庫\\nDONE : 全部驗收入庫\\nCLOSE:金萬林不同意拆單後的採購項目");
             entity.Property(e => e.UpdatedAt)
                 .ValueGeneratedOnAddOrUpdate()
                 .HasDefaultValueSql("CURRENT_TIMESTAMP");
@@ -658,7 +658,7 @@ public partial class StockDbContext : DbContext
 
         modelBuilder.Entity<WarehouseProduct>(entity =>
         {
-            entity.HasKey(e => new { e.ProductId, e.CompId })
+            entity.HasKey(e => new { e.CompId, e.ProductId })
                 .HasName("PRIMARY")
                 .HasAnnotation("MySql:IndexPrefixLength", new[] { 0, 0 });
 
@@ -673,7 +673,6 @@ public partial class StockDbContext : DbContext
             entity.Property(e => e.Delievery)
                 .HasDefaultValueSql("'VENDOR'")
                 .HasComment("VENDOR:廠商直寄,\nOWNER:得標廠商(金萬林)供貨");
-            entity.Property(e => e.DeliverFunction).HasComment("運送條件");
             entity.Property(e => e.DeliverRemarks).HasComment("運送備註");
             entity.Property(e => e.GroupIds).HasComment("屬於數個組別");
             entity.Property(e => e.GroupNames).HasComment("組別名稱");
@@ -706,7 +705,6 @@ public partial class StockDbContext : DbContext
             entity.Property(e => e.ProductRemarks).HasComment("品項備註");
             entity.Property(e => e.ProductSpec).HasComment("品項規格");
             entity.Property(e => e.SafeQuantity).HasComment("最小安庫量");
-            entity.Property(e => e.SavingFunction).HasComment("儲存環境條件");
             entity.Property(e => e.SupplierUnitConvertsion).HasDefaultValueSql("'1'");
             entity.Property(e => e.TestCount)
                 .HasDefaultValueSql("'1'")
@@ -727,49 +725,33 @@ public partial class StockDbContext : DbContext
 
         modelBuilder.Entity<WarehouseProductCommon>(entity =>
         {
-            entity.HasKey(e => e.ProductId).HasName("PRIMARY");
+            entity.HasKey(e => e.ProductCode).HasName("PRIMARY");
 
             entity.ToTable("warehouse_product_common", tb => tb.HasComment("1. 庫存品項基本資料，因為要考慮到調撥這件事情，也就是從醫院單位A把項目移動部分庫存量到醫院單位B；所以，任一相同品項，在不同的醫院單位內的 ProductID 應該是一制，在這條件下，Product 表格的 PK 應是 CompID + ProductID\n2. 目前最大庫存量與最小安庫量跟庫存數量(InStockQuantity)這個欄位去做判斷就好 不要牽扯到TestCount 這樣感覺比較單純 ，TestCount這個欄位僅用來呈現目前尚存TEST用就好\n3. 用無條件進位的方式去轉換成訂購數量\n例如 單位訂購某品項10組 但UnitCoonversion欄位設定為4 則換算結果10/4=2.5 則無條件進位 意即訂購此品項變為3"));
 
+            entity.Property(e => e.ProductCode).HasComment("產品編碼");
             entity.Property(e => e.AllowReceiveDateRange).HasComment("該品項期限距離現在的最小天數");
             entity.Property(e => e.CreatedAt).HasDefaultValueSql("CURRENT_TIMESTAMP");
             entity.Property(e => e.DeadlineRule).HasComment("有效期限規範");
             entity.Property(e => e.DefaultSupplierId).HasComment("預設供應商");
             entity.Property(e => e.DefaultSupplierName).HasComment("預設供應商名稱");
-            entity.Property(e => e.Delievery)
-                .HasDefaultValueSql("'VENDOR'")
-                .HasComment("VENDOR:廠商直寄,\nOWNER:得標廠商(金萬林)供貨");
-            entity.Property(e => e.DeliverFunction).HasComment("運送條件");
-            entity.Property(e => e.DeliverRemarks).HasComment("運送備註");
-            entity.Property(e => e.GroupIds).HasComment("屬於數個組別");
-            entity.Property(e => e.GroupNames).HasComment("組別名稱");
-            entity.Property(e => e.InStockQuantity).HasComment("庫存數量");
             entity.Property(e => e.IsActive).HasDefaultValueSql("'1'");
             entity.Property(e => e.IsNeedAcceptProcess)
                 .HasDefaultValueSql("'0'")
                 .HasComment("該品項出庫時，是否需要經過二次驗收");
-            entity.Property(e => e.LastAbleDate).HasComment("最後可使用日期");
-            entity.Property(e => e.LastOutStockDate).HasComment("最後出庫日期");
-            entity.Property(e => e.LotNumber).HasComment("批號");
-            entity.Property(e => e.LotNumberBatch).HasComment("批次");
-            entity.Property(e => e.Manager).HasComment("管理者");
             entity.Property(e => e.ManufacturerId).HasComment("品項所屬的製造商ID");
             entity.Property(e => e.ManufacturerName).HasComment("品項所屬的製造商名稱");
-            entity.Property(e => e.MaxSafeQuantity).HasComment("最高安庫量");
             entity.Property(e => e.OpenDeadline).HasComment("開封有效期限\n數字（開封後可以用幾天），檢查資料庫是不是int");
             entity.Property(e => e.OpenedSealName).HasComment("開封列印名稱");
             entity.Property(e => e.OriginalDeadline).HasComment("原始有效期限");
             entity.Property(e => e.PackageWay).HasComment("包裝方式");
             entity.Property(e => e.PreOrderDays).HasComment("前置天數");
             entity.Property(e => e.ProductCategory).HasComment("產品類別\n[耗材, 試劑, 其他]");
-            entity.Property(e => e.ProductCode).HasComment("產品編碼");
             entity.Property(e => e.ProductMachine).HasComment("品項所屬儀器");
             entity.Property(e => e.ProductModel).HasComment("品項型號");
             entity.Property(e => e.ProductName).HasComment("品項名稱");
             entity.Property(e => e.ProductRemarks).HasComment("品項備註");
             entity.Property(e => e.ProductSpec).HasComment("品項規格");
-            entity.Property(e => e.SafeQuantity).HasComment("最小安庫量");
-            entity.Property(e => e.SavingFunction).HasComment("儲存環境條件");
             entity.Property(e => e.TestCount)
                 .HasDefaultValueSql("'1'")
                 .HasComment("在總覽表與目前庫存數量(InStockQuantity)相乘顯示給使用者知道目前可用的數量用的欄位");
