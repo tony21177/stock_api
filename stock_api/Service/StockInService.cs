@@ -29,6 +29,10 @@ namespace stock_api.Service
             {
                 query = query.Where(h => h.ReceiveStatus == request.ReceiveStatus);
             }
+            if (request.PurchaseMainId != null) 
+            {
+                query = query.Where(h => h.PurchaseMainId == request.PurchaseMainId);
+            }
             //if (request.DemandDateStart != null)
             //{
             //    DateOnly startDate = DateOnly.FromDateTime(DateTimeHelper.ParseDateString(request.DemandDateStart).Value);
