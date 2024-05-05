@@ -203,4 +203,10 @@ public partial class WarehouseProductCommon
     public string? SavingFunction { get; set; }
 
     public double? SavingTemperature { get; set; }
+
+    [StringLength(100)]
+    public string? ProductId { get; set; }
+
+    [StringLength(500)]
+    public string? DeliverRemarks { get; set; }
 }

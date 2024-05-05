@@ -288,4 +288,7 @@ public partial class WarehouseProduct
     public string? SavingFunction { get; set; }
 
     public double? SavingTemperature { get; set; }
+
+    [StringLength(45)]
+    public string? CompName { get; set; }
 }

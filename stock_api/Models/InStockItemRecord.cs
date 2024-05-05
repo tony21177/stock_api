@@ -125,4 +125,12 @@ public partial class InStockItemRecord
     public string? SavingFunction { get; set; }
 
     public double? SavingTemperature { get; set; }
+
+    /// <summary>
+    /// 出庫的狀態\\nNONE:都還沒出,PART:出部分:ALL:出完全部
+    /// </summary>
+    [StringLength(45)]
+    public string? OutStockStatus { get; set; }
+
+    public int? OutStockQuantity { get; set; }
 }

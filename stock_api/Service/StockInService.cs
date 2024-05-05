@@ -3,6 +3,7 @@ using stock_api.Common.Constant;
 using stock_api.Common.Utils;
 using stock_api.Controllers.Request;
 using stock_api.Models;
+using System.Linq;
 using System.Security.AccessControl;
 using System.Transactions;
 
@@ -353,7 +354,7 @@ namespace stock_api.Service
             return _dbContext.AcceptanceItems.Where(i => i.AcceptId == acceptId).FirstOrDefault();
         }
 
-        public List<InStockItemRecord> ListStockInRecords(ListStockInRecordsRequest request)
+        public (List<InStockItemRecord>, int TotalPages) ListStockInRecords(ListStockInRecordsRequest request)
         {
             IQueryable<InStockItemRecord> query = _dbContext.InStockItemRecords;
             if (request.LotNumberBatch != null)
@@ -384,9 +385,57 @@ namespace stock_api.Service
             {
                 query = query.Where(h => h.Type == request.Type);
             }
+            if (request.OutStockStatusList != null && request.OutStockStatusList.Count > 0)
+            {
+                query = query.Where(h => request.OutStockStatusList.Contains(h.OutStockStatus));
+            }
+
             query = query.Where(h => h.CompId == request.CompId);
 
-            return query.ToList();
+            if (!string.IsNullOrEmpty(request.Keywords))
+            {
+                var groupNameList =
+                query = query.Where(h => h.LotNumberBatch.Contains(request.Keywords)
+                || h.LotNumber.Contains(request.Keywords)
+                || h.DeliverFunction.Contains(request.Keywords)
+                || h.ProductId.Contains(request.Keywords)
+                || h.ProductName.Contains(request.Keywords)
+                || h.ProductSpec.Contains(request.Keywords)
+                || h.UserId.Contains(request.Keywords)
+                || h.UserName.Contains(request.Keywords)
+                || h.DeliverFunction.Contains(request.Keywords)
+                || h.SavingFunction.Contains(request.Keywords));
+            }
+
+            if (request.PaginationCondition.IsDescOrderBy)
+            {
+                query = request.PaginationCondition.OrderByField switch
+                {
+                    "lotNumberBatch" => query.OrderByDescending(h => h.LotNumberBatch),
+                    "lotNumber" => query.OrderByDescending(h => h.LotNumber),
+                    "expirationDate" => query.OrderByDescending(h => h.ExpirationDate),
+                    "createdAt" => query.OrderByDescending(h => h.CreatedAt),
+                    "updatedAt" => query.OrderByDescending(h => h.UpdatedAt),
+                    _ => query.OrderByDescending(h => h.UpdatedAt),
+                };
+            }
+            else
+            {
+                query = request.PaginationCondition.OrderByField switch
+                {
+                    "lotNumberBatch" => query.OrderBy(h => h.LotNumberBatch),
+                    "lotNumber" => query.OrderBy(h => h.LotNumber),
+                    "expirationDate" => query.OrderBy(h => h.ExpirationDate),
+                    "createdAt" => query.OrderBy(h => h.CreatedAt),
+                    "updatedAt" => query.OrderBy(h => h.UpdatedAt),
+                    _ => query.OrderBy(h => h.UpdatedAt),
+                };
+            }
+            int totalItems = query.Count();
+            int totalPages = (int)Math.Ceiling((double)totalItems / request.PaginationCondition.PageSize);
+
+            query = query.Skip((request.PaginationCondition.Page - 1) * request.PaginationCondition.PageSize).Take(request.PaginationCondition.PageSize);
+            return (query.ToList(), totalPages);
 
         }
     }

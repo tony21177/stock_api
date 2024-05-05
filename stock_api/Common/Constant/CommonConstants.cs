@@ -151,6 +151,19 @@ namespace stock_api.Common.Constant
                 return new List<string> { NORMAL, REFRIGERATE, FREEZED, OTHER };
             }
         }
+
+        public static class OutStockStatus
+        {
+            public const string NONE = "NONE";
+            public const string PART = "PART";
+            public const string ALL = "ALL";
+
+            public static List<string> GetAllValues()
+            {
+                return new List<string> { NONE, PART, ALL };
+            }
+        }
+
     }
 
     

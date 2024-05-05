@@ -37,6 +37,8 @@ public partial class StockDbContext : DbContext
 
     public virtual DbSet<OutStockRecord> OutStockRecords { get; set; }
 
+    public virtual DbSet<Outstockrelatetoinstock> Outstockrelatetoinstocks { get; set; }
+
     public virtual DbSet<PurchaseAcceptanceItemsView> PurchaseAcceptanceItemsViews { get; set; }
 
     public virtual DbSet<PurchaseFlow> PurchaseFlows { get; set; }
@@ -243,6 +245,10 @@ public partial class StockDbContext : DbContext
             entity.Property(e => e.LotNumber).HasComment("批號");
             entity.Property(e => e.LotNumberBatch).HasComment("批次");
             entity.Property(e => e.OriginalQuantity).HasComment("現有庫存量");
+            entity.Property(e => e.OutStockQuantity).HasDefaultValueSql("'0'");
+            entity.Property(e => e.OutStockStatus)
+                .HasDefaultValueSql("'NONE'")
+                .HasComment("出庫的狀態\\\\nNONE:都還沒出,PART:出部分:ALL:出完全部");
             entity.Property(e => e.ProductId).HasComment("品項PK");
             entity.Property(e => e.ProductName).HasComment("品項名稱");
             entity.Property(e => e.ProductSpec).HasComment("品項規格");
@@ -316,6 +322,18 @@ public partial class StockDbContext : DbContext
                 .HasDefaultValueSql("CURRENT_TIMESTAMP");
             entity.Property(e => e.UserId).HasComment("執行出庫人員的UserID");
             entity.Property(e => e.UserName).HasComment("執行出庫人員的UserName");
+        });
+
+        modelBuilder.Entity<Outstockrelatetoinstock>(entity =>
+        {
+            entity.HasKey(e => e.OutStockId).HasName("PRIMARY");
+
+            entity.ToTable("outstockrelatetoinstock", tb => tb.HasComment("出庫對應入庫,可能是多對多"));
+
+            entity.Property(e => e.CreatedAt).HasDefaultValueSql("CURRENT_TIMESTAMP");
+            entity.Property(e => e.UpdatedAt)
+                .ValueGeneratedOnAddOrUpdate()
+                .HasDefaultValueSql("CURRENT_TIMESTAMP");
         });
 
         modelBuilder.Entity<PurchaseAcceptanceItemsView>(entity =>

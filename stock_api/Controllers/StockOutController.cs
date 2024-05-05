@@ -16,7 +16,7 @@ namespace stock_api.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    public class StockInController : ControllerBase
+    public class StockOutController : ControllerBase
     {
         private readonly IMapper _mapper;
         private readonly AuthHelpers _authHelpers;
@@ -29,7 +29,7 @@ namespace stock_api.Controllers
         private readonly IValidator<UpdateAcceptItemRequest> _updateAcceptItemRequestValidator;
         private readonly IValidator<ListStockInRecordsRequest> _listStockInRecordsValidator;
 
-        public StockInController(IMapper mapper, AuthHelpers authHelpers, GroupService groupService, StockInService stockInService, WarehouseProductService warehouseProductService, PurchaseService purchaseService)
+        public StockOutController(IMapper mapper, AuthHelpers authHelpers, GroupService groupService, StockInService stockInService, WarehouseProductService warehouseProductService, PurchaseService purchaseService)
         {
             _mapper = mapper;
             _authHelpers = authHelpers;
@@ -43,7 +43,7 @@ namespace stock_api.Controllers
             _listStockInRecordsValidator = new ListStockInRecordsValidator();
         }
 
-        [HttpPost("purchaseAndAcceptItems/list")]
+        [HttpPost("stockInRecords/list")]
         [Authorize]
         public IActionResult ListPurchases(SearchPurchaseAcceptItemRequest request)
         {
@@ -256,17 +256,11 @@ namespace stock_api.Controllers
             }
 
             request.CompId = compId;
-            if (request.PaginationCondition.OrderByField == null)
-            {
-                request.PaginationCondition.OrderByField = "updatedAt";
-            }
-
-            var (data,pages) = _stockInService.ListStockInRecords(request);
+            var data = _stockInService.ListStockInRecords(request);
             return Ok(new CommonResponse<dynamic>
             {
                 Result = true,
-                Data = data,
-                TotalPages =pages
+                Data = data
             });
         }
     }
