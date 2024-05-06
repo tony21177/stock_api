@@ -52,7 +52,9 @@ namespace stock_api.Service.ValueObject
         public string? SavingFunction { get; set; }
         public double? SavingTemperature { get; set; }
         public string? Unit { get; set; }
-
+        public string? UDIBatchCode { get; set; }
+        public string? UDICreateCode { get; set; }
+        public string? UDIVerifyDateCode { get; set; }
         public bool IsContainKeywords(string keywords)
         {
             return ($"{this.AcceptId} {this.AcceptUserId} {this.LotNumberBatch} {this.LotNumber} {this.PackagingStatus} {this.ProductId} {this.ProductName} {this.ProductSpec} {this.UdiserialCode}" +

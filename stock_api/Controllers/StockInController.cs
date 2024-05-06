@@ -85,6 +85,9 @@ namespace stock_api.Controllers
                     if (matchedProdcut != null)
                     {
                         item.Unit = matchedProdcut.Unit;
+                        item.UDIBatchCode = matchedProdcut.UdibatchCode;
+                        item.UDICreateCode = matchedProdcut.UdicreateCode;
+                        item.UDIVerifyDateCode = matchedProdcut.UdiverifyDateCode;
                     }
                 }
 
