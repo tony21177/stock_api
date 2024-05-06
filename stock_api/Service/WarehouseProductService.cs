@@ -115,19 +115,20 @@ namespace stock_api.Service
             {
                 query = searchRequest.PaginationCondition.OrderByField switch
                 {
-                    "InStockQuantity" => query.OrderByDescending(h => h.InStockQuantity),
-                    "MaxSafeQuantity" => query.OrderByDescending(h => h.MaxSafeQuantity),
-                    "LastAbleDate" => query.OrderByDescending(h => h.LastAbleDate),
-                    "LastOutStockDate" => query.OrderByDescending(h => h.LastOutStockDate),
-                    "OpenDeadline" => query.OrderByDescending(h => h.OpenDeadline),
-                    "OriginalDeadline" => query.OrderByDescending(h => h.OriginalDeadline),
-                    "PreDeadline" => query.OrderByDescending(h => h.PreDeadline),
-                    "PreOrderDays" => query.OrderByDescending(h => h.PreOrderDays),
-                    "SafeQuantity" => query.OrderByDescending(h => h.SafeQuantity),
-                    "AllowReceiveDateRange" => query.OrderByDescending(h => h.AllowReceiveDateRange),
-                    "CreatedAt" => query.OrderByDescending(h => h.CreatedAt),
-                    "UpdatedAt" => query.OrderByDescending(h => h.UpdatedAt),
-                    _ => query.OrderByDescending(h => h.UpdatedAt),
+                    "InStockQuantity" => query.OrderBy(h => h.InStockQuantity),
+                    "MaxSafeQuantity" => query.OrderBy(h => h.MaxSafeQuantity),
+                    "LastAbleDate" => query.OrderBy(h => h.LastAbleDate),
+                    "LastOutStockDate" => query.OrderBy(h => h.LastOutStockDate),
+                    "OpenDeadline" => query.OrderBy(h => h.OpenDeadline),
+                    "OriginalDeadline" => query.OrderBy(h => h.OriginalDeadline),
+                    "PreDeadline" => query.OrderBy(h => h.PreDeadline),
+                    "PreOrderDays" => query.OrderBy(h => h.PreOrderDays),
+                    "SafeQuantity" => query.OrderBy(h => h.SafeQuantity),
+                    "AllowReceiveDateRange" => query.OrderBy(h => h.AllowReceiveDateRange),
+                    "CreatedAt" => query.OrderBy(h => h.CreatedAt),
+                    "UpdatedAt" => query.OrderBy(h => h.UpdatedAt),
+                    "ProductCode" => query.OrderBy(h => h.ProductCode),
+                    _ => query.OrderBy(h => h.UpdatedAt),
                 };
             }
             int totalItems = query.Count();
