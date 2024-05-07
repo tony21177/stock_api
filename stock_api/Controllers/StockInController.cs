@@ -11,6 +11,7 @@ using stock_api.Utils;
 using stock_api.Service.ValueObject;
 using stock_api.Models;
 using MySqlX.XDevAPI.Common;
+using stock_api.Common.Utils;
 
 namespace stock_api.Controllers
 {
@@ -286,12 +287,35 @@ namespace stock_api.Controllers
                     Message = "採購單不存在"
                 });
             }
+            if (request.ExpirationDate != null&&product.DeadlineRule!=null)
+            {
+                var expirationDate = DateOnly.FromDateTime(DateTimeHelper.ParseDateString(request.ExpirationDate).Value);
+                if (expirationDate.AddDays(product.DeadlineRule.Value)< DateOnly.FromDateTime(DateTime.Now))
+                {
+                    return Ok(new CommonResponse<dynamic>
+                    {
+                        Result = false,
+                        Data = new
+                        {
+                            isExceedLastAbleDate = true,
+                        }
+                    });
+                }
+            }
+
+            List<InStockItemRecord> existingStockInRecords = _stockInService.GetInStockRecordsHistory(existingAcceptItem.ProductId, compId).OrderByDescending(item=>item.CreatedAt).ToList();
+            var lastLotNumber = existingStockInRecords.FirstOrDefault()?.LotNumber;
 
             var result = _stockInService.UpdateAccepItem(purchaseMain, existingAcceptItem, request, product, compId, memberAndPermissionSetting.Member);
 
             return Ok(new CommonResponse<dynamic>
             {
                 Result = result,
+                Data = new
+                {
+                    //IsNewLot = existingStockInRecordLotNumber.Contains(request.LotNumber)
+                    isNewLot = request.LotNumber!=null?request.LotNumber!= lastLotNumber : false,
+                }
             });
         }
 

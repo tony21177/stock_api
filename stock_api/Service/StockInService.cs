@@ -311,8 +311,10 @@ namespace stock_api.Service
                     };
                     //更新庫存品項
                     product.InStockQuantity = inStockItemRecord.AfterQuantity;
-                    product.LotNumber = updateAcceptItem.LotNumber;
-                    product.LotNumberBatch = existingAcceptanceItem.LotNumberBatch;
+                    // 應該是出庫時才去更新
+                    //product.LotNumber = updateAcceptItem.LotNumber;
+                    //product.LotNumberBatch = existingAcceptanceItem.LotNumberBatch;
+                    //
                     product.DeliverFunction = existingAcceptanceItem.DeliverFunction;
                     product.DeliverTemperature = existingAcceptanceItem.DeliverTemperature;
                     product.SavingFunction = existingAcceptanceItem.SavingFunction;
@@ -437,6 +439,11 @@ namespace stock_api.Service
             query = query.Skip((request.PaginationCondition.Page - 1) * request.PaginationCondition.PageSize).Take(request.PaginationCondition.PageSize);
             return (query.ToList(), totalPages);
 
+        }
+
+        public List<InStockItemRecord> GetInStockRecordsHistory(string prodcutId,string compId)
+        {
+            return _dbContext.InStockItemRecords.Where(record=>record.CompId==compId&&record.ProductId==prodcutId).ToList();
         }
     }
 }

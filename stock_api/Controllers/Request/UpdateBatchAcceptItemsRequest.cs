@@ -23,5 +23,6 @@ namespace stock_api.Controllers.Request
         public double? DeliverTemperature { get; set; }
         public string? SavingFunction { get; set; }
         public double? SavingTemperature { get; set; }
+        public bool? IsConfirmed { get; set; }
     }
 }

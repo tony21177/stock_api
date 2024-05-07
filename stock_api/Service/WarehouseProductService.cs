@@ -1,8 +1,10 @@
 ﻿using AutoMapper;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using stock_api.Controllers.Request;
 using stock_api.Models;
 using System.Linq;
+using System.Transactions;
 
 namespace stock_api.Service
 {
@@ -10,11 +12,13 @@ namespace stock_api.Service
     {
         private readonly StockDbContext _dbContext;
         private readonly IMapper _mapper;
+        private readonly ILogger<WarehouseProductService> _logger;
 
-        public WarehouseProductService(StockDbContext dbContext, IMapper mapper)
+        public WarehouseProductService(StockDbContext dbContext, IMapper mapper, ILogger<WarehouseProductService> logger)
         {
             _dbContext = dbContext;
             _mapper = mapper;
+            _logger = logger;
         }
 
         public WarehouseProduct? GetProductByProductId(string productId)
@@ -163,105 +167,143 @@ namespace stock_api.Service
 
         }
 
-        public void UpdateProduct(UpdateProductRequest request,WarehouseProduct existingProduct,List<WarehouseGroup> groups)
+        public bool UpdateProduct(UpdateProductRequest request,WarehouseProduct existingProduct,List<WarehouseGroup> groups)
         {
-            var groupIds = request.GroupIds;
+            using var scope = new TransactionScope();
+            try
+            {
+                var groupIds = request.GroupIds;
 
-            var updateProduct = _mapper.Map<WarehouseProduct>(request);
-            updateProduct.InStockQuantity = existingProduct.InStockQuantity;
-            updateProduct.MaxSafeQuantity = existingProduct.MaxSafeQuantity;
-            updateProduct.OpenDeadline = existingProduct.OpenDeadline;
-            updateProduct.PreDeadline = existingProduct.PreDeadline;
-            if (request.PreOrderDays == null)
-            {
-                updateProduct.PreOrderDays = existingProduct.PreOrderDays;
+                // 尚未驗收的AcceptanceItem也需更新udiSerialcode
+                if (request.UdiserialCode != null && request.UdiserialCode != existingProduct.UdiserialCode)
+                {
+                    _dbContext.AcceptanceItems.Where(item => item.QcStatus == null&&item.CompId==request.CompId&&item.ProductId== existingProduct.ProductId)
+                        .ExecuteUpdate(item => item.SetProperty(x => x.UdiserialCode, request.UdiserialCode));
+                }
+
+                var updateProduct = _mapper.Map<WarehouseProduct>(request);
+                updateProduct.InStockQuantity = existingProduct.InStockQuantity;
+                updateProduct.MaxSafeQuantity = existingProduct.MaxSafeQuantity;
+                updateProduct.OpenDeadline = existingProduct.OpenDeadline;
+                updateProduct.PreDeadline = existingProduct.PreDeadline;
+                if (request.PreOrderDays == null)
+                {
+                    updateProduct.PreOrderDays = existingProduct.PreOrderDays;
+                }
+                updateProduct.SafeQuantity = existingProduct.SafeQuantity;
+                updateProduct.DefaultSupplierId = existingProduct.DefaultSupplierId;
+                if (request.IsNeedAcceptProcess == null)
+                {
+                    updateProduct.IsNeedAcceptProcess = existingProduct.IsNeedAcceptProcess;
+                }
+                updateProduct.AllowReceiveDateRange = existingProduct.AllowReceiveDateRange;
+                updateProduct.TestCount = existingProduct.TestCount;
+                updateProduct.UnitConversion = existingProduct.UnitConversion;
+                updateProduct.IsActive = existingProduct.IsActive;
+                _mapper.Map(updateProduct, existingProduct);
+                if (groups.Count > 0)
+                {
+                    var matchedGroups = groups.Where(g => groupIds.Contains(g.GroupId)).ToList();
+                    existingProduct.GroupNames = matchedGroups.Select(g => g.GroupName).Aggregate("", (current, s) => current + (s + ","));
+                }
+                _dbContext.SaveChanges();
+                scope.Complete();
+                return true;
             }
-            updateProduct.SafeQuantity = existingProduct.SafeQuantity;
-            updateProduct.DefaultSupplierId = existingProduct.DefaultSupplierId;
-            if (request.IsNeedAcceptProcess == null)
+            catch (Exception ex)
             {
-                updateProduct.IsNeedAcceptProcess = existingProduct.IsNeedAcceptProcess;
+                _logger.LogError("事務失敗[UpdateProduct]：{msg}", ex);
+                return false;
             }
-            updateProduct.AllowReceiveDateRange = existingProduct.AllowReceiveDateRange;
-            updateProduct.TestCount = existingProduct.TestCount;
-            updateProduct.UnitConversion = existingProduct.UnitConversion;
-            updateProduct.IsActive = existingProduct.IsActive;
-            _mapper.Map(updateProduct, existingProduct);
-            if (groups.Count > 0)
-            {
-                var matchedGroups = groups.Where(g => groupIds.Contains(g.GroupId)).ToList();
-                existingProduct.GroupNames = matchedGroups.Select(g => g.GroupName).Aggregate("", (current, s) => current + (s + ","));
-            }
-            _dbContext.SaveChanges();
-            return;
+
+            
         }
 
-        public void AdminUpdateProduct(AdminUpdateProductRequest request, WarehouseProduct existingProduct, Supplier? supplier,Manufacturer? manufacturer, List<WarehouseGroup> groups)
+        public bool AdminUpdateProduct(AdminUpdateProductRequest request, WarehouseProduct existingProduct, Supplier? supplier,Manufacturer? manufacturer, List<WarehouseGroup> groups)
         {
-            var groupIds = request.GroupIds;
-            var matchedGroups = groups.Where(g => groupIds.Contains(g.GroupId)).ToList();
-            var updateProduct = new WarehouseProduct()
+            using var scope = new TransactionScope();
+            try
             {
-                CompId = existingProduct.CompId,
-                ProductId = existingProduct.ProductId,
-            };
+                // 尚未驗收的AcceptanceItem也需更新udiSerialcode
+                if (request.UdiserialCode != null && request.UdiserialCode != existingProduct.UdiserialCode)
+                {
+                    _dbContext.AcceptanceItems.Where(item => item.QcStatus == null && item.CompId == request.CompId && item.ProductId == existingProduct.ProductId)
+                        .ExecuteUpdate(item => item.SetProperty(x => x.UdiserialCode, request.UdiserialCode));
+                }
 
-            _mapper.Map(request, updateProduct);
-            updateProduct.InStockQuantity = existingProduct.InStockQuantity;
-            if (request.MaxSafeQuantity == null)
-            {
-                updateProduct.MaxSafeQuantity = existingProduct.MaxSafeQuantity;
-            }
-            if(request.OpenDeadline == null)
-            {
-                updateProduct.OpenDeadline = existingProduct.OpenDeadline;
-            }
-            if (request.PreDeadline == null)
-            {
-                updateProduct.PreDeadline = existingProduct.PreDeadline;
-            }
-            if (request.PreOrderDays == null)
-            {
-                updateProduct.PreOrderDays = existingProduct.PreOrderDays;
-            }
-            if (request.SafeQuantity == null)
-            {
-                updateProduct.SafeQuantity = existingProduct.SafeQuantity;
-            }
-            if (request.DefaultSupplierId == null)
-            {
-                updateProduct.DefaultSupplierId = existingProduct.DefaultSupplierId;
-            }
-            if (request.IsNeedAcceptProcess == null)
-            {
-                updateProduct.IsNeedAcceptProcess = existingProduct.IsNeedAcceptProcess;
-            }
-            if (request.AllowReceiveDateRange == null)
-            {
-                updateProduct.AllowReceiveDateRange = existingProduct.AllowReceiveDateRange;
-            }
-            if (request.UnitConversion == null)
-            {
-                updateProduct.UnitConversion = existingProduct.UnitConversion;
-            }
-            if (request.TestCount == null)
-            {
-                updateProduct.TestCount = existingProduct.TestCount;
-            }
-            updateProduct.IsActive = existingProduct.IsActive;
+                var groupIds = request.GroupIds;
+                var matchedGroups = groups.Where(g => groupIds.Contains(g.GroupId)).ToList();
+                var updateProduct = new WarehouseProduct()
+                {
+                    CompId = existingProduct.CompId,
+                    ProductId = existingProduct.ProductId,
+                };
 
-            _mapper.Map(updateProduct, existingProduct);
-            existingProduct.GroupNames = matchedGroups.Select(g => g.GroupName).Aggregate("", (current, s) => current + (s + ","));
-            if (supplier != null)
-            {
-                existingProduct.DefaultSupplierName = supplier.Name;
+                _mapper.Map(request, updateProduct);
+                updateProduct.InStockQuantity = existingProduct.InStockQuantity;
+                if (request.MaxSafeQuantity == null)
+                {
+                    updateProduct.MaxSafeQuantity = existingProduct.MaxSafeQuantity;
+                }
+                if (request.OpenDeadline == null)
+                {
+                    updateProduct.OpenDeadline = existingProduct.OpenDeadline;
+                }
+                if (request.PreDeadline == null)
+                {
+                    updateProduct.PreDeadline = existingProduct.PreDeadline;
+                }
+                if (request.PreOrderDays == null)
+                {
+                    updateProduct.PreOrderDays = existingProduct.PreOrderDays;
+                }
+                if (request.SafeQuantity == null)
+                {
+                    updateProduct.SafeQuantity = existingProduct.SafeQuantity;
+                }
+                if (request.DefaultSupplierId == null)
+                {
+                    updateProduct.DefaultSupplierId = existingProduct.DefaultSupplierId;
+                }
+                if (request.IsNeedAcceptProcess == null)
+                {
+                    updateProduct.IsNeedAcceptProcess = existingProduct.IsNeedAcceptProcess;
+                }
+                if (request.AllowReceiveDateRange == null)
+                {
+                    updateProduct.AllowReceiveDateRange = existingProduct.AllowReceiveDateRange;
+                }
+                if (request.UnitConversion == null)
+                {
+                    updateProduct.UnitConversion = existingProduct.UnitConversion;
+                }
+                if (request.TestCount == null)
+                {
+                    updateProduct.TestCount = existingProduct.TestCount;
+                }
+                updateProduct.IsActive = existingProduct.IsActive;
+
+                _mapper.Map(updateProduct, existingProduct);
+                existingProduct.GroupNames = matchedGroups.Select(g => g.GroupName).Aggregate("", (current, s) => current + (s + ","));
+                if (supplier != null)
+                {
+                    existingProduct.DefaultSupplierName = supplier.Name;
+                }
+                if (manufacturer != null)
+                {
+                    existingProduct.ManufacturerName = manufacturer.Name;
+                }
+                _dbContext.SaveChanges();
+                scope.Complete();
+                return true;
             }
-            if (manufacturer != null)
+            catch (Exception ex)
             {
-                existingProduct.ManufacturerName = manufacturer.Name;
+                _logger.LogError("事務失敗[AdminUpdateProduct]：{msg}", ex);
+                return false;
             }
-            _dbContext.SaveChanges();
-            return;
+
+            
         }
 
     }

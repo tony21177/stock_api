@@ -52,8 +52,7 @@ public partial class WarehouseProduct
     /// <summary>
     /// 有效期限規範
     /// </summary>
-    [StringLength(500)]
-    public string? DeadlineRule { get; set; }
+    public int? DeadlineRule { get; set; }
 
     /// <summary>
     /// 運送備註
