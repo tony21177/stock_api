@@ -174,10 +174,6 @@ namespace stock_api.Controllers
             var result = acceptanceItems.OrderByDescending(i => i.UpdatedAt).FirstOrDefault();
 
             // Gary 增加取得 accept 品項連動的 product 資料
-            SearchPurchaseAcceptItemRequest subRequest = new SearchPurchaseAcceptItemRequest{
-                PurchaseMainId = result.PurchaseMainId
-            };
-            DateOnly? demandDate = _stockInService.SearchPurchaseAcceptanceItems(subRequest).FirstOrDefault().DemandDate;
             List<string> distinctProductIdList = new List<string> { result.ProductId };
             List<WarehouseProduct> products = _warehouseProductService.GetProductsByProductIdsAndCompId(distinctProductIdList, compId);
             var matchedProdcut = products.Where(p => p.ProductId == result.ProductId).FirstOrDefault();
@@ -185,7 +181,6 @@ namespace stock_api.Controllers
             ManualAcceptItem resultItem = new ManualAcceptItem
             {
                 PurchaseMainId = result.PurchaseMainId,
-                DemandDate = demandDate,
                 AcceptId = result.AcceptId,
                 AcceptQuantity = result.AcceptQuantity,
                 AcceptUserId = result.AcceptUserId,
