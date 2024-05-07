@@ -181,28 +181,30 @@ namespace stock_api.Controllers
             List<WarehouseProduct> products = _warehouseProductService.GetProductsByProductIdsAndCompId(distinctProductIdList, compId);
             var matchedProdcut = products.Where(p => p.ProductId == result.ProductId).FirstOrDefault();
 
-            AcceptItem resultItem = new AcceptItem();
-            resultItem.AcceptId = result.AcceptId;
-            resultItem.AcceptQuantity = result.AcceptQuantity;
-            resultItem.AcceptUserId = result.AcceptUserId;
-            resultItem.LotNumberBatch = result.LotNumberBatch;
-            resultItem.LotNumber = result.LotNumber;
-            resultItem.ExpirationDate = result.ExpirationDate;
-            resultItem.ItemId = result.ItemId;
-            resultItem.OrderQuantity = result.OrderQuantity;
-            resultItem.PackagingStatus = result.PackagingStatus;
-            resultItem.ProductId = result.ProductId;
-            resultItem.ProductName = result.ProductName;
-            resultItem.ProductSpec = result.ProductSpec;
-            resultItem.UdiserialCode = result.UdiserialCode;
-            resultItem.QcStatus = result.QcStatus;
-            resultItem.CurrentTotalQuantity = result.CurrentTotalQuantity;
-            resultItem.Comment = result.Comment;
-            resultItem.QcComment = result.QcComment;
-            resultItem.DeliverFunction = result.DeliverFunction;
-            resultItem.DeliverTemperature = result.DeliverTemperature;
-            resultItem.SavingFunction = result.SavingFunction;
-            resultItem.SavingTemperature = result.SavingTemperature;
+            AcceptItem resultItem = new AcceptItem
+            {
+                AcceptId = result.AcceptId,
+                AcceptQuantity = result.AcceptQuantity,
+                AcceptUserId = result.AcceptUserId ?? "",
+                LotNumberBatch = result.LotNumberBatch ?? "",
+                LotNumber = result.LotNumber ?? "",
+                ExpirationDate = result.ExpirationDate,
+                ItemId = result.ItemId,
+                OrderQuantity = result.OrderQuantity,
+                PackagingStatus = result.PackagingStatus ?? "",
+                ProductId = result.ProductId,
+                ProductName = result.ProductName,
+                ProductSpec = result.ProductSpec,
+                UdiserialCode = result.UdiserialCode ?? "",
+                QcStatus = result.QcStatus ?? "",
+                CurrentTotalQuantity = result.CurrentTotalQuantity,
+                Comment = result.Comment ?? "",
+                QcComment = result.QcComment ?? "",
+                DeliverFunction = result.DeliverFunction,
+                DeliverTemperature = result.DeliverTemperature,
+                SavingFunction = result.SavingFunction,
+                SavingTemperature = result.SavingTemperature
+            };
 
             if (matchedProdcut != null)
             {
