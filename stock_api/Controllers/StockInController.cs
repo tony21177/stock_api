@@ -170,11 +170,11 @@ namespace stock_api.Controllers
             var userId = memberAndPermissionSetting.Member.UserId;
 
 
-            List<AcceptanceItem> acceptanceItems = _stockInService.acceptanceItemsByUdiSerialCode(request.UdiserialCode, compId).Where(i => i.QcStatus == null).ToList();
-            var unVerifyAcceptance = acceptanceItems.Where(i=>i.QcStatus==null).OrderByDescending(i => i.UpdatedAt).FirstOrDefault();
+            List<AcceptanceItem> acceptanceItems = _stockInService.acceptanceItemsByUdiSerialCode(request.UdiserialCode, compId).Where(i => i.AcceptUserId == null).ToList();
+            var unVerifyAcceptance = acceptanceItems.Where(i=>i.AcceptUserId==null).OrderByDescending(i => i.UpdatedAt).FirstOrDefault();
             if (unVerifyAcceptance == null) {
                 // 代表沒有可以驗收入庫的項目
-                return BadRequest(new CommonResponse<dynamic>
+                return Ok(new CommonResponse<dynamic>
                 {
                     Result = false,
                     Message = "以唯一碼："+ request.UdiserialCode +"搜尋後，並無發現需要驗收/入庫的項目"
