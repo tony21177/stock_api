@@ -171,37 +171,40 @@ namespace stock_api.Controllers
 
 
             List<AcceptanceItem> acceptanceItems = _stockInService.acceptanceItemsByUdiSerialCode(request.UdiserialCode, compId).Where(i => i.QcStatus == null).ToList();
-            var result = acceptanceItems.OrderByDescending(i => i.UpdatedAt).FirstOrDefault();
+            var unVerifyAcceptance = acceptanceItems.Where(i=>i.QcStatus==null).OrderByDescending(i => i.UpdatedAt).FirstOrDefault();
 
             // Gary 增加取得 accept 品項連動的 product 資料
-            List<string> distinctProductIdList = new List<string> { result.ProductId };
+            List<string> distinctProductIdList = new List<string> { unVerifyAcceptance.ProductId };
             List<WarehouseProduct> products = _warehouseProductService.GetProductsByProductIdsAndCompId(distinctProductIdList, compId);
-            var matchedProdcut = products.Where(p => p.ProductId == result.ProductId).FirstOrDefault();
+            var matchedProdcut = products.Where(p => p.ProductId == unVerifyAcceptance.ProductId).FirstOrDefault();
+            var purchaseMain = _purchaseService.GetPurchaseMainByMainId(unVerifyAcceptance.PurchaseMainId);
+            
 
             ManualAcceptItem resultItem = new ManualAcceptItem
             {
-                PurchaseMainId = result.PurchaseMainId,
-                AcceptId = result.AcceptId,
-                AcceptQuantity = result.AcceptQuantity,
-                AcceptUserId = result.AcceptUserId,
-                LotNumberBatch = result.LotNumberBatch,
-                LotNumber = result.LotNumber,
-                ExpirationDate = result.ExpirationDate,
-                ItemId = result.ItemId,
-                OrderQuantity = result.OrderQuantity,
-                PackagingStatus = result.PackagingStatus,
-                ProductId = result.ProductId,
-                ProductName = result.ProductName,
-                ProductSpec = result.ProductSpec,
-                UdiserialCode = result.UdiserialCode,
-                QcStatus = result.QcStatus,
-                CurrentTotalQuantity = result.CurrentTotalQuantity,
-                Comment = result.Comment,
-                QcComment = result.QcComment,
-                DeliverFunction = result.DeliverFunction,
-                DeliverTemperature = result.DeliverTemperature,
-                SavingFunction = result.SavingFunction,
-                SavingTemperature = result.SavingTemperature
+                PurchaseMainId = unVerifyAcceptance.PurchaseMainId,
+                AcceptId = unVerifyAcceptance.AcceptId,
+                AcceptQuantity = unVerifyAcceptance.AcceptQuantity,
+                AcceptUserId = unVerifyAcceptance.AcceptUserId,
+                LotNumberBatch = unVerifyAcceptance.LotNumberBatch,
+                LotNumber = unVerifyAcceptance.LotNumber,
+                ExpirationDate = unVerifyAcceptance.ExpirationDate,
+                ItemId = unVerifyAcceptance.ItemId,
+                OrderQuantity = unVerifyAcceptance.OrderQuantity,
+                PackagingStatus = unVerifyAcceptance.PackagingStatus,
+                ProductId = unVerifyAcceptance.ProductId,
+                ProductName = unVerifyAcceptance.ProductName,
+                ProductSpec = unVerifyAcceptance.ProductSpec,
+                UdiserialCode = unVerifyAcceptance.UdiserialCode,
+                QcStatus = unVerifyAcceptance.QcStatus,
+                CurrentTotalQuantity = unVerifyAcceptance.CurrentTotalQuantity,
+                Comment = unVerifyAcceptance.Comment,
+                QcComment = unVerifyAcceptance.QcComment,
+                DeliverFunction = unVerifyAcceptance.DeliverFunction,
+                DeliverTemperature = unVerifyAcceptance.DeliverTemperature,
+                SavingFunction = unVerifyAcceptance.SavingFunction,
+                SavingTemperature = unVerifyAcceptance.SavingTemperature,
+                DemandDate = purchaseMain!=null? purchaseMain.DemandDate: null,
             };
 
             if (matchedProdcut != null)
