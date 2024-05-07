@@ -29,6 +29,8 @@ namespace stock_api.Service.ValueObject
 
     public class ManualAcceptItem
     {
+        public string PurchaseMainId { get; set; }
+        public DateOnly? DemandDate { get; set; }
         public string AcceptId { get; set; }
         public int? AcceptQuantity { get; set; }
         public string? AcceptUserId { get; set; }
