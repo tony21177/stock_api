@@ -172,10 +172,50 @@ namespace stock_api.Controllers
 
             List<AcceptanceItem> acceptanceItems = _stockInService.acceptanceItemsByUdiSerialCode(request.UdiserialCode, compId).Where(i => i.QcStatus == null).ToList();
             var result = acceptanceItems.OrderByDescending(i => i.UpdatedAt).FirstOrDefault();
-            return Ok(new CommonResponse<AcceptanceItem>
+
+            // Gary 增加取得 accept 品項連動的 product 資料
+            SearchPurchaseAcceptItemRequest subRequest = new SearchPurchaseAcceptItemRequest();
+            subRequest.PurchaseMainId = result.PurchaseMainId;
+            List<PurchaseAcceptanceItemsView> purchaseAcceptanceItemsViewList = _stockInService.SearchPurchaseAcceptanceItems(subRequest);
+            List<string> distinctProductIdList = purchaseAcceptanceItemsViewList.Select(x => x.ProductId).Distinct().ToList();
+            List<WarehouseProduct> products = _warehouseProductService.GetProductsByProductIdsAndCompId(distinctProductIdList, compId);
+            var matchedProdcut = products.Where(p => p.ProductId == result.ProductId).FirstOrDefault();
+
+            AcceptItem resultItem = new AcceptItem();
+            resultItem.AcceptId = result.AcceptId;
+            resultItem.AcceptQuantity = result.AcceptQuantity;
+            resultItem.AcceptUserId = result.AcceptUserId;
+            resultItem.LotNumberBatch = result.LotNumberBatch;
+            resultItem.LotNumber = result.LotNumber;
+            resultItem.ExpirationDate = result.ExpirationDate;
+            resultItem.ItemId = result.ItemId;
+            resultItem.OrderQuantity = result.OrderQuantity;
+            resultItem.PackagingStatus = result.PackagingStatus;
+            resultItem.ProductId = result.ProductId;
+            resultItem.ProductName = result.ProductName;
+            resultItem.ProductSpec = result.ProductSpec;
+            resultItem.UdiserialCode = result.UdiserialCode;
+            resultItem.QcStatus = result.QcStatus;
+            resultItem.CurrentTotalQuantity = result.CurrentTotalQuantity;
+            resultItem.Comment = result.Comment;
+            resultItem.QcComment = result.QcComment;
+            resultItem.DeliverFunction = result.DeliverFunction;
+            resultItem.DeliverTemperature = result.DeliverTemperature;
+            resultItem.SavingFunction = result.SavingFunction;
+            resultItem.SavingTemperature = result.SavingTemperature;
+
+            if (matchedProdcut != null)
+            {
+                resultItem.Unit = matchedProdcut.Unit;
+                resultItem.UDIBatchCode = matchedProdcut.UdibatchCode;
+                resultItem.UDICreateCode = matchedProdcut.UdicreateCode;
+                resultItem.UDIVerifyDateCode = matchedProdcut.UdiverifyDateCode;
+            }
+
+            return Ok(new CommonResponse<AcceptItem>
             {
                 Result = true,
-                Data = result,
+                Data = resultItem,
             });
         }
 
