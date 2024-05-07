@@ -178,25 +178,25 @@ namespace stock_api.Controllers
             List<WarehouseProduct> products = _warehouseProductService.GetProductsByProductIdsAndCompId(distinctProductIdList, compId);
             var matchedProdcut = products.Where(p => p.ProductId == result.ProductId).FirstOrDefault();
 
-            AcceptItem resultItem = new AcceptItem
+            ManualAcceptItem resultItem = new ManualAcceptItem
             {
                 AcceptId = result.AcceptId,
                 AcceptQuantity = result.AcceptQuantity,
-                AcceptUserId = result.AcceptUserId ?? "",
-                LotNumberBatch = result.LotNumberBatch ?? "",
-                LotNumber = result.LotNumber ?? "",
+                AcceptUserId = result.AcceptUserId,
+                LotNumberBatch = result.LotNumberBatch,
+                LotNumber = result.LotNumber,
                 ExpirationDate = result.ExpirationDate,
                 ItemId = result.ItemId,
                 OrderQuantity = result.OrderQuantity,
-                PackagingStatus = result.PackagingStatus ?? "",
+                PackagingStatus = result.PackagingStatus,
                 ProductId = result.ProductId,
                 ProductName = result.ProductName,
                 ProductSpec = result.ProductSpec,
-                UdiserialCode = result.UdiserialCode ?? "",
-                QcStatus = result.QcStatus ?? "",
+                UdiserialCode = result.UdiserialCode,
+                QcStatus = result.QcStatus,
                 CurrentTotalQuantity = result.CurrentTotalQuantity,
-                Comment = result.Comment ?? "",
-                QcComment = result.QcComment ?? "",
+                Comment = result.Comment,
+                QcComment = result.QcComment,
                 DeliverFunction = result.DeliverFunction,
                 DeliverTemperature = result.DeliverTemperature,
                 SavingFunction = result.SavingFunction,
@@ -211,7 +211,7 @@ namespace stock_api.Controllers
                 resultItem.UDIVerifyDateCode = matchedProdcut.UdiverifyDateCode;
             }
 
-            return Ok(new CommonResponse<AcceptItem>
+            return Ok(new CommonResponse<ManualAcceptItem>
             {
                 Result = true,
                 Data = resultItem,

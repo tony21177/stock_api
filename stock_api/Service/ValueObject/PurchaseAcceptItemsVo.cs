@@ -26,6 +26,44 @@ namespace stock_api.Service.ValueObject
             
         }
     }
+
+    public class ManualAcceptItem
+    {
+        public string AcceptId { get; set; }
+        public int? AcceptQuantity { get; set; }
+        public string? AcceptUserId { get; set; }
+        public string? LotNumberBatch { get; set; }
+        public string? LotNumber { get; set; }
+        public DateOnly? ExpirationDate { get; set; }
+        public string ItemId { get; set; }
+        public int OrderQuantity { get; set; }
+        public string? PackagingStatus { get; set; }
+        public string ProductId { get; set; }
+        public string ProductName { get; set; }
+        public string ProductSpec { get; set; }
+        public string? UdiserialCode { get; set; }
+        public string? QcStatus { get; set; }
+        public int? CurrentTotalQuantity { get; set; }
+        public string? Comment { get; set; }
+        public string? QcComment { get; set; }
+        public DateTime? AcceptCreatedAt { get; set; }
+        public DateTime? AcceptUpdatedAt { get; set; }
+        public string? DeliverFunction { get; set; }
+        public double? DeliverTemperature { get; set; }
+        public string? SavingFunction { get; set; }
+        public double? SavingTemperature { get; set; }
+        public string? Unit { get; set; }
+        public string? UDIBatchCode { get; set; }
+        public string? UDICreateCode { get; set; }
+        public string? UDIVerifyDateCode { get; set; }
+        public bool IsContainKeywords(string keywords)
+        {
+            return ($"{this.AcceptId} {this.AcceptUserId} {this.LotNumberBatch} {this.LotNumber} {this.PackagingStatus} {this.ProductId} {this.ProductName} {this.ProductSpec} {this.UdiserialCode}" +
+                $"{this.QcStatus} {this.Comment}").Contains(keywords);
+
+        }
+    }
+
     public class AcceptItem
     {
         public string AcceptId { get; set; }
