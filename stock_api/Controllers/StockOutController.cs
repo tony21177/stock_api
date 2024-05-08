@@ -41,7 +41,7 @@ namespace stock_api.Controllers
         }
 
         
-        [HttpPost("/outbound")]
+        [HttpPost("outbound")]
         [Authorize]
         public IActionResult OutboundItems(OutboundRequest request)
         {
@@ -169,11 +169,12 @@ namespace stock_api.Controllers
             }
 
             request.CompId = compId;
-            var data = _stockOutService.ListStockOutRecords(request);
-            return Ok(new CommonResponse<dynamic>
+            var (data,totalPages) = _stockOutService.ListStockOutRecords(request);
+            return Ok(new CommonResponse<List<OutStockRecord>>
             {
                 Result = true,
-                Data = data
+                Data = data,
+                TotalPages = totalPages
             });
         }
 
@@ -200,12 +201,13 @@ namespace stock_api.Controllers
             {
                 request.CompId = request.ToCompId;
             }
-            
-            var data = _stockOutService.ListStockOutRecords(request);
-            return Ok(new CommonResponse<dynamic>
+
+            var (data, totalPages) = _stockOutService.ListStockOutRecords(request);
+            return Ok(new CommonResponse<List<OutStockRecord>>
             {
                 Result = true,
-                Data = data
+                Data = data,
+                TotalPages = totalPages
             });
         }
     }

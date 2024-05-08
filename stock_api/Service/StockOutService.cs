@@ -62,7 +62,8 @@ namespace stock_api.Service
                     IsTransfer = true,
                     ExpirationDate = inStockItem.ExpirationDate
                 };
-                
+                var test = (product.InStockQuantity ?? 0) - request.ApplyQuantity;
+
                 var outStockRecord = new OutStockRecord()
                 {
                     OutStockId = outStockId,
@@ -80,7 +81,7 @@ namespace stock_api.Service
                     UserId = applyUser.UserId,
                     UserName = applyUser.DisplayName,
                     OriginalQuantity = product.InStockQuantity ?? 0,
-                    AfterQuantity = product.InStockQuantity ?? 0 - request.ApplyQuantity,
+                    AfterQuantity = (product.InStockQuantity ?? 0) - request.ApplyQuantity,
                     ItemId = inStockItem.ItemId,
                     BarCodeNumber = inStockItem.BarCodeNumber,
                     ExpirationDate = inStockItem.ExpirationDate

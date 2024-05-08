@@ -11,6 +11,7 @@ namespace stock_api.Controllers.Validator
         {
             RuleFor(request => request.Type)
                  .Must(type => CommonConstants.OutStockType.GetAllValues().Contains(type))
+                 .When(request => request.Type != null)
                      .WithMessage($"type必須為{string.Join(",", CommonConstants.OutStockType.GetAllValues())}");
         }
     }
