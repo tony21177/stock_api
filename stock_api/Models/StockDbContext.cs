@@ -37,7 +37,7 @@ public partial class StockDbContext : DbContext
 
     public virtual DbSet<OutStockRecord> OutStockRecords { get; set; }
 
-    public virtual DbSet<Outstockrelatetoinstock> Outstockrelatetoinstocks { get; set; }
+    public virtual DbSet<OutstockRelatetoInstock> OutstockRelatetoInstocks { get; set; }
 
     public virtual DbSet<PurchaseAcceptanceItemsView> PurchaseAcceptanceItemsViews { get; set; }
 
@@ -324,11 +324,11 @@ public partial class StockDbContext : DbContext
             entity.Property(e => e.UserName).HasComment("執行出庫人員的UserName");
         });
 
-        modelBuilder.Entity<Outstockrelatetoinstock>(entity =>
+        modelBuilder.Entity<OutstockRelatetoInstock>(entity =>
         {
             entity.HasKey(e => e.OutStockId).HasName("PRIMARY");
 
-            entity.ToTable("outstockrelatetoinstock", tb => tb.HasComment("出庫對應入庫,可能是多對多"));
+            entity.ToTable("outstock_relateto_instock", tb => tb.HasComment("出庫對應入庫,可能是多對多"));
 
             entity.Property(e => e.CreatedAt).HasDefaultValueSql("CURRENT_TIMESTAMP");
             entity.Property(e => e.UpdatedAt)

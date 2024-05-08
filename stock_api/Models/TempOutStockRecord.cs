@@ -64,6 +64,9 @@ public partial class TempOutStockRecord
     [StringLength(100)]
     public string ProductId { get; set; } = null!;
 
+    [StringLength(200)]
+    public string ProductCode { get; set; } = null!;
+
     /// <summary>
     /// 品項名稱
     /// </summary>
@@ -113,7 +116,7 @@ public partial class TempOutStockRecord
     /// </summary>
     [Column("InventoryID")]
     [StringLength(100)]
-    public string InventoryId { get; set; } = null!;
+    public string? InventoryId { get; set; }
 
     [Column(TypeName = "timestamp")]
     public DateTime? CreatedAt { get; set; }

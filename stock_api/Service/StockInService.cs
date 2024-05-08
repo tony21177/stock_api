@@ -166,6 +166,7 @@ namespace stock_api.Service
                                 ItemId = existItem.ItemId,
                                 InStockQuantity = existItem.AcceptQuantity.Value,
                                 ProductId = matchedProduct.ProductId,
+                                ProductCode = matchedProduct.ProductCode,
                                 ProductName = matchedProduct.ProductName,
                                 ProductSpec = matchedProduct.ProductSpec,
                                 Type = CommonConstants.StockInType.PURCHASE,
@@ -203,7 +204,7 @@ namespace stock_api.Service
 
         }
 
-        public bool UpdateAccepItem(PurchaseMainSheet purchaseMain, AcceptanceItem existingAcceptanceItem, UpdateAcceptItemRequest updateAcceptItem, WarehouseProduct product, string compId, WarehouseMember acceptMember)
+        public (bool,string?) UpdateAccepItem(PurchaseMainSheet purchaseMain, AcceptanceItem existingAcceptanceItem, UpdateAcceptItemRequest updateAcceptItem, WarehouseProduct product, string compId, WarehouseMember acceptMember)
         {
             using var scope = new TransactionScope();
             try
@@ -222,7 +223,7 @@ namespace stock_api.Service
                     existingAcceptanceItem.LotNumber = updateAcceptItem.LotNumber;
                 }
                 var now = DateTime.Now;
-                existingAcceptanceItem.LotNumberBatch = $"{existingAcceptanceItem.LotNumber}_{now.Year}{now.Month}{now.Day}";
+                existingAcceptanceItem.LotNumberBatch = $"{existingAcceptanceItem.LotNumber}_{now.Year}{now.Month}{now.Day}{now.Hour}{now.Minute}{now.Second}";
                 if (updateAcceptItem.ExpirationDate != null)
                 {
                     existingAcceptanceItem.ExpirationDate = DateOnly.FromDateTime(DateTimeHelper.ParseDateString(updateAcceptItem.ExpirationDate).Value);
@@ -273,6 +274,7 @@ namespace stock_api.Service
                         ExpirationDate = existingAcceptanceItem.ExpirationDate,
                         InStockQuantity = existingAcceptanceItem.AcceptQuantity.Value,
                         ProductId = product.ProductId,
+                        ProductCode = product.ProductCode,
                         ProductName = product.ProductName,
                         ProductSpec = product.ProductSpec,
                         Type = CommonConstants.StockInType.PURCHASE,
@@ -297,6 +299,7 @@ namespace stock_api.Service
                         ItemId = existingAcceptanceItem.ItemId,
                         InStockQuantity = existingAcceptanceItem.AcceptQuantity.Value,
                         ProductId = product.ProductId,
+                        ProductCode = product.ProductCode,
                         ProductName = product.ProductName,
                         ProductSpec = product.ProductSpec,
                         Type = CommonConstants.StockInType.PURCHASE,
@@ -336,12 +339,12 @@ namespace stock_api.Service
                 }
                 _dbContext.SaveChanges();
                 scope.Complete();
-                return true;
+                return (true,null);
             }
             catch (Exception ex)
             {
                 _logger.LogError("事務失敗[UpdateAccepItem]：{msg}", ex);
-                return false;
+                return (false,ex.Message);
             }
 
         }
@@ -354,6 +357,11 @@ namespace stock_api.Service
         public AcceptanceItem? GetAcceptanceItemByAcceptId(string acceptId)
         {
             return _dbContext.AcceptanceItems.Where(i => i.AcceptId == acceptId).FirstOrDefault();
+        }
+
+        public List<AcceptanceItem> GetAcceptanceItemByLotAndProductId(string lotNumber,string lotNumberBatch,string productId,string compId)
+        {
+            return _dbContext.AcceptanceItems.Where(i => i.LotNumber==lotNumber&&i.LotNumberBatch==lotNumberBatch&&i.ProductId==productId&&i.CompId==compId).OrderBy(i=>i.CreatedAt).ToList();
         }
 
         public (List<InStockItemRecord>, int TotalPages) ListStockInRecords(ListStockInRecordsRequest request)
@@ -444,6 +452,12 @@ namespace stock_api.Service
         public List<InStockItemRecord> GetInStockRecordsHistory(string prodcutId,string compId)
         {
             return _dbContext.InStockItemRecords.Where(record=>record.CompId==compId&&record.ProductId==prodcutId).ToList();
+        }
+
+        public List<InStockItemRecord> GetInStockRecordsHistoryNotAllOut(string productCode,string lotNumber, string lotNumberBatch, string compId)
+        {
+            return _dbContext.InStockItemRecords.Where(record => record.CompId == compId && record.ProductCode == productCode&&record.LotNumber==lotNumber&&record.LotNumberBatch == lotNumberBatch
+            &&record.OutStockStatus!=CommonConstants.OutStockStatus.ALL).ToList();
         }
     }
 }

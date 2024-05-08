@@ -11,8 +11,8 @@ namespace stock_api.Models;
 /// <summary>
 /// 出庫對應入庫,可能是多對多
 /// </summary>
-[Table("outstockrelatetoinstock")]
-public partial class Outstockrelatetoinstock
+[Table("outstock_relateto_instock")]
+public partial class OutstockRelatetoInstock
 {
     [Key]
     [StringLength(100)]

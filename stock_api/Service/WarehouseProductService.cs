@@ -31,6 +31,11 @@ namespace stock_api.Service
             return _dbContext.WarehouseProducts.Where(p => p.ProductId == productId && p.CompId == compId).FirstOrDefault();
         }
 
+        public WarehouseProduct? GetProductByProductCodeAndCompId(string productCode, string compId)
+        {
+            return _dbContext.WarehouseProducts.Where(p => p.ProductCode == productCode && p.CompId == compId).FirstOrDefault();
+        }
+
         public List<WarehouseProduct> GetProductsByProductIdsAndCompId(List<string> productIdList, string compId)
         {
             return _dbContext.WarehouseProducts.Where(p => productIdList.Contains(p.ProductId) && p.CompId == compId).ToList();
