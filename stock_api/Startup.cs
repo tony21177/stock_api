@@ -21,6 +21,12 @@ Log.Logger = new LoggerConfiguration()
 // 設置 Serilog 作為 Logging Provider
 builder.Host.UseSerilog();
 
+// 創建一個 Serilog LoggerFactory
+var serilogLoggerFactory = LoggerFactory.Create(loggingBuilder =>
+{
+    loggingBuilder.AddSerilog(); // 添加 Serilog 作為 Logger
+});
+
 
 //services cors
 builder.Services.AddCors(options =>
@@ -34,12 +40,13 @@ builder.Services.AddCors(options =>
 });
 
 
+// 配置 MySQL 和 Entity Framework
 var serverVersion = new MySqlServerVersion(new Version(5, 7, 29));
-builder.Services.AddEntityFrameworkMySql().AddDbContext<StockDbContext>(options =>
+builder.Services.AddDbContext<StockDbContext>(options =>
 {
     options.UseMySql(builder.Configuration.GetConnectionString("DefaultConnection"), serverVersion);
-    options.UseLoggerFactory(LoggerFactory.Create(builder => builder.AddConsole()))
-           .EnableSensitiveDataLogging();
+    options.UseLoggerFactory(serilogLoggerFactory) // 使用 Serilog 的 LoggerFactory
+           .EnableSensitiveDataLogging(); // 如果需要敏感數據記錄
 }, ServiceLifetime.Scoped);
 
 
