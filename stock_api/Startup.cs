@@ -6,8 +6,16 @@ using Microsoft.IdentityModel.Tokens;
 using stock_api.Common.IoC.Configuration.DI;
 using System.Text;
 using System.Text.Json;
+using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// 配置 Serilog
+Log.Logger = new LoggerConfiguration()
+    .MinimumLevel.Debug()
+    .WriteTo.Console()
+    .WriteTo.File("logs/stock_api_log.txt", rollingInterval: RollingInterval.Day)
+    .CreateLogger();
 
 //services cors
 builder.Services.AddCors(options =>
