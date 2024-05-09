@@ -19,6 +19,7 @@ namespace stock_api.Service.ValueObject
         public DateTime? CreatedAt { get; set; }
         public DateTime? UpdatedAt { get; set; }
         public bool IsActive { get; set; }
+        public string?  SplitProcess { get; set; }
         public List<PurchaseSubItemVo> Items {get;set;}
         public List<PurchaseFlow>? flows { get;set;}
         public List<PurchaseFlowLog>? flowLogs { get;set;}

@@ -38,6 +38,11 @@ namespace stock_api.Service
         {
             return _dbContext.PurchaseSubItems.Where(s => s.PurchaseMainId == purchaseMainId).ToList();
         }
+        public PurchaseSubItem? GetPurchaseSubItemByItemId(string itemId)
+        {
+            return _dbContext.PurchaseSubItems.Where(s => s.ItemId == itemId).FirstOrDefault();
+        }
+
         public List<PurchaseSubItem> GetPurchaseSubItemsByMainIdList(List<string> purchaseMainIdList)
         {
             return _dbContext.PurchaseSubItems.Where(s => purchaseMainIdList.Contains(s.PurchaseMainId)).ToList();
@@ -104,6 +109,44 @@ namespace stock_api.Service
                         purchaseFlows.Add(purchaseFlow);
                     }
                     _dbContext.PurchaseFlows.AddRange(purchaseFlows);
+
+                    Dictionary<string,List<PurchaseSubItem>> mainIdAndPurchaseSubItmeListMap = new Dictionary<string,List<PurchaseSubItem>>();
+                    Dictionary<string,PurchaseMainSheet> mainIdAndPurchaseMainMap = new Dictionary<string,PurchaseMainSheet>();
+
+                    foreach (var item in purchaseSubItemList)
+                    {
+                        if (item.WithItemId != null&&item.WithPurchaseMainId!=null)
+                        {
+                            var withPurchaseMain = GetPurchaseMainByMainId(item.WithPurchaseMainId);
+                            var withSubItems = GetPurchaseSubItemsByMainId(item.WithPurchaseMainId);
+                            foreach (var subItem in withSubItems)
+                            {
+                                if (subItem.ItemId == item.WithItemId)
+                                {
+                                    subItem.SplitProcess = CommonConstants.SplitProcess.DONE;
+                                }
+                            }
+                            if (!mainIdAndPurchaseSubItmeListMap.ContainsKey(withPurchaseMain.PurchaseMainId))
+                            {
+                                mainIdAndPurchaseSubItmeListMap[withPurchaseMain.PurchaseMainId] = withSubItems;
+                            }
+                            if (!mainIdAndPurchaseMainMap.ContainsKey(withPurchaseMain.PurchaseMainId))
+                            {
+                                mainIdAndPurchaseMainMap[withPurchaseMain.PurchaseMainId] = withPurchaseMain;
+                            }
+                        }
+                    }
+                    foreach (var (mainId, subItemList) in mainIdAndPurchaseSubItmeListMap)
+                    {
+                        if(subItemList.All(item=>item.SplitProcess== CommonConstants.SplitProcess.DONE))
+                        {
+                            mainIdAndPurchaseMainMap[mainId].SplitPrcoess = CommonConstants.SplitProcess.DONE;
+                        }else if (subItemList.Any(item => item.SplitProcess == CommonConstants.SplitProcess.DONE))
+                        {
+                            mainIdAndPurchaseMainMap[mainId].SplitPrcoess = CommonConstants.SplitProcess.PART;
+                        }
+                    }
+
                     _dbContext.SaveChanges();
                     scope.Complete();
                     return true;
@@ -207,6 +250,7 @@ namespace stock_api.Service
                         CurrentInStockQuantity = vo.CurrentInStockQuantity,
                         CreatedAt = vo.CreatedAt.Value,
                         UpdatedAt = vo.UpdatedAt.Value,
+                        SplitProcess = vo.SubSplitProcess,
                     };
                     Items.Add(subItem);
                 });
@@ -227,6 +271,7 @@ namespace stock_api.Service
                     CreatedAt = kvp.Value[0].CreatedAt,
                     UpdatedAt = kvp.Value[0].UpdatedAt,
                     IsActive = kvp.Value[0].IsActive,
+                    SplitProcess = kvp.Value[0].MainSplitPrcoess,
                     Items = Items,
                 };
                 purchaseMainAndSubItemVoList.Add(vo);

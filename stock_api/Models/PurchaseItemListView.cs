@@ -86,6 +86,12 @@ public partial class PurchaseItemListView
 
     public bool IsActive { get; set; }
 
+    /// <summary>
+    /// NONE(所有sub_item都尚未經過OWNER拆單),PART(部分sub_item經過OWNER拆單),DONE(所有sub_item經過OWNER拆單)
+    /// </summary>
+    [StringLength(45)]
+    public string? MainSplitPrcoess { get; set; }
+
     [StringLength(100)]
     public string ItemId { get; set; } = null!;
 
@@ -160,4 +166,31 @@ public partial class PurchaseItemListView
     /// 採購單項目在建立當下的庫存數量
     /// </summary>
     public int? CurrentInStockQuantity { get; set; }
+
+    /// <summary>
+    /// Owner從拆單建立就會帶這個參數,表示從WithCompId的採購單拆單出來的
+    /// </summary>
+    [StringLength(100)]
+    public string? WithCompId { get; set; }
+
+    /// <summary>
+    /// Owner從拆單建立就會帶這個參數,對應對WithCompId的採購單purchase_main_sheet.PurchaseMainId
+    /// </summary>
+    [Column("withPurchaseMainId")]
+    [StringLength(100)]
+    public string? WithPurchaseMainId { get; set; }
+
+    /// <summary>
+    /// Owner從拆單建立就會帶這個參數,對應對WithCompId的purchase_sub_item.ItemId
+    /// </summary>
+    [Column("withItemId")]
+    [StringLength(100)]
+    public string? WithItemId { get; set; }
+
+    /// <summary>
+    /// NONE(表示OWNER尚未拆單過), DONE(表示OWNER已經拆單過)
+    /// 
+    /// </summary>
+    [StringLength(45)]
+    public string? SubSplitProcess { get; set; }
 }

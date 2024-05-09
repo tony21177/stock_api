@@ -89,4 +89,10 @@ public partial class PurchaseMainSheet
     public DateTime? UpdatedAt { get; set; }
 
     public bool IsActive { get; set; }
+
+    /// <summary>
+    /// NONE(所有sub_item都尚未經過OWNER拆單),PART(部分sub_item經過OWNER拆單),DONE(所有sub_item經過OWNER拆單)
+    /// </summary>
+    [StringLength(45)]
+    public string? SplitPrcoess { get; set; }
 }

@@ -24,5 +24,8 @@
         public int Quantity { get; set; }
 
         public List<string>? GroupIds { get; set; }
+        public string? WithCompId { get; set; }
+        public string? WithPurchaseMainId { get; set;}
+        public string? WithItemId { get; set; }
     }
 }

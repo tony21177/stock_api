@@ -170,10 +170,21 @@ namespace stock_api.Controllers
 
             request.CompId = compId;
             var (data,totalPages) = _stockOutService.ListStockOutRecords(request);
-            return Ok(new CommonResponse<List<OutStockRecord>>
+            var distinctProductIds = data.Select(x => x.ProductId).Distinct().ToList();
+            var products = _warehouseProductService.GetProductsByProductIdsAndCompId(distinctProductIds, compId);
+
+            var outStockRecordVoList = _mapper.Map<List<OutStockRecordVo>>(data);
+            foreach (var item in outStockRecordVoList)
+            {
+                var matchedProdcut = products.Where(p => p.ProductId == item.ProductId).FirstOrDefault();
+                item.Unit = matchedProdcut?.Unit;
+            }
+
+
+            return Ok(new CommonResponse<List<OutStockRecordVo>>
             {
                 Result = true,
-                Data = data,
+                Data = outStockRecordVoList,
                 TotalPages = totalPages
             });
         }
@@ -203,10 +214,22 @@ namespace stock_api.Controllers
             }
 
             var (data, totalPages) = _stockOutService.ListStockOutRecords(request);
-            return Ok(new CommonResponse<List<OutStockRecord>>
+
+            var distinctProductIds = data.Select(x => x.ProductId).Distinct().ToList();
+            var products = _warehouseProductService.GetProductsByProductIdsAndCompId(distinctProductIds, request.CompId);
+
+            var outStockRecordVoList = _mapper.Map<List<OutStockRecordVo>>(data);
+            foreach (var item in outStockRecordVoList)
+            {
+                var matchedProdcut = products.Where(p => p.ProductId == item.ProductId).FirstOrDefault();
+                item.Unit = matchedProdcut?.Unit;
+            }
+
+
+            return Ok(new CommonResponse<List<OutStockRecordVo>>
             {
                 Result = true,
-                Data = data,
+                Data = outStockRecordVoList,
                 TotalPages = totalPages
             });
         }

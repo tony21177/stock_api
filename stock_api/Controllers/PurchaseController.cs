@@ -50,7 +50,7 @@ namespace stock_api.Controllers
             _warehouseProductService = warehouseProductService;
             _groupService = groupService;
             _supplierService = supplierService;
-            _createPurchaseValidator = new CreatePurchaseValidator(warehouseProductService, groupService);
+            _createPurchaseValidator = new CreatePurchaseValidator(warehouseProductService, groupService,purchaseService);
             _listPurchaseRequestValidator = new ListPurchaseValidator(warehouseProductService, groupService);
             _answerFlowRequestValidator = new AnswerFlowValidator();
         }
@@ -129,7 +129,10 @@ namespace stock_api.Controllers
                     Quantity = purchaseSubItem.Quantity,
                     GroupIds = string.Join(",", matchedGroups.Select(g => g.GroupId).ToList()),
                     GroupNames = string.Join(",", matchedGroups.Select(g => g.GroupName).ToList()),
-                    CurrentInStockQuantity = matchedProduct.InStockQuantity
+                    CurrentInStockQuantity = matchedProduct.InStockQuantity,
+                    WithPurchaseMainId = purchaseSubItem.WithPurchaseMainId,
+                    WithItemId = purchaseSubItem.WithItemId,
+                    WithCompId = purchaseSubItem.WithCompId,
                 };
                 purchaseSubItemList.Add(newPurchaseSubItem);
             });

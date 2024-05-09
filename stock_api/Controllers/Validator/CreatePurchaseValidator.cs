@@ -2,6 +2,7 @@
 using stock_api.Common.Constant;
 using stock_api.Common.Utils;
 using stock_api.Controllers.Request;
+using stock_api.Models;
 using stock_api.Service;
 
 namespace stock_api.Controllers.Validator
@@ -10,11 +11,13 @@ namespace stock_api.Controllers.Validator
     {
         private readonly WarehouseProductService _warehouseProductService;
         private readonly GroupService _groupService;
+        private readonly PurchaseService _purchaseService;
 
-        public CreatePurchaseValidator(WarehouseProductService warehouseProductService, GroupService groupService)
+        public CreatePurchaseValidator(WarehouseProductService warehouseProductService, GroupService groupService,PurchaseService purchaseService)
         {
             _warehouseProductService = warehouseProductService;
             _groupService = groupService;
+            _purchaseService = purchaseService;
 
             ClassLevelCascadeMode = CascadeMode.Stop;
             RuleFor(x => x.GroupIds)
@@ -33,6 +36,8 @@ namespace stock_api.Controllers.Validator
                 .Cascade(CascadeMode.Stop) // Stop on first failure
                 .Must(type => CommonConstants.PurchaseType.GetAllValues().Contains(type)).When(request => !string.IsNullOrEmpty(request.Type)) // Only validate when Type is not empty
                     .WithMessage($"type必須為{string.Join(",", CommonConstants.PurchaseType.GetAllValues())}");
+
+            RuleForEach(request => request.PurchaseSubItems).SetValidator(new SubItemValidator(_purchaseService));
 
         }
 
@@ -85,6 +90,25 @@ namespace stock_api.Controllers.Validator
 
             if(DateTimeHelper.ParseDateString(date)!=null) return true;
             return false;
+        }
+    }
+
+    public class SubItemValidator : AbstractValidator<SubItem>
+    {
+        private readonly PurchaseService _purchaseService;
+
+        public SubItemValidator(PurchaseService purchaseService)
+        {
+            _purchaseService = purchaseService;
+            RuleFor(x=>x)
+                .Must((subItem, x, context) => BeValidWithSubItem(subItem, context))
+                .When(subItem => subItem.WithPurchaseMainId!=null&&subItem.WithItemId!=null)
+                .WithMessage("對應的withSubItem(待拆單採購品項)不存在");
+        }
+
+        private bool BeValidWithSubItem(SubItem subItem, ValidationContext<SubItem> context)
+        {
+            return (_purchaseService.GetPurchaseSubItemByItemId(subItem.WithItemId)!=null);
         }
     }
 }

@@ -177,6 +177,18 @@ namespace stock_api.Common.Constant
             }
         }
 
+        public static class SplitProcess
+        {
+            public const string NONE = "NONE";
+            public const string PART = "PART";
+            public const string DONE = "DONE";
+
+            public static List<string> GetAllValues()
+            {
+                return new List<string> { NONE, PART, DONE };
+            }
+        }
+
     }
 
     
