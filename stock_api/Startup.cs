@@ -7,6 +7,7 @@ using stock_api.Common.IoC.Configuration.DI;
 using System.Text;
 using System.Text.Json;
 using Serilog;
+using Microsoft.AspNetCore.Hosting;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -15,7 +16,11 @@ Log.Logger = new LoggerConfiguration()
     .MinimumLevel.Debug()
     .WriteTo.Console()
     .WriteTo.File("logs/stock_api_log.txt", rollingInterval: RollingInterval.Day)
-    .CreateLogger();
+.CreateLogger();
+
+// 設置 Serilog 作為 Logging Provider
+builder.Host.UseSerilog();
+
 
 //services cors
 builder.Services.AddCors(options =>
@@ -103,6 +108,10 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.ConfigureBusinessServices(builder.Configuration);
 
 var app = builder.Build();
+
+// 記錄當前工作目錄
+var currentDirectory = Directory.GetCurrentDirectory();
+Log.Information($"目前工作目錄: {currentDirectory}");
 
 app.UseHttpsRedirection();
 
