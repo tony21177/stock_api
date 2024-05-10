@@ -111,15 +111,9 @@ namespace stock_api.Controllers
         {
             var memberAndPermissionSetting = _authHelpers.GetMemberAndPermissionSetting(User);
             var compId = memberAndPermissionSetting.CompanyWithUnit.CompId;
-            var compType = memberAndPermissionSetting.CompanyWithUnit.Type;
             if (request.CompId == null)
             {
                 request.CompId = compId;
-            }
-
-            if (request.CompId != null && request.CompId != compId && compType != CommonConstants.CompanyType.OWNER)
-            {
-                return BadRequest(CommonResponse<dynamic>.BuildNotAuthorizeResponse());
             }
 
             var data = _warehouseProductService.GetProductByProductCodeAndCompId(request.ProductCode, request.CompId);
