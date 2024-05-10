@@ -290,14 +290,14 @@ namespace stock_api.Controllers
             if (request.ExpirationDate != null&&product.DeadlineRule!=null)
             {
                 var expirationDate = DateOnly.FromDateTime(DateTimeHelper.ParseDateString(request.ExpirationDate).Value);
-                if (expirationDate.AddDays(product.DeadlineRule.Value)< DateOnly.FromDateTime(DateTime.Now))
+                if (DateOnly.FromDateTime(DateTime.Now).AddDays(product.DeadlineRule.Value)<expirationDate)
                 {
                     return Ok(new CommonResponse<dynamic>
                     {
                         Result = false,
                         Data = new
                         {
-                            isExceedLastAbleDate = true,
+                            isExceedDeadlineRule = true,
                         }
                     });
                 }
