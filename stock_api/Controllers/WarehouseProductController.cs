@@ -104,6 +104,37 @@ namespace stock_api.Controllers
 
         }
 
+
+        [HttpPost("detailByCode")]
+        [Authorize]
+        public IActionResult GetWarehouseProductDetailByCode(ProductDetailByCodeRequest request)
+        {
+            var memberAndPermissionSetting = _authHelpers.GetMemberAndPermissionSetting(User);
+            var compId = memberAndPermissionSetting.CompanyWithUnit.CompId;
+            var compType = memberAndPermissionSetting.CompanyWithUnit.Type;
+            if (request.CompId == null)
+            {
+                request.CompId = compId;
+            }
+
+            if (request.CompId != null && request.CompId != compId && compType != CommonConstants.CompanyType.OWNER)
+            {
+                return BadRequest(CommonResponse<dynamic>.BuildNotAuthorizeResponse());
+            }
+
+            var data = _warehouseProductService.GetProductByProductCodeAndCompId(request.ProductCode, request.CompId);
+
+
+            var response = new CommonResponse<WarehouseProduct>()
+            {
+                Result = true,
+                Message = "",
+                Data = data
+            };
+            return Ok(response);
+
+        }
+
         [HttpPost("detail")]
         [Authorize]
         public IActionResult GetWarehouseProductDetail(ProductDetailRequest request)
