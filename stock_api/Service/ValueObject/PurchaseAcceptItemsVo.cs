@@ -78,6 +78,7 @@ namespace stock_api.Service.ValueObject
         public int OrderQuantity { get; set; }
         public string PackagingStatus { get; set; }
         public string ProductId { get; set; }
+        public string ProductCode { get; set; }
         public string ProductName { get; set; }
         public string ProductSpec { get; set; }
         public string UdiserialCode { get; set; }
