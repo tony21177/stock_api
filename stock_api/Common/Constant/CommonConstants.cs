@@ -45,15 +45,7 @@ namespace stock_api.Common.Constant
             }
         }
 
-        public static class PurchaseFlowStatus
-        {
-            public const string WAIT = "WAIT";
-            public const string DONE = "DONE";
-            public static List<string> GetAllValues()
-            {
-                return new List<string> { WAIT, DONE };
-            }
-        }
+        
 
         public static class PurchaseFlowAnswer
         {
@@ -74,6 +66,17 @@ namespace stock_api.Common.Constant
             public static List<string> GetAllValues()
             {
                 return new List<string> { AGREE, REJECT, BACK };
+            }
+        }
+
+        public static class PurchaseFlowStatus
+        {
+            public const string WAIT = "WAIT";
+            public const string AGREE = "AGREE";
+            public const string REJECT = "REJECT";
+            public static List<string> GetAllValues()
+            {
+                return new List<string> { WAIT, REJECT };
             }
         }
 
