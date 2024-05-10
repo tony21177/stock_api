@@ -142,4 +142,7 @@ public partial class AcceptanceItem
     public string? SavingFunction { get; set; }
 
     public double? SavingTemperature { get; set; }
+
+    [Column("isInStocked")]
+    public bool? IsInStocked { get; set; }
 }

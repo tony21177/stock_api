@@ -307,7 +307,7 @@ namespace stock_api.Controllers
             List<InStockItemRecord> existingStockInRecords = _stockInService.GetInStockRecordsHistory(existingAcceptItem.ProductId, compId).OrderByDescending(item=>item.CreatedAt).ToList();
             var lastLotNumber = existingStockInRecords.FirstOrDefault()?.LotNumber;
 
-            var (result,message) = _stockInService.UpdateAccepItem(purchaseMain, existingAcceptItem, request, product, compId, memberAndPermissionSetting.Member);
+            var (result,message) = _stockInService.UpdateAccepItem(purchaseMain, existingAcceptItem, request, product, compId, memberAndPermissionSetting.Member,request.IsInStocked);
 
             return Ok(new CommonResponse<dynamic>
             {

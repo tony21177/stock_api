@@ -133,7 +133,8 @@ namespace stock_api.Controllers
             AcceptanceItem? toCompAcceptanceItem = null;
             if(request.Type == CommonConstants.OutStockType.SHIFT_OUT)
             {
-                toCompAcceptanceItem = _stockInService.GetAcceptanceItemByLotAndProductId(request.LotNumber, request.LotNumberBatch, firstInStockItemRecord.ProductId, request.ToCompId).FirstOrDefault();
+                // 找到要調撥過去的單位還沒入庫的AcceptItem
+                toCompAcceptanceItem = _stockInService.GetAcceptanceItemNotInStockByProductIdAndCompId(firstInStockItemRecord.ProductId, request.ToCompId).FirstOrDefault();
                 if (toCompAcceptanceItem == null)
                 {
                     return BadRequest(new CommonResponse<dynamic>

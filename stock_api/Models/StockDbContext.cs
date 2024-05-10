@@ -88,6 +88,7 @@ public partial class StockDbContext : DbContext
             entity.Property(e => e.CreatedAt).HasDefaultValueSql("CURRENT_TIMESTAMP");
             entity.Property(e => e.CurrentTotalQuantity).HasComment("驗收入庫後，當下該品項的總庫存數量");
             entity.Property(e => e.ExpirationDate).HasComment("保存期限");
+            entity.Property(e => e.IsInStocked).HasDefaultValueSql("'0'");
             entity.Property(e => e.ItemId).HasComment("對應 PurchaseSubItem 的 PK");
             entity.Property(e => e.LotNumber).HasComment("批號");
             entity.Property(e => e.LotNumberBatch).HasComment("批次");
@@ -389,7 +390,7 @@ public partial class StockDbContext : DbContext
             entity.Property(e => e.ReadAt).HasComment("讀取時間");
             entity.Property(e => e.Reason).HasComment("流程備註內容");
             entity.Property(e => e.Sequence).HasComment("流程順序");
-            entity.Property(e => e.Status).HasComment("當下該單據狀態");
+            entity.Property(e => e.Status).HasComment("當下該單據狀態WAIT,AGREE,REJECT");
             entity.Property(e => e.SubmitAt).HasComment("送出時間");
             entity.Property(e => e.UpdatedAt)
                 .ValueGeneratedOnAddOrUpdate()

@@ -37,7 +37,7 @@ public partial class PurchaseFlow
     public string? Reason { get; set; }
 
     /// <summary>
-    /// 當下該單據狀態
+    /// 當下該單據狀態WAIT,AGREE,REJECT
     /// </summary>
     [StringLength(45)]
     public string Status { get; set; } = null!;

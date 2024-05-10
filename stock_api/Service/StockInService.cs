@@ -204,7 +204,7 @@ namespace stock_api.Service
 
         }
 
-        public (bool,string?) UpdateAccepItem(PurchaseMainSheet purchaseMain, AcceptanceItem existingAcceptanceItem, UpdateAcceptItemRequest updateAcceptItem, WarehouseProduct product, string compId, WarehouseMember acceptMember)
+        public (bool,string?) UpdateAccepItem(PurchaseMainSheet purchaseMain, AcceptanceItem existingAcceptanceItem, UpdateAcceptItemRequest updateAcceptItem, WarehouseProduct product, string compId, WarehouseMember acceptMember,bool isInStocked)
         {
             using var scope = new TransactionScope();
             try
@@ -261,8 +261,8 @@ namespace stock_api.Service
                 {
                     existingAcceptanceItem.SavingTemperature = updateAcceptItem.SavingTemperature;
                 }
-
-                if (existingAcceptanceItem.AcceptQuantity != null && existingAcceptanceItem.QcStatus != CommonConstants.QcStatus.FAIL)
+                existingAcceptanceItem.IsInStocked = isInStocked;
+                if (existingAcceptanceItem.AcceptQuantity != null && existingAcceptanceItem.IsInStocked==true)
                 {
                     var tempInStockItemRecord = new TempInStockItemRecord()
                     {
@@ -362,6 +362,11 @@ namespace stock_api.Service
         public List<AcceptanceItem> GetAcceptanceItemByLotAndProductId(string lotNumber,string lotNumberBatch,string productId,string compId)
         {
             return _dbContext.AcceptanceItems.Where(i => i.LotNumber==lotNumber&&i.LotNumberBatch==lotNumberBatch&&i.ProductId==productId&&i.CompId==compId).OrderBy(i=>i.CreatedAt).ToList();
+        }
+
+        public List<AcceptanceItem> GetAcceptanceItemNotInStockByProductIdAndCompId(string productId, string compId)
+        {
+            return _dbContext.AcceptanceItems.Where(i => i.ProductId == productId && i.CompId == compId && i.IsInStocked==false).OrderBy(i => i.CreatedAt).ToList();
         }
 
         public (List<InStockItemRecord>, int TotalPages) ListStockInRecords(ListStockInRecordsRequest request)

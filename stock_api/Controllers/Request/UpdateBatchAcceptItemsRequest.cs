@@ -17,6 +17,7 @@ namespace stock_api.Controllers.Request
         public string? ExpirationDate { get; set; }
         public string? PackagingStatus { get; set; }
         public string? QcStatus { get; set; }
+        public bool IsInStocked { get; set; }
         public string? Comment { get; set; }
         public string? QcComment { get; set; }
         public string? DeliverFunction { get; set; }
