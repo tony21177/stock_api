@@ -76,7 +76,7 @@ namespace stock_api.Common.Constant
             public const string REJECT = "REJECT";
             public static List<string> GetAllValues()
             {
-                return new List<string> { WAIT, REJECT };
+                return new List<string> { WAIT, AGREE, REJECT };
             }
         }
 
