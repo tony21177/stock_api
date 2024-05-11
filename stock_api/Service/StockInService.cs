@@ -459,10 +459,10 @@ namespace stock_api.Service
             return _dbContext.InStockItemRecords.Where(record=>record.CompId==compId&&record.ProductId==prodcutId).ToList();
         }
 
-        public List<InStockItemRecord> GetInStockRecordsHistoryNotAllOut(string productCode,string lotNumber, string lotNumberBatch, string compId)
+        public List<InStockItemRecord> GetProductInStockRecordsHistoryNotAllOutFIFO(string productCode, string compId)
         {
-            return _dbContext.InStockItemRecords.Where(record => record.CompId == compId && record.ProductCode == productCode&&record.LotNumber==lotNumber&&record.LotNumberBatch == lotNumberBatch
-            &&record.OutStockStatus!=CommonConstants.OutStockStatus.ALL).ToList();
+            return _dbContext.InStockItemRecords.Where(record => record.CompId == compId && record.ProductCode == productCode
+            &&record.OutStockStatus!=CommonConstants.OutStockStatus.ALL).OrderBy(record=>record.CreatedAt).ToList();
         }
     }
 }

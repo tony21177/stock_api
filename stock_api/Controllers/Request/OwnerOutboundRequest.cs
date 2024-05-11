@@ -16,5 +16,6 @@
         public string? AbnormalReason { get; set; }  
 
         public string Type { get; set; } = null!;
+        public bool? IsConfirmed { get; set; }
     }
 }

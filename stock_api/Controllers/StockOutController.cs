@@ -56,8 +56,9 @@ namespace stock_api.Controllers
                 return BadRequest(CommonResponse<dynamic>.BuildValidationFailedResponse(validationResult));
             }
 
-            List<InStockItemRecord> inStockItemRecordsNotAllOut = _stockInService.GetInStockRecordsHistoryNotAllOut(request.ProductCode, request.LotNumber, request.LotNumberBatch, request.CompId);
-            if (inStockItemRecordsNotAllOut.Count == 0)
+            List<InStockItemRecord> inStockItemRecordsNotAllOutFIFO = _stockInService.GetProductInStockRecordsHistoryNotAllOutFIFO(request.ProductCode, request.CompId);
+
+            if (inStockItemRecordsNotAllOutFIFO.Count == 0)
             {
                 return BadRequest(new CommonResponse<dynamic>
                 {
@@ -65,17 +66,47 @@ namespace stock_api.Controllers
                     Message = "未找到相對應尚未出庫的入庫紀錄"
                 });
             }
-            var firstInStockItemRecord = inStockItemRecordsNotAllOut.OrderBy(item=>item.CreatedAt).FirstOrDefault();
+            InStockItemRecord requestLot = null; 
+            if(inStockItemRecordsNotAllOutFIFO.Count > 0)
+            {
+                requestLot = inStockItemRecordsNotAllOutFIFO.Where(record=>record.LotNumber==request.LotNumber&&record.LotNumberBatch==request.LotNumberBatch&&record.ProductCode==request.ProductCode
+                &&record.CompId==compId).FirstOrDefault();
+                if (requestLot==null)
+                {
+                    return BadRequest(new CommonResponse<dynamic>
+                    {
+                        Result = false,
+                        Message = "未找到相對應尚未出庫的入庫紀錄"
+                    });
+                }
+                var oldestLot = inStockItemRecordsNotAllOutFIFO.FirstOrDefault();
+
+                // 表示要出的批號不是最早的那批 而且IsConfirmed!=true(非user確認過的)
+                if ((requestLot.LotNumber!=oldestLot.LotNumber||requestLot.LotNumberBatch!=oldestLot.LotNumberBatch)&&request.IsConfirmed != true)
+                {
+                    return BadRequest(new CommonResponse<Dictionary<string,dynamic>>
+                    {
+                        Result = false,
+                        Message = "沒有先進先出",
+                        Data = new Dictionary<string, dynamic>
+                        {
+                            ["isFIFO"] = false,
+                            ["oldest"] = oldestLot
+                        }
+                    });
+                }
+            }
+
             var product = _warehouseProductService.GetProductByProductCodeAndCompId(request.ProductCode, request.CompId);
             if (product==null)
             {
                 return BadRequest(new CommonResponse<dynamic>
                 {
                     Result = false,
-                    Message = "無對應的品項"
+                    Message = "無對應的庫存品項"
                 });
             }
-            var result = _stockOutService.OutStock(request, firstInStockItemRecord, product, memberAndPermissionSetting.Member);
+            var result = _stockOutService.OutStock(request, requestLot, product, memberAndPermissionSetting.Member);
             return Ok(new CommonResponse<dynamic>
             {
                 Result = result,
@@ -103,8 +134,9 @@ namespace stock_api.Controllers
                 return BadRequest(CommonResponse<dynamic>.BuildValidationFailedResponse(validationResult));
             }
 
-            List<InStockItemRecord> inStockItemRecordsNotAllOut = _stockInService.GetInStockRecordsHistoryNotAllOut(request.ProductCode, request.LotNumber, request.LotNumberBatch, request.CompId);
-            if (inStockItemRecordsNotAllOut.Count == 0)
+            List<InStockItemRecord> inStockItemRecordsNotAllOutFIFO = _stockInService.GetProductInStockRecordsHistoryNotAllOutFIFO(request.ProductCode, request.CompId);
+
+            if (inStockItemRecordsNotAllOutFIFO.Count == 0)
             {
                 return BadRequest(new CommonResponse<dynamic>
                 {
@@ -112,7 +144,36 @@ namespace stock_api.Controllers
                     Message = "未找到相對應尚未出庫的入庫紀錄"
                 });
             }
-            var firstInStockItemRecord = inStockItemRecordsNotAllOut.OrderBy(item => item.CreatedAt).FirstOrDefault();
+            InStockItemRecord requestLot = null;
+            if (inStockItemRecordsNotAllOutFIFO.Count > 0)
+            {
+                requestLot = inStockItemRecordsNotAllOutFIFO.Where(record => record.LotNumber == request.LotNumber && record.LotNumberBatch == request.LotNumberBatch && record.ProductCode == request.ProductCode
+                && record.CompId == compId).FirstOrDefault();
+                if (requestLot == null)
+                {
+                    return BadRequest(new CommonResponse<dynamic>
+                    {
+                        Result = false,
+                        Message = "未找到相對應尚未出庫的入庫紀錄"
+                    });
+                }
+                var oldestLot = inStockItemRecordsNotAllOutFIFO.FirstOrDefault();
+
+                // 表示要出的批號不是最早的那批 而且IsConfirmed!=true(非user確認過的)
+                if ((requestLot.LotNumber != oldestLot.LotNumber || requestLot.LotNumberBatch != oldestLot.LotNumberBatch) && request.IsConfirmed != true)
+                {
+                    return BadRequest(new CommonResponse<Dictionary<string, dynamic>>
+                    {
+                        Result = false,
+                        Message = "沒有先進先出",
+                        Data = new Dictionary<string, dynamic>
+                        {
+                            ["isFIFO"] = false,
+                            ["oldest"] = oldestLot
+                        }
+                    });
+                }
+            }
             var product = _warehouseProductService.GetProductByProductCodeAndCompId(request.ProductCode, request.CompId);
             if (product == null)
             {
@@ -122,6 +183,7 @@ namespace stock_api.Controllers
                     Message = "無對應的品項"
                 });
             }
+
             if (request.Type == CommonConstants.OutStockType.SHIFT_OUT && request.ToCompId == null)
             {
                 return BadRequest(new CommonResponse<dynamic>
@@ -134,7 +196,7 @@ namespace stock_api.Controllers
             if(request.Type == CommonConstants.OutStockType.SHIFT_OUT)
             {
                 // 找到要調撥過去的單位還沒入庫的AcceptItem
-                toCompAcceptanceItem = _stockInService.GetAcceptanceItemNotInStockByProductIdAndCompId(firstInStockItemRecord.ProductId, request.ToCompId).FirstOrDefault();
+                toCompAcceptanceItem = _stockInService.GetAcceptanceItemNotInStockByProductIdAndCompId(requestLot.ProductId, request.ToCompId).FirstOrDefault();
                 if (toCompAcceptanceItem == null)
                 {
                     return BadRequest(new CommonResponse<dynamic>
@@ -145,7 +207,7 @@ namespace stock_api.Controllers
                 }
             }
 
-            var result = _stockOutService.OwnerOutStock(request, firstInStockItemRecord, product, memberAndPermissionSetting.Member,toCompAcceptanceItem);
+            var result = _stockOutService.OwnerOutStock(request, requestLot, product, memberAndPermissionSetting.Member,toCompAcceptanceItem);
             return Ok(new CommonResponse<dynamic>
             {
                 Result = result,
