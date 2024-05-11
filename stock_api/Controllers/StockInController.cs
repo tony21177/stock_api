@@ -260,11 +260,16 @@ namespace stock_api.Controllers
             {
                 return BadRequest(CommonResponse<dynamic>.BuildNotAuthorizeResponse());
             }
-            if (existingAcceptItem.QcStatus != null)
+            if (existingAcceptItem.IsInStocked ==true)
             {
-                return BadRequest(new CommonResponse<dynamic>{
+                //return BadRequest(new CommonResponse<dynamic>{
+                //    Result = false,
+                //    Message = $"此驗收單狀態已為{existingAcceptItem.QcStatus},不可重複驗收"
+                //});
+                return BadRequest(new CommonResponse<dynamic>
+                {
                     Result = false,
-                    Message = $"此驗收單狀態已為{existingAcceptItem.QcStatus},不可重複驗收"
+                    Message = $"此驗收單已入庫"
                 });
             }
 
