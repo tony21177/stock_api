@@ -418,6 +418,7 @@ namespace stock_api.Service
                 || h.LotNumber.Contains(request.Keywords)
                 || h.DeliverFunction.Contains(request.Keywords)
                 || h.ProductId.Contains(request.Keywords)
+                || h.ProductCode.Contains(request.ProdcutCode)
                 || h.ProductName.Contains(request.Keywords)
                 || h.ProductSpec.Contains(request.Keywords)
                 || h.UserId.Contains(request.Keywords)
