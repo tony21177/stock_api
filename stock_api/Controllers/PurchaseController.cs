@@ -133,6 +133,8 @@ namespace stock_api.Controllers
                     WithPurchaseMainId = purchaseSubItem.WithPurchaseMainId,
                     WithItemId = purchaseSubItem.WithItemId,
                     WithCompId = purchaseSubItem.WithCompId,
+                    ArrangeSupplierId = matchedProduct.DefaultSupplierId,
+                    ArrangeSupplierName = matchedProduct.DefaultSupplierName,
                 };
                 purchaseSubItemList.Add(newPurchaseSubItem);
             });
