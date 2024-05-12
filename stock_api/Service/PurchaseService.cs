@@ -321,6 +321,11 @@ namespace stock_api.Service
             _dbContext.SaveChanges();
         }
 
+        public List<PurchaseFlow> GetBeforeFlows(PurchaseFlow nowFlow)
+        {
+            return _dbContext.PurchaseFlows.Where(f=>f.Sequence<nowFlow.Sequence&&f.CompId==nowFlow.CompId&&f.PurchaseMainId==nowFlow.PurchaseMainId).OrderBy(f=>f.Sequence).ToList();
+        }
+
         public bool AnswerFlow(PurchaseFlow flow, MemberAndPermissionSetting verifierMemberAndPermission, string answer, string? reason)
         {
             string purchaseMainId = flow.PurchaseMainId;
