@@ -404,6 +404,10 @@ namespace stock_api.Service
             {
                 query = query.Where(h => request.OutStockStatusList.Contains(h.OutStockStatus));
             }
+            if (request.ProdcutCode != null)
+            {
+                query = query.Where(h => h.ProductCode == request.ProdcutCode);
+            }
 
             query = query.Where(h => h.CompId == request.CompId);
 

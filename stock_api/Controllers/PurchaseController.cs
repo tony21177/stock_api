@@ -358,7 +358,15 @@ namespace stock_api.Controllers
                     Message = "審核流程不存在"
                 });
             }
-
+            var beforeFlows = _purchaseService.GetBeforeFlows(purchaseFlow);
+            if (beforeFlows.Any(f => f.Status == CommonConstants.PurchaseFlowStatus.WAIT))
+            {
+                return BadRequest(new CommonResponse<dynamic>()
+                {
+                    Result = false,
+                    Message = "之前的審核流程還在跑"
+                });
+            }
 
             var result = _purchaseService.AnswerFlow(purchaseFlow, memberAndPermissionSetting, request.Answer, request.Reason);
 
