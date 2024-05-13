@@ -360,7 +360,7 @@ namespace stock_api.Controllers
                 });
             }
             var beforeFlows = _purchaseService.GetBeforeFlows(purchaseFlow);
-            if (beforeFlows.Any(f => f.Status == CommonConstants.PurchaseFlowStatus.WAIT))
+            if (beforeFlows.Any(f => f.Answer == CommonConstants.PurchaseFlowAnswer.EMPTY))
             {
                 return BadRequest(new CommonResponse<dynamic>()
                 {
