@@ -38,5 +38,7 @@ namespace stock_api.Service.ValueObject
         public string? Delivery { get; set; }
 
         public string? SplitProcess { get; set; }
+        public string? OpenedSealName { get; set; }
+
     }
 }
