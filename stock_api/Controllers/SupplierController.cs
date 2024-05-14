@@ -43,14 +43,15 @@ namespace stock_api.Controllers
         [Authorize]
         public IActionResult ListAll()
         {
-            var memberAndPermissionSetting = _authHelpers.GetMemberAndPermissionSetting(User);
-            var memberAndPermissionSettingList = _supplierService.GetAllSupplierByCompId(memberAndPermissionSetting.CompanyWithUnit.CompId).OrderByDescending(e=>e.CreatedAt).ToList();
+            // var memberAndPermissionSetting = _authHelpers.GetMemberAndPermissionSetting(User);
+            // var memberAndPermissionSettingList = _supplierService.GetAllSupplierByCompId(memberAndPermissionSetting.CompanyWithUnit.CompId).OrderByDescending(e=>e.CreatedAt).ToList();
+            var data = _supplierService.GetAllSupplier().OrderByDescending(e => e.CreatedAt).ToList();
 
             var response = new CommonResponse<List<Supplier>>()
             {
                 Result = true,
                 Message = "",
-                Data = memberAndPermissionSettingList
+                Data = data
             };
             return Ok(response);
         }
