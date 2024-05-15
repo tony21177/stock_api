@@ -185,6 +185,7 @@ namespace stock_api.Controllers
         {
             var memberAndPermissionSetting = _authHelpers.GetMemberAndPermissionSetting(User);
             var compId = memberAndPermissionSetting.CompanyWithUnit.CompId;
+            request.CompId = compId;
             var compType = memberAndPermissionSetting.CompanyWithUnit.Type;
             if (memberAndPermissionSetting.PermissionSetting.IsItemManage == false)
             {
@@ -227,6 +228,7 @@ namespace stock_api.Controllers
         {
             var memberAndPermissionSetting = _authHelpers.GetMemberAndPermissionSetting(User);
             var compId = memberAndPermissionSetting.CompanyWithUnit.CompId;
+            request.CompId = compId;
             if (memberAndPermissionSetting.PermissionSetting.IsItemManage == false)
             {
                 return BadRequest(CommonResponse<dynamic>.BuildNotAuthorizeResponse());
