@@ -14,12 +14,14 @@ namespace stock_api.Service
         private readonly StockDbContext _dbContext;
         private readonly IMapper _mapper;
         private readonly ILogger<StockOutService> _logger;
+        private readonly WarehouseProductService _warehouseProductService;  
 
-        public StockOutService(StockDbContext dbContext, IMapper mapper, ILogger<StockOutService> logger)
+        public StockOutService(StockDbContext dbContext, IMapper mapper, ILogger<StockOutService> logger,WarehouseProductService warehouseProductService)
         {
             _dbContext = dbContext;
             _mapper = mapper;
             _logger = logger;
+            _warehouseProductService = warehouseProductService;
         }
 
         public bool OutStock(OutboundRequest request,InStockItemRecord inStockItem,WarehouseProduct product,WarehouseMember applyUser)
@@ -215,7 +217,9 @@ namespace stock_api.Service
 
                 if(request.Type==CommonConstants.OutStockType.SHIFT_OUT && toCompAcceptanceItem != null)
                 {
-                    toCompAcceptanceItem.AcceptQuantity = request.ApplyQuantity;
+                    var toProduct = _warehouseProductService.GetProductByProductIdAndCompId(product.ProductId,toCompAcceptanceItem.CompId);
+
+                    toCompAcceptanceItem.AcceptQuantity = request.ApplyQuantity* (toProduct.UnitConversion??1);
                     toCompAcceptanceItem.LotNumber = request.LotNumber;
                     toCompAcceptanceItem.LotNumberBatch = request.LotNumberBatch;
                     toCompAcceptanceItem.ExpirationDate = inStockItem.ExpirationDate;

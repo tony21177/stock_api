@@ -81,7 +81,8 @@ namespace stock_api.Service
                     newPurchasePurchaseMainSheet.CurrentStatus = CommonConstants.PurchaseApplyStatus.APPLY;
                     newPurchasePurchaseMainSheet.ReceiveStatus = CommonConstants.PurchaseReceiveStatus.NONE;
                     newPurchasePurchaseMainSheet.IsActive = true;
-                    
+                    _dbContext.PurchaseMainSheets.Add(newPurchasePurchaseMainSheet);
+
 
                     foreach (var item in purchaseSubItemList)
                     {
