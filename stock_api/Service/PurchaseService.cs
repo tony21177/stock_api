@@ -67,33 +67,42 @@ namespace stock_api.Service
             return _dbContext.PurchaseFlowLogs.Where(l => purchaseMainIdList.Contains(l.PurchaseMainId)).ToList();
         }
 
-        public bool CreatePurchase(PurchaseMainSheet newPurchasePurchaseMainSheet, List<PurchaseSubItem> purchaseSubItemList, List<PurchaseFlowSettingVo> purchaseFlowSettingList,bool isOwnerCreate)
+        public bool CreatePurchase(PurchaseMainSheet newPurchasePurchaseMainSheet, List<PurchaseSubItem> newPurchaseSubItemList, List<PurchaseFlowSettingVo> purchaseFlowSettingList,bool isOwnerCreate)
         {
             using (var scope = new TransactionScope())
             {
                 try
                 {
-                    var distinctItemSupplierList = purchaseSubItemList.Select(i => i.ArrangeSupplierId).Distinct().ToList();
-
+                    var distinctItemSupplierListForNew = newPurchaseSubItemList.Select(i => i.ArrangeSupplierId).Distinct().ToList();
 
                     var purchaseMainId = Guid.NewGuid().ToString();
                     newPurchasePurchaseMainSheet.PurchaseMainId = purchaseMainId;
                     newPurchasePurchaseMainSheet.CurrentStatus = CommonConstants.PurchaseApplyStatus.APPLY;
                     newPurchasePurchaseMainSheet.ReceiveStatus = CommonConstants.PurchaseReceiveStatus.NONE;
                     newPurchasePurchaseMainSheet.IsActive = true;
+                    // 表示OWNER拆單後的新單供應商只有一家就不能再拆單了
+                    if (distinctItemSupplierListForNew.Count == 1 && isOwnerCreate == true)
+                    {
+                        newPurchasePurchaseMainSheet.SplitPrcoess = CommonConstants.SplitProcess.DONE;
+                    }
                     _dbContext.PurchaseMainSheets.Add(newPurchasePurchaseMainSheet);
 
 
-                    foreach (var item in purchaseSubItemList)
+                    foreach (var item in newPurchaseSubItemList)
                     {
                         item.ItemId = Guid.NewGuid().ToString();
                         item.PurchaseMainId = purchaseMainId;
                         item.ReceiveStatus = CommonConstants.PurchaseReceiveStatus.NONE;
+                        // 表示OWNER拆單後的新單供應商只有一家就不能再拆單了
+                        if (distinctItemSupplierListForNew.Count == 1 && isOwnerCreate == true)
+                        {
+                            item.SplitProcess = CommonConstants.SplitProcess.DONE;
+                        }
                     }
-                    _dbContext.PurchaseSubItems.AddRange(purchaseSubItemList);
+                    _dbContext.PurchaseSubItems.AddRange(newPurchaseSubItemList);
 
 
-                    List<PurchaseFlow> purchaseFlows = new List<PurchaseFlow>();
+                    List<PurchaseFlow> purchaseFlows = new();
                     DateTime submitedAt = DateTime.Now;
                     foreach (var item in purchaseFlowSettingList)
                     {
@@ -114,17 +123,17 @@ namespace stock_api.Service
                     }
                     _dbContext.PurchaseFlows.AddRange(purchaseFlows);
 
-                    Dictionary<string,List<PurchaseSubItem>> mainIdAndPurchaseSubItmeListMap = new Dictionary<string,List<PurchaseSubItem>>();
-                    Dictionary<string,PurchaseMainSheet> mainIdAndPurchaseMainMap = new Dictionary<string,PurchaseMainSheet>();
+                    Dictionary<string,List<PurchaseSubItem>> mainIdAndPurchaseSubItmeListMapForWith = new ();
+                    Dictionary<string,PurchaseMainSheet> mainIdAndPurchaseMainMapForWith = new ();
 
 
 
-                    foreach (var item in purchaseSubItemList)
+                    foreach (var item in newPurchaseSubItemList)
                     {
                         if (item.WithItemId != null&&item.WithPurchaseMainId!=null)
                         {
-                            var withPurchaseMain = GetPurchaseMainByMainId(item.WithPurchaseMainId);
-                            var withSubItems = GetPurchaseSubItemsByMainId(item.WithPurchaseMainId);
+                            var withPurchaseMain = GetPurchaseMainByMainId(item.WithPurchaseMainId); // 表示新的採購單是從這張主單拆單過來的
+                            var withSubItems = GetPurchaseSubItemsByMainId(item.WithPurchaseMainId); // 表示新的採購單item是從主單的這些item拆過來的
                             foreach (var subItem in withSubItems)
                             {
                                 if (subItem.ItemId == item.WithItemId)
@@ -132,30 +141,30 @@ namespace stock_api.Service
                                     subItem.SplitProcess = CommonConstants.SplitProcess.DONE;
                                 }
                                 // 表示OWNER拆單後的供應商只有一家就不能再拆單了
-                                if (distinctItemSupplierList.Count == 1 && isOwnerCreate == true)
-                                {
-                                    subItem.SplitProcess = CommonConstants.SplitProcess.DONE;
-                                }
+                                //if (distinctItemSupplierList.Count == 1 && isOwnerCreate == true)
+                                //{
+                                //    subItem.SplitProcess = CommonConstants.SplitProcess.DONE;
+                                //}
                             }
-                            if (!mainIdAndPurchaseSubItmeListMap.ContainsKey(withPurchaseMain.PurchaseMainId))
+                            if (!mainIdAndPurchaseSubItmeListMapForWith.ContainsKey(withPurchaseMain.PurchaseMainId))
                             {
-                                mainIdAndPurchaseSubItmeListMap[withPurchaseMain.PurchaseMainId] = withSubItems;
+                                mainIdAndPurchaseSubItmeListMapForWith[withPurchaseMain.PurchaseMainId] = withSubItems;
                             }
-                            if (!mainIdAndPurchaseMainMap.ContainsKey(withPurchaseMain.PurchaseMainId))
+                            if (!mainIdAndPurchaseMainMapForWith.ContainsKey(withPurchaseMain.PurchaseMainId))
                             {
-                                mainIdAndPurchaseMainMap[withPurchaseMain.PurchaseMainId] = withPurchaseMain;
+                                mainIdAndPurchaseMainMapForWith[withPurchaseMain.PurchaseMainId] = withPurchaseMain;
                             }
                             
                         }
                     }
-                    foreach (var (mainId, subItemList) in mainIdAndPurchaseSubItmeListMap)
+                    foreach (var (mainId, subItemList) in mainIdAndPurchaseSubItmeListMapForWith)
                     {
                         if(subItemList.All(item=>item.SplitProcess== CommonConstants.SplitProcess.DONE))
                         {
-                            mainIdAndPurchaseMainMap[mainId].SplitPrcoess = CommonConstants.SplitProcess.DONE;
+                            mainIdAndPurchaseMainMapForWith[mainId].SplitPrcoess = CommonConstants.SplitProcess.DONE;
                         }else if (subItemList.Any(item => item.SplitProcess == CommonConstants.SplitProcess.DONE))
                         {
-                            mainIdAndPurchaseMainMap[mainId].SplitPrcoess = CommonConstants.SplitProcess.PART;
+                            mainIdAndPurchaseMainMapForWith[mainId].SplitPrcoess = CommonConstants.SplitProcess.PART;
                         }
                     }
                     
