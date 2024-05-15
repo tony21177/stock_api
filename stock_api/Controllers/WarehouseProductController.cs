@@ -11,6 +11,7 @@ using FluentValidation;
 using Org.BouncyCastle.Asn1.Ocsp;
 using stock_api.Controllers.Validator;
 using stock_api.Auth;
+using stock_api.Service.ValueObject;
 
 namespace stock_api.Controllers
 {
@@ -75,12 +76,32 @@ namespace stock_api.Controllers
 
 
             var (data,totalPages) = _warehouseProductService.SearchProduct(searchRequest);
+            var warehouseProductVoList = _mapper.Map<List<WarehouseProductVo>>(data);
+            var distictProductCodeList = warehouseProductVoList.Select(x => x.ProductCode).Distinct().ToList();
+            var productsInAnotherComp = _warehouseProductService.GetProductByProductCodeList(distictProductCodeList);
+
+            if (compType == CommonConstants.CompanyType.OWNER&& productsInAnotherComp.Count>0)
+            {
+                foreach (var item in warehouseProductVoList)
+                {
+                    var matchedProdcutsInAnotherComp = productsInAnotherComp.Where(p => p.ProductCode.Contains(item.ProductCode)).ToList();
+                    if (matchedProdcutsInAnotherComp.Count > 0)
+                    {
+                        // 因為金萬林此product的unit在不同醫院單位都會設成一樣,故只取第一筆
+                        var matchedProdcutInAnotherComp = matchedProdcutsInAnotherComp[0];
+                        item.AnotherUnit = matchedProdcutInAnotherComp.Unit;
+                        item.AnotherUnitConversion = matchedProdcutInAnotherComp.UnitConversion;
+
+                    }
+                }
+            }
+
 
             var response = new CommonResponse<List<WarehouseProduct>>()
             {
                 Result = true,
                 Message = "",
-                Data = data,
+                Data = warehouseProductVoList,
                 TotalPages = totalPages
             };
             return Ok(response);
