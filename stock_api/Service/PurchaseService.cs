@@ -67,17 +67,25 @@ namespace stock_api.Service
             return _dbContext.PurchaseFlowLogs.Where(l => purchaseMainIdList.Contains(l.PurchaseMainId)).ToList();
         }
 
-        public bool CreatePurchase(PurchaseMainSheet newPurchasePurchaseMainSheet, List<PurchaseSubItem> purchaseSubItemList, List<PurchaseFlowSettingVo> purchaseFlowSettingList)
+        public bool CreatePurchase(PurchaseMainSheet newPurchasePurchaseMainSheet, List<PurchaseSubItem> purchaseSubItemList, List<PurchaseFlowSettingVo> purchaseFlowSettingList,bool isOwnerCreate)
         {
             using (var scope = new TransactionScope())
             {
                 try
                 {
+                    var distinctItemSupplierList = purchaseSubItemList.Select(i => i.ArrangeSupplierId).Distinct().ToList();
+
+
                     var purchaseMainId = Guid.NewGuid().ToString();
                     newPurchasePurchaseMainSheet.PurchaseMainId = purchaseMainId;
                     newPurchasePurchaseMainSheet.CurrentStatus = CommonConstants.PurchaseApplyStatus.APPLY;
                     newPurchasePurchaseMainSheet.ReceiveStatus = CommonConstants.PurchaseReceiveStatus.NONE;
                     newPurchasePurchaseMainSheet.IsActive = true;
+                    // 表示OWNER拆單後的供應商只有一家就不能再拆單了
+                    if (distinctItemSupplierList.Count == 1)
+                    {
+                        newPurchasePurchaseMainSheet.SplitPrcoess = CommonConstants.SplitProcess.DONE;
+                    }
                     _dbContext.PurchaseMainSheets.Add(newPurchasePurchaseMainSheet);
 
                     foreach (var item in purchaseSubItemList)
@@ -113,6 +121,8 @@ namespace stock_api.Service
                     Dictionary<string,List<PurchaseSubItem>> mainIdAndPurchaseSubItmeListMap = new Dictionary<string,List<PurchaseSubItem>>();
                     Dictionary<string,PurchaseMainSheet> mainIdAndPurchaseMainMap = new Dictionary<string,PurchaseMainSheet>();
 
+
+
                     foreach (var item in purchaseSubItemList)
                     {
                         if (item.WithItemId != null&&item.WithPurchaseMainId!=null)
@@ -125,6 +135,11 @@ namespace stock_api.Service
                                 {
                                     subItem.SplitProcess = CommonConstants.SplitProcess.DONE;
                                 }
+                                // 表示OWNER拆單後的供應商只有一家就不能再拆單了
+                                if (distinctItemSupplierList.Count == 1)
+                                {
+                                    subItem.SplitProcess = CommonConstants.SplitProcess.DONE;
+                                }
                             }
                             if (!mainIdAndPurchaseSubItmeListMap.ContainsKey(withPurchaseMain.PurchaseMainId))
                             {
@@ -134,6 +149,7 @@ namespace stock_api.Service
                             {
                                 mainIdAndPurchaseMainMap[withPurchaseMain.PurchaseMainId] = withPurchaseMain;
                             }
+                            
                         }
                     }
                     foreach (var (mainId, subItemList) in mainIdAndPurchaseSubItmeListMap)
@@ -146,6 +162,7 @@ namespace stock_api.Service
                             mainIdAndPurchaseMainMap[mainId].SplitPrcoess = CommonConstants.SplitProcess.PART;
                         }
                     }
+                    
 
                     _dbContext.SaveChanges();
                     scope.Complete();
