@@ -226,6 +226,8 @@ namespace stock_api.Controllers
                 resultItem.UDIBatchCode = matchedProdcut.UdibatchCode;
                 resultItem.UDICreateCode = matchedProdcut.UdicreateCode;
                 resultItem.UDIVerifyDateCode = matchedProdcut.UdiverifyDateCode;
+                resultItem.Prod_savingFunction = matchedProdcut.SavingFunction;
+                resultItem.Prod_stockLocation = matchedProdcut.StockLocation;
             }
 
             return Ok(new CommonResponse<ManualAcceptItem>
