@@ -185,7 +185,7 @@ namespace stock_api.Service
                 // 尚未驗收的AcceptanceItem也需更新udiSerialcode
                 if (request.UdiserialCode != null && request.UdiserialCode != existingProduct.UdiserialCode)
                 {
-                    _dbContext.AcceptanceItems.Where(item => item.QcStatus == null&&item.CompId==request.CompId&&item.ProductId== existingProduct.ProductId)
+                    _dbContext.AcceptanceItems.Where(item => item.CompId==request.CompId&&item.ProductId== existingProduct.ProductId)
                         .ExecuteUpdate(item => item.SetProperty(x => x.UdiserialCode, request.UdiserialCode));
                 }
 
@@ -235,7 +235,7 @@ namespace stock_api.Service
                 // 尚未驗收的AcceptanceItem也需更新udiSerialcode
                 if (request.UdiserialCode != null && request.UdiserialCode != existingProduct.UdiserialCode)
                 {
-                    _dbContext.AcceptanceItems.Where(item => item.QcStatus == null && item.CompId == request.CompId && item.ProductId == existingProduct.ProductId)
+                    _dbContext.AcceptanceItems.Where(item => item.CompId == request.CompId && item.ProductId == existingProduct.ProductId)
                         .ExecuteUpdate(item => item.SetProperty(x => x.UdiserialCode, request.UdiserialCode));
                 }
                 
