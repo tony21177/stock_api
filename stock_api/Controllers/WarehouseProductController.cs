@@ -84,20 +84,19 @@ namespace stock_api.Controllers
             {
                 foreach (var item in warehouseProductVoList)
                 {
-                    var matchedProdcutsInAnotherComp = productsInAnotherComp.Where(p => p.ProductCode.Contains(item.ProductCode)).ToList();
+                    var matchedProdcutsInAnotherComp = productsInAnotherComp.Where(p => p.ProductCode.Contains(item.ProductCode)&&p.CompId!=compId).ToList();
                     if (matchedProdcutsInAnotherComp.Count > 0)
                     {
                         // 因為金萬林此product的unit在不同醫院單位都會設成一樣,故只取第一筆
                         var matchedProdcutInAnotherComp = matchedProdcutsInAnotherComp[0];
                         item.AnotherUnit = matchedProdcutInAnotherComp.Unit;
                         item.AnotherUnitConversion = matchedProdcutInAnotherComp.UnitConversion;
-
                     }
                 }
             }
 
 
-            var response = new CommonResponse<List<WarehouseProduct>>()
+            var response = new CommonResponse<List<WarehouseProductVo>>()
             {
                 Result = true,
                 Message = "",
