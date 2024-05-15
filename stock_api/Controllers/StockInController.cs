@@ -438,7 +438,8 @@ namespace stock_api.Controllers
                 if(item.ExpirationDate!=null&& matchedProduct.DeadlineRule != null)
                 {
                     var expirationDate = DateOnly.FromDateTime(DateTimeHelper.ParseDateString(item.ExpirationDate).Value);
-                    if (DateOnly.FromDateTime(DateTime.Now).AddDays(matchedProduct.DeadlineRule.Value) < expirationDate)
+                    // check : 如果今天日期+deallinerule(至少要可以放幾天) > 保存期限，代表保存期前過短
+                    if (DateOnly.FromDateTime(DateTime.Now).AddDays(matchedProduct.DeadlineRule.Value) > expirationDate)
                     {
                         exceedDeadLineRuleIdList.Add(item.AcceptId);
                     }
