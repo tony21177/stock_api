@@ -329,11 +329,11 @@ namespace stock_api.Service
                 //更新採購主單
                 List<AcceptanceItem> existingAcceptanceItems = _dbContext.AcceptanceItems.Where(i=>i.PurchaseMainId == purchaseMain.PurchaseMainId && i.CompId==compId).ToList();
 
-                if (existingAcceptanceItems.All(item => item.QcStatus != null && item.QcStatus != CommonConstants.QcStatus.FAIL))
+                if (existingAcceptanceItems.All(item => item.IsInStocked==true ))
                 {
                     purchaseMain.ReceiveStatus = CommonConstants.PurchaseReceiveStatus.ALL_ACCEPT;
                 }
-                else if (existingAcceptanceItems.Any(item => item.QcStatus != null && item.QcStatus != CommonConstants.QcStatus.FAIL))
+                else if (existingAcceptanceItems.Any(item => item.IsInStocked!=true))
                 {
                     purchaseMain.ReceiveStatus = CommonConstants.PurchaseReceiveStatus.PART_ACCEPT;
                 }
@@ -357,6 +357,10 @@ namespace stock_api.Service
         public AcceptanceItem? GetAcceptanceItemByAcceptId(string acceptId)
         {
             return _dbContext.AcceptanceItems.Where(i => i.AcceptId == acceptId).FirstOrDefault();
+        }
+        public List<AcceptanceItem> GetAcceptanceItemByAcceptIdList(List<string> acceptIdList)
+        {
+            return _dbContext.AcceptanceItems.Where(i => acceptIdList.Contains( i.AcceptId)).ToList();
         }
 
         public List<AcceptanceItem> GetAcceptanceItemByLotAndProductId(string lotNumber,string lotNumberBatch,string productId,string compId)

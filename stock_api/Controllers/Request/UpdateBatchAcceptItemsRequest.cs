@@ -6,6 +6,7 @@ namespace stock_api.Controllers.Request
     public class UpdateBatchAcceptItemsRequest
     {
         public List<UpdateAcceptItemRequest> UpdateAcceptItemList { get; set; }
+        public bool? IsConfirmed { get; set; }  
     }
 
     public class UpdateAcceptItemRequest

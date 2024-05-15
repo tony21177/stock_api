@@ -12,6 +12,7 @@ using stock_api.Service.ValueObject;
 using stock_api.Models;
 using MySqlX.XDevAPI.Common;
 using stock_api.Common.Utils;
+using System.Linq;
 
 namespace stock_api.Controllers
 {
@@ -28,6 +29,7 @@ namespace stock_api.Controllers
         private readonly IValidator<SearchPurchaseAcceptItemRequest> _searchPurchaseAcceptItemValidator;
         private readonly IValidator<UpdateBatchAcceptItemsRequest> _updateBatchAcceptItemsRequestValidator;
         private readonly IValidator<UpdateAcceptItemRequest> _updateAcceptItemRequestValidator;
+        private readonly IValidator<UpdateBatchAcceptItemsRequest> _batchUdateAcceptItemRequestValidator;
         private readonly IValidator<ListStockInRecordsRequest> _listStockInRecordsValidator;
 
         public StockInController(IMapper mapper, AuthHelpers authHelpers, GroupService groupService, StockInService stockInService, WarehouseProductService warehouseProductService, PurchaseService purchaseService)
@@ -41,6 +43,7 @@ namespace stock_api.Controllers
             _searchPurchaseAcceptItemValidator = new SearchPurchaseAcceptItemValidator(groupService);
             _updateBatchAcceptItemsRequestValidator = new UpdateBatchAcceptItemsRequestValidator();
             _updateAcceptItemRequestValidator = new UpdateAcceptItemValidator();
+            _batchUdateAcceptItemRequestValidator = new UpdateBatchAcceptItemsRequestValidator();
             _listStockInRecordsValidator = new ListStockInRecordsValidator();
         }
 
@@ -354,5 +357,140 @@ namespace stock_api.Controllers
                 TotalPages =pages
             });
         }
+
+        [HttpPost("acceptItem/batchVerify")]
+        [Authorize]
+        public IActionResult BatchVerifyAcceptItem(UpdateBatchAcceptItemsRequest request)
+        {
+            var memberAndPermissionSetting = _authHelpers.GetMemberAndPermissionSetting(User);
+            var compId = memberAndPermissionSetting.CompanyWithUnit.CompId;
+            var userId = memberAndPermissionSetting.Member.UserId;
+            request.UpdateAcceptItemList.ForEach(item => item.AcceptUserId = userId);
+
+            var validationResult = _batchUdateAcceptItemRequestValidator.Validate(request);
+
+            if (!validationResult.IsValid)
+            {
+                return BadRequest(CommonResponse<dynamic>.BuildValidationFailedResponse(validationResult));
+            }
+            var updateAcceptIdList = request.UpdateAcceptItemList.Select(i => i.AcceptId).ToList();
+            var existingAcceptItemList = _stockInService.GetAcceptanceItemByAcceptIdList(updateAcceptIdList);
+            var existingAcceptIdList = existingAcceptItemList.Select(i => i.AcceptId).ToList();
+            var notExistAcceptIdList = updateAcceptIdList.Except(existingAcceptIdList).ToList();
+            if (notExistAcceptIdList.Count>0)
+            {
+                return BadRequest(new CommonResponse<dynamic>
+                {
+                    Result = false,
+                    Message = $"驗收品項 {string.Join(", ", notExistAcceptIdList)} 不存在"
+                });
+            }
+            if (existingAcceptItemList.Any(i=>i.CompId!=compId))
+            {
+                return BadRequest(CommonResponse<dynamic>.BuildNotAuthorizeResponse());
+            }
+
+            var inStockedAcceptIdList = existingAcceptItemList.Where(i=>i.IsInStocked==true).Select(i=>i.AcceptId).ToList();
+            if (inStockedAcceptIdList.Count>0)
+            {
+               
+                return BadRequest(new CommonResponse<dynamic>
+                {
+                    Result = false,
+                    Message = $"驗收項目 {string.Join(",",inStockedAcceptIdList)} 已入庫"
+                });
+            }
+
+            var existingAcceptProductIdList = existingAcceptItemList.Select(i=>i.ProductId).ToList();
+            var existingProductList = _warehouseProductService.GetProductsByProductIdsAndCompId(existingAcceptProductIdList, compId);
+            var existingProductIdList = existingProductList.Select(p=>p.ProductId).ToList() ;
+            var notExistProductIdList = existingAcceptProductIdList.Except(existingProductIdList).ToList();
+            if (notExistProductIdList.Count >0 )
+            {
+                return BadRequest(new CommonResponse<dynamic>
+                {
+                    Result = false,
+                    Message = $"庫存品項 {string.Join(",", notExistProductIdList)} 不存在"
+                });
+            }
+
+            var updatePurchaseMainIdList = existingAcceptItemList.Select(i=>i.PurchaseMainId).ToList();
+            var purchaseMainList = _purchaseService.GetPurchaseMainsByMainIdList(updatePurchaseMainIdList);
+            var existingPurchaseMainIdList = purchaseMainList.Select(p=>p.PurchaseMainId).ToList() ;
+            var notExistPurchaseMainIdList = existingPurchaseMainIdList.Except(existingPurchaseMainIdList).ToList();
+            if (notExistPurchaseMainIdList.Count>0)
+            {
+                return BadRequest(new CommonResponse<dynamic>
+                {
+                    Result = false,
+                    Message = $"採購單 {string.Join(",", notExistPurchaseMainIdList)} 不存在"
+                });
+            }
+
+            var updateAcceptItemsList = request.UpdateAcceptItemList;
+            List<string> exceedDeadLineRuleIdList = new List<string>();
+
+            foreach (var item in updateAcceptItemsList)
+            {
+                var matchedExistAcceptItem = existingAcceptItemList.Where(i=>i.AcceptId==item.AcceptId).FirstOrDefault();
+                var matchedProduct = existingProductList.Where(p=>p.ProductId==matchedExistAcceptItem.ProductId).FirstOrDefault();
+                if(item.ExpirationDate!=null&& matchedProduct.DeadlineRule != null)
+                {
+                    var expirationDate = DateOnly.FromDateTime(DateTimeHelper.ParseDateString(item.ExpirationDate).Value);
+                    if (DateOnly.FromDateTime(DateTime.Now).AddDays(matchedProduct.DeadlineRule.Value) < expirationDate)
+                    {
+                        exceedDeadLineRuleIdList.Add(item.AcceptId);
+                    }
+                }
+            }
+            if (request.IsConfirmed != true)
+            {
+                return Ok(new CommonResponse<dynamic>
+                {
+                    Result = false,
+                    Data = new
+                    {
+                        isExceedDeadlineRule = true,
+                        exceedDeadlineRuleIdList = exceedDeadLineRuleIdList,
+                    }
+                });
+            }
+
+            List<dynamic> updateResultDataList = new ();
+            List<string> newLotNumberList = new ();
+            List<string> failedIdList = new();
+
+            foreach (var item in updateAcceptItemsList)
+            {
+                var matchedExistAcceptItem = existingAcceptItemList.Where(i => i.AcceptId == item.AcceptId).FirstOrDefault();
+                var matchedProduct = existingProductList.Where(p => p.ProductId == matchedExistAcceptItem.ProductId).FirstOrDefault();
+                var matchedPurchaseMain = purchaseMainList.Where(p=>p.PurchaseMainId==matchedExistAcceptItem.PurchaseMainId).FirstOrDefault();
+
+                List<InStockItemRecord> existingStockInRecords = _stockInService.GetInStockRecordsHistory(matchedExistAcceptItem.ProductId, compId).OrderByDescending(item => item.CreatedAt).ToList();
+                var lastLotNumber = existingStockInRecords.FirstOrDefault()?.LotNumber;
+                if (item.LotNumber != null && item.LotNumber != lastLotNumber)
+                {
+                    newLotNumberList.Add(item.LotNumber);
+                }
+                var (result, message) = _stockInService.UpdateAccepItem(matchedPurchaseMain, matchedExistAcceptItem, item, matchedProduct, compId, memberAndPermissionSetting.Member, item.IsInStocked);
+                if (result != true)
+                {
+                    failedIdList.Add(matchedExistAcceptItem.AcceptId);
+                }
+            }
+
+
+            return Ok(new CommonResponse<dynamic>
+            {
+                Result = true,
+                Message = "",
+                Data = new
+                {
+                    newLotNumberList,
+                    failedIdList
+                }
+            });
+        }
+
     }
 }
