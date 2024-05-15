@@ -81,12 +81,7 @@ namespace stock_api.Service
                     newPurchasePurchaseMainSheet.CurrentStatus = CommonConstants.PurchaseApplyStatus.APPLY;
                     newPurchasePurchaseMainSheet.ReceiveStatus = CommonConstants.PurchaseReceiveStatus.NONE;
                     newPurchasePurchaseMainSheet.IsActive = true;
-                    // 表示OWNER拆單後的供應商只有一家就不能再拆單了
-                    if (distinctItemSupplierList.Count == 1&&isOwnerCreate==true)
-                    {
-                        newPurchasePurchaseMainSheet.SplitPrcoess = CommonConstants.SplitProcess.DONE;
-                    }
-                    _dbContext.PurchaseMainSheets.Add(newPurchasePurchaseMainSheet);
+                    
 
                     foreach (var item in purchaseSubItemList)
                     {
