@@ -279,6 +279,9 @@ namespace stock_api.Controllers
             List<PurchaseSubItem> purchaseSubItems = _purchaseService.GetPurchaseSubItemsByMainId(purchaseMainId);
             List<PurchaseFlow> purchaseFlows = _purchaseService.GetPurchaseFlowsByMainId(purchaseMainId).OrderBy(f => f.Sequence).ToList();
             List<PurchaseFlowLog> purchaseFlowLogs = _purchaseService.GetPurchaseFlowLogsByMainId(purchaseMainId).OrderBy(fl => fl.UpdatedAt).ToList();
+            var distinctWithCompId = purchaseSubItems.Where(i=>i.WithCompId!=null).Select(i=>i.WithCompId).Distinct().ToList();
+            List<CompanyWithUnitVo> companyWithUnitVoList = _companyService.GetCompanyWithUnitListByCompanyIdList(distinctWithCompId);
+
             var purchaseAndSubItemVo = _mapper.Map<PurchaseMainAndSubItemVo>(purchaseMain);
             var purchaseSubItemVoList = _mapper.Map<List<PurchaseSubItemVo>>(purchaseSubItems);
 
@@ -299,6 +302,15 @@ namespace stock_api.Controllers
                 item.ProductCode = matchedProduct?.ProductCode;
                 item.SupplierUnit = matchedProduct?.SupplierUnit;
                 item.SupplierUnitConvertsion = matchedProduct?.SupplierUnitConvertsion;
+                if (item.WithCompId != null)
+                {
+                    var matchedCompanyWithUnitVo = companyWithUnitVoList.Where(c=>c.CompId==item.WithCompId).FirstOrDefault();
+                    if (matchedCompanyWithUnitVo != null)
+                    {
+                        item.WithCompName = matchedCompanyWithUnitVo.UnitName+matchedCompanyWithUnitVo.Name;
+                    }
+                }
+
             });
             purchaseAndSubItemVo.Items = purchaseSubItemVoList;
             purchaseAndSubItemVo.flows = purchaseFlows;

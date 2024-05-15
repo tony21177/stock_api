@@ -92,6 +92,28 @@ namespace stock_api.Service
             return null;
         }
 
+        public List<CompanyWithUnitVo> GetCompanyWithUnitListByCompanyIdList(List<string> compIdList)
+        {
+            var query = from c in _dbContext.Companies
+                        join cu in _dbContext.CompanyUnits on c.CompId equals cu.CompId
+                        where compIdList.Contains(c.CompId)
+                        select new CompanyWithUnitVo
+                        {
+                            CompId = c.CompId,
+                            Name = c.Name,
+                            IsActive = c.IsActive,
+                            Type = c.Type,
+                            CreatedAt = c.CreatedAt,
+                            UpdatedAt = c.UpdatedAt,
+                            UnitId = cu.UnitId,
+                            UnitName = cu.UnitName
+                        };
+
+            var result = query.ToList();
+            
+            return result;
+        }
+
         public void AddCompany(Company company,String unitId,String unitName)
         {
             company.CompId = Guid.NewGuid().ToString();

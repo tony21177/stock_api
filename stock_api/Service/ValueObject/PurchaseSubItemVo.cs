@@ -42,5 +42,10 @@ namespace stock_api.Service.ValueObject
         public string? WithCompId { get; set; }
         public string? WithPurchaseMainId { get; set; }
 
+        public string? WithCompId { get; set; }
+        public string? WithCompName { get; set; }
+        public string? WithPurchaseMainId { get; set; }
+        public string? WithItemId { get; set; }
+
     }
 }
