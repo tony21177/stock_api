@@ -238,9 +238,7 @@ namespace stock_api.Service
                     _dbContext.AcceptanceItems.Where(item => item.QcStatus == null && item.CompId == request.CompId && item.ProductId == existingProduct.ProductId)
                         .ExecuteUpdate(item => item.SetProperty(x => x.UdiserialCode, request.UdiserialCode));
                 }
-
-                var groupIds = request.GroupIds;
-                var matchedGroups = groups.Where(g => groupIds.Contains(g.GroupId)).ToList();
+                
                 var updateProduct = new WarehouseProduct()
                 {
                     CompId = existingProduct.CompId,
@@ -292,7 +290,13 @@ namespace stock_api.Service
                 updateProduct.IsActive = existingProduct.IsActive;
 
                 _mapper.Map(updateProduct, existingProduct);
-                existingProduct.GroupNames = matchedGroups.Select(g => g.GroupName).Aggregate("", (current, s) => current + (s + ","));
+                var groupIds = request.GroupIds;
+                if (groupIds != null)
+                {
+                    var matchedGroups = groups.Where(g => groupIds.Contains(g.GroupId)).ToList();
+                    existingProduct.GroupIds = String.Join(",", matchedGroups.Select(g => g.GroupId).ToList());
+                    existingProduct.GroupNames = matchedGroups.Select(g => g.GroupName).Aggregate("", (current, s) => current + (s + ","));
+                }
                 if (supplier != null)
                 {
                     existingProduct.DefaultSupplierName = supplier.Name;
