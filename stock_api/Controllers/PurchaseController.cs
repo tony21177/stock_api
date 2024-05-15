@@ -138,7 +138,7 @@ namespace stock_api.Controllers
                 };
                 purchaseSubItemList.Add(newPurchaseSubItem);
             });
-            var result = _purchaseService.CreatePurchase(newPurchaseMain, purchaseSubItemList, purchaseFlowSettingList.Where(s => s.IsActive == true).ToList());
+            var result = _purchaseService.CreatePurchase(newPurchaseMain, purchaseSubItemList, purchaseFlowSettingList.Where(s => s.IsActive == true).ToList(), memberAndPermissionSetting.CompanyWithUnit.Type == CommonConstants.CompanyType.OWNER);
             var response = new CommonResponse<dynamic>
             {
                 Result = result,
