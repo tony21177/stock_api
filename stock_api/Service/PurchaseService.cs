@@ -82,7 +82,7 @@ namespace stock_api.Service
                     newPurchasePurchaseMainSheet.ReceiveStatus = CommonConstants.PurchaseReceiveStatus.NONE;
                     newPurchasePurchaseMainSheet.IsActive = true;
                     // 表示OWNER拆單後的供應商只有一家就不能再拆單了
-                    if (distinctItemSupplierList.Count == 1)
+                    if (distinctItemSupplierList.Count == 1&&isOwnerCreate==true)
                     {
                         newPurchasePurchaseMainSheet.SplitPrcoess = CommonConstants.SplitProcess.DONE;
                     }
@@ -136,7 +136,7 @@ namespace stock_api.Service
                                     subItem.SplitProcess = CommonConstants.SplitProcess.DONE;
                                 }
                                 // 表示OWNER拆單後的供應商只有一家就不能再拆單了
-                                if (distinctItemSupplierList.Count == 1)
+                                if (distinctItemSupplierList.Count == 1 && isOwnerCreate == true)
                                 {
                                     subItem.SplitProcess = CommonConstants.SplitProcess.DONE;
                                 }
