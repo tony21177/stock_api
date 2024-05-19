@@ -395,6 +395,7 @@ namespace stock_api.Service
                             ItemId = item.ItemId,
                             OrderQuantity = item.Quantity??0,
                             ProductId = item.ProductId,
+                            ProductCode = item.ProductCode,
                             ProductName = item.ProductName,
                             ProductSpec = item.ProductSpec,
                             UdiserialCode = item.UdiserialCode,

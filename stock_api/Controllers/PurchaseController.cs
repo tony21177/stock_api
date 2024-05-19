@@ -122,6 +122,7 @@ namespace stock_api.Controllers
                     Comment = purchaseSubItem.Comment,
                     CompId = createRequest.CompId,
                     ProductId = matchedProduct.ProductId,
+                    ProductCode = matchedProduct.ProductCode,
                     ProductName = matchedProduct.ProductName,
                     ProductCategory = matchedProduct.ProductCategory,
                     ProductSpec = matchedProduct.ProductSpec,

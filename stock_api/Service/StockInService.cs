@@ -371,9 +371,9 @@ namespace stock_api.Service
             return _dbContext.AcceptanceItems.Where(i => i.LotNumber==lotNumber&&i.LotNumberBatch==lotNumberBatch&&i.ProductId==productId&&i.CompId==compId).OrderBy(i=>i.CreatedAt).ToList();
         }
 
-        public List<AcceptanceItem> GetAcceptanceItemNotInStockByProductIdAndCompId(string productId, string compId)
+        public List<AcceptanceItem> GetAcceptanceItemNotInStockByProductCodeAndCompId(string productCode, string compId)
         {
-            return _dbContext.AcceptanceItems.Where(i => i.ProductId == productId && i.CompId == compId && i.IsInStocked==false).OrderBy(i => i.CreatedAt).ToList();
+            return _dbContext.AcceptanceItems.Where(i => i.ProductCode == productCode && i.CompId == compId && i.IsInStocked==false).OrderBy(i => i.CreatedAt).ToList();
         }
 
         public (List<InStockItemRecord>, int TotalPages) ListStockInRecords(ListStockInRecordsRequest request)

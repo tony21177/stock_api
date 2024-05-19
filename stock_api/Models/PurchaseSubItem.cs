@@ -37,6 +37,9 @@ public partial class PurchaseSubItem
     [StringLength(100)]
     public string ProductId { get; set; } = null!;
 
+    [StringLength(200)]
+    public string? ProductCode { get; set; }
+
     /// <summary>
     /// 品項名稱
     /// </summary>

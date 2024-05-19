@@ -271,7 +271,7 @@ namespace stock_api.Controllers
             if (request.Type == CommonConstants.OutStockType.SHIFT_OUT)
             {
                 // 找到要調撥過去的單位還沒入庫的AcceptItem
-                toCompAcceptanceItem = _stockInService.GetAcceptanceItemNotInStockByProductIdAndCompId(requestLot.ProductId, request.ToCompId).FirstOrDefault();
+                toCompAcceptanceItem = _stockInService.GetAcceptanceItemNotInStockByProductCodeAndCompId(requestLot.ProductCode, request.ToCompId).FirstOrDefault();
                 if (toCompAcceptanceItem == null || toCompAcceptanceItem.LotNumberBatch != requestLot.LotNumberBatch)
                 {
                     return BadRequest(new CommonResponse<dynamic>
@@ -340,7 +340,7 @@ namespace stock_api.Controllers
                     Message = "還有效期更早的批號還沒出",
                     Data = notOldestLotList
                 });
-            }
+            };
 
             if (request.Type == CommonConstants.OutStockType.SHIFT_OUT && request.ToCompId == null)
             {
@@ -652,8 +652,8 @@ namespace stock_api.Controllers
                 List<InStockItemRecord> inStockItemRecordsNotAllOutExDateFIFO = lotNumberBatchAndproductCodeInStockExFIFORecords[outItem.LotNumberBatch];
                 var requestLot = inStockItemRecordsNotAllOutExDateFIFO.FirstOrDefault(record => record.LotNumberBatch == outItem.LotNumberBatch);
                 // 找到要調撥過去的單位還沒入庫的AcceptItem
-                toCompAcceptanceItem = _stockInService.GetAcceptanceItemNotInStockByProductIdAndCompId(requestLot.ProductId, toCompId).FirstOrDefault();
-                if (toCompAcceptanceItem == null || toCompAcceptanceItem.LotNumberBatch != requestLot.LotNumberBatch)
+                toCompAcceptanceItem = _stockInService.GetAcceptanceItemNotInStockByProductCodeAndCompId(requestLot.ProductCode, toCompId).FirstOrDefault();
+                if (toCompAcceptanceItem == null )
                 {
                     notFoundLotNumberBatchList.Add(outItem.LotNumberBatch);
                 }
