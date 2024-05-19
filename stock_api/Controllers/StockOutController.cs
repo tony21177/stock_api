@@ -113,7 +113,7 @@ namespace stock_api.Controllers
                     Message = "無對應的庫存品項"
                 });
             }
-            var result = _stockOutService.OutStock(request, requestLot, product, memberAndPermissionSetting.Member,compId);
+            var result = _stockOutService.OutStock(request.Type,request, requestLot, product, memberAndPermissionSetting.Member,compId);
             return Ok(new CommonResponse<dynamic>
             {
                 Result = result,
@@ -176,7 +176,7 @@ namespace stock_api.Controllers
             {
                 var product = lotNumberBatchAndProductMap[outItem.LotNumberBatch];
                 var requestLot = lotNumberBatchRequestLotMap[outItem.LotNumberBatch];
-                var successful = _stockOutService.OutStock(outItem, requestLot, product, memberAndPermissionSetting.Member,compId);
+                var successful = _stockOutService.OutStock(request.Type,outItem, requestLot, product, memberAndPermissionSetting.Member,compId);
                 if (!successful)
                 {
                     failedOutLotNumberBatchList.Add(outItem.LotNumberBatch);
@@ -282,7 +282,7 @@ namespace stock_api.Controllers
                 }
             }
 
-            var result = _stockOutService.OwnerOutStock(request, requestLot, product, memberAndPermissionSetting.Member, toCompAcceptanceItem, compId);
+            var result = _stockOutService.OwnerOutStock(request.Type,request, requestLot, product, memberAndPermissionSetting.Member, toCompAcceptanceItem, compId);
             return Ok(new CommonResponse<dynamic>
             {
                 Result = result,
@@ -373,7 +373,7 @@ namespace stock_api.Controllers
                 var product = lotNumberBatchAndProductMap[outItem.LotNumberBatch];
                 var requestLot = lotNumberBatchRequestLotMap[outItem.LotNumberBatch];
                 var toCompAcceptanceItem = lotNumberBatchAndToCompAcceptanceItem[outItem.LotNumberBatch];
-                var successful = _stockOutService.OwnerOutStock(outItem, requestLot, product, memberAndPermissionSetting.Member, toCompAcceptanceItem, compId);
+                var successful = _stockOutService.OwnerOutStock(request.Type,outItem, requestLot, product, memberAndPermissionSetting.Member, toCompAcceptanceItem, compId);
                 if (!successful)
                 {
                     failedOutLotNumberBatchList.Add(outItem.LotNumberBatch);

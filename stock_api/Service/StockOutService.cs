@@ -24,7 +24,7 @@ namespace stock_api.Service
             _warehouseProductService = warehouseProductService;
         }
 
-        public bool OutStock(OutboundRequest request,InStockItemRecord inStockItem,WarehouseProduct product,WarehouseMember applyUser,string compId)
+        public bool OutStock(string outType,OutboundRequest request,InStockItemRecord inStockItem,WarehouseProduct product,WarehouseMember applyUser,string compId)
         {
             using var scope = new TransactionScope();
             try
@@ -57,7 +57,7 @@ namespace stock_api.Service
                     ProductCode = inStockItem.ProductCode,
                     ProductName = inStockItem.ProductName,
                     ProductSpec = inStockItem.ProductSpec,
-                    Type = request.Type,
+                    Type = outType,
                     UserId = applyUser.UserId,
                     UserName = applyUser.DisplayName,
                     OriginalQuantity = product.InStockQuantity ?? 0,
@@ -79,7 +79,7 @@ namespace stock_api.Service
                     ProductCode = inStockItem.ProductCode,
                     ProductName = inStockItem.ProductName,
                     ProductSpec = inStockItem.ProductSpec,
-                    Type = request.Type,
+                    Type = outType,
                     UserId = applyUser.UserId,
                     UserName = applyUser.DisplayName,
                     OriginalQuantity = product.InStockQuantity ?? 0,
@@ -126,7 +126,7 @@ namespace stock_api.Service
         }
 
 
-        public bool OwnerOutStock(OwnerOutboundRequest request, InStockItemRecord inStockItem, WarehouseProduct product, WarehouseMember applyUser,AcceptanceItem? toCompAcceptanceItem,string compId)
+        public bool OwnerOutStock(string outType,OwnerOutboundRequest request, InStockItemRecord inStockItem, WarehouseProduct product, WarehouseMember applyUser,AcceptanceItem? toCompAcceptanceItem,string compId)
         {
             using var scope = new TransactionScope();
             try
@@ -160,7 +160,7 @@ namespace stock_api.Service
                     ProductCode = inStockItem.ProductCode,
                     ProductName = inStockItem.ProductName,
                     ProductSpec = inStockItem.ProductSpec,
-                    Type = request.Type,
+                    Type = outType,
                     UserId = applyUser.UserId,
                     UserName = applyUser.DisplayName,
                     OriginalQuantity = product.InStockQuantity ?? 0,
@@ -181,7 +181,7 @@ namespace stock_api.Service
                     ProductCode = inStockItem.ProductCode,
                     ProductName = inStockItem.ProductName,
                     ProductSpec = inStockItem.ProductSpec,
-                    Type = request.Type,
+                    Type = outType,
                     UserId = applyUser.UserId,
                     UserName = applyUser.DisplayName,
                     OriginalQuantity = product.InStockQuantity ?? 0,
@@ -215,7 +215,7 @@ namespace stock_api.Service
                 product.LastOutStockDate = nowDate;
                 product.OriginalDeadline = inStockItem.ExpirationDate;
 
-                if(request.Type==CommonConstants.OutStockType.SHIFT_OUT && toCompAcceptanceItem != null)
+                if(outType == CommonConstants.OutStockType.SHIFT_OUT && toCompAcceptanceItem != null)
                 {
                     var toProduct = _warehouseProductService.GetProductByProductIdAndCompId(product.ProductId,toCompAcceptanceItem.CompId);
                     // TODO:跟Gary確認這樣轉換對不對
