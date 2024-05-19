@@ -4,13 +4,21 @@ using stock_api.Controllers.Request;
 
 namespace stock_api.Controllers.Validator
 {
-    public class OwnerOutboundValidator : AbstractValidator<OwnerOutboundRequest>
+    public class BatchOutboundValidator : AbstractValidator<BatchOutboundRequest>
     {
-        public OwnerOutboundValidator() 
+        public BatchOutboundValidator()
         {
             RuleFor(request => request.Type)
                   .Must(type => CommonConstants.OutStockType.GetAllValues().Contains(type))
                       .WithMessage($"type必須為{string.Join(",", CommonConstants.OutStockType.GetAllValues())}");
+        }
+    }
+
+    public class OutboundValidator : AbstractValidator<OutboundRequest>
+    {
+        public OutboundValidator() 
+        {
+            
         }
 
     }

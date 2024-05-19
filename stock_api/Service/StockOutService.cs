@@ -126,7 +126,7 @@ namespace stock_api.Service
         }
 
 
-        public bool OwnerOutStock(OwnerOutboundRequest request, InStockItemRecord inStockItem, WarehouseProduct product, WarehouseMember applyUser,AcceptanceItem? toCompAcceptanceItem)
+        public bool OwnerOutStock(OwnerOutboundRequest request, InStockItemRecord inStockItem, WarehouseProduct product, WarehouseMember applyUser,AcceptanceItem? toCompAcceptanceItem,string compId)
         {
             using var scope = new TransactionScope();
             try
@@ -153,9 +153,9 @@ namespace stock_api.Service
                     AbnormalReason = request.AbnormalReason,
                     ApplyQuantity = request.ApplyQuantity,
                     IsAbnormal = request.IsAbnormal,
-                    LotNumber = request.LotNumber,
+                    LotNumber = inStockItem.LotNumber,
                     LotNumberBatch = request.LotNumberBatch,
-                    CompId = request.CompId,
+                    CompId = compId,
                     ProductId = inStockItem.ProductId,
                     ProductCode = inStockItem.ProductCode,
                     ProductName = inStockItem.ProductName,
@@ -174,9 +174,9 @@ namespace stock_api.Service
                     AbnormalReason = request.AbnormalReason,
                     ApplyQuantity = request.ApplyQuantity,
                     IsAbnormal = request.IsAbnormal,
-                    LotNumber = request.LotNumber,
+                    LotNumber = inStockItem.LotNumber,
                     LotNumberBatch = request.LotNumberBatch,
-                    CompId = request.CompId,
+                    CompId = compId,
                     ProductId = inStockItem.ProductId,
                     ProductCode = inStockItem.ProductCode,
                     ProductName = inStockItem.ProductName,
@@ -198,15 +198,15 @@ namespace stock_api.Service
                 {
                     OutStockId = outStockId,
                     InStockId = inStockItem.InStockId,
-                    LotNumber = request.LotNumber,
+                    LotNumber = inStockItem.LotNumber,
                     LotNumberBatch = request.LotNumberBatch,
                     Quantity = request.ApplyQuantity,
                 };
                 _dbContext.OutstockRelatetoInstocks.Add(outStockRelateToInStock);
                 // 更新庫存
-                product.LotNumber = request.LotNumber;
+                product.LotNumber = inStockItem.LotNumber;
                 product.LotNumberBatch = request.LotNumberBatch;
-                product.InStockQuantity = product.InStockQuantity - request.ApplyQuantity;
+                product.InStockQuantity -= request.ApplyQuantity;
                 DateOnly nowDate = DateOnly.FromDateTime(DateTime.Now);
                 if (product.OpenDeadline != null)
                 {
@@ -218,9 +218,9 @@ namespace stock_api.Service
                 if(request.Type==CommonConstants.OutStockType.SHIFT_OUT && toCompAcceptanceItem != null)
                 {
                     var toProduct = _warehouseProductService.GetProductByProductIdAndCompId(product.ProductId,toCompAcceptanceItem.CompId);
-
+                    // TODO:跟Gary確認這樣轉換對不對
                     toCompAcceptanceItem.AcceptQuantity = request.ApplyQuantity* (toProduct.UnitConversion??1);
-                    toCompAcceptanceItem.LotNumber = request.LotNumber;
+                    toCompAcceptanceItem.LotNumber = inStockItem.LotNumber;
                     toCompAcceptanceItem.LotNumberBatch = request.LotNumberBatch;
                     toCompAcceptanceItem.ExpirationDate = inStockItem.ExpirationDate;
                 }

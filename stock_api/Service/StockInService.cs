@@ -107,7 +107,10 @@ namespace stock_api.Service
                             existItem.LotNumber = matchedUpdateAcceptItem.LotNumber;
                         }
                         var now = DateTime.Now;
+                        var nowDateTimeString = DateTimeHelper.FormatDateString(now,"yyyyMMddhhmm");
+
                         existItem.LotNumberBatch = $"{existItem.LotNumber}_{now.Year}{now.Month}{now.Day}";
+                        existItem.LotNumberBatch = $"{matchedProduct.ProductCode}{nowDateTimeString}";
                         if (matchedUpdateAcceptItem.ExpirationDate != null)
                         {
                             existItem.ExpirationDate = DateOnly.FromDateTime(DateTimeHelper.ParseDateString(matchedUpdateAcceptItem.ExpirationDate).Value);
@@ -468,10 +471,18 @@ namespace stock_api.Service
             return _dbContext.InStockItemRecords.Where(record=>record.CompId==compId&&record.ProductId==prodcutId).ToList();
         }
 
-        public List<InStockItemRecord> GetProductInStockRecordsHistoryNotAllOutFIFO(string productCode, string compId)
+        //public List<InStockItemRecord> GetProductInStockRecordsHistoryNotAllOutFIFO(string productCode, string compId)
+        //{
+        //    return _dbContext.InStockItemRecords.Where(record => record.CompId == compId && record.ProductCode == productCode
+        //    &&record.OutStockStatus!=CommonConstants.OutStockStatus.ALL).OrderBy(record=>record.CreatedAt).ToList();
+        //}
+        
+
+        public List<InStockItemRecord> GetProductInStockRecordsHistoryNotAllOutExpirationFIFO(string productCode, string compId)
         {
+            // 先挑效期最早的相同的再依據FIFO
             return _dbContext.InStockItemRecords.Where(record => record.CompId == compId && record.ProductCode == productCode
-            &&record.OutStockStatus!=CommonConstants.OutStockStatus.ALL).OrderBy(record=>record.CreatedAt).ToList();
+            && record.OutStockStatus != CommonConstants.OutStockStatus.ALL).OrderBy(record => record.ExpirationDate).ThenBy(record=>record.CreatedAt).ToList();
         }
     }
 }
