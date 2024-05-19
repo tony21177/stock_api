@@ -226,7 +226,7 @@ namespace stock_api.Service
                 }
                 var now = DateTime.Now;
                 var nowDateTimeString = DateTimeHelper.FormatDateString(now, "yyyyMMddhhmm");
-                existingAcceptanceItem.LotNumberBatch = $"{product.ProductCode}_{nowDateTimeString}";
+                existingAcceptanceItem.LotNumberBatch = $"{product.ProductCode}{nowDateTimeString}";
                 if (updateAcceptItem.ExpirationDate != null)
                 {
                     existingAcceptanceItem.ExpirationDate = DateOnly.FromDateTime(DateTimeHelper.ParseDateString(updateAcceptItem.ExpirationDate).Value);

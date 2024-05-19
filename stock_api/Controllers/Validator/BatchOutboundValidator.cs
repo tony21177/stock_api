@@ -18,7 +18,9 @@ namespace stock_api.Controllers.Validator
     {
         public OutboundValidator() 
         {
-            
+            RuleFor(request => request.Type)
+                  .Must(type => CommonConstants.OutStockType.GetAllValues().Contains(type))
+                      .WithMessage($"type必須為{string.Join(",", CommonConstants.OutStockType.GetAllValues())}");
         }
 
     }

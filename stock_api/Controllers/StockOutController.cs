@@ -113,7 +113,7 @@ namespace stock_api.Controllers
                     Message = "無對應的庫存品項"
                 });
             }
-            var result = _stockOutService.OutStock(request, requestLot, product, memberAndPermissionSetting.Member);
+            var result = _stockOutService.OutStock(request, requestLot, product, memberAndPermissionSetting.Member,compId);
             return Ok(new CommonResponse<dynamic>
             {
                 Result = result,
@@ -176,7 +176,7 @@ namespace stock_api.Controllers
             {
                 var product = lotNumberBatchAndProductMap[outItem.LotNumberBatch];
                 var requestLot = lotNumberBatchRequestLotMap[outItem.LotNumberBatch];
-                var successful = _stockOutService.OutStock(outItem, requestLot, product, memberAndPermissionSetting.Member);
+                var successful = _stockOutService.OutStock(outItem, requestLot, product, memberAndPermissionSetting.Member,compId);
                 if (!successful)
                 {
                     failedOutLotNumberBatchList.Add(outItem.LotNumberBatch);

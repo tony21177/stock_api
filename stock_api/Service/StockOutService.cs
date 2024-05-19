@@ -24,7 +24,7 @@ namespace stock_api.Service
             _warehouseProductService = warehouseProductService;
         }
 
-        public bool OutStock(OutboundRequest request,InStockItemRecord inStockItem,WarehouseProduct product,WarehouseMember applyUser)
+        public bool OutStock(OutboundRequest request,InStockItemRecord inStockItem,WarehouseProduct product,WarehouseMember applyUser,string compId)
         {
             using var scope = new TransactionScope();
             try
@@ -50,9 +50,9 @@ namespace stock_api.Service
                     AbnormalReason = request.AbnormalReason,
                     ApplyQuantity = request.ApplyQuantity,
                     IsAbnormal = request.IsAbnormal,
-                    LotNumber = request.LotNumber,
+                    LotNumber = inStockItem.LotNumber,
                     LotNumberBatch = request.LotNumberBatch,
-                    CompId = request.CompId,
+                    CompId = compId,
                     ProductId = inStockItem.ProductId,
                     ProductCode = inStockItem.ProductCode,
                     ProductName = inStockItem.ProductName,
@@ -72,9 +72,9 @@ namespace stock_api.Service
                     AbnormalReason = request.AbnormalReason,
                     ApplyQuantity = request.ApplyQuantity,
                     IsAbnormal = request.IsAbnormal,
-                    LotNumber = request.LotNumber,
+                    LotNumber = inStockItem.LotNumber,
                     LotNumberBatch = request.LotNumberBatch,
-                    CompId = request.CompId,
+                    CompId = compId,
                     ProductId = inStockItem.ProductId,
                     ProductCode = inStockItem.ProductCode,
                     ProductName = inStockItem.ProductName,
@@ -96,13 +96,13 @@ namespace stock_api.Service
                 {
                     OutStockId = outStockId,
                     InStockId = inStockItem.InStockId,
-                    LotNumber = request.LotNumber,
+                    LotNumber = inStockItem.LotNumber,
                     LotNumberBatch = request.LotNumberBatch,
                     Quantity = request.ApplyQuantity,
                 };
                 _dbContext.OutstockRelatetoInstocks.Add(outStockRelateToInStock);
                 // 更新庫存
-                product.LotNumber = request.LotNumber;
+                product.LotNumber = inStockItem.LotNumber;
                 product.LotNumberBatch = request.LotNumberBatch;
                 product.InStockQuantity = product.InStockQuantity - request.ApplyQuantity;
                 DateOnly nowDate = DateOnly.FromDateTime(DateTime.Now);
