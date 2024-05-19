@@ -217,7 +217,7 @@ namespace stock_api.Service
 
                 if(outType == CommonConstants.OutStockType.SHIFT_OUT && toCompAcceptanceItem != null)
                 {
-                    var toProduct = _warehouseProductService.GetProductByProductIdAndCompId(product.ProductId,toCompAcceptanceItem.CompId);
+                    var toProduct = _warehouseProductService.GetProductByProductCodeAndCompId(product.ProductCode,toCompAcceptanceItem.CompId);
                     // TODO:跟Gary確認這樣轉換對不對
                     toCompAcceptanceItem.AcceptQuantity = request.ApplyQuantity* (toProduct.UnitConversion??1);
                     toCompAcceptanceItem.LotNumber = inStockItem.LotNumber;
