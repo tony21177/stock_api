@@ -109,7 +109,6 @@ namespace stock_api.Service
                         var now = DateTime.Now;
                         var nowDateTimeString = DateTimeHelper.FormatDateString(now,"yyyyMMddhhmm");
 
-                        existItem.LotNumberBatch = $"{existItem.LotNumber}_{now.Year}{now.Month}{now.Day}";
                         existItem.LotNumberBatch = $"{matchedProduct.ProductCode}{nowDateTimeString}";
                         if (matchedUpdateAcceptItem.ExpirationDate != null)
                         {
@@ -226,7 +225,8 @@ namespace stock_api.Service
                     existingAcceptanceItem.LotNumber = updateAcceptItem.LotNumber;
                 }
                 var now = DateTime.Now;
-                existingAcceptanceItem.LotNumberBatch = $"{existingAcceptanceItem.LotNumber}_{now.Year}{now.Month}{now.Day}{now.Hour}{now.Minute}{now.Second}";
+                var nowDateTimeString = DateTimeHelper.FormatDateString(now, "yyyyMMddhhmm");
+                existingAcceptanceItem.LotNumberBatch = $"{product.ProductCode}_{nowDateTimeString}";
                 if (updateAcceptItem.ExpirationDate != null)
                 {
                     existingAcceptanceItem.ExpirationDate = DateOnly.FromDateTime(DateTimeHelper.ParseDateString(updateAcceptItem.ExpirationDate).Value);
