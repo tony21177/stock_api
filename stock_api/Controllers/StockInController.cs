@@ -431,7 +431,7 @@ namespace stock_api.Controllers
             }
 
             var updateAcceptItemsList = request.UpdateAcceptItemList;
-            List<string> exceedDeadLineRuleIdList = new List<string>();
+            List<string> exceedDeadLineRuleIdList = new ();
 
             foreach (var item in updateAcceptItemsList)
             {
@@ -447,7 +447,7 @@ namespace stock_api.Controllers
                     }
                 }
             }
-            if (request.IsConfirmed != true)
+            if (request.IsConfirmed != true&& exceedDeadLineRuleIdList.Count>0)
             {
                 return Ok(new CommonResponse<dynamic>
                 {
