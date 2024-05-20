@@ -107,7 +107,7 @@ namespace stock_api.Service
                             existItem.LotNumber = matchedUpdateAcceptItem.LotNumber;
                         }
                         var now = DateTime.Now;
-                        var nowDateTimeString = DateTimeHelper.FormatDateString(now,"yyyyMMddhhmm");
+                        var nowDateTimeString = DateTimeHelper.FormatDateString(now, "yyyyMMddHHmm");
 
                         existItem.LotNumberBatch = $"{matchedProduct.ProductCode}{nowDateTimeString}";
                         if (matchedUpdateAcceptItem.ExpirationDate != null)
