@@ -494,7 +494,7 @@ namespace stock_api.Controllers
             {
                 return Ok(new CommonResponse<dynamic>
                 {
-                    Result = failedIdList.Count==0,
+                    Result = false, //有超過允收日期的需要確認的,都回false
                     Data = new
                     {
                         isExceedDeadlineRule = true,
