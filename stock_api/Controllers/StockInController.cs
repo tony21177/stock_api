@@ -439,6 +439,7 @@ namespace stock_api.Controllers
 
             var updateAcceptItemsList = request.UpdateAcceptItemList;
             List<string> exceedDeadLineRuleIdList = new ();
+            List<UpdateAcceptItemRequest> notExceedDeadLineRuleRequestList = new();
 
             foreach (var item in updateAcceptItemsList)
             {
@@ -452,27 +453,23 @@ namespace stock_api.Controllers
                     {
                         exceedDeadLineRuleIdList.Add(item.AcceptId);
                     }
+                    else
+                    {
+                        notExceedDeadLineRuleRequestList.Add(item);
+                    }
+                }
+                else
+                {
+                    notExceedDeadLineRuleRequestList.Add(item);
                 }
             }
-            // 有效日期短於末效,且user沒有確認
-            if (request.IsConfirmed != true&& exceedDeadLineRuleIdList.Count>0)
-            {
-                return Ok(new CommonResponse<dynamic>
-                {
-                    Result = false,
-                    Data = new
-                    {
-                        isExceedDeadlineRule = true,
-                        exceedDeadlineRuleIdList = exceedDeadLineRuleIdList,
-                    }
-                });
-            }
+            
 
             List<dynamic> updateResultDataList = new ();
             List<string> newLotNumberIdList = new ();
             List<string> failedIdList = new();
-
-            foreach (var item in updateAcceptItemsList)
+            // 未超過允收末效的就先入庫
+            foreach (var item in notExceedDeadLineRuleRequestList)
             {
                 var matchedExistAcceptItem = existingAcceptItemList.Where(i => i.AcceptId == item.AcceptId).FirstOrDefault();
                 var matchedProduct = existingProductList.Where(p => p.ProductId == matchedExistAcceptItem.ProductId).FirstOrDefault();
@@ -491,10 +488,25 @@ namespace stock_api.Controllers
                 }
             }
 
+            // 有效日期短於末效,只有第一次才會批次所以不需要判斷user有沒有確認,因為批次超過允收日期的會打單一驗收
+
+            if (exceedDeadLineRuleIdList.Count > 0)
+            {
+                return Ok(new CommonResponse<dynamic>
+                {
+                    Result = failedIdList.Count==0,
+                    Data = new
+                    {
+                        isExceedDeadlineRule = true,
+                        exceedDeadlineRuleIdList = exceedDeadLineRuleIdList,
+                        newLotNumberIdList
+                    }
+                });
+            }
 
             return Ok(new CommonResponse<dynamic>
             {
-                Result = true,
+                Result = failedIdList.Count==0,
                 Message = "",
                 Data = new
                 {
