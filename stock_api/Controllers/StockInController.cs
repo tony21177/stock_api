@@ -310,6 +310,7 @@ namespace stock_api.Controllers
                         Data = new
                         {
                             isExceedDeadlineRule = true,
+                            exceedDeadLineRuleIdList = new List<string> { existingAcceptItem.AcceptId }
                         }
                     });
                 }
@@ -317,8 +318,13 @@ namespace stock_api.Controllers
 
             List<InStockItemRecord> existingStockInRecords = _stockInService.GetInStockRecordsHistory(existingAcceptItem.ProductId, compId).OrderByDescending(item=>item.CreatedAt).ToList();
             var lastLotNumber = existingStockInRecords.FirstOrDefault()?.LotNumber;
-
+            List<string> newLotNumberIdList = new();
             var (result,message) = _stockInService.UpdateAccepItem(purchaseMain, existingAcceptItem, request, product, compId, memberAndPermissionSetting.Member,request.IsInStocked);
+            if(request.LotNumber != lastLotNumber)
+            {
+                newLotNumberIdList.Add(request.AcceptId);
+            }
+
 
             return Ok(new CommonResponse<dynamic>
             {
@@ -328,6 +334,7 @@ namespace stock_api.Controllers
                 {
                     //IsNewLot = existingStockInRecordLotNumber.Contains(request.LotNumber)
                     isNewLot = request.LotNumber!=null?request.LotNumber!= lastLotNumber : false,
+                    newLotNumberIdList
                 }
             });
         }
@@ -447,6 +454,7 @@ namespace stock_api.Controllers
                     }
                 }
             }
+            // 有效日期短於末效,且user沒有確認
             if (request.IsConfirmed != true&& exceedDeadLineRuleIdList.Count>0)
             {
                 return Ok(new CommonResponse<dynamic>
@@ -461,7 +469,7 @@ namespace stock_api.Controllers
             }
 
             List<dynamic> updateResultDataList = new ();
-            List<string> newLotNumberList = new ();
+            List<string> newLotNumberIdList = new ();
             List<string> failedIdList = new();
 
             foreach (var item in updateAcceptItemsList)
@@ -474,7 +482,7 @@ namespace stock_api.Controllers
                 var lastLotNumber = existingStockInRecords.FirstOrDefault()?.LotNumber;
                 if (item.LotNumber != null && item.LotNumber != lastLotNumber)
                 {
-                    newLotNumberList.Add(item.LotNumber);
+                    newLotNumberIdList.Add(item.AcceptId);
                 }
                 var (result, message) = _stockInService.UpdateAccepItem(matchedPurchaseMain, matchedExistAcceptItem, item, matchedProduct, compId, memberAndPermissionSetting.Member, item.IsInStocked);
                 if (result != true)
@@ -490,7 +498,7 @@ namespace stock_api.Controllers
                 Message = "",
                 Data = new
                 {
-                    newLotNumberList,
+                    newLotNumberIdList,
                     failedIdList
                 }
             });
