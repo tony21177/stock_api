@@ -161,18 +161,22 @@ namespace stock_api.Controllers
             (List<Dictionary<string, dynamic>> notOldestLotList, Dictionary<string, InStockItemRecord> lotNumberBatchRequestLotMap) =
                 FindNotOldestLotList(request.OutboundItems, lotNumberBatchAndProductMap, lotNumberBatchAndProductCodeInStockExFIFORecordsMap, request.IsConfirmed ?? false);
 
-            if (notOldestLotList.Count > 0)
-            {
-                return BadRequest(new CommonResponse<List<Dictionary<string, dynamic>>>
-                {
-                    Result = false,
-                    Message = "還有效期更早的批號還沒出",
-                    Data = notOldestLotList
-                });
-            }
+            //if (notOldestLotList.Count > 0)
+            //{
+            //    return BadRequest(new CommonResponse<List<Dictionary<string, dynamic>>>
+            //    {
+            //        Result = false,
+            //        Message = "還有效期更早的批號還沒出",
+            //        Data = notOldestLotList
+            //    });
+            //}
+            List<string?> unOutableLotNumberBatchList = notOldestLotList.Select(lot => lot.GetValueOrDefault("requestLotNumberBatch") as string).ToList();
+            var outableOutBoundItems = request.OutboundItems.Where(i => !unOutableLotNumberBatchList.Contains(i.LotNumberBatch));
+
+
 
             List<string> failedOutLotNumberBatchList = new();
-            foreach (var outItem in request.OutboundItems)
+            foreach (var outItem in outableOutBoundItems)
             {
                 var product = lotNumberBatchAndProductMap[outItem.LotNumberBatch];
                 var requestLot = lotNumberBatchRequestLotMap[outItem.LotNumberBatch];
@@ -182,12 +186,15 @@ namespace stock_api.Controllers
                     failedOutLotNumberBatchList.Add(outItem.LotNumberBatch);
                 }
             }
+
+
             return Ok(new CommonResponse<dynamic>
             {
-                Result = failedOutLotNumberBatchList.Count == 0,
+                Result = (failedOutLotNumberBatchList.Count == 0&& notOldestLotList.Count==0),
                 Data = new Dictionary<string, dynamic>
                 {
-                    ["failedLotNumberBatchList"] = failedOutLotNumberBatchList
+                    ["failedLotNumberBatchList"] = failedOutLotNumberBatchList,
+                    ["notOldestLotList"] = notOldestLotList
                 }
             });
         }
@@ -329,19 +336,6 @@ namespace stock_api.Controllers
                 });
             }
 
-
-            (List<Dictionary<string, dynamic>> notOldestLotList, Dictionary< string, InStockItemRecord > lotNumberBatchRequestLotMap) = 
-                FindNotOldestLotList(request.OutboundItems,lotNumberBatchAndProductMap, lotNumberBatchAndProductCodeInStockExFIFORecordsMap,request.IsConfirmed??false);
-            if (notOldestLotList.Count > 0)
-            {
-                return BadRequest(new CommonResponse<List<Dictionary<string, dynamic>>>
-                {
-                    Result = false,
-                    Message = "還有效期更早的批號還沒出",
-                    Data = notOldestLotList
-                });
-            };
-
             if (request.Type == CommonConstants.OutStockType.SHIFT_OUT && request.ToCompId == null)
             {
                 return BadRequest(new CommonResponse<dynamic>
@@ -354,9 +348,9 @@ namespace stock_api.Controllers
             Dictionary<string, AcceptanceItem> lotNumberBatchAndToCompAcceptanceItem = new();
             if (request.Type == CommonConstants.OutStockType.SHIFT_OUT)
             {
-                (notFoundLotNumberBatchList,lotNumberBatchAndToCompAcceptanceItem) = FindToCompAcceptItems(request.OutboundItems,lotNumberBatchAndProductCodeInStockExFIFORecordsMap,request.ToCompId);  
+                (notFoundLotNumberBatchList, lotNumberBatchAndToCompAcceptanceItem) = FindToCompAcceptItems(request.OutboundItems, lotNumberBatchAndProductCodeInStockExFIFORecordsMap, request.ToCompId);
             }
-            
+
             if (notFoundLotNumberBatchList.Count > 0)
             {
                 return BadRequest(new CommonResponse<dynamic>
@@ -366,9 +360,23 @@ namespace stock_api.Controllers
                 });
             }
 
+            (List<Dictionary<string, dynamic>> notOldestLotList, Dictionary< string, InStockItemRecord > lotNumberBatchRequestLotMap) = 
+                FindNotOldestLotList(request.OutboundItems,lotNumberBatchAndProductMap, lotNumberBatchAndProductCodeInStockExFIFORecordsMap,request.IsConfirmed??false);
+            //if (notOldestLotList.Count > 0)
+            //{
+            //    return BadRequest(new CommonResponse<List<Dictionary<string, dynamic>>>
+            //    {
+            //        Result = false,
+            //        Message = "還有效期更早的批號還沒出",
+            //        Data = notOldestLotList
+            //    });
+            //};
+            List<string?> unOutableLotNumberBatchList = notOldestLotList.Select(lot => lot.GetValueOrDefault("requestLotNumberBatch") as string).ToList();
+            var outableOutBoundItems = request.OutboundItems.Where(i => !unOutableLotNumberBatchList.Contains(i.LotNumberBatch));
+
 
             List<string> failedOutLotNumberBatchList = new();
-            foreach (var outItem in request.OutboundItems)
+            foreach (var outItem in outableOutBoundItems)
             {
                 var product = lotNumberBatchAndProductMap[outItem.LotNumberBatch];
                 var requestLot = lotNumberBatchRequestLotMap[outItem.LotNumberBatch];
@@ -384,7 +392,8 @@ namespace stock_api.Controllers
                 Result = failedOutLotNumberBatchList.Count == 0,
                 Data = new Dictionary<string, dynamic>
                 {
-                    ["failedLotNumberBatchList"] = failedOutLotNumberBatchList
+                    ["failedLotNumberBatchList"] = failedOutLotNumberBatchList,
+                    ["notOldestLotList"] = notOldestLotList
                 }
             });
         }
@@ -582,7 +591,6 @@ namespace stock_api.Controllers
                 {
                     notOldestLotList.Add(new Dictionary<string, dynamic>
                     {
-                        ["isFIFO"] = false,
                         ["requestLotNumberBatch"] = outItem.LotNumberBatch,
                         ["oldest"] = oldestLot
                     });
@@ -593,7 +601,6 @@ namespace stock_api.Controllers
                 {
                     notOldestLotList.Add(new Dictionary<string, dynamic>
                     {
-                        ["isFIFO"] = false,
                         ["requestLotNumberBatch"] = requestLot.LotNumberBatch,
                         ["oldest"] = oldestLot
                     });
