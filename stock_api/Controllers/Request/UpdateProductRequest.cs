@@ -22,6 +22,9 @@ namespace stock_api.Controllers.Request
         public string? UdiverifyDateCode { get; set; }
         public bool? IsNeedAcceptProcess { get; set; }
         public string? StockLocation { get; set; }
-        
+        public string? DeadlineRule { get; set; }
+        public int? OpenDeadline { get; set; }
+        public string? Unit { get; set; }
+
     }
 }

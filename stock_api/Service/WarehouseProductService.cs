@@ -208,6 +208,12 @@ namespace stock_api.Service
                 updateProduct.TestCount = existingProduct.TestCount;
                 updateProduct.UnitConversion = existingProduct.UnitConversion;
                 updateProduct.IsActive = existingProduct.IsActive;
+                if (request.OpenDeadline == null)
+                {
+                    updateProduct.OpenDeadline = existingProduct.OpenDeadline;
+                }
+
+
                 _mapper.Map(updateProduct, existingProduct);
                 if (groups.Count > 0)
                 {
