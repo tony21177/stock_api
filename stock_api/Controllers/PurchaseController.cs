@@ -393,7 +393,43 @@ namespace stock_api.Controllers
             return Ok(response);
         }
 
-        [HttpGet("flows/my")]
+        [HttpPost("flow/updateOrDeleteItem")]
+        [Authorize]
+        public IActionResult UpdateOrDeleteSubItemWhenFlow(UpdateOrDeleteSubItemInFlowRequest request)
+        {
+            var memberAndPermissionSetting = _authHelpers.GetMemberAndPermissionSetting(User);
+            var verifier = memberAndPermissionSetting.Member;
+            var compId = memberAndPermissionSetting.CompanyWithUnit.CompId;
+            var currentPurchaseFlow = _purchaseService.GetFlowsByPurchaseMainIds(new List<string> { request.PurchaseMainId})
+                .Where(f=>f.Status==CommonConstants.PurchaseFlowStatus.WAIT).OrderBy(f=>f.Sequence).FirstOrDefault();
+            if (currentPurchaseFlow == null || currentPurchaseFlow.VerifyUserId != verifier.UserId)
+            {
+                return BadRequest(new CommonResponse<dynamic>
+                {
+                    Result = false,
+                    Message = "未輪到你的審核流程,不可修改數量或刪除採購品項"
+                });
+            }
+            PurchaseMainSheet? purchaseMainSheet = _purchaseService.GetPurchaseMainByMainId(request.PurchaseMainId);
+            List<PurchaseSubItem> existingSubItemList = _purchaseService.GetPurchaseSubItemsByMainId(request.PurchaseMainId);
+            if (purchaseMainSheet==null|| purchaseMainSheet.IsActive==false||existingSubItemList.Count == 0)
+            {
+                return BadRequest(new CommonResponse<dynamic>
+                {
+                    Result = false,
+                    Message = "該採購單未存在"
+                });
+            }
+
+            var result = _purchaseService.UpdateOrDeleteSubItems(request,purchaseMainSheet,existingSubItemList,currentPurchaseFlow,verifier,compId);
+
+            return Ok(new CommonResponse<dynamic>
+            {
+                Result = result,
+            });
+        }
+
+            [HttpGet("flows/my")]
         [Authorize]
         public IActionResult GetFlowsSignedByMy()
         {

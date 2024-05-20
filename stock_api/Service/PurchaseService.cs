@@ -6,6 +6,7 @@ using stock_api.Controllers.Request;
 using stock_api.Models;
 using stock_api.Service.ValueObject;
 using stock_api.Utils;
+using System.Text.Json;
 using System.Transactions;
 
 namespace stock_api.Service
@@ -484,6 +485,49 @@ namespace stock_api.Service
             catch (Exception ex)
             {
                 _logger.LogError("事務失敗[UpdateItemsSupplier]：{msg}", ex);
+                return false;
+            }
+        }
+
+        public bool UpdateOrDeleteSubItems(UpdateOrDeleteSubItemInFlowRequest request,PurchaseMainSheet purchaseMainSheet,List<PurchaseSubItem> purchaseSubItemList,
+            PurchaseFlow flow,WarehouseMember user,string compId)
+        {
+            using var scope = new TransactionScope();
+            try
+            {
+                var beforeSubItemsJsonString = JsonSerializer.Serialize(purchaseSubItemList);
+                request.UpdateSubItemList.ForEach(subItem =>
+                {
+                    var matchedUpdateItem = purchaseSubItemList.Where(i=>i.ItemId==subItem.ItemId).FirstOrDefault();
+                    if (matchedUpdateItem != null)
+                    {
+                        matchedUpdateItem.Quantity = subItem.Quantity;
+                    }
+                });
+                _dbContext.PurchaseSubItems.Where(subItem => request.DeleteSubItemIdList.Contains(subItem.ItemId)).ExecuteDelete();
+
+                var modifiedSubItems = _dbContext.PurchaseSubItems.Where(i => i.PurchaseMainId == purchaseMainSheet.PurchaseMainId).ToList();
+                var afterSubItemsJsonString = JsonSerializer.Serialize(modifiedSubItems);
+                var newPurchaseFlowLog = new PurchaseFlowLog()
+                {
+                    LogId = Guid.NewGuid().ToString(),
+                    CompId = compId,
+                    PurchaseMainId = purchaseMainSheet.PurchaseMainId,
+                    UserId = user.UserId,
+                    UserName = user.DisplayName,
+                    Sequence = flow.Sequence,
+                    Action = CommonConstants.PurchaseFlowLogAction.MODIFY,
+                    BeforeSubItems = beforeSubItemsJsonString,
+                    AfterSubItems = afterSubItemsJsonString,
+                };
+                _dbContext.PurchaseFlowLogs.Add(newPurchaseFlowLog);
+                _dbContext.SaveChanges();
+                scope.Complete();
+                return true;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError("事務失敗[UpdateOrDeleteSubItems]：{msg}", ex);
                 return false;
             }
         }

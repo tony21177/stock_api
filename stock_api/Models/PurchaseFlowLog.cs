@@ -67,4 +67,10 @@ public partial class PurchaseFlowLog
 
     [Column(TypeName = "timestamp")]
     public DateTime UpdatedAt { get; set; }
+
+    [Column(TypeName = "json")]
+    public string? BeforeSubItems { get; set; }
+
+    [Column(TypeName = "json")]
+    public string? AfterSubItems { get; set; }
 }
