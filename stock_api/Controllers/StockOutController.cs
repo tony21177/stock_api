@@ -481,6 +481,29 @@ namespace stock_api.Controllers
             });
         }
 
+        [HttpPost("getProductInfoByLotNumberBatch")]
+        [Authorize]
+        public IActionResult GetProductInfoByLotNumberBatch(GetProductInfoReqeust request)
+        {
+            var memberAndPermissionSetting = _authHelpers.GetMemberAndPermissionSetting(User);
+            var compId = memberAndPermissionSetting.CompanyWithUnit.CompId;
+            var userId = memberAndPermissionSetting.Member.UserId;
+            WarehouseProduct? productInfo = null;
+            var inStockRecord = _stockInService.GetInStockRecordsHistoryByLotNumberBatch(request.LotNumberBatch, compId).FirstOrDefault();
+            if (inStockRecord != null)
+            {
+                productInfo = _warehouseProductService.GetProductByProductCodeAndCompId(inStockRecord.ProductCode, inStockRecord.CompId);
+            }
+
+
+            return Ok(new CommonResponse<WarehouseProduct>
+            {
+                Result = true,
+                Data = productInfo,
+            });
+        }
+
+
 
         private (List<string>, Dictionary<string, List<InStockItemRecord>>, List<string>) FindSameProductInStockRecordsNotAllOutExpirationFIFO(List<OutboundRequest> outBoundItems, string compId)
         {

@@ -471,12 +471,17 @@ namespace stock_api.Service
             return _dbContext.InStockItemRecords.Where(record=>record.CompId==compId&&record.ProductId==prodcutId).ToList();
         }
 
+        public List<InStockItemRecord> GetInStockRecordsHistoryByLotNumberBatch(string lotNumberBatch, string compId)
+        {
+            return _dbContext.InStockItemRecords.Where(record => record.CompId == compId && record.LotNumberBatch == lotNumberBatch).ToList();
+        }
+
         //public List<InStockItemRecord> GetProductInStockRecordsHistoryNotAllOutFIFO(string productCode, string compId)
         //{
         //    return _dbContext.InStockItemRecords.Where(record => record.CompId == compId && record.ProductCode == productCode
         //    &&record.OutStockStatus!=CommonConstants.OutStockStatus.ALL).OrderBy(record=>record.CreatedAt).ToList();
         //}
-        
+
 
         public List<InStockItemRecord> GetProductInStockRecordsHistoryNotAllOutExpirationFIFO(string productCode, string compId)
         {
