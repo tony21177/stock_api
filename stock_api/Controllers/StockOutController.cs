@@ -499,7 +499,7 @@ namespace stock_api.Controllers
                 //     inStockRecord.LotNumberBatch = productInfo.LotNumberBatch;
                 // }
             }
-            return Ok(new CommonResponse<WarehouseProduct>
+            return Ok(new CommonResponse<InStockItemRecord>
             {
                 Result = true,
                 Data = inStockRecord,
