@@ -495,8 +495,8 @@ namespace stock_api.Controllers
                 productInfo = _warehouseProductService.GetProductByProductCodeAndCompId(inStockRecord.ProductCode, inStockRecord.CompId);
                 if (productInfo != null)
                 {
-                    productInfo.LotNumber = inStockRecord.LotNumber;
-                    productInfo.LotNumberBatch = inStockRecord.LotNumberBatch;
+                    inStockRecord.LotNumber = productInfo.LotNumber;
+                    inStockRecord.LotNumberBatch = productInfo.LotNumberBatch;
                 }
             }
             return Ok(new CommonResponse<WarehouseProduct>
