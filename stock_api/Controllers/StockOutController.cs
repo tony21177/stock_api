@@ -488,17 +488,19 @@ namespace stock_api.Controllers
             var memberAndPermissionSetting = _authHelpers.GetMemberAndPermissionSetting(User);
             var compId = memberAndPermissionSetting.CompanyWithUnit.CompId;
             var userId = memberAndPermissionSetting.Member.UserId;
-            WarehouseProduct? productInfo = null;
             var inStockRecord = _stockInService.GetInStockRecordsHistoryByLotNumberBatch(request.LotNumberBatch, compId).FirstOrDefault();
-            if (inStockRecord != null)
+            WarehouseProduct? productInfo = _warehouseProductService.GetProductByProductCodeAndCompId(inStockRecord.ProductCode, inStockRecord.CompId);
+            
+            if (inStockRecord != null&&productInfo!=null)
             {
-                productInfo = _warehouseProductService.GetProductByProductCodeAndCompId(inStockRecord.ProductCode, inStockRecord.CompId);
-                
+                productInfo.LotNumber = inStockRecord.LotNumber;
+                productInfo.LotNumberBatch = inStockRecord.LotNumberBatch;
             }
-            return Ok(new CommonResponse<InStockItemRecord>
+
+            return Ok(new CommonResponse<WarehouseProduct>
             {
                 Result = true,
-                Data = inStockRecord,
+                Data = productInfo,
             });
         }
 
