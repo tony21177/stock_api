@@ -492,17 +492,17 @@ namespace stock_api.Controllers
             var inStockRecord = _stockInService.GetInStockRecordsHistoryByLotNumberBatch(request.LotNumberBatch, compId).FirstOrDefault();
             if (inStockRecord != null)
             {
-                // productInfo = _warehouseProductService.GetProductByProductCodeAndCompId(inStockRecord.ProductCode, inStockRecord.CompId);
-                // if (productInfo != null)
-                // {
-                //     inStockRecord.LotNumber = productInfo.LotNumber;
-                //     inStockRecord.LotNumberBatch = productInfo.LotNumberBatch;
-                // }
+                productInfo = _warehouseProductService.GetProductByProductCodeAndCompId(inStockRecord.ProductCode, inStockRecord.CompId);
+                if (productInfo != null)
+                {
+                    productInfo.LotNumber = inStockRecord.LotNumber;
+                    productInfo.LotNumberBatch = inStockRecord.LotNumberBatch;
+                }
             }
-            return Ok(new CommonResponse<InStockItemRecord>
+            return Ok(new CommonResponse<WarehouseProduct>
             {
                 Result = true,
-                Data = inStockRecord,
+                Data = productInfo,
             });
         }
 
