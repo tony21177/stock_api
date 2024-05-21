@@ -6,7 +6,6 @@
         public string? ToCompId { get; set; } = null!;
         public string? CompId { get; set; }
         public string Type { get; set; } = null!;
-        public bool? IsConfirmed { get; set; }
     }
     public class OwnerOutboundRequest
     {
@@ -17,7 +16,6 @@
         public int ApplyQuantity { get; set; } 
         public bool IsAbnormal { get; set; } = false;
         public string? AbnormalReason { get; set; }  
-        public bool? IsConfirmed { get; set; }
         public string? Type { get; set; } = null!;
     }
 }

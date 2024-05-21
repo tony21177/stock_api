@@ -87,8 +87,8 @@ namespace stock_api.Controllers
                 }
                 var oldestLot = inStockItemRecordsNotAllOutExDateFIFO.FirstOrDefault();
 
-                // 表示要出的批號不是最早的那批 而且IsConfirmed!=true(非user確認過的)
-                if ((requestLot.LotNumberBatch != oldestLot.LotNumberBatch) && request.IsConfirmed != true)
+                // 表示要出的批號不是最早的那批 IsAbnormal!=true(非user確認過的)
+                if ((requestLot.LotNumberBatch != oldestLot.LotNumberBatch) && request.IsAbnormal != true)
                 {
                     return BadRequest(new CommonResponse<Dictionary<string, dynamic>>
                     {
@@ -159,7 +159,7 @@ namespace stock_api.Controllers
 
 
             (List<Dictionary<string, dynamic>> notOldestLotList, Dictionary<string, InStockItemRecord> lotNumberBatchRequestLotMap) =
-                FindNotOldestLotList(request.OutboundItems, lotNumberBatchAndProductMap, lotNumberBatchAndProductCodeInStockExFIFORecordsMap, request.IsConfirmed ?? false);
+                FindNotOldestLotList(request.OutboundItems, lotNumberBatchAndProductMap, lotNumberBatchAndProductCodeInStockExFIFORecordsMap);
 
             //if (notOldestLotList.Count > 0)
             //{
@@ -240,8 +240,8 @@ namespace stock_api.Controllers
                 });
             }
             var oldestLot = lotNumberBatchAndProductCodeInStockExFIFORecordsMap[request.LotNumberBatch].FirstOrDefault();
-            // 表示要出的批號不是最早的那批 而且IsConfirmed!=true(非user確認過的)
-            if ((requestLot.LotNumberBatch != oldestLot.LotNumberBatch) && request.IsConfirmed != true)
+            // 表示要出的批號不是最早的那批 IsAbnormal!=true(非user確認過的)
+            if ((requestLot.LotNumberBatch != oldestLot.LotNumberBatch) && request.IsAbnormal!=true)
             {
                 return BadRequest(new CommonResponse<Dictionary<string, dynamic>>
                 {
@@ -361,7 +361,7 @@ namespace stock_api.Controllers
             }
 
             (List<Dictionary<string, dynamic>> notOldestLotList, Dictionary< string, InStockItemRecord > lotNumberBatchRequestLotMap) = 
-                FindNotOldestLotList(request.OutboundItems,lotNumberBatchAndProductMap, lotNumberBatchAndProductCodeInStockExFIFORecordsMap,request.IsConfirmed??false);
+                FindNotOldestLotList(request.OutboundItems,lotNumberBatchAndProductMap, lotNumberBatchAndProductCodeInStockExFIFORecordsMap);
             //if (notOldestLotList.Count > 0)
             //{
             //    return BadRequest(new CommonResponse<List<Dictionary<string, dynamic>>>
@@ -493,6 +493,7 @@ namespace stock_api.Controllers
             
             if (inStockRecord != null&&productInfo!=null)
             {
+                //這是因為畫面批號批次是要顯示正要出庫的這批資料　其他則是庫存品項的相關資料
                 productInfo.LotNumber = inStockRecord.LotNumber;
                 productInfo.LotNumberBatch = inStockRecord.LotNumberBatch;
             }
@@ -597,7 +598,7 @@ namespace stock_api.Controllers
             return (notFoundLotNumberBatchList, lotNumberBatchAndProductMap, productCodeList);
         }
 
-        private (List<Dictionary<string, dynamic>>, Dictionary<string, InStockItemRecord>) FindNotOldestLotList(List<OutboundRequest> outBoundItems, Dictionary<string, WarehouseProduct> lotNumberBatchAndProductMap, Dictionary<string, List<InStockItemRecord>> lotNumberBatchAndproductCodeInStockExFIFORecords, bool isConfirmed)
+        private (List<Dictionary<string, dynamic>>, Dictionary<string, InStockItemRecord>) FindNotOldestLotList(List<OutboundRequest> outBoundItems, Dictionary<string, WarehouseProduct> lotNumberBatchAndProductMap, Dictionary<string, List<InStockItemRecord>> lotNumberBatchAndproductCodeInStockExFIFORecords)
         {
             List<Dictionary<string, dynamic>> notOldestLotList = new();
             Dictionary<string, InStockItemRecord> lotNumberBatchAndRequestLotInStockRecordMap = new();
@@ -620,8 +621,8 @@ namespace stock_api.Controllers
                     });
                     continue;
                 }
-                // 表示要出的批號不是最早的那批 而且IsConfirmed!=true(非user確認過的)
-                if ((requestLot.LotNumberBatch != oldestLot.LotNumberBatch) && !isConfirmed)
+                // 表示要出的批號不是最早的那批 而且IsAbnormal不為true且AbnormalReason為空的或null(表示沒確認過)
+                if ((requestLot.LotNumberBatch != oldestLot.LotNumberBatch) && outItem.IsAbnormal!=true )
                 {
                     notOldestLotList.Add(new Dictionary<string, dynamic>
                     {
@@ -634,7 +635,7 @@ namespace stock_api.Controllers
             return (notOldestLotList, lotNumberBatchAndRequestLotInStockRecordMap);
         }
 
-        private (List<Dictionary<string, dynamic>>,Dictionary<string,InStockItemRecord>) FindNotOldestLotList(List<OwnerOutboundRequest> outBoundItems,Dictionary<string,WarehouseProduct> lotNumberBatchAndProductMap,Dictionary<string,List<InStockItemRecord>> lotNumberBatchAndproductCodeInStockExFIFORecords,bool isConfirmed)
+        private (List<Dictionary<string, dynamic>>,Dictionary<string,InStockItemRecord>) FindNotOldestLotList(List<OwnerOutboundRequest> outBoundItems,Dictionary<string,WarehouseProduct> lotNumberBatchAndProductMap,Dictionary<string,List<InStockItemRecord>> lotNumberBatchAndproductCodeInStockExFIFORecords)
         {
             List<Dictionary<string, dynamic>> notOldestLotList = new();
             Dictionary<string, InStockItemRecord> lotNumberBatchAndRequestLotInStockRecordMap = new();
@@ -658,8 +659,8 @@ namespace stock_api.Controllers
                     });
                     continue;
                 }
-                // 表示要出的批號不是最早的那批 而且IsConfirmed!=true(非user確認過的)
-                if ((requestLot.LotNumberBatch != oldestLot.LotNumberBatch)&&!isConfirmed)
+                // 表示要出的批號不是最早的那批 而且IsAbnormal!=true(非user確認過的)
+                if ((requestLot.LotNumberBatch != oldestLot.LotNumberBatch)&&outItem.IsAbnormal!=true)
                 {
                     notOldestLotList.Add(new Dictionary<string, dynamic>
                     {
