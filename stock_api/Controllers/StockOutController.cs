@@ -498,10 +498,69 @@ namespace stock_api.Controllers
                 productInfo.LotNumberBatch = inStockRecord.LotNumberBatch;
             }
 
-            return Ok(new CommonResponse<WarehouseProduct>
+            WarehouseProductStockOutView resultItem = new WarehouseProductStockOutView
+            {
+                LotNumberBatch = productInfo.LotNumberBatch,
+                LotNumber = productInfo.LotNumber,
+                CompId = productInfo.CompId,
+                ManufacturerId = productInfo.ManufacturerId,
+                ManufacturerName = productInfo.ManufacturerName,
+                DeadlineRule = productInfo.DeadlineRule,
+                DeliverRemarks = productInfo.DeliverRemarks,
+                GroupIds = productInfo.GroupIds,
+                GroupNames = productInfo.GroupNames,
+                InStockQuantity = productInfo.InStockQuantity,
+                Manager = productInfo.Manager,
+                MaxSafeQuantity = productInfo.MaxSafeQuantity,
+                LastAbleDate = productInfo.LastAbleDate,
+                LastOutStockDate = productInfo.LastOutStockDate,
+                OpenDeadline = productInfo.OpenDeadline,
+                OpenedSealName = productInfo.OpenedSealName,
+                OriginalDeadline = productInfo.OriginalDeadline,
+                PackageWay = productInfo.PackageWay,
+                PreDeadline = productInfo.PreDeadline,
+                PreOrderDays = productInfo.PreOrderDays,
+                ProductCategory = productInfo.ProductCategory,
+                ProductCode = productInfo.ProductCode,
+                ProductId = productInfo.ProductId,
+                ProductModel = productInfo.ProductModel,
+                ProductName = productInfo.ProductName,
+                ProductRemarks = productInfo.ProductRemarks,
+                ProductSpec = productInfo.ProductSpec,
+                SafeQuantity = productInfo.SafeQuantity,
+                UdibatchCode = productInfo.UdibatchCode,
+                UdicreateCode = productInfo.UdicreateCode,
+                UdiserialCode = productInfo.UdiserialCode,
+                UdiverifyDateCode = productInfo.UdiverifyDateCode,
+                Unit = productInfo.Unit,
+                Weight = productInfo.Weight,
+                ProductMachine = productInfo.ProductMachine,
+                DefaultSupplierId = productInfo.DefaultSupplierId,
+                DefaultSupplierName = productInfo.DefaultSupplierName,
+                IsNeedAcceptProcess = productInfo.IsNeedAcceptProcess,
+                AllowReceiveDateRange = productInfo.AllowReceiveDateRange,
+                CreatedAt = productInfo.CreatedAt,
+                UpdatedAt = productInfo.UpdatedAt,
+                UnitConversion = productInfo.UnitConversion,
+                TestCount = productInfo.TestCount,
+                IsActive = productInfo.IsActive,
+                StockLocation = productInfo.StockLocation,
+                Delievery = productInfo.Delievery,
+                SupplierUnitConvertsion = productInfo.SupplierUnitConvertsion,
+                SupplierUnit = productInfo.SupplierUnit,
+                DeliverFunction = productInfo.DeliverFunction,
+                DeliverTemperature = productInfo.DeliverTemperature,
+                SavingFunction = productInfo.SavingFunction,
+                SavingTemperature = productInfo.SavingTemperature,
+                CompName = productInfo.CompName,
+                BatchInStockQuantity = inStockRecord.instockQuantity,
+                BatchOutStockQuantity = productInfo.outstockQuantity,
+            };
+
+            return Ok(new CommonResponse<WarehouseProductStockOutView>
             {
                 Result = true,
-                Data = productInfo,
+                Data = resultItem,
             });
         }
 
