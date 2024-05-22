@@ -279,7 +279,7 @@ namespace stock_api.Controllers
             {
                 // 找到要調撥過去的單位還沒入庫的AcceptItem
                 toCompAcceptanceItem = _stockInService.GetAcceptanceItemNotInStockByProductCodeAndCompId(requestLot.ProductCode, request.ToCompId).FirstOrDefault();
-                if (toCompAcceptanceItem == null || toCompAcceptanceItem.LotNumberBatch != requestLot.LotNumberBatch)
+                if (toCompAcceptanceItem == null )
                 {
                     return BadRequest(new CommonResponse<dynamic>
                     {
