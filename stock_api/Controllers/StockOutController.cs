@@ -555,6 +555,7 @@ namespace stock_api.Controllers
                 CompName = productInfo.CompName,
                 BatchInStockQuantity = inStockRecord.InStockQuantity,
                 BatchOutStockQuantity = inStockRecord.OutStockQuantity,
+                BatchExpirationDate = inStockRecord.ExpirationDate
             };
 
             return Ok(new CommonResponse<WarehouseProductStockOutView>
