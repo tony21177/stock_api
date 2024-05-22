@@ -553,8 +553,8 @@ namespace stock_api.Controllers
                 SavingFunction = productInfo.SavingFunction,
                 SavingTemperature = productInfo.SavingTemperature,
                 CompName = productInfo.CompName,
-                BatchInStockQuantity = inStockRecord.instockQuantity,
-                BatchOutStockQuantity = productInfo.outstockQuantity,
+                BatchInStockQuantity = 1,
+                BatchOutStockQuantity = 1,
             };
 
             return Ok(new CommonResponse<WarehouseProductStockOutView>
