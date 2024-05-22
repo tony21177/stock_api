@@ -389,7 +389,7 @@ namespace stock_api.Controllers
             }
             return Ok(new CommonResponse<dynamic>
             {
-                Result = failedOutLotNumberBatchList.Count == 0,
+                Result = failedOutLotNumberBatchList.Count == 0 && notOldestLotList.Count == 0,
                 Data = new Dictionary<string, dynamic>
                 {
                     ["failedLotNumberBatchList"] = failedOutLotNumberBatchList,
