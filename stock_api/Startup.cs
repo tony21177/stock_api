@@ -8,15 +8,29 @@ using System.Text;
 using System.Text.Json;
 using Serilog;
 using Microsoft.AspNetCore.Hosting;
+using Serilog.Enrichers.CallerInfo;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // 配置 Serilog
+//Log.Logger = new LoggerConfiguration()
+//    .MinimumLevel.Debug()
+//    .WriteTo.Console()
+//    .WriteTo.File("logs/stock_api_log.txt", rollingInterval: RollingInterval.Day)
+//.CreateLogger();
+
+// 配置 Serilog
 Log.Logger = new LoggerConfiguration()
-    .MinimumLevel.Debug()
-    .WriteTo.Console()
-    .WriteTo.File("logs/stock_api_log.txt", rollingInterval: RollingInterval.Day)
-.CreateLogger();
+    .MinimumLevel.Information()
+    .WriteTo.Console(outputTemplate: "[{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz}] [{Level:u3}] [{SourceContext}] [{Caller}] {Message:lj}{NewLine}{Exception}")
+    .WriteTo.File("logs/stock_api_log.txt", rollingInterval: RollingInterval.Day, outputTemplate: "[{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz}] [{Level:u3}] [{SourceContext}] [{Caller}] {Message:lj}{NewLine}{Exception}")
+    .Enrich.FromLogContext()
+    .Enrich.WithCallerInfo(
+        includeFileInfo: true,
+        allowedAssemblies: new List<string> { "Serilog.Enrichers.CallerInfo.Tests" },
+        prefix: "stock_")// 添加这个以捕获调用者信息
+    .CreateLogger();
+
 
 // 設置 Serilog 作為 Logging Provider
 builder.Host.UseSerilog();
@@ -117,6 +131,8 @@ builder.Services.ConfigureBusinessServices(builder.Configuration);
 
 var app = builder.Build();
 
+app.UseMiddleware<RequestLoggingMiddleware>();
+
 // 記錄當前工作目錄
 var currentDirectory = Directory.GetCurrentDirectory();
 Log.Information($"目前工作目錄: {currentDirectory}");
@@ -132,7 +148,6 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
-
 
 app.Run();
 

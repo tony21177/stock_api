@@ -11,24 +11,28 @@
     <Compile Remove="DataDB\**" />
     <Compile Remove="Migrations\**" />
     <Compile Remove="Model\**" />
+    <Compile Remove="NewFolder1\**" />
     <Compile Remove="Service\NewFolder1\**" />
     <Compile Remove="Service\NewFolder2\**" />
     <Compile Remove="Sql\**" />
     <Content Remove="DataDB\**" />
     <Content Remove="Migrations\**" />
     <Content Remove="Model\**" />
+    <Content Remove="NewFolder1\**" />
     <Content Remove="Service\NewFolder1\**" />
     <Content Remove="Service\NewFolder2\**" />
     <Content Remove="Sql\**" />
     <EmbeddedResource Remove="DataDB\**" />
     <EmbeddedResource Remove="Migrations\**" />
     <EmbeddedResource Remove="Model\**" />
+    <EmbeddedResource Remove="NewFolder1\**" />
     <EmbeddedResource Remove="Service\NewFolder1\**" />
     <EmbeddedResource Remove="Service\NewFolder2\**" />
     <EmbeddedResource Remove="Sql\**" />
     <None Remove="DataDB\**" />
     <None Remove="Migrations\**" />
     <None Remove="Model\**" />
+    <None Remove="NewFolder1\**" />
     <None Remove="Service\NewFolder1\**" />
     <None Remove="Service\NewFolder2\**" />
     <None Remove="Sql\**" />
@@ -47,6 +51,7 @@
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
     <PackageReference Include="Pomelo.EntityFrameworkCore.MySql" Version="7.0.0" />
     <PackageReference Include="Serilog.AspNetCore" Version="8.0.1" />
+    <PackageReference Include="Serilog.Enrichers.CallerInfo" Version="1.0.4" />
     <PackageReference Include="Serilog.Sinks.Console" Version="5.0.1" />
     <PackageReference Include="Serilog.Sinks.File" Version="5.0.0" />
     <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="7.2.0" />
@@ -62,6 +67,7 @@
     <None Remove="System.Drawing.Common" />
   </ItemGroup>
   <ItemGroup>
+    <Folder Include="Middleware\" />
     <Folder Include="Models\" />
     <Folder Include="uploads\" />
   </ItemGroup>

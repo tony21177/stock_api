@@ -489,6 +489,14 @@ namespace stock_api.Controllers
             var compId = memberAndPermissionSetting.CompanyWithUnit.CompId;
             var userId = memberAndPermissionSetting.Member.UserId;
             var inStockRecord = _stockInService.GetInStockRecordsHistoryByLotNumberBatch(request.LotNumberBatch, compId).FirstOrDefault();
+            if (inStockRecord == null)
+            {
+                return BadRequest(new CommonResponse<WarehouseProductStockOutView>
+                {
+                    Result = false,
+                    Message = "沒有相對應的入庫紀錄",
+                });
+            }
             WarehouseProduct? productInfo = _warehouseProductService.GetProductByProductCodeAndCompId(inStockRecord.ProductCode, inStockRecord.CompId);
             
             if (inStockRecord != null&&productInfo!=null)
@@ -496,6 +504,14 @@ namespace stock_api.Controllers
                 //這是因為畫面批號批次是要顯示正要出庫的這批資料　其他則是庫存品項的相關資料
                 productInfo.LotNumber = inStockRecord.LotNumber;
                 productInfo.LotNumberBatch = inStockRecord.LotNumberBatch;
+            }
+            else
+            {
+                return BadRequest(new CommonResponse<WarehouseProductStockOutView>
+                {
+                    Result = false,
+                    Message = "沒有相對應的庫存品項",
+                });
             }
 
             WarehouseProductStockOutView resultItem = new WarehouseProductStockOutView

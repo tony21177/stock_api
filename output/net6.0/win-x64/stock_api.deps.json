@@ -21,6 +21,7 @@
           "Newtonsoft.Json": "13.0.3",
           "Pomelo.EntityFrameworkCore.MySql": "7.0.0",
           "Serilog.AspNetCore": "8.0.1",
+          "Serilog.Enrichers.CallerInfo": "1.0.4",
           "Serilog.Sinks.Console": "5.0.1",
           "Serilog.Sinks.File": "5.0.0",
           "System.IdentityModel.Tokens.Jwt": "7.2.0",
@@ -1348,6 +1349,17 @@
           }
         }
       },
+      "Ben.Demystifier/0.4.1": {
+        "dependencies": {
+          "System.Reflection.Metadata": "5.0.0"
+        },
+        "runtime": {
+          "lib/netstandard2.1/Ben.Demystifier.dll": {
+            "assemblyVersion": "0.4.0.0",
+            "fileVersion": "0.4.0.2"
+          }
+        }
+      },
       "FluentValidation/11.9.0": {
         "runtime": {
           "lib/net6.0/FluentValidation.dll": {
@@ -1894,6 +1906,18 @@
           }
         }
       },
+      "Serilog.Enrichers.CallerInfo/1.0.4": {
+        "dependencies": {
+          "Ben.Demystifier": "0.4.1",
+          "Serilog": "3.1.1"
+        },
+        "runtime": {
+          "lib/net6.0/Serilog.Enrichers.CallerInfo.dll": {
+            "assemblyVersion": "1.0.0.0",
+            "fileVersion": "1.0.0.0"
+          }
+        }
+      },
       "Serilog.Extensions.Hosting/8.0.0": {
         "dependencies": {
           "Microsoft.Extensions.DependencyInjection.Abstractions": "8.0.0",
@@ -2052,6 +2076,7 @@
           "runtime.any.System.Reflection": "4.3.0"
         }
       },
+      "System.Reflection.Metadata/5.0.0": {},
       "System.Reflection.Primitives/4.3.0": {
         "dependencies": {
           "Microsoft.NETCore.Platforms": "3.1.0",
@@ -2197,6 +2222,13 @@
       "sha512": "sha512-+g/K+Vpe3gGMKGzjslMOdqNlkikScDjWfVvmWTayrDHaG/n2pPmFBMa+jKX1r/h6BDGFdkyRjAuhFE3ykW+r1g==",
       "path": "automapper.extensions.microsoft.dependencyinjection/12.0.1",
       "hashPath": "automapper.extensions.microsoft.dependencyinjection.12.0.1.nupkg.sha512"
+    },
+    "Ben.Demystifier/0.4.1": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-axFeEMfmEORy3ipAzOXG/lE+KcNptRbei3F0C4kQCdeiQtW+qJW90K5iIovITGrdLt8AjhNCwk5qLSX9/rFpoA==",
+      "path": "ben.demystifier/0.4.1",
+      "hashPath": "ben.demystifier.0.4.1.nupkg.sha512"
     },
     "FluentValidation/11.9.0": {
       "type": "package",
@@ -2590,6 +2622,13 @@
       "path": "serilog.aspnetcore/8.0.1",
       "hashPath": "serilog.aspnetcore.8.0.1.nupkg.sha512"
     },
+    "Serilog.Enrichers.CallerInfo/1.0.4": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-Tk1mSmUV19V2WUv6N0Iz6dSJiaf6ZBtOYuSKDXCKKsJWSCYulP+uuLOhFj4sJrHYIi0u2GO9tqSQojYlxU6blw==",
+      "path": "serilog.enrichers.callerinfo/1.0.4",
+      "hashPath": "serilog.enrichers.callerinfo.1.0.4.nupkg.sha512"
+    },
     "Serilog.Extensions.Hosting/8.0.0": {
       "type": "package",
       "serviceable": true,
@@ -2701,6 +2740,13 @@
       "sha512": "sha512-KMiAFoW7MfJGa9nDFNcfu+FpEdiHpWgTcS2HdMpDvt9saK3y/G4GwprPyzqjFH9NTaGPQeWNHU+iDlDILj96aQ==",
       "path": "system.reflection/4.3.0",
       "hashPath": "system.reflection.4.3.0.nupkg.sha512"
+    },
+    "System.Reflection.Metadata/5.0.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-5NecZgXktdGg34rh1OenY1rFNDCI8xSjFr+Z4OU4cU06AQHUdRnIIEeWENu3Wl4YowbzkymAIMvi3WyK9U53pQ==",
+      "path": "system.reflection.metadata/5.0.0",
+      "hashPath": "system.reflection.metadata.5.0.0.nupkg.sha512"
     },
     "System.Reflection.Primitives/4.3.0": {
       "type": "package",
