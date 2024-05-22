@@ -497,6 +497,15 @@ namespace stock_api.Controllers
                     Message = "沒有相對應的入庫紀錄",
                 });
             }
+            if (inStockRecord.OutStockStatus == CommonConstants.OutStockStatus.ALL)
+            {
+                return BadRequest(new CommonResponse<WarehouseProductStockOutView>
+                {
+                    Result = false,
+                    Message = "此批已全部出庫",
+                });
+            }
+
             WarehouseProduct? productInfo = _warehouseProductService.GetProductByProductCodeAndCompId(inStockRecord.ProductCode, inStockRecord.CompId);
             
             if (inStockRecord != null&&productInfo!=null)
@@ -573,6 +582,8 @@ namespace stock_api.Controllers
                 BatchOutStockQuantity = inStockRecord.OutStockQuantity,
                 BatchExpirationDate = inStockRecord.ExpirationDate
             };
+
+
 
             return Ok(new CommonResponse<WarehouseProductStockOutView>
             {
