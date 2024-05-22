@@ -286,6 +286,6 @@ public partial class WarehouseProductStockOutView
 
     [StringLength(45)]
     public string? CompName { get; set; }
-    public double? BatchInStockQuantity { get; set; } // 對應 inStockRecord 的 instockQuantity
-    public double? BatchOutStockQuantity { get; set; } // 對應 inStockRecord 的 outstockQuantity
+    public int? BatchInStockQuantity { get; set; } // 對應 inStockRecord 的 instockQuantity
+    public int? BatchOutStockQuantity { get; set; } // 對應 inStockRecord 的 outstockQuantity
 }
