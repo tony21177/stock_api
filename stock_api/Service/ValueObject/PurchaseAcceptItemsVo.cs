@@ -98,6 +98,7 @@ namespace stock_api.Service.ValueObject
         public string? UDIBatchCode { get; set; }
         public string? UDICreateCode { get; set; }
         public string? UDIVerifyDateCode { get; set; }
+        public string? Prod_supplierName { get; set; }
         public bool IsContainKeywords(string keywords)
         {
             return ($"{this.AcceptId} {this.AcceptUserId} {this.LotNumberBatch} {this.LotNumber} {this.PackagingStatus} {this.ProductId} {this.ProductName} {this.ProductSpec} {this.UdiserialCode}" +

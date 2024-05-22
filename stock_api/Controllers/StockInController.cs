@@ -93,6 +93,7 @@ namespace stock_api.Controllers
                         item.UDIBatchCode = matchedProdcut.UdibatchCode;
                         item.UDICreateCode = matchedProdcut.UdicreateCode;
                         item.UDIVerifyDateCode = matchedProdcut.UdiverifyDateCode;
+                        item.Prod_supplierName = matchedProdcut.DefaultSupplierName;
                     }
                 }
 
