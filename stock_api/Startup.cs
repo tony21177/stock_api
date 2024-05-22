@@ -44,13 +44,7 @@ builder.Services.AddCors(options =>
 var serverVersion = new MySqlServerVersion(new Version(5, 7, 29));
 builder.Services.AddDbContext<StockDbContext>(options =>
 {
-    options.UseMySql(builder.Configuration.GetConnectionString("DefaultConnection"), serverVersion, mysqlOption =>
-    {
-        mysqlOption.EnableRetryOnFailure(
-            maxRetryCount: 5,
-            maxRetryDelay: TimeSpan.FromSeconds(10),
-            errorNumbersToAdd: null);
-    });
+    options.UseMySql(builder.Configuration.GetConnectionString("DefaultConnection"), serverVersion);
     options.UseLoggerFactory(serilogLoggerFactory) // 使用 Serilog 的 LoggerFactory
            .EnableSensitiveDataLogging(); // 如果需要敏感數據記錄
 
