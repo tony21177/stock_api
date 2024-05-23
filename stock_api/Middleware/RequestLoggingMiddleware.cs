@@ -26,7 +26,7 @@ public class RequestLoggingMiddleware
         context.Request.EnableBuffering(); // Allows us to read the request body multiple times
         var requestBody = await new StreamReader(context.Request.Body).ReadToEndAsync();
         context.Request.Body.Position = 0; // Reset the request body stream position for the next middleware
-        _logger.LogInformation($"Request body: {requestBody}");
+        _logger.LogInformation($"Request Path:{context.Request.Path},Query string:{queryString} ,Request body: {requestBody}");
 
         await _next(context);
     }
