@@ -19,8 +19,6 @@ namespace stock_api.Service.ValueObject
         public DateTime? UpdatedAt { get; set; }
         public bool IsActive { get; set; }
         public List<AcceptItem> AcceptItems { get; set; }
-        public string InStockStatus { get; set; }
-
         public bool IsContainKeywords(string keywords)
         {
             return $"{this.CurrentStatus} {this.GroupIds} {this.Remarks} {this.UserId} {this.ReceiveStatus} {this.Type}".Contains(keywords);
