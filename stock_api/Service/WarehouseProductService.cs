@@ -187,6 +187,8 @@ namespace stock_api.Service
                 {
                     _dbContext.AcceptanceItems.Where(item => item.CompId==request.CompId&&item.ProductId== existingProduct.ProductId)
                         .ExecuteUpdate(item => item.SetProperty(x => x.UdiserialCode, request.UdiserialCode));
+                    _dbContext.PurchaseSubItems.Where(i => i.CompId == request.CompId && i.ProductCode == existingProduct.ProductCode).
+                        ExecuteUpdate(i => i.SetProperty(x => x.UdiserialCode, request.UdiserialCode));
                 }
 
                 var updateProduct = _mapper.Map<WarehouseProduct>(request);
