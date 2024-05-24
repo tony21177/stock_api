@@ -20,13 +20,20 @@ public class RequestLoggingMiddleware
     {
         // Log query string
         var queryString = context.Request.QueryString.HasValue ? context.Request.QueryString.Value : string.Empty;
-        _logger.LogInformation($"Query string: {queryString}");
-
         // Log request body
         context.Request.EnableBuffering(); // Allows us to read the request body multiple times
         var requestBody = await new StreamReader(context.Request.Body).ReadToEndAsync();
         context.Request.Body.Position = 0; // Reset the request body stream position for the next middleware
-        _logger.LogInformation($"Request Path:{context.Request.Path},Query string:{queryString} ,Request body: {requestBody}");
+        // Extract Authorization header
+        string authorizationHeader = context.Request.Headers["Authorization"];
+        string bearerToken = string.Empty;
+        if (!string.IsNullOrEmpty(authorizationHeader) && authorizationHeader.StartsWith("Bearer "))
+        {
+            bearerToken = authorizationHeader.Substring("Bearer ".Length).Trim();
+        }
+
+        // Log the request details
+        _logger.LogInformation($"Request Path: {context.Request.Path}, Query string: {queryString}, Request body: {requestBody}, Authorization: {bearerToken}");
 
         await _next(context);
     }

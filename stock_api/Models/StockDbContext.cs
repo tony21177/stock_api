@@ -88,7 +88,9 @@ public partial class StockDbContext : DbContext
             entity.Property(e => e.CreatedAt).HasDefaultValueSql("CURRENT_TIMESTAMP");
             entity.Property(e => e.CurrentTotalQuantity).HasComment("驗收入庫後，當下該品項的總庫存數量");
             entity.Property(e => e.ExpirationDate).HasComment("保存期限");
-            entity.Property(e => e.IsInStocked).HasDefaultValueSql("'0'");
+            entity.Property(e => e.InStockStatus)
+                .HasDefaultValueSql("'NONE'")
+                .HasComment("入庫狀態\nNONE,PART,DONE");
             entity.Property(e => e.ItemId).HasComment("對應 PurchaseSubItem 的 PK");
             entity.Property(e => e.LotNumber).HasComment("批號");
             entity.Property(e => e.LotNumberBatch).HasComment("批次");
@@ -358,6 +360,9 @@ public partial class StockDbContext : DbContext
             entity.Property(e => e.DemandDate).HasComment("需求日期");
             entity.Property(e => e.ExpirationDate).HasComment("保存期限");
             entity.Property(e => e.GroupIds).HasComment("設定此單據所屬的組別，參考 Warehouse_Group");
+            entity.Property(e => e.InStockStatus)
+                .HasDefaultValueSql("'NONE'")
+                .HasComment("入庫狀態\nNONE,PART,DONE");
             entity.Property(e => e.ItemId).HasComment("對應 PurchaseSubItem 的 PK");
             entity.Property(e => e.LotNumber).HasComment("批號");
             entity.Property(e => e.LotNumberBatch).HasComment("批次");
@@ -370,6 +375,9 @@ public partial class StockDbContext : DbContext
             entity.Property(e => e.QcStatus).HasComment("驗收測試品管結果\nPASS : 通過\nFAIL : 不通過\nNONEED : 不需側\nOTHER : 其他");
             entity.Property(e => e.ReceiveStatus).HasComment("送單到金萬林後，目前狀態\nNONE : 尚未收到結果\nDELIVERED : 金萬林已出貨\nIN_ACCEPTANCE_CHECK : 驗收中\nPART_ACCEPT : 部分驗收入庫\nALL_ACCEPT : 全部驗收入庫");
             entity.Property(e => e.Remarks).HasComment("備註內容");
+            entity.Property(e => e.SplitPrcoess)
+                .HasDefaultValueSql("'NONE'")
+                .HasComment("NONE(所有sub_item都尚未經過OWNER拆單),PART(部分sub_item經過OWNER拆單),DONE(所有sub_item經過OWNER拆單)");
             entity.Property(e => e.Type).HasComment("採購單類型\nGENERAL : 一般訂單\nURGENT : 緊急訂單");
             entity.Property(e => e.UpdatedAt)
                 .ValueGeneratedOnAddOrUpdate()

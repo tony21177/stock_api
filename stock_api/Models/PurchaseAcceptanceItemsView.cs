@@ -86,6 +86,12 @@ public partial class PurchaseAcceptanceItemsView
 
     public bool IsActive { get; set; }
 
+    /// <summary>
+    /// NONE(所有sub_item都尚未經過OWNER拆單),PART(部分sub_item經過OWNER拆單),DONE(所有sub_item經過OWNER拆單)
+    /// </summary>
+    [StringLength(45)]
+    public string? SplitPrcoess { get; set; }
+
     [StringLength(100)]
     public string AcceptId { get; set; } = null!;
 
@@ -142,6 +148,9 @@ public partial class PurchaseAcceptanceItemsView
     /// </summary>
     [StringLength(100)]
     public string ProductId { get; set; } = null!;
+
+    [StringLength(200)]
+    public string? ProductCode { get; set; }
 
     /// <summary>
     /// 品項名稱
@@ -201,4 +210,11 @@ public partial class PurchaseAcceptanceItemsView
     public string? SavingFunction { get; set; }
 
     public double? SavingTemperature { get; set; }
+
+    /// <summary>
+    /// 入庫狀態
+    /// NONE,PART,DONE
+    /// </summary>
+    [StringLength(45)]
+    public string? InStockStatus { get; set; }
 }

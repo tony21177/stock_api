@@ -214,7 +214,7 @@ namespace stock_api.Service
                 
                 if (updateAcceptItem.AcceptQuantity.HasValue)
                 {
-                    existingAcceptanceItem.AcceptQuantity = updateAcceptItem.AcceptQuantity.Value;
+                    existingAcceptanceItem.AcceptQuantity += updateAcceptItem.AcceptQuantity.Value;
                 }
                 if (updateAcceptItem.AcceptUserId != null)
                 {
@@ -264,8 +264,19 @@ namespace stock_api.Service
                 {
                     existingAcceptanceItem.SavingTemperature = updateAcceptItem.SavingTemperature;
                 }
-                existingAcceptanceItem.IsInStocked = isInStocked;
-                if (existingAcceptanceItem.AcceptQuantity != null && existingAcceptanceItem.IsInStocked==true)
+
+                // 判斷是否全部驗收完
+                if (existingAcceptanceItem.AcceptQuantity >= existingAcceptanceItem.OrderQuantity)
+                {
+                    existingAcceptanceItem.InStockStatus = CommonConstants.PurchaseSubItemReceiveStatus.DONE;
+                }
+                // 判斷是否部分驗收
+                if (existingAcceptanceItem.AcceptQuantity >0&& existingAcceptanceItem.AcceptQuantity<existingAcceptanceItem.OrderQuantity)
+                {
+                    existingAcceptanceItem.InStockStatus = CommonConstants.PurchaseSubItemReceiveStatus.PART;
+                }
+
+                if (updateAcceptItem.AcceptQuantity!=null)
                 {
                     var tempInStockItemRecord = new TempInStockItemRecord()
                     {
@@ -275,7 +286,7 @@ namespace stock_api.Service
                         CompId = compId,
                         OriginalQuantity = product.InStockQuantity.Value,
                         ExpirationDate = existingAcceptanceItem.ExpirationDate,
-                        InStockQuantity = existingAcceptanceItem.AcceptQuantity.Value,
+                        InStockQuantity = updateAcceptItem.AcceptQuantity.Value,
                         ProductId = product.ProductId,
                         ProductCode = product.ProductCode,
                         ProductName = product.ProductName,
@@ -300,7 +311,7 @@ namespace stock_api.Service
                         OriginalQuantity = product.InStockQuantity.Value,
                         ExpirationDate = existingAcceptanceItem.ExpirationDate,
                         ItemId = existingAcceptanceItem.ItemId,
-                        InStockQuantity = existingAcceptanceItem.AcceptQuantity.Value,
+                        InStockQuantity = updateAcceptItem.AcceptQuantity.Value,
                         ProductId = product.ProductId,
                         ProductCode = product.ProductCode,
                         ProductName = product.ProductName,
@@ -309,7 +320,7 @@ namespace stock_api.Service
                         BarCodeNumber = existingAcceptanceItem.LotNumberBatch,
                         UserId = acceptMember.UserId,
                         UserName = acceptMember.DisplayName,
-                        AfterQuantity = product.InStockQuantity.Value + existingAcceptanceItem.AcceptQuantity.Value,
+                        AfterQuantity = product.InStockQuantity.Value + updateAcceptItem.AcceptQuantity.Value,
                         DeliverFunction = existingAcceptanceItem.DeliverFunction,
                         DeliverTemperature = existingAcceptanceItem.DeliverTemperature,
                         SavingFunction = existingAcceptanceItem.SavingFunction,
@@ -332,11 +343,11 @@ namespace stock_api.Service
                 //更新採購主單
                 List<AcceptanceItem> existingAcceptanceItems = _dbContext.AcceptanceItems.Where(i=>i.PurchaseMainId == purchaseMain.PurchaseMainId && i.CompId==compId).ToList();
 
-                if (existingAcceptanceItems.All(item => item.IsInStocked==true ))
+                if (existingAcceptanceItems.All(item => item.InStockStatus==CommonConstants.PurchaseSubItemReceiveStatus.DONE ))
                 {
                     purchaseMain.ReceiveStatus = CommonConstants.PurchaseReceiveStatus.ALL_ACCEPT;
                 }
-                else if (existingAcceptanceItems.Any(item => item.IsInStocked!=true))
+                else if (existingAcceptanceItems.Any(item => item.InStockStatus == CommonConstants.PurchaseSubItemReceiveStatus.PART))
                 {
                     purchaseMain.ReceiveStatus = CommonConstants.PurchaseReceiveStatus.PART_ACCEPT;
                 }
@@ -371,9 +382,9 @@ namespace stock_api.Service
             return _dbContext.AcceptanceItems.Where(i => i.LotNumber==lotNumber&&i.LotNumberBatch==lotNumberBatch&&i.ProductId==productId&&i.CompId==compId).OrderBy(i=>i.CreatedAt).ToList();
         }
 
-        public List<AcceptanceItem> GetAcceptanceItemNotInStockByProductCodeAndCompId(string productCode, string compId)
+        public List<AcceptanceItem> GetAcceptanceItemNotAllInStockByProductCodeAndCompId(string productCode, string compId)
         {
-            return _dbContext.AcceptanceItems.Where(i => i.ProductCode == productCode && i.CompId == compId && i.IsInStocked==false).OrderBy(i => i.CreatedAt).ToList();
+            return _dbContext.AcceptanceItems.Where(i => i.ProductCode == productCode && i.CompId == compId && i.InStockStatus!=CommonConstants.PurchaseSubItemReceiveStatus.DONE).OrderBy(i => i.CreatedAt).ToList();
         }
 
         public (List<InStockItemRecord>, int TotalPages) ListStockInRecords(ListStockInRecordsRequest request)

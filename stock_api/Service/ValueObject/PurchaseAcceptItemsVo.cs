@@ -19,6 +19,7 @@ namespace stock_api.Service.ValueObject
         public DateTime? UpdatedAt { get; set; }
         public bool IsActive { get; set; }
         public List<AcceptItem> AcceptItems { get; set; }
+        public string InStockStatus { get; set; }
 
         public bool IsContainKeywords(string keywords)
         {
@@ -60,6 +61,8 @@ namespace stock_api.Service.ValueObject
         public DateOnly? DemandDate { get; set; }
         public string? Prod_savingFunction { get; set; }
         public string? Prod_stockLocation { get; set; }
+
+        public string InStockStatus { get; set; }
         public bool IsContainKeywords(string keywords)
         {
             return ($"{this.AcceptId} {this.AcceptUserId} {this.LotNumberBatch} {this.LotNumber} {this.PackagingStatus} {this.ProductId} {this.ProductName} {this.ProductSpec} {this.UdiserialCode}" +
@@ -99,6 +102,8 @@ namespace stock_api.Service.ValueObject
         public string? UDICreateCode { get; set; }
         public string? UDIVerifyDateCode { get; set; }
         public string? Prod_supplierName { get; set; }
+
+        public string InStockStatus { get; set; }
         public bool IsContainKeywords(string keywords)
         {
             return ($"{this.AcceptId} {this.AcceptUserId} {this.LotNumberBatch} {this.LotNumber} {this.PackagingStatus} {this.ProductId} {this.ProductName} {this.ProductSpec} {this.UdiserialCode}" +

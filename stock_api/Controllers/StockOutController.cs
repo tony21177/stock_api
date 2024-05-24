@@ -278,7 +278,7 @@ namespace stock_api.Controllers
             if (request.Type == CommonConstants.OutStockType.SHIFT_OUT)
             {
                 // 找到要調撥過去的單位還沒入庫的AcceptItem
-                toCompAcceptanceItem = _stockInService.GetAcceptanceItemNotInStockByProductCodeAndCompId(requestLot.ProductCode, request.ToCompId).FirstOrDefault();
+                toCompAcceptanceItem = _stockInService.GetAcceptanceItemNotAllInStockByProductCodeAndCompId(requestLot.ProductCode, request.ToCompId).FirstOrDefault();
                 if (toCompAcceptanceItem == null )
                 {
                     return BadRequest(new CommonResponse<dynamic>
@@ -771,7 +771,7 @@ namespace stock_api.Controllers
                 List<InStockItemRecord> inStockItemRecordsNotAllOutExDateFIFO = lotNumberBatchAndproductCodeInStockExFIFORecords[outItem.LotNumberBatch];
                 var requestLot = inStockItemRecordsNotAllOutExDateFIFO.FirstOrDefault(record => record.LotNumberBatch == outItem.LotNumberBatch);
                 // 找到要調撥過去的單位還沒入庫的AcceptItem
-                toCompAcceptanceItem = _stockInService.GetAcceptanceItemNotInStockByProductCodeAndCompId(requestLot.ProductCode, toCompId).FirstOrDefault();
+                toCompAcceptanceItem = _stockInService.GetAcceptanceItemNotAllInStockByProductCodeAndCompId(requestLot.ProductCode, toCompId).FirstOrDefault();
                 if (toCompAcceptanceItem == null )
                 {
                     notFoundLotNumberBatchList.Add(outItem.LotNumberBatch);

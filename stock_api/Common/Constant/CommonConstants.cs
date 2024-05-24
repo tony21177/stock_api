@@ -45,7 +45,19 @@ namespace stock_api.Common.Constant
             }
         }
 
-        
+        public static class PurchaseSubItemReceiveStatus
+        {
+            public const string NONE = "NONE";
+            public const string PART = "PART";
+            public const string DONE = "DONE";
+            public const string CLOSE = "CLOSE";
+            public static List<string> GetAllValues()
+            {
+                return new List<string> { NONE, PART, DONE, CLOSE };
+            }
+        }
+
+
 
         public static class PurchaseFlowAnswer
         {

@@ -146,6 +146,10 @@ public partial class AcceptanceItem
 
     public double? SavingTemperature { get; set; }
 
-    [Column("isInStocked")]
-    public bool? IsInStocked { get; set; }
+    /// <summary>
+    /// 入庫狀態
+    /// NONE,PART,DONE
+    /// </summary>
+    [StringLength(45)]
+    public string? InStockStatus { get; set; }
 }

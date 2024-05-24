@@ -177,7 +177,7 @@ namespace stock_api.Controllers
 
 
             List<AcceptanceItem> acceptanceItems = _stockInService.acceptanceItemsByUdiSerialCode(request.UdiserialCode, compId).Where(i => i.AcceptUserId == null).ToList();
-            var unVerifyAcceptance = acceptanceItems.Where(i=>i.AcceptUserId==null).OrderByDescending(i => i.UpdatedAt).FirstOrDefault();
+            var unVerifyAcceptance = acceptanceItems.Where(i=>i.InStockStatus!=CommonConstants.PurchaseSubItemReceiveStatus.DONE).OrderByDescending(i => i.UpdatedAt).FirstOrDefault();
             if (unVerifyAcceptance == null) {
                 // 代表沒有可以驗收入庫的項目
                 return Ok(new CommonResponse<dynamic>
@@ -266,7 +266,7 @@ namespace stock_api.Controllers
             {
                 return BadRequest(CommonResponse<dynamic>.BuildNotAuthorizeResponse());
             }
-            if (existingAcceptItem.IsInStocked ==true)
+            if (existingAcceptItem.InStockStatus == CommonConstants.PurchaseSubItemReceiveStatus.DONE)
             {
                 //return BadRequest(new CommonResponse<dynamic>{
                 //    Result = false,
@@ -275,7 +275,7 @@ namespace stock_api.Controllers
                 return BadRequest(new CommonResponse<dynamic>
                 {
                     Result = false,
-                    Message = $"此驗收單已入庫"
+                    Message = $"此驗收單已全部入庫"
                 });
             }
 
@@ -401,14 +401,14 @@ namespace stock_api.Controllers
                 return BadRequest(CommonResponse<dynamic>.BuildNotAuthorizeResponse());
             }
 
-            var inStockedAcceptIdList = existingAcceptItemList.Where(i=>i.IsInStocked==true).Select(i=>i.AcceptId).ToList();
+            var inStockedAcceptIdList = existingAcceptItemList.Where(i=>i.InStockStatus == CommonConstants.PurchaseSubItemReceiveStatus.DONE).Select(i=>i.AcceptId).ToList();
             if (inStockedAcceptIdList.Count>0)
             {
                
                 return BadRequest(new CommonResponse<dynamic>
                 {
                     Result = false,
-                    Message = $"驗收項目 {string.Join(",",inStockedAcceptIdList)} 已入庫"
+                    Message = $"驗收項目 {string.Join(",",inStockedAcceptIdList)} 皆已全入庫"
                 });
             }
 
