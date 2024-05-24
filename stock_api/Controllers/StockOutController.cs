@@ -113,6 +113,15 @@ namespace stock_api.Controllers
                     Message = "無對應的庫存品項"
                 });
             }
+            if (request.ApplyQuantity > requestLot.InStockQuantity)
+            {
+                return BadRequest(new CommonResponse<dynamic>
+                {
+                    Result = false,
+                    Message = "出庫數量超過入庫數量"
+                });
+            }
+
             var result = _stockOutService.OutStock(request.Type,request, requestLot, product, memberAndPermissionSetting.Member,compId);
             return Ok(new CommonResponse<dynamic>
             {
@@ -180,6 +189,15 @@ namespace stock_api.Controllers
             {
                 var product = lotNumberBatchAndProductMap[outItem.LotNumberBatch];
                 var requestLot = lotNumberBatchRequestLotMap[outItem.LotNumberBatch];
+                if (outItem.ApplyQuantity > requestLot.InStockQuantity)
+                {
+                    return BadRequest(new CommonResponse<dynamic>
+                    {
+                        Result = false,
+                        Message = $"出庫數量超過入庫數量 批次:{outItem.LotNumberBatch},入庫數量:{requestLot.InStockQuantity}"
+                    });
+                }
+
                 var successful = _stockOutService.OutStock(request.Type,outItem, requestLot, product, memberAndPermissionSetting.Member,compId);
                 if (!successful)
                 {
