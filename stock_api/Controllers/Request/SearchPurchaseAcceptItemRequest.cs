@@ -9,9 +9,11 @@
         public string? ApplyDateStart { get; set; }
         public string? ApplyDateEnd { get; set; }
         public string? GroupId { get; set; }
-        public string? Type { get; set;}
+        public string? Type { get; set; }
         public string? Keywords { get; set; }
         public string? PurchaseMainId { get; set; }
+
+        public bool? IsGroupBySupplier { get; set; } = false;
 
     }
 }

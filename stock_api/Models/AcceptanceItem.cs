@@ -152,4 +152,9 @@ public partial class AcceptanceItem
     /// </summary>
     [StringLength(45)]
     public string? InStockStatus { get; set; }
+
+    public int? ArrangeSupplierId { get; set; }
+
+    [StringLength(100)]
+    public string? ArrangeSupplierName { get; set; }
 }

@@ -2,17 +2,15 @@
 using FluentValidation;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using stock_api.Common.Constant;
 using stock_api.Common;
+using stock_api.Common.Constant;
+using stock_api.Common.Utils;
 using stock_api.Controllers.Request;
 using stock_api.Controllers.Validator;
-using stock_api.Service;
-using stock_api.Utils;
-using stock_api.Service.ValueObject;
 using stock_api.Models;
-using MySqlX.XDevAPI.Common;
-using stock_api.Common.Utils;
-using System.Linq;
+using stock_api.Service;
+using stock_api.Service.ValueObject;
+using stock_api.Utils;
 
 namespace stock_api.Controllers
 {
@@ -113,6 +111,13 @@ namespace stock_api.Controllers
             }
             data = data.OrderByDescending(item => item.ApplyDate).ToList();
 
+            List<AcceptItem> allAcceptItemList = new();
+            if (request.IsGroupBySupplier == true)
+            {
+                allAcceptItemList = data.SelectMany(item => item.AcceptItems).ToList();
+            }
+            
+
 
             var response = new CommonResponse<List<PurchaseAcceptItemsVo>>
             {
@@ -177,13 +182,14 @@ namespace stock_api.Controllers
 
 
             List<AcceptanceItem> acceptanceItems = _stockInService.acceptanceItemsByUdiSerialCode(request.UdiserialCode, compId).Where(i => i.AcceptUserId == null).ToList();
-            var unVerifyAcceptance = acceptanceItems.Where(i=>i.InStockStatus!=CommonConstants.PurchaseSubItemReceiveStatus.DONE).OrderByDescending(i => i.UpdatedAt).FirstOrDefault();
-            if (unVerifyAcceptance == null) {
+            var unVerifyAcceptance = acceptanceItems.Where(i => i.InStockStatus != CommonConstants.PurchaseSubItemReceiveStatus.DONE).OrderByDescending(i => i.UpdatedAt).FirstOrDefault();
+            if (unVerifyAcceptance == null)
+            {
                 // 代表沒有可以驗收入庫的項目
                 return Ok(new CommonResponse<dynamic>
                 {
                     Result = false,
-                    Message = "以唯一碼："+ request.UdiserialCode +"搜尋後，並無發現需要驗收/入庫的項目"
+                    Message = "以唯一碼：" + request.UdiserialCode + "搜尋後，並無發現需要驗收/入庫的項目"
                 });
             }
 
@@ -192,7 +198,7 @@ namespace stock_api.Controllers
             List<WarehouseProduct> products = _warehouseProductService.GetProductsByProductIdsAndCompId(distinctProductIdList, compId);
             var matchedProdcut = products.Where(p => p.ProductId == unVerifyAcceptance.ProductId).FirstOrDefault();
             var purchaseMain = _purchaseService.GetPurchaseMainByMainId(unVerifyAcceptance.PurchaseMainId);
-            
+
 
             ManualAcceptItem resultItem = new ManualAcceptItem
             {
@@ -218,7 +224,7 @@ namespace stock_api.Controllers
                 DeliverTemperature = unVerifyAcceptance.DeliverTemperature,
                 SavingFunction = unVerifyAcceptance.SavingFunction,
                 SavingTemperature = unVerifyAcceptance.SavingTemperature,
-                DemandDate = purchaseMain!=null? purchaseMain.DemandDate: null,
+                DemandDate = purchaseMain != null ? purchaseMain.DemandDate : null,
             };
 
             if (matchedProdcut != null)
@@ -262,7 +268,7 @@ namespace stock_api.Controllers
                     Message = "驗收品項不存在"
                 });
             }
-            if(existingAcceptItem.CompId != compId)
+            if (existingAcceptItem.CompId != compId)
             {
                 return BadRequest(CommonResponse<dynamic>.BuildNotAuthorizeResponse());
             }
@@ -299,11 +305,11 @@ namespace stock_api.Controllers
                     Message = "採購單不存在"
                 });
             }
-            if (request.ExpirationDate != null&&product.DeadlineRule!=null)
+            if (request.ExpirationDate != null && product.DeadlineRule != null)
             {
                 var expirationDate = DateOnly.FromDateTime(DateTimeHelper.ParseDateString(request.ExpirationDate).Value);
                 // check : 如果今天日期+deallinerule(至少要可以放幾天) > 保存期限，代表保存期前過短
-                if (DateOnly.FromDateTime(DateTime.Now).AddDays(product.DeadlineRule.Value)>expirationDate&&request.IsConfirmed!=true)
+                if (DateOnly.FromDateTime(DateTime.Now).AddDays(product.DeadlineRule.Value) > expirationDate && request.IsConfirmed != true)
                 {
                     return Ok(new CommonResponse<dynamic>
                     {
@@ -317,11 +323,11 @@ namespace stock_api.Controllers
                 }
             }
 
-            List<InStockItemRecord> existingStockInRecords = _stockInService.GetInStockRecordsHistory(existingAcceptItem.ProductId, compId).OrderByDescending(item=>item.CreatedAt).ToList();
+            List<InStockItemRecord> existingStockInRecords = _stockInService.GetInStockRecordsHistory(existingAcceptItem.ProductId, compId).OrderByDescending(item => item.CreatedAt).ToList();
             var lastLotNumber = existingStockInRecords.FirstOrDefault()?.LotNumber;
             List<string> newLotNumberIdList = new();
-            var (result,message) = _stockInService.UpdateAccepItem(purchaseMain, existingAcceptItem, request, product, compId, memberAndPermissionSetting.Member,request.IsInStocked);
-            if(request.LotNumber != lastLotNumber)
+            var (result, message) = _stockInService.UpdateAccepItem(purchaseMain, existingAcceptItem, request, product, compId, memberAndPermissionSetting.Member, request.IsInStocked);
+            if (request.LotNumber != lastLotNumber)
             {
                 newLotNumberIdList.Add(request.AcceptId);
             }
@@ -334,7 +340,7 @@ namespace stock_api.Controllers
                 Data = new
                 {
                     //IsNewLot = existingStockInRecordLotNumber.Contains(request.LotNumber)
-                    isNewLot = request.LotNumber!=null?request.LotNumber!= lastLotNumber : false,
+                    isNewLot = request.LotNumber != null ? request.LotNumber != lastLotNumber : false,
                     newLotNumberIdList
                 }
             });
@@ -360,12 +366,12 @@ namespace stock_api.Controllers
                 request.PaginationCondition.OrderByField = "updatedAt";
             }
 
-            var (data,pages) = _stockInService.ListStockInRecords(request);
+            var (data, pages) = _stockInService.ListStockInRecords(request);
             return Ok(new CommonResponse<dynamic>
             {
                 Result = true,
                 Data = data,
-                TotalPages =pages
+                TotalPages = pages
             });
         }
 
@@ -388,7 +394,7 @@ namespace stock_api.Controllers
             var existingAcceptItemList = _stockInService.GetAcceptanceItemByAcceptIdList(updateAcceptIdList);
             var existingAcceptIdList = existingAcceptItemList.Select(i => i.AcceptId).ToList();
             var notExistAcceptIdList = updateAcceptIdList.Except(existingAcceptIdList).ToList();
-            if (notExistAcceptIdList.Count>0)
+            if (notExistAcceptIdList.Count > 0)
             {
                 return BadRequest(new CommonResponse<dynamic>
                 {
@@ -396,27 +402,27 @@ namespace stock_api.Controllers
                     Message = $"驗收品項 {string.Join(", ", notExistAcceptIdList)} 不存在"
                 });
             }
-            if (existingAcceptItemList.Any(i=>i.CompId!=compId))
+            if (existingAcceptItemList.Any(i => i.CompId != compId))
             {
                 return BadRequest(CommonResponse<dynamic>.BuildNotAuthorizeResponse());
             }
 
-            var inStockedAcceptIdList = existingAcceptItemList.Where(i=>i.InStockStatus == CommonConstants.PurchaseSubItemReceiveStatus.DONE).Select(i=>i.AcceptId).ToList();
-            if (inStockedAcceptIdList.Count>0)
+            var inStockedAcceptIdList = existingAcceptItemList.Where(i => i.InStockStatus == CommonConstants.PurchaseSubItemReceiveStatus.DONE).Select(i => i.AcceptId).ToList();
+            if (inStockedAcceptIdList.Count > 0)
             {
-               
+
                 return BadRequest(new CommonResponse<dynamic>
                 {
                     Result = false,
-                    Message = $"驗收項目 {string.Join(",",inStockedAcceptIdList)} 皆已全入庫"
+                    Message = $"驗收項目 {string.Join(",", inStockedAcceptIdList)} 皆已全入庫"
                 });
             }
 
-            var existingAcceptProductIdList = existingAcceptItemList.Select(i=>i.ProductId).ToList();
+            var existingAcceptProductIdList = existingAcceptItemList.Select(i => i.ProductId).ToList();
             var existingProductList = _warehouseProductService.GetProductsByProductIdsAndCompId(existingAcceptProductIdList, compId);
-            var existingProductIdList = existingProductList.Select(p=>p.ProductId).ToList() ;
+            var existingProductIdList = existingProductList.Select(p => p.ProductId).ToList();
             var notExistProductIdList = existingAcceptProductIdList.Except(existingProductIdList).ToList();
-            if (notExistProductIdList.Count >0 )
+            if (notExistProductIdList.Count > 0)
             {
                 return BadRequest(new CommonResponse<dynamic>
                 {
@@ -425,11 +431,11 @@ namespace stock_api.Controllers
                 });
             }
 
-            var updatePurchaseMainIdList = existingAcceptItemList.Select(i=>i.PurchaseMainId).ToList();
+            var updatePurchaseMainIdList = existingAcceptItemList.Select(i => i.PurchaseMainId).ToList();
             var purchaseMainList = _purchaseService.GetPurchaseMainsByMainIdList(updatePurchaseMainIdList);
-            var existingPurchaseMainIdList = purchaseMainList.Select(p=>p.PurchaseMainId).ToList() ;
+            var existingPurchaseMainIdList = purchaseMainList.Select(p => p.PurchaseMainId).ToList();
             var notExistPurchaseMainIdList = existingPurchaseMainIdList.Except(existingPurchaseMainIdList).ToList();
-            if (notExistPurchaseMainIdList.Count>0)
+            if (notExistPurchaseMainIdList.Count > 0)
             {
                 return BadRequest(new CommonResponse<dynamic>
                 {
@@ -439,14 +445,14 @@ namespace stock_api.Controllers
             }
 
             var updateAcceptItemsList = request.UpdateAcceptItemList;
-            List<string> exceedDeadLineRuleIdList = new ();
+            List<string> exceedDeadLineRuleIdList = new();
             List<UpdateAcceptItemRequest> notExceedDeadLineRuleRequestList = new();
 
             foreach (var item in updateAcceptItemsList)
             {
-                var matchedExistAcceptItem = existingAcceptItemList.Where(i=>i.AcceptId==item.AcceptId).FirstOrDefault();
-                var matchedProduct = existingProductList.Where(p=>p.ProductId==matchedExistAcceptItem.ProductId).FirstOrDefault();
-                if(item.ExpirationDate!=null&& matchedProduct.DeadlineRule != null)
+                var matchedExistAcceptItem = existingAcceptItemList.Where(i => i.AcceptId == item.AcceptId).FirstOrDefault();
+                var matchedProduct = existingProductList.Where(p => p.ProductId == matchedExistAcceptItem.ProductId).FirstOrDefault();
+                if (item.ExpirationDate != null && matchedProduct.DeadlineRule != null)
                 {
                     var expirationDate = DateOnly.FromDateTime(DateTimeHelper.ParseDateString(item.ExpirationDate).Value);
                     // check : 如果今天日期+deallinerule(至少要可以放幾天) > 保存期限，代表保存期前過短
@@ -464,17 +470,17 @@ namespace stock_api.Controllers
                     notExceedDeadLineRuleRequestList.Add(item);
                 }
             }
-            
 
-            List<dynamic> updateResultDataList = new ();
-            List<string> newLotNumberIdList = new ();
+
+            List<dynamic> updateResultDataList = new();
+            List<string> newLotNumberIdList = new();
             List<string> failedIdList = new();
             // 未超過允收末效的就先入庫
             foreach (var item in notExceedDeadLineRuleRequestList)
             {
                 var matchedExistAcceptItem = existingAcceptItemList.Where(i => i.AcceptId == item.AcceptId).FirstOrDefault();
                 var matchedProduct = existingProductList.Where(p => p.ProductId == matchedExistAcceptItem.ProductId).FirstOrDefault();
-                var matchedPurchaseMain = purchaseMainList.Where(p=>p.PurchaseMainId==matchedExistAcceptItem.PurchaseMainId).FirstOrDefault();
+                var matchedPurchaseMain = purchaseMainList.Where(p => p.PurchaseMainId == matchedExistAcceptItem.PurchaseMainId).FirstOrDefault();
 
                 List<InStockItemRecord> existingStockInRecords = _stockInService.GetInStockRecordsHistory(matchedExistAcceptItem.ProductId, compId).OrderByDescending(item => item.CreatedAt).ToList();
                 var lastLotNumber = existingStockInRecords.FirstOrDefault()?.LotNumber;
@@ -507,7 +513,7 @@ namespace stock_api.Controllers
 
             return Ok(new CommonResponse<dynamic>
             {
-                Result = failedIdList.Count==0,
+                Result = failedIdList.Count == 0,
                 Message = "",
                 Data = new
                 {
@@ -517,5 +523,10 @@ namespace stock_api.Controllers
             });
         }
 
+    }
+
+    public class SupplierDto
+    {
+        string 
     }
 }
