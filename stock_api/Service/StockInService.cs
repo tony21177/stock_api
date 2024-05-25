@@ -214,7 +214,7 @@ namespace stock_api.Service
                 
                 if (updateAcceptItem.AcceptQuantity.HasValue)
                 {
-                    existingAcceptanceItem.AcceptQuantity += updateAcceptItem.AcceptQuantity.Value;
+                    existingAcceptanceItem.AcceptQuantity = updateAcceptItem.AcceptQuantity.Value + existingAcceptanceItem.AcceptQuantity??0;
                 }
                 if (updateAcceptItem.AcceptUserId != null)
                 {
