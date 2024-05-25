@@ -92,6 +92,8 @@ namespace stock_api.Controllers
                         item.UDICreateCode = matchedProdcut.UdicreateCode;
                         item.UDIVerifyDateCode = matchedProdcut.UdiverifyDateCode;
                         item.Prod_supplierName = matchedProdcut.DefaultSupplierName;
+                        item.ArrangeSupplierId = item.ArrangeSupplierId;
+                        item.ArrangeSupplierName = item.ArrangeSupplierName;
                     }
                 }
 
@@ -115,8 +117,49 @@ namespace stock_api.Controllers
             if (request.IsGroupBySupplier == true)
             {
                 allAcceptItemList = data.SelectMany(item => item.AcceptItems).ToList();
+                Dictionary<int, List<AcceptItem>> supplierIdAndAcceptItemListMap = new();
+                supplierIdAndAcceptItemListMap[-1] = new();
+                allAcceptItemList.ForEach(item =>
+                {
+                    if (item.ArrangeSupplierId != null)
+                    {
+                        if (!supplierIdAndAcceptItemListMap.ContainsKey(item.ArrangeSupplierId.Value))
+                        {
+                            supplierIdAndAcceptItemListMap[item.ArrangeSupplierId.Value] = new();
+                        }
+                        supplierIdAndAcceptItemListMap[item.ArrangeSupplierId.Value].Add(item);
+                    }
+                    else
+                    {
+                        supplierIdAndAcceptItemListMap[-1].Add(item);
+                    }
+                });
+
+                List<SupplierAccepItemsVo> result = new();
+                foreach (var keyValuePair in supplierIdAndAcceptItemListMap)
+                {
+                    if (keyValuePair.Value.Count > 0)
+                    {
+                        SupplierVo supplierVo = new()
+                        {
+                            ArrangeSupplierId = keyValuePair.Value[0].ArrangeSupplierId ?? -1,
+                            ArrangeSupplierName = keyValuePair.Value[0].ArrangeSupplierName,
+                        };
+                        SupplierAccepItemsVo supplierAccepItemsVo = new()
+                        {
+                            Supplier = supplierVo,
+                            AcceptItems = keyValuePair.Value,
+                        };
+                        result.Add(supplierAccepItemsVo);
+                    }
+                }
+                var responseGroup = new CommonResponse<List<SupplierAccepItemsVo>>
+                {
+                    Result = true,
+                    Data = result
+                };
+                return Ok(responseGroup);
             }
-            
 
 
             var response = new CommonResponse<List<PurchaseAcceptItemsVo>>
@@ -525,8 +568,17 @@ namespace stock_api.Controllers
 
     }
 
-    public class SupplierDto
+    public class SupplierAccepItemsVo
     {
-        string 
+        public SupplierVo Supplier { get; set; } = null!;
+
+        public List<AcceptItem> AcceptItems {  get; set; } = new();
+
+    }
+
+    public class SupplierVo
+    {
+        public int ArrangeSupplierId { get; set; }
+        public string? ArrangeSupplierName { get; set; }
     }
 }

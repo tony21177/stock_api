@@ -401,7 +401,8 @@ namespace stock_api.Service
                             ProductSpec = item.ProductSpec,
                             UdiserialCode = item.UdiserialCode,
                             PurchaseMainId = purchaseMain.PurchaseMainId,
-
+                            ArrangeSupplierId = item.ArrangeSupplierId,
+                            ArrangeSupplierName = item.ArrangeSupplierName,
                         };
                         acceptanceItems.Add(acceptanceItem);
                     }
