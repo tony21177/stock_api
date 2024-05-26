@@ -95,4 +95,10 @@ public partial class PurchaseMainSheet
     /// </summary>
     [StringLength(45)]
     public string? SplitPrcoess { get; set; }
+
+    /// <summary>
+    /// NONE,NOT_AGREE,AGREE
+    /// </summary>
+    [StringLength(45)]
+    public string? OwnerProcess { get; set; }
 }

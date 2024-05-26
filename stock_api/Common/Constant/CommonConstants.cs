@@ -32,6 +32,18 @@ namespace stock_api.Common.Constant
             }
         }
 
+        public static class PurchaseMainOwnerProcessStatus
+        {
+            public const string NONE = "NONE";
+            public const string NOT_AGREE = "NOT_AGREE";
+            public const string AGREE = "AGREE";
+
+            public static List<string> GetAllValues()
+            {
+                return new List<string> { NONE, NOT_AGREE, AGREE };
+            }
+        }
+
         public static class PurchaseReceiveStatus
         {
             public const string NONE = "NONE";

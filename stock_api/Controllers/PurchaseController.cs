@@ -37,7 +37,8 @@ namespace stock_api.Controllers
         private readonly IValidator<CreatePurchaseRequest> _createPurchaseValidator;
         private readonly IValidator<ListPurchaseRequest> _listPurchaseRequestValidator;
         private readonly IValidator<AnswerFlowRequest> _answerFlowRequestValidator;
-        
+        private readonly IValidator<UpdateOwnerProcessRequest> _updateOwnerProcessRequestValidator;
+
 
         public PurchaseController(IMapper mapper, AuthHelpers authHelpers, PurchaseFlowSettingService purchaseFlowSettingService, MemberService memberService, CompanyService companyService,SupplierService supplierService, PurchaseService purchaseService, WarehouseProductService warehouseProductService, GroupService groupService)
         {
@@ -53,6 +54,7 @@ namespace stock_api.Controllers
             _createPurchaseValidator = new CreatePurchaseValidator(warehouseProductService, groupService,purchaseService);
             _listPurchaseRequestValidator = new ListPurchaseValidator(warehouseProductService, groupService);
             _answerFlowRequestValidator = new AnswerFlowValidator();
+            _updateOwnerProcessRequestValidator = new UpdateOwnerProcessValidator();
         }
 
         [HttpPost("create")]
@@ -196,7 +198,7 @@ namespace stock_api.Controllers
             }
             data = data.OrderByDescending(item => item.ApplyDate).ToList();
 
-            var response = new CommonResponse<dynamic>
+            var response = new CommonResponse<List<PurchaseMainAndSubItemVo>>
             {
                 Result = true,
                 Data = data
@@ -556,6 +558,43 @@ namespace stock_api.Controllers
             };
             return Ok(response);
 
+        }
+
+        [HttpPost("owner/updateOwnerProcess")]
+        [Authorize]
+        public IActionResult UpdateOwnerProcess(UpdateOwnerProcessRequest request)
+        {
+            var memberAndPermissionSetting = _authHelpers.GetMemberAndPermissionSetting(User);
+            var compId = memberAndPermissionSetting.CompanyWithUnit.CompId;
+            if (memberAndPermissionSetting.CompanyWithUnit.Type != CommonConstants.CompanyType.OWNER)
+            {
+                return BadRequest(CommonResponse<dynamic>.BuildNotAuthorizeResponse());
+            }
+
+
+            var validationResult = _updateOwnerProcessRequestValidator.Validate(request);
+
+            if (!validationResult.IsValid)
+            {
+                return BadRequest(CommonResponse<dynamic>.BuildValidationFailedResponse(validationResult));
+            }
+
+            PurchaseMainSheet purchaseMainSheet = _purchaseService.GetPurchaseMainByMainId(request.PurchaseMainId);
+            if (purchaseMainSheet == null)
+            {
+                return BadRequest(new CommonResponse<dynamic>
+                {
+                    Result = false,
+                    Message = "採購單不存在"
+                });
+            }
+            _purchaseService.UpdatePurchaseOwnerProcess(purchaseMainSheet, request.OwnerProcess);
+
+            var response = new CommonResponse<dynamic>
+            {
+                Result = true,
+            };
+            return Ok(response);
         }
     } 
 }

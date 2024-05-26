@@ -92,6 +92,12 @@ public partial class PurchaseItemListView
     [StringLength(45)]
     public string? MainSplitPrcoess { get; set; }
 
+    /// <summary>
+    /// NONE,NOT_AGREE,AGREE
+    /// </summary>
+    [StringLength(45)]
+    public string? OwnerProcess { get; set; }
+
     [StringLength(100)]
     public string ItemId { get; set; } = null!;
 

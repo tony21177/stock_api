@@ -295,6 +295,7 @@ namespace stock_api.Service
                     UpdatedAt = kvp.Value[0].UpdatedAt,
                     IsActive = kvp.Value[0].IsActive,
                     SplitProcess = kvp.Value[0].MainSplitPrcoess,
+                    OwnerProcess = kvp.Value[0].OwnerProcess,   
                     Items = Items,
                 };
                 purchaseMainAndSubItemVoList.Add(vo);
@@ -336,6 +337,12 @@ namespace stock_api.Service
         {
             return _dbContext.PurchaseFlows.Where(f => f.VerifyUserId == userId).ToList();
 
+        }
+
+        public void UpdatePurchaseOwnerProcess(PurchaseMainSheet main,String status)
+        {
+            main.OwnerProcess = status;
+            _dbContext.SaveChanges();
         }
 
         public void PurchaseFlowRead(PurchaseFlow flow)

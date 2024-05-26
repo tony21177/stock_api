@@ -465,6 +465,9 @@ public partial class StockDbContext : DbContext
             entity.Property(e => e.MainSplitPrcoess)
                 .HasDefaultValueSql("'NONE'")
                 .HasComment("NONE(所有sub_item都尚未經過OWNER拆單),PART(部分sub_item經過OWNER拆單),DONE(所有sub_item經過OWNER拆單)");
+            entity.Property(e => e.OwnerProcess)
+                .HasDefaultValueSql("'NONE'")
+                .HasComment("NONE,NOT_AGREE,AGREE");
             entity.Property(e => e.ProductCategory).HasComment("品項的 ProductCategory, 用來醫院拆單用");
             entity.Property(e => e.ProductId).HasComment("品項的PK，\n參考 Product Table");
             entity.Property(e => e.ProductName).HasComment("品項名稱");
@@ -500,6 +503,9 @@ public partial class StockDbContext : DbContext
             entity.Property(e => e.CurrentStatus).HasComment("目前狀態\nAPPLY : 申請中\nAGREE : 同意\nREJECT : 拒絕\nCLOSE : 結案");
             entity.Property(e => e.DemandDate).HasComment("需求日期");
             entity.Property(e => e.GroupIds).HasComment("設定此單據所屬的組別，參考 Warehouse_Group");
+            entity.Property(e => e.OwnerProcess)
+                .HasDefaultValueSql("'NONE'")
+                .HasComment("NONE,NOT_AGREE,AGREE");
             entity.Property(e => e.ReceiveStatus).HasComment("送單到金萬林後，目前狀態\nNONE : 尚未收到結果\nDELIVERED : 金萬林已出貨\nIN_ACCEPTANCE_CHECK : 驗收中\nPART_ACCEPT : 部分驗收入庫\nALL_ACCEPT : 全部驗收入庫");
             entity.Property(e => e.Remarks).HasComment("備註內容");
             entity.Property(e => e.SplitPrcoess)
