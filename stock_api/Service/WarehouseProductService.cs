@@ -215,7 +215,7 @@ namespace stock_api.Service
                     updateProduct.OpenDeadline = existingProduct.OpenDeadline;
                 }
 
-
+                updateProduct.CompId = existingProduct.CompId;
                 _mapper.Map(updateProduct, existingProduct);
                 if (groups.Count > 0)
                 {
@@ -296,7 +296,7 @@ namespace stock_api.Service
                     updateProduct.TestCount = existingProduct.TestCount;
                 }
                 updateProduct.IsActive = existingProduct.IsActive;
-
+                updateProduct.CompId = existingProduct.CompId;
                 _mapper.Map(updateProduct, existingProduct);
                 var groupIds = request.GroupIds;
                 if (groupIds != null)

@@ -210,12 +210,12 @@ namespace stock_api.Controllers
             }
             var groups = _groupService.GetGroupsByIdList(request.GroupIds);
 
-            _warehouseProductService.UpdateProduct(request,existingProduct,groups);
+            var result = _warehouseProductService.UpdateProduct(request,existingProduct,groups);
 
 
             var response = new CommonResponse<WarehouseProduct>()
             {
-                Result = true,
+                Result = result,
                 Message = "",
             };
             return Ok(response);
@@ -261,12 +261,12 @@ namespace stock_api.Controllers
                 manufacturer = _manufacturerService.GetManufacturerById(request.ManufacturerId);
             }
 
-            _warehouseProductService.AdminUpdateProduct(request, existingProduct, supplier, manufacturer, groups);
+            var result = _warehouseProductService.AdminUpdateProduct(request, existingProduct, supplier, manufacturer, groups);
 
 
             var response = new CommonResponse<WarehouseProduct>()
             {
-                Result = true,
+                Result = result,
                 Message = "",
             };
             return Ok(response);
