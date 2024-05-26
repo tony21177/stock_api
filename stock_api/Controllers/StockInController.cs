@@ -153,6 +153,10 @@ namespace stock_api.Controllers
                         result.Add(supplierAccepItemsVo);
                     }
                 }
+                if (request.SupplierId != null)
+                {
+                    result = result.Where(i=>i.Supplier.ArrangeSupplierId==request.SupplierId).ToList();    
+                }
                 var responseGroup = new CommonResponse<List<SupplierAccepItemsVo>>
                 {
                     Result = true,

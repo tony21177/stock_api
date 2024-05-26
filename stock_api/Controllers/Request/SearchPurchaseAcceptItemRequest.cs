@@ -14,6 +14,7 @@
         public string? PurchaseMainId { get; set; }
 
         public bool? IsGroupBySupplier { get; set; } = false;
+        public int? SupplierId { get; set; }
 
     }
 }
