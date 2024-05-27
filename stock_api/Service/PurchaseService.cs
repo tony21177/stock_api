@@ -339,10 +339,23 @@ namespace stock_api.Service
 
         }
 
-        public void UpdatePurchaseOwnerProcess(PurchaseMainSheet main,String status)
+        public bool UpdatePurchaseOwnerProcess(PurchaseMainSheet main,String status)
         {
-            main.OwnerProcess = status;
-            _dbContext.SaveChanges();
+            using var scope = new TransactionScope();
+            try
+            {
+                main.OwnerProcess = status;
+                main.SplitPrcoess = CommonConstants.SplitProcess.DONE;
+                _dbContext.PurchaseSubItems.Where(i => i.PurchaseMainId == main.PurchaseMainId).ExecuteUpdate(i => i.SetProperty(i => i.SplitProcess, CommonConstants.SplitProcess.DONE));
+                _dbContext.SaveChanges();
+                scope.Complete();
+                return true;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError("事務失敗[UpdatePurchaseOwnerProcess]：{msg}", ex);
+                return false;
+            }
         }
 
         public void PurchaseFlowRead(PurchaseFlow flow)
