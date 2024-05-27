@@ -104,6 +104,8 @@ namespace stock_api.Controllers.Validator
                 .Must((subItem, x, context) => BeValidWithSubItem(subItem, context))
                 .When(subItem => subItem.WithPurchaseMainId!=null&&subItem.WithItemId!=null)
                 .WithMessage("對應的withSubItem(待拆單採購品項)不存在");
+            RuleFor(x => x.Quantity).GreaterThan(0).WithMessage("採購數量必須大於0");
+
         }
 
         private bool BeValidWithSubItem(SubItem subItem, ValidationContext<SubItem> context)
