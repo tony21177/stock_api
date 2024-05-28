@@ -106,10 +106,11 @@ namespace stock_api.Service
                         {
                             existItem.LotNumber = matchedUpdateAcceptItem.LotNumber;
                         }
-                        var now = DateTime.Now;
-                        var nowDateTimeString = DateTimeHelper.FormatDateString(now, "yyyyMMddHHmm");
+                        //var now = DateTime.Now;
+                        //var nowDateTimeString = DateTimeHelper.FormatDateString(now, "yyyyMMddHHmm");
 
-                        existItem.LotNumberBatch = $"{matchedProduct.ProductCode}{nowDateTimeString}";
+                        //existItem.LotNumberBatch = $"{matchedProduct.ProductCode}{nowDateTimeString}";
+                        existItem.LotNumberBatch = existItem.LotNumberBatchSeq.ToString("D12");
                         if (matchedUpdateAcceptItem.ExpirationDate != null)
                         {
                             existItem.ExpirationDate = DateOnly.FromDateTime(DateTimeHelper.ParseDateString(matchedUpdateAcceptItem.ExpirationDate).Value);
@@ -225,9 +226,10 @@ namespace stock_api.Service
                 {
                     existingAcceptanceItem.LotNumber = updateAcceptItem.LotNumber;
                 }
-                var now = DateTime.Now;
-                var nowDateTimeString = DateTimeHelper.FormatDateString(now, "yyyyMMddHHmm");
-                existingAcceptanceItem.LotNumberBatch = $"{product.ProductCode}{nowDateTimeString}";
+                //var now = DateTime.Now;
+                //var nowDateTimeString = DateTimeHelper.FormatDateString(now, "yyyyMMddHHmm");
+                //existingAcceptanceItem.LotNumberBatch = $"{product.ProductCode}{nowDateTimeString}";
+                existingAcceptanceItem.LotNumberBatch = existingAcceptanceItem.LotNumberBatchSeq.ToString("D12");
                 if (updateAcceptItem.ExpirationDate != null)
                 {
                     existingAcceptanceItem.ExpirationDate = DateOnly.FromDateTime(DateTimeHelper.ParseDateString(updateAcceptItem.ExpirationDate).Value);

@@ -12,6 +12,7 @@ namespace stock_api.Models;
 /// 各採購項目驗收紀錄
 /// </summary>
 [Table("acceptance_item")]
+[Index("LotNumberBatchSeq", Name = "LotNumberBatchSeq_UNIQUE", IsUnique = true)]
 public partial class AcceptanceItem
 {
     [Key]
@@ -157,4 +158,6 @@ public partial class AcceptanceItem
 
     [StringLength(100)]
     public string? ArrangeSupplierName { get; set; }
+
+    public int LotNumberBatchSeq { get; set; }
 }
