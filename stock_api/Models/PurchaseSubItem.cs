@@ -65,12 +65,12 @@ public partial class PurchaseSubItem
     /// <summary>
     /// 數量
     /// </summary>
-    public int? Quantity { get; set; }
+    public float? Quantity { get; set; }
 
     /// <summary>
     /// 已收到的數量
     /// </summary>
-    public int? ReceiveQuantity { get; set; }
+    public float? ReceiveQuantity { get; set; }
 
     /// <summary>
     /// 送單到金萬林後，目前狀態\nNONE : 尚未收到結果\nPART : 部分驗收入庫\nDONE : 全部驗收入庫\nCLOSE:金萬林不同意拆單後的採購項目
@@ -107,7 +107,7 @@ public partial class PurchaseSubItem
     /// <summary>
     /// 採購單項目在建立當下的庫存數量
     /// </summary>
-    public int? CurrentInStockQuantity { get; set; }
+    public float? CurrentInStockQuantity { get; set; }
 
     [Column(TypeName = "timestamp")]
     public DateTime CreatedAt { get; set; }

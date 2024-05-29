@@ -71,7 +71,7 @@ public partial class WarehouseProductStockOutView
     /// <summary>
     /// 庫存數量
     /// </summary>
-    public int? InStockQuantity { get; set; }
+    public float? InStockQuantity { get; set; }
 
     /// <summary>
     /// 管理者
@@ -82,7 +82,7 @@ public partial class WarehouseProductStockOutView
     /// <summary>
     /// 最高安庫量
     /// </summary>
-    public int? MaxSafeQuantity { get; set; }
+    public float? MaxSafeQuantity { get; set; }
 
     /// <summary>
     /// 最後可使用日期
@@ -171,7 +171,7 @@ public partial class WarehouseProductStockOutView
     /// <summary>
     /// 最小安庫量
     /// </summary>
-    public int? SafeQuantity { get; set; }
+    public float? SafeQuantity { get; set; }
 
     /// <summary>
     /// UDI 碼
@@ -250,12 +250,12 @@ public partial class WarehouseProductStockOutView
     /// <summary>
     /// 用來在訂購時將最小單位轉為訂購規格及驗收時 將訂購規格轉為最小單位數量用的欄位
     /// </summary>
-    public int? UnitConversion { get; set; }
+    public float? UnitConversion { get; set; }
 
     /// <summary>
     /// 在總覽表與目前庫存數量(InStockQuantity)相乘顯示給使用者知道目前可用的數量用的欄位
     /// </summary>
-    public int? TestCount { get; set; }
+    public float? TestCount { get; set; }
 
     public bool? IsActive { get; set; }
 
@@ -269,7 +269,7 @@ public partial class WarehouseProductStockOutView
     [StringLength(200)]
     public string? Delievery { get; set; }
 
-    public int? SupplierUnitConvertsion { get; set; }
+    public float? SupplierUnitConvertsion { get; set; }
 
     [StringLength(100)]
     public string? SupplierUnit { get; set; }
@@ -286,7 +286,7 @@ public partial class WarehouseProductStockOutView
 
     [StringLength(45)]
     public string? CompName { get; set; }
-    public int? BatchInStockQuantity { get; set; } // 對應 inStockRecord 的 instockQuantity
-    public int? BatchOutStockQuantity { get; set; } // 對應 inStockRecord 的 outstockQuantity
+    public float? BatchInStockQuantity { get; set; } // 對應 inStockRecord 的 instockQuantity
+    public float? BatchOutStockQuantity { get; set; } // 對應 inStockRecord 的 outstockQuantity
     public DateOnly? BatchExpirationDate { get; set; } // 對應 inStockRecord 的 expirationDate
 }

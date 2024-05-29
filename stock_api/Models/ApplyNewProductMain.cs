@@ -21,7 +21,7 @@ public partial class ApplyNewProductMain
     /// <summary>
     /// 申請數量
     /// </summary>
-    public int ApplyQuantity { get; set; }
+    public float ApplyQuantity { get; set; }
 
     /// <summary>
     /// 申請原因

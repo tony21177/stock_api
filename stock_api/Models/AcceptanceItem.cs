@@ -28,7 +28,7 @@ public partial class AcceptanceItem
     /// <summary>
     /// 驗收接受數量，不可大於 OrderQuantity
     /// </summary>
-    public int? AcceptQuantity { get; set; }
+    public float? AcceptQuantity { get; set; }
 
     /// <summary>
     /// 驗收允收者的UserID
@@ -69,7 +69,7 @@ public partial class AcceptanceItem
     /// <summary>
     /// 訂購數量，對應 PurchaseSubItem 的 Quantity
     /// </summary>
-    public int OrderQuantity { get; set; }
+    public float OrderQuantity { get; set; }
 
     /// <summary>
     /// 外觀包裝
@@ -117,7 +117,7 @@ public partial class AcceptanceItem
     /// <summary>
     /// 驗收入庫後，當下該品項的總庫存數量
     /// </summary>
-    public int? CurrentTotalQuantity { get; set; }
+    public float? CurrentTotalQuantity { get; set; }
 
     /// <summary>
     /// 初驗驗收填寫相關原因

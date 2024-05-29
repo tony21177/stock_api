@@ -30,20 +30,20 @@ namespace stock_api.Service.ValueObject
     {
         public string PurchaseMainId { get; set; }
         public string AcceptId { get; set; }
-        public int? AcceptQuantity { get; set; }
+        public float? AcceptQuantity { get; set; }
         public string? AcceptUserId { get; set; }
         public string? LotNumberBatch { get; set; }
         public string? LotNumber { get; set; }
         public DateOnly? ExpirationDate { get; set; }
         public string ItemId { get; set; }
-        public int OrderQuantity { get; set; }
+        public float OrderQuantity { get; set; }
         public string? PackagingStatus { get; set; }
         public string ProductId { get; set; }
         public string ProductName { get; set; }
         public string ProductSpec { get; set; }
         public string? UdiserialCode { get; set; }
         public string? QcStatus { get; set; }
-        public int? CurrentTotalQuantity { get; set; }
+        public float? CurrentTotalQuantity { get; set; }
         public string? Comment { get; set; }
         public string? QcComment { get; set; }
         public DateTime? AcceptCreatedAt { get; set; }

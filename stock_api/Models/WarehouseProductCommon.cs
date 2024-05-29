@@ -181,12 +181,12 @@ public partial class WarehouseProductCommon
     /// <summary>
     /// 用來在訂購時將最小單位轉為訂購規格及驗收時 將訂購規格轉為最小單位數量用的欄位
     /// </summary>
-    public int UnitConversion { get; set; }
+    public float UnitConversion { get; set; }
 
     /// <summary>
     /// 在總覽表與目前庫存數量(InStockQuantity)相乘顯示給使用者知道目前可用的數量用的欄位
     /// </summary>
-    public int TestCount { get; set; }
+    public float TestCount { get; set; }
 
     [Required]
     public bool? IsActive { get; set; }

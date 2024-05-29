@@ -39,7 +39,7 @@ public partial class InStockItemRecord
     /// <summary>
     /// 現有庫存量
     /// </summary>
-    public int OriginalQuantity { get; set; }
+    public float OriginalQuantity { get; set; }
 
     /// <summary>
     /// 保存期限
@@ -56,7 +56,7 @@ public partial class InStockItemRecord
     /// <summary>
     /// 此次入庫數量
     /// </summary>
-    public int InStockQuantity { get; set; }
+    public float InStockQuantity { get; set; }
 
     /// <summary>
     /// 品項PK
@@ -111,7 +111,7 @@ public partial class InStockItemRecord
     /// <summary>
     /// 入庫後數量
     /// </summary>
-    public int AfterQuantity { get; set; }
+    public float AfterQuantity { get; set; }
 
     [Column(TypeName = "timestamp")]
     public DateTime? CreatedAt { get; set; }
@@ -135,5 +135,5 @@ public partial class InStockItemRecord
     [StringLength(45)]
     public string? OutStockStatus { get; set; }
 
-    public int? OutStockQuantity { get; set; }
+    public float? OutStockQuantity { get; set; }
 }

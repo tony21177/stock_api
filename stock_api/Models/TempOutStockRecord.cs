@@ -27,7 +27,7 @@ public partial class TempOutStockRecord
     /// <summary>
     /// 出庫數量
     /// </summary>
-    public int ApplyQuantity { get; set; }
+    public float ApplyQuantity { get; set; }
 
     /// <summary>
     /// 是否為出庫異常
@@ -104,7 +104,7 @@ public partial class TempOutStockRecord
     /// <summary>
     /// 現有庫存量
     /// </summary>
-    public int OriginalQuantity { get; set; }
+    public float OriginalQuantity { get; set; }
 
     /// <summary>
     /// 用來判斷暫存項目是不是已經有複製過去 InStockItemRecord,(0)false: 未複製,(1)true: 已複製

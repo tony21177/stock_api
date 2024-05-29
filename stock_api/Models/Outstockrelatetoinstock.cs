@@ -27,7 +27,7 @@ public partial class OutstockRelatetoInstock
     [StringLength(100)]
     public string? LotNumber { get; set; }
 
-    public int? Quantity { get; set; }
+    public float? Quantity { get; set; }
 
     [Column(TypeName = "timestamp")]
     public DateTime? CreatedAt { get; set; }

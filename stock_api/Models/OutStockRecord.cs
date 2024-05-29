@@ -27,7 +27,7 @@ public partial class OutStockRecord
     /// <summary>
     /// 出庫數量
     /// </summary>
-    public int ApplyQuantity { get; set; }
+    public float ApplyQuantity { get; set; }
 
     /// <summary>
     /// 批次
@@ -104,12 +104,12 @@ public partial class OutStockRecord
     /// <summary>
     /// 現有庫存量
     /// </summary>
-    public int OriginalQuantity { get; set; }
+    public float OriginalQuantity { get; set; }
 
     /// <summary>
     /// 入庫後數量
     /// </summary>
-    public int AfterQuantity { get; set; }
+    public float AfterQuantity { get; set; }
 
     /// <summary>
     /// 對應 PurchaseSubItem 的 PK

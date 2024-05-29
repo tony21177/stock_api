@@ -39,7 +39,7 @@ public partial class TempInStockItemRecord
     /// <summary>
     /// 現有庫存量
     /// </summary>
-    public int OriginalQuantity { get; set; }
+    public float OriginalQuantity { get; set; }
 
     /// <summary>
     /// 保存期限
@@ -49,7 +49,7 @@ public partial class TempInStockItemRecord
     /// <summary>
     /// 此次入庫數量
     /// </summary>
-    public int InStockQuantity { get; set; }
+    public float InStockQuantity { get; set; }
 
     /// <summary>
     /// 品項PK

@@ -12,28 +12,28 @@ namespace stock_api.Service.ValueObject
         public string ProductName { get; set; }
         public string ProductSpec { get; set; }
         public string PurchaseMainId { get; set; }
-        public int? Quantity { get; set; }
-        public int? ReceiveQuantity { get; set; }
+        public float? Quantity { get; set; }
+        public float? ReceiveQuantity { get; set; }
         public string ReceiveStatus { get; set; }
         public List<string> GroupIds { get; set; }
         public List<string> GroupNames { get; set; }
         public string ProductCategory { get; set; }
         public int? ArrangeSupplierId { get; set; }
         public string ArrangeSupplierName { get; set; }
-        public int? CurrentInStockQuantity { get; set; }
+        public float? CurrentInStockQuantity { get; set; }
         public DateTime CreatedAt { get; set; }
         public DateTime UpdatedAt { get; set; }
 
-        public int? MaxSafeQuantity { get; set; }
+        public float? MaxSafeQuantity { get; set; }
         public string ProductModel { get; set; } 
         public string ManufacturerName { get; set; }
         public string ProductMachine { get; set; }
         public string ProductUnit { get; set; }
-        public int? UnitConversion { get; set; }
-        public int? TestCount { get; set; }
+        public float? UnitConversion { get; set; }
+        public float? TestCount { get; set; }
         public string PackageWay { get; set; }
         public string ProductCode { get; set; }
-        public int? SupplierUnitConvertsion { get; set; }
+        public float? SupplierUnitConvertsion { get; set; }
         public string? SupplierUnit { get; set; }
         public string? Delivery { get; set; }
 
