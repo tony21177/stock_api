@@ -502,10 +502,10 @@ namespace stock_api.Service
         //}
 
 
-        public List<InStockItemRecord> GetProductInStockRecordsHistoryNotAllOutExpirationFIFO(string lotNumberBatch, string compId)
+        public List<InStockItemRecord> GetProductInStockRecordsHistoryNotAllOutExpirationFIFO(string productCode, string compId)
         {
             // 先挑效期最早的相同的再依據FIFO
-            return _dbContext.InStockItemRecords.Where(record => record.CompId == compId && record.LotNumberBatch == lotNumberBatch
+            return _dbContext.InStockItemRecords.Where(record => record.CompId == compId && record.ProductCode == productCode
             && record.OutStockStatus != CommonConstants.OutStockStatus.ALL).OrderBy(record => record.ExpirationDate).ThenBy(record=>record.CreatedAt).ToList();
         }
     }
