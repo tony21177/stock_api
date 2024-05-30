@@ -72,6 +72,7 @@ namespace stock_api.Controllers
                 });
             }
             var productCode = inStockRecord.ProductCode;
+            request.ProductCode = productCode;
 
             List<InStockItemRecord> inStockItemRecordsNotAllOutExDateFIFO = _stockInService.GetProductInStockRecordsHistoryNotAllOutExpirationFIFO(productCode, compId);
 
@@ -284,7 +285,7 @@ namespace stock_api.Controllers
                 });
             }
 
-            var product = _warehouseProductService.GetProductByProductCodeAndCompId(request.LotNumberBatch[..3], compId);
+            var product = _warehouseProductService.GetProductByProductCodeAndCompId(request.ProductCode, compId);
             if (product == null)
             {
                 return BadRequest(new CommonResponse<dynamic>
@@ -638,6 +639,7 @@ namespace stock_api.Controllers
                 }
 
                 var productCode = inStockRecord.ProductCode;
+                outItem.ProductCode = productCode;
                 productCodeList.Add(productCode);
                 List<InStockItemRecord> inStockItemRecordsNotAllOutExDateFIFO = _stockInService.GetProductInStockRecordsHistoryNotAllOutExpirationFIFO(productCode, compId);
 
@@ -667,7 +669,7 @@ namespace stock_api.Controllers
                     return (notFoundLotNumberBatchList, lotNumberBatchAndProductCodeInStockExFIFORecordsMap, productCodeList);
                 }
                 var productCode = inStockRecord.ProductCode;
-
+                outItem.ProductCode = productCode;
                 productCodeList.Add(productCode);
                 List<InStockItemRecord> inStockItemRecordsNotAllOutExDateFIFO = _stockInService.GetProductInStockRecordsHistoryNotAllOutExpirationFIFO(productCode, compId);
 
@@ -690,7 +692,7 @@ namespace stock_api.Controllers
             List<string> productCodeList = new();
             foreach (var outItem in outBoundItems)
             {
-                var productCode = outItem.LotNumberBatch[..3];
+                var productCode = outItem.ProductCode;
                 var product = _warehouseProductService.GetProductByProductCodeAndCompId(productCode, compId);
 
                 if (product == null)
@@ -712,7 +714,7 @@ namespace stock_api.Controllers
             List<string> productCodeList = new();
             foreach (var outItem in outBoundItems)
             {
-                var productCode = outItem.LotNumberBatch[..3];
+                var productCode = outItem.ProductCode;
                 var product = _warehouseProductService.GetProductByProductCodeAndCompId(productCode, compId);
                
                 if (product == null)
