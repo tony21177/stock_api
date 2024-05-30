@@ -62,7 +62,17 @@ namespace stock_api.Controllers
                 return BadRequest(CommonResponse<dynamic>.BuildValidationFailedResponse(validationResult));
             }
 
-            var productCode = request.LotNumberBatch[..3];
+            var inStockRecord = _stockInService.GetInStockRecordByLotNumberBatch(request.LotNumberBatch,compId);
+            if (inStockRecord == null)
+            {
+                return BadRequest(new CommonResponse<dynamic>
+                {
+                    Result = false,
+                    Message = "未找到該品項尚未出庫的入庫紀錄"
+                });
+            }
+            var productCode = inStockRecord.ProductCode;
+
             List<InStockItemRecord> inStockItemRecordsNotAllOutExDateFIFO = _stockInService.GetProductInStockRecordsHistoryNotAllOutExpirationFIFO(productCode, compId);
 
             if (inStockItemRecordsNotAllOutExDateFIFO.Count == 0)
@@ -620,7 +630,14 @@ namespace stock_api.Controllers
             List<string> productCodeList = new();
             foreach (var outItem in outBoundItems)
             {
-                var productCode = outItem.LotNumberBatch;
+                var inStockRecord = _stockInService.GetInStockRecordByLotNumberBatch(outItem.LotNumberBatch, compId);
+                if (inStockRecord == null)
+                {
+                    notFoundLotNumberBatchList.Add(outItem.LotNumberBatch);
+                    return (notFoundLotNumberBatchList, lotNumberBatchAndProductCodeInStockExFIFORecordsMap, productCodeList);
+                }
+
+                var productCode = inStockRecord.ProductCode;
                 productCodeList.Add(productCode);
                 List<InStockItemRecord> inStockItemRecordsNotAllOutExDateFIFO = _stockInService.GetProductInStockRecordsHistoryNotAllOutExpirationFIFO(productCode, compId);
 
@@ -643,7 +660,14 @@ namespace stock_api.Controllers
             List<string> productCodeList = new();
             foreach (var outItem in outBoundItems)
             {
-                var productCode = outItem.LotNumberBatch[..3];
+                var inStockRecord = _stockInService.GetInStockRecordByLotNumberBatch(outItem.LotNumberBatch, compId);
+                if (inStockRecord == null)
+                {
+                    notFoundLotNumberBatchList.Add(outItem.LotNumberBatch);
+                    return (notFoundLotNumberBatchList, lotNumberBatchAndProductCodeInStockExFIFORecordsMap, productCodeList);
+                }
+                var productCode = inStockRecord.ProductCode;
+
                 productCodeList.Add(productCode);
                 List<InStockItemRecord> inStockItemRecordsNotAllOutExDateFIFO = _stockInService.GetProductInStockRecordsHistoryNotAllOutExpirationFIFO(productCode, compId);
 

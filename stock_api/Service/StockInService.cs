@@ -485,6 +485,11 @@ namespace stock_api.Service
             return _dbContext.InStockItemRecords.Where(record=>record.CompId==compId&&record.ProductId==prodcutId).ToList();
         }
 
+        public InStockItemRecord? GetInStockRecordByLotNumberBatch(string lotNumberBatch, string compId)
+        {
+            return _dbContext.InStockItemRecords.Where(record => record.CompId == compId && record.LotNumberBatch == lotNumberBatch).FirstOrDefault();
+        }
+
         public List<InStockItemRecord> GetInStockRecordsHistoryByLotNumberBatch(string lotNumberBatch, string compId)
         {
             return _dbContext.InStockItemRecords.Where(record => record.CompId == compId && record.LotNumberBatch == lotNumberBatch).ToList();

@@ -367,9 +367,6 @@ namespace stock_api.Service
                     main.CurrentStatus = CommonConstants.PurchaseApplyStatus.CLOSE;
                 }
 
-
-
-                _dbContext.PurchaseSubItems.Where(i => i.PurchaseMainId == main.PurchaseMainId).ExecuteUpdate(i => i.SetProperty(i => i.SplitProcess, CommonConstants.SplitProcess.DONE));
                 _dbContext.SaveChanges();
                 scope.Complete();
                 return true;
