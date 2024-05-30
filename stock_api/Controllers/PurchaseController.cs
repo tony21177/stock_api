@@ -588,7 +588,9 @@ namespace stock_api.Controllers
                     Message = "採購單不存在"
                 });
             }
-            _purchaseService.UpdatePurchaseOwnerProcess(purchaseMainSheet, request.OwnerProcess);
+            List<PurchaseSubItem> allPurchaseSubItems = _purchaseService.GetPurchaseSubItemsByMainId(request.PurchaseMainId);
+
+            _purchaseService.UpdatePurchaseOwnerProcess(purchaseMainSheet, allPurchaseSubItems, request);
 
             var response = new CommonResponse<dynamic>
             {

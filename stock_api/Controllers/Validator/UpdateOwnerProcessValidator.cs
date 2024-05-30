@@ -15,8 +15,8 @@ namespace stock_api.Controllers.Validator
         {
             RuleFor(request => request.OwnerProcess)
                 .Cascade(CascadeMode.Stop) // Stop on first failure
-                .Must(status => CommonConstants.PurchaseMainOwnerProcessStatus.GetAllValues().Contains(status))
-                    .WithMessage($"ownerProcess必須為{string.Join(",", CommonConstants.PurchaseMainOwnerProcessStatus.GetAllValues())}");
+                .Must(status => CommonConstants.UpdateOwnerProcessStatus.GetAllValues().Contains(status))
+                    .WithMessage($"ownerProcess必須為{string.Join(",", CommonConstants.UpdateOwnerProcessStatus.GetAllValues())}");
             
 
         }

@@ -5,5 +5,7 @@
         public string PurchaseMainId { get; set; }
 
         public string OwnerProcess { get; set; }
+
+        public List<string>? ItemIds { get; set; }
     }
 }

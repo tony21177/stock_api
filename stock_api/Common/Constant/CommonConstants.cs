@@ -36,11 +36,23 @@ namespace stock_api.Common.Constant
         {
             public const string NONE = "NONE";
             public const string NOT_AGREE = "NOT_AGREE";
+            public const string PART_AGREE = "PART_AGREE";
             public const string AGREE = "AGREE";
 
             public static List<string> GetAllValues()
             {
-                return new List<string> { NONE, NOT_AGREE, AGREE };
+                return new List<string> { NONE, NOT_AGREE, AGREE, PART_AGREE };
+            }
+        }
+
+        public static class UpdateOwnerProcessStatus
+        {
+            public const string NOT_AGREE = "NOT_AGREE";
+            public const string AGREE = "AGREE";
+
+            public static List<string> GetAllValues()
+            {
+                return new List<string> {  NOT_AGREE, AGREE,  };
             }
         }
 

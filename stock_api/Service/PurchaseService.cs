@@ -339,13 +339,36 @@ namespace stock_api.Service
 
         }
 
-        public bool UpdatePurchaseOwnerProcess(PurchaseMainSheet main,String status)
+        public bool UpdatePurchaseOwnerProcess(PurchaseMainSheet main,List<PurchaseSubItem> allPurchaseSubItems ,UpdateOwnerProcessRequest request)
         {
             using var scope = new TransactionScope();
             try
             {
-                main.OwnerProcess = status;
-                main.SplitPrcoess = CommonConstants.SplitProcess.DONE;
+                List<PurchaseSubItem> toUpdateSubItems = new();
+                if (request.ItemIds != null)
+                {
+                    toUpdateSubItems = allPurchaseSubItems.Where(s => request.ItemIds.Contains(s.ItemId)).ToList();
+                }
+                toUpdateSubItems.ForEach(s => { s.OwnerProcess = request.OwnerProcess; });
+                if (allPurchaseSubItems.All(s => s.OwnerProcess == CommonConstants.PurchaseMainOwnerProcessStatus.AGREE))
+                {
+                    main.OwnerProcess = CommonConstants.PurchaseMainOwnerProcessStatus.AGREE;
+                    main.SplitPrcoess = CommonConstants.SplitProcess.DONE;
+                    main.ReceiveStatus = CommonConstants.PurchaseReceiveStatus.DELIVERED;
+                }else if (allPurchaseSubItems.Any(s => s.OwnerProcess == CommonConstants.PurchaseMainOwnerProcessStatus.AGREE))
+                {
+                    main.OwnerProcess = CommonConstants.PurchaseMainOwnerProcessStatus.PART_AGREE;
+                    main.SplitPrcoess = CommonConstants.SplitProcess.PART;
+                    main.ReceiveStatus = CommonConstants.PurchaseReceiveStatus.DELIVERED;
+                }else if(allPurchaseSubItems.All(s => s.OwnerProcess == CommonConstants.PurchaseMainOwnerProcessStatus.NOT_AGREE))
+                {
+                    main.OwnerProcess = CommonConstants.PurchaseMainOwnerProcessStatus.NOT_AGREE;
+                    main.SplitPrcoess = CommonConstants.SplitProcess.DONE;
+                    main.CurrentStatus = CommonConstants.PurchaseApplyStatus.CLOSE;
+                }
+
+
+
                 _dbContext.PurchaseSubItems.Where(i => i.PurchaseMainId == main.PurchaseMainId).ExecuteUpdate(i => i.SetProperty(i => i.SplitProcess, CommonConstants.SplitProcess.DONE));
                 _dbContext.SaveChanges();
                 scope.Complete();

@@ -141,4 +141,7 @@ public partial class PurchaseSubItem
     /// </summary>
     [StringLength(45)]
     public string? SplitProcess { get; set; }
+
+    [StringLength(45)]
+    public string? OwnerProcess { get; set; }
 }

@@ -532,6 +532,7 @@ public partial class StockDbContext : DbContext
             entity.Property(e => e.CreatedAt).HasDefaultValueSql("CURRENT_TIMESTAMP");
             entity.Property(e => e.CurrentInStockQuantity).HasComment("採購單項目在建立當下的庫存數量");
             entity.Property(e => e.GroupIds).HasComment("品項可以設定組別ID\\n在醫院端可以依照組別拆單顯示");
+            entity.Property(e => e.OwnerProcess).HasDefaultValueSql("'NONE'");
             entity.Property(e => e.ProductCategory).HasComment("品項的 ProductCategory, 用來醫院拆單用");
             entity.Property(e => e.ProductId).HasComment("品項的PK，\n參考 Product Table");
             entity.Property(e => e.ProductName).HasComment("品項名稱");
