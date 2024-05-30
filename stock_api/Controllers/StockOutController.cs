@@ -619,7 +619,7 @@ namespace stock_api.Controllers
             List<string> productCodeList = new();
             foreach (var outItem in outBoundItems)
             {
-                var productCode = outItem.LotNumberBatch[..3];
+                var productCode = outItem.LotNumberBatch;
                 productCodeList.Add(productCode);
                 List<InStockItemRecord> inStockItemRecordsNotAllOutExDateFIFO = _stockInService.GetProductInStockRecordsHistoryNotAllOutExpirationFIFO(productCode, compId);
 
