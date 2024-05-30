@@ -152,7 +152,7 @@ namespace stock_api.Controllers
                 return BadRequest(new CommonResponse<dynamic>
                 {
                     Result = false,
-                    Message = $"以下批號{string.Join(",", notFoundLotNumberBatchList)}未找到品項的入庫紀錄"
+                    Message = $"以下批次{string.Join(",", notFoundLotNumberBatchList)}未找到品項的入庫紀錄"
                 });
             }
 
@@ -162,7 +162,7 @@ namespace stock_api.Controllers
                 return BadRequest(new CommonResponse<dynamic>
                 {
                     Result = false,
-                    Message = $"以下批號: {string.Join(",", notFoundLotNumberBatchList)} 未找到相對應的庫存品項productCode: {string.Join(",", productCodeList)}"
+                    Message = $"以下批次: {string.Join(",", notFoundLotNumberBatchList)} 未找到相對應的庫存品項productCode: {string.Join(",", productCodeList)}"
                 });
             }
 
