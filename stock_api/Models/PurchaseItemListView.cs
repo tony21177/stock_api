@@ -93,7 +93,7 @@ public partial class PurchaseItemListView
     public string? MainSplitPrcoess { get; set; }
 
     /// <summary>
-    /// NONE,NOT_AGREE,AGREE
+    /// NONE,NOT_AGREE,PART_AGREE,AGREE
     /// </summary>
     [StringLength(45)]
     public string? OwnerProcess { get; set; }
@@ -199,4 +199,7 @@ public partial class PurchaseItemListView
     /// </summary>
     [StringLength(45)]
     public string? SubSplitProcess { get; set; }
+
+    [StringLength(45)]
+    public string? SubOwnerProcess { get; set; }
 }

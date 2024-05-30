@@ -38,13 +38,13 @@ namespace stock_api.Service.ValueObject
         public string? Delivery { get; set; }
 
         public string? SplitProcess { get; set; }
+        public string? OwnerProcess { get; set; }
         public string? OpenedSealName { get; set; }
         public string? WithCompId { get; set; }
         public string? WithPurchaseMainId { get; set; }
 
         public string? WithCompName { get; set; }
         public string? WithItemId { get; set; }
-        public string? OwnerProcess { get; set; }
 
     }
 }

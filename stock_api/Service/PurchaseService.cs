@@ -274,7 +274,7 @@ namespace stock_api.Service
                         CreatedAt = vo.CreatedAt.Value,
                         UpdatedAt = vo.UpdatedAt.Value,
                         SplitProcess = vo.SubSplitProcess,
-                        OwnerProcess = vo.OwnerProcess,
+                        OwnerProcess = vo.SubOwnerProcess
                     };
                     Items.Add(subItem);
                 });

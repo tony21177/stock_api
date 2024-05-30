@@ -97,7 +97,7 @@ public partial class PurchaseMainSheet
     public string? SplitPrcoess { get; set; }
 
     /// <summary>
-    /// NONE,NOT_AGREE,AGREE
+    /// NONE,NOT_AGREE,PART_AGREE,AGREE
     /// </summary>
     [StringLength(45)]
     public string? OwnerProcess { get; set; }
