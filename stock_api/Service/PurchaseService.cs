@@ -349,7 +349,7 @@ namespace stock_api.Service
                 {
                     toUpdateSubItems = allPurchaseSubItems.Where(s => request.ItemIds.Contains(s.ItemId)).ToList();
                 }
-                toUpdateSubItems.ForEach(s => { s.OwnerProcess = request.OwnerProcess; });
+                toUpdateSubItems.ForEach(s => { s.OwnerProcess = request.OwnerProcess;s.SplitProcess = CommonConstants.SplitProcess.DONE; });
                 if (allPurchaseSubItems.All(s => s.OwnerProcess == CommonConstants.PurchaseMainOwnerProcessStatus.AGREE))
                 {
                     main.OwnerProcess = CommonConstants.PurchaseMainOwnerProcessStatus.AGREE;
