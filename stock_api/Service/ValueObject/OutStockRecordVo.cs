@@ -5,5 +5,6 @@ namespace stock_api.Service.ValueObject
     public class OutStockRecordVo : OutStockRecord
     {
         public string? Unit { get; set; }
+        public int OpenDeadline { get; set; }
     }
 }
