@@ -166,7 +166,6 @@ namespace stock_api.Service
                             {
                                 withPurchaseMain.OwnerProcess = CommonConstants.PurchaseMainOwnerProcessStatus.NOT_AGREE;
                             }
-
                         }
                     }
                     foreach (var (mainId, subItemList) in mainIdAndPurchaseSubItmeListMapForWith)
