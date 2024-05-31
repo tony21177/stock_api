@@ -7,6 +7,16 @@
 	<ImplicitUsings>enable</ImplicitUsings>  
   </PropertyGroup>
 
+    <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+		<Optimize>true</Optimize>
+		<DebugType>pdbonly</DebugType>
+		<PlatformTarget>AnyCPU</PlatformTarget>
+		<AllowUnsafeBlocks>false</AllowUnsafeBlocks>
+		<PublishReadyToRun>true</PublishReadyToRun>
+		<PublishTrimmed>true</PublishTrimmed>
+		<!-- 如果需要还可以添加其他优化属性 -->
+    </PropertyGroup>	
+	
   <ItemGroup>
     <Compile Remove="DataDB\**" />
     <Compile Remove="Migrations\**" />
