@@ -140,6 +140,7 @@ namespace stock_api.Service
                                 if (subItem.ItemId == item.WithItemId)
                                 {
                                     subItem.SplitProcess = CommonConstants.SplitProcess.DONE;
+                                    subItem.OwnerProcess = CommonConstants.PurchaseMainOwnerProcessStatus.AGREE;
                                 }
                                 // 表示OWNER拆單後的供應商只有一家就不能再拆單了
                                 //if (distinctItemSupplierList.Count == 1 && isOwnerCreate == true)
@@ -155,7 +156,17 @@ namespace stock_api.Service
                             {
                                 mainIdAndPurchaseMainMapForWith[withPurchaseMain.PurchaseMainId] = withPurchaseMain;
                             }
-                            
+                            if (withSubItems.All(item => item.OwnerProcess == CommonConstants.PurchaseMainOwnerProcessStatus.AGREE))
+                            {
+                                withPurchaseMain.OwnerProcess = CommonConstants.PurchaseMainOwnerProcessStatus.AGREE;
+                            }else if(withSubItems.Any(item => item.OwnerProcess == CommonConstants.PurchaseMainOwnerProcessStatus.AGREE))
+                            {
+                                withPurchaseMain.OwnerProcess = CommonConstants.PurchaseMainOwnerProcessStatus.PART_AGREE;
+                            }else if (withSubItems.All(item => item.OwnerProcess == CommonConstants.PurchaseMainOwnerProcessStatus.NOT_AGREE))
+                            {
+                                withPurchaseMain.OwnerProcess = CommonConstants.PurchaseMainOwnerProcessStatus.NOT_AGREE;
+                            }
+
                         }
                     }
                     foreach (var (mainId, subItemList) in mainIdAndPurchaseSubItmeListMapForWith)
