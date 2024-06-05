@@ -174,50 +174,6 @@ namespace stock_api.Controllers
             return Ok(response);
         }
 
-        [HttpPost("acceptItems/batch/verify")]
-        [Authorize]
-        public IActionResult VerifyAcceptItems(UpdateBatchAcceptItemsRequest request)
-        {
-            var memberAndPermissionSetting = _authHelpers.GetMemberAndPermissionSetting(User);
-            var compId = memberAndPermissionSetting.CompanyWithUnit.CompId;
-            var userId = memberAndPermissionSetting.Member.UserId;
-
-            request.UpdateAcceptItemList.ForEach(item => { item.AcceptUserId = userId; });
-
-            var validationResult = _updateBatchAcceptItemsRequestValidator.Validate(request);
-
-            if (!validationResult.IsValid)
-            {
-                return BadRequest(CommonResponse<dynamic>.BuildValidationFailedResponse(validationResult));
-            }
-
-            var acceptIdList = request.UpdateAcceptItemList.Select(i => i.AcceptId).ToList();
-            var exsitingAcceptItems = _stockInService.GetAcceptanceItemsByAccepIdList(acceptIdList, compId);
-            if (exsitingAcceptItems.Any(i => i.CompId != compId))
-            {
-                return BadRequest(CommonResponse<dynamic>.BuildNotAuthorizeResponse());
-            }
-
-            var existingAcceptIdList = exsitingAcceptItems.Select(i => i.AcceptId).ToList();
-            var notExistAcceptIdList = acceptIdList.Except(existingAcceptIdList);
-            if (notExistAcceptIdList.Any())
-            {
-                return BadRequest(new CommonResponse<dynamic>
-                {
-                    Result = false,
-                    Message = $"{String.Join(",", notExistAcceptIdList)} 不存在"
-                });
-            }
-
-            var products = _warehouseProductService.GetProductsByProductIds(exsitingAcceptItems.Select(i => i.ProductId).ToList());
-            var purchaseMain = _purchaseService.GetPurchaseMainByMainId(exsitingAcceptItems[0].PurchaseMainId);
-            var result = _stockInService.UpdateAccepItems(purchaseMain, exsitingAcceptItems, request.UpdateAcceptItemList, products, compId, memberAndPermissionSetting.Member);
-
-            return Ok(new CommonResponse<dynamic>
-            {
-                Result = result,
-            });
-        }
 
         [HttpPost("acceptItems/search")]
         [Authorize]
@@ -373,12 +329,16 @@ namespace stock_api.Controllers
             List<InStockItemRecord> existingStockInRecords = _stockInService.GetInStockRecordsHistory(existingAcceptItem.ProductId, compId).OrderByDescending(item => item.CreatedAt).ToList();
             var lastLotNumber = existingStockInRecords.FirstOrDefault()?.LotNumber;
             List<string> newLotNumberIdList = new();
-            var (result, message) = _stockInService.UpdateAccepItem(purchaseMain, existingAcceptItem, request, product, compId, memberAndPermissionSetting.Member, request.IsInStocked);
+            var (result, message,qc) = _stockInService.UpdateAccepItem(purchaseMain, existingAcceptItem, request, product, compId, memberAndPermissionSetting.Member, request.IsInStocked);
             if (request.LotNumber != lastLotNumber)
             {
                 newLotNumberIdList.Add(request.AcceptId);
             }
-
+            List<Qc> qcList = new ();
+            if (qc != null)
+            {
+                qcList.Add(qc);
+            }
 
             return Ok(new CommonResponse<dynamic>
             {
@@ -388,7 +348,8 @@ namespace stock_api.Controllers
                 {
                     //IsNewLot = existingStockInRecordLotNumber.Contains(request.LotNumber)
                     isNewLot = request.LotNumber != null ? request.LotNumber != lastLotNumber : false,
-                    newLotNumberIdList
+                    newLotNumberIdList,
+                    qcList
                 }
             });
         }
@@ -522,6 +483,8 @@ namespace stock_api.Controllers
             List<dynamic> updateResultDataList = new();
             List<string> newLotNumberIdList = new();
             List<string> failedIdList = new();
+            List<Qc> qcList = new();
+
             // 未超過允收末效的就先入庫
             foreach (var item in notExceedDeadLineRuleRequestList)
             {
@@ -535,11 +498,16 @@ namespace stock_api.Controllers
                 {
                     newLotNumberIdList.Add(item.AcceptId);
                 }
-                var (result, message) = _stockInService.UpdateAccepItem(matchedPurchaseMain, matchedExistAcceptItem, item, matchedProduct, compId, memberAndPermissionSetting.Member, item.IsInStocked);
+                var (result, message,qc) = _stockInService.UpdateAccepItem(matchedPurchaseMain, matchedExistAcceptItem, item, matchedProduct, compId, memberAndPermissionSetting.Member, item.IsInStocked);
                 if (result != true)
                 {
                     failedIdList.Add(matchedExistAcceptItem.AcceptId);
                 }
+                if (qc != null)
+                {
+                    qcList.Add(qc);
+                }
+
             }
 
             // 有效日期短於末效,只有第一次才會批次所以不需要判斷user有沒有確認,因為批次超過允收日期的會打單一驗收
@@ -553,7 +521,8 @@ namespace stock_api.Controllers
                     {
                         isExceedDeadlineRule = true,
                         exceedDeadlineRuleIdList = exceedDeadLineRuleIdList,
-                        newLotNumberIdList
+                        newLotNumberIdList,
+                        qcList
                     }
                 });
             }

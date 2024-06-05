@@ -241,6 +241,12 @@ public partial class WarehouseProduct
     public bool? IsNeedAcceptProcess { get; set; }
 
     /// <summary>
+    /// NONE,LOT_NUMBER,LOT_NUMBER_BATCH
+    /// </summary>
+    [StringLength(45)]
+    public string? QcType { get; set; }
+
+    /// <summary>
     /// 該品項期限距離現在的最小天數
     /// </summary>
     public int? AllowReceiveDateRange { get; set; }

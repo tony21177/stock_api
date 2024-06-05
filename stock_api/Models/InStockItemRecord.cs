@@ -136,4 +136,18 @@ public partial class InStockItemRecord
     public string? OutStockStatus { get; set; }
 
     public float? OutStockQuantity { get; set; }
+
+    /// <summary>
+    /// NONE,LOT_NUMBER,LOT_NUMBER_BATCH
+    /// </summary>
+    [StringLength(45)]
+    public string? QcType { get; set; }
+
+    public bool? IsNeedQc { get; set; }
+
+    /// <summary>
+    /// NONE,FAIL,PASS
+    /// </summary>
+    [StringLength(45)]
+    public string? QcTestStatus { get; set; }
 }

@@ -240,6 +240,30 @@ namespace stock_api.Common.Constant
             }
         }
 
+        public static class QcTypeConstants
+        {
+            public const string NONE = "NONE";
+            public const string LOT_NUMBER = "LOT_NUMBER";
+            public const string LOT_NUMBER_BATCH = "LOT_NUMBER_BATCH";
+
+            public static List<string> GetAllValues()
+            {
+                return new List<string> { NONE, LOT_NUMBER, LOT_NUMBER_BATCH };
+            }
+        }
+
+        public static class QcTestStatus
+        {
+            public const string NONE = "NONE";
+            public const string FAIL = "FAIL";
+            public const string PASS = "PASS";
+
+            public static List<string> GetAllValues()
+            {
+                return new List<string> { NONE, FAIL, PASS };
+            }
+        }
+
     }
 
     

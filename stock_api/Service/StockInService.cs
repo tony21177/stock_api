@@ -3,6 +3,7 @@ using stock_api.Common.Constant;
 using stock_api.Common.Utils;
 using stock_api.Controllers.Request;
 using stock_api.Models;
+using stock_api.Service.ValueObject;
 using System.Linq;
 using System.Security.AccessControl;
 using System.Transactions;
@@ -83,11 +84,12 @@ namespace stock_api.Service
         }
 
 
-        public bool UpdateAccepItems(PurchaseMainSheet purchaseMain,List<AcceptanceItem> existingAcceptanceItems, List<UpdateAcceptItemRequest> updateAcceptItems, List<WarehouseProduct> products, string compId, WarehouseMember acceptMember)
+        public (bool,List<Qc>?) UpdateAccepItems(PurchaseMainSheet purchaseMain,List<AcceptanceItem> existingAcceptanceItems, List<UpdateAcceptItemRequest> updateAcceptItems, List<WarehouseProduct> products, string compId, WarehouseMember acceptMember)
         {
             using var scope = new TransactionScope();
             try
             {
+                List<Qc> qcList = new();
                 foreach (var existItem in existingAcceptanceItems)
                 {
                     var matchedUpdateAcceptItem = updateAcceptItems.Where(u => u.AcceptId == existItem.AcceptId).FirstOrDefault();
@@ -178,6 +180,41 @@ namespace stock_api.Service
                                 UserName = acceptMember.DisplayName,
                                 AfterQuantity = matchedProduct.InStockQuantity.Value + existItem.AcceptQuantity.Value,
                             };
+                            if (inStockItemRecord.IsNeedQc == true)
+                            {
+                                if (inStockItemRecord.QcType == CommonConstants.QcTypeConstants.LOT_NUMBER)
+                                {
+                                    var lastInStockedRecord = _dbContext.InStockItemRecords.Where(i => i.LotNumber == inStockItemRecord.LotNumber).OrderByDescending(i => i.CreatedAt).FirstOrDefault();
+                                    if (lastInStockedRecord != null && (lastInStockedRecord.QcTestStatus == CommonConstants.QcTestStatus.PASS))
+                                    {
+                                        // 上一批同批號的已經檢驗pass,表示此批號已經QC過了,不需再QC
+                                        inStockItemRecord.QcTestStatus = CommonConstants.QcTestStatus.PASS;
+                                    }
+                                }
+                                if (inStockItemRecord.QcType == CommonConstants.QcTypeConstants.LOT_NUMBER_BATCH)
+                                {
+                                    var lastInStockedRecord = _dbContext.InStockItemRecords.Where(i => i.LotNumberBatch == inStockItemRecord.LotNumber).OrderByDescending(i => i.CreatedAt).FirstOrDefault();
+                                    if (lastInStockedRecord != null && (lastInStockedRecord.QcTestStatus == CommonConstants.QcTestStatus.PASS))
+                                    {
+                                        // 上一批同批號的已經檢驗pass,表示此批號已經QC過了,不需再QC
+                                        inStockItemRecord.QcTestStatus = CommonConstants.QcTestStatus.PASS;
+                                    }
+                                }
+                                Qc qc = new()
+                                {
+                                    QcType = inStockItemRecord.QcType,
+                                    IsNeedQc = inStockItemRecord.IsNeedQc.Value
+                                };
+                                Lot lot = new()
+                                {
+                                    LotNumber = inStockItemRecord.LotNumber,
+                                    LotNumberBatch = inStockItemRecord.LotNumberBatch,
+                                    ProductCode = inStockItemRecord.ProductCode,
+                                    ProductName = inStockItemRecord.ProductName,
+                                };
+                                qc.NeedQcLotList.Add(lot);
+                                qcList.Add(qc);
+                            }
                             //
                             matchedProduct.InStockQuantity = inStockItemRecord.AfterQuantity;
                             matchedProduct.LotNumber = matchedUpdateAcceptItem.LotNumber;
@@ -197,22 +234,22 @@ namespace stock_api.Service
                 }
                 _dbContext.SaveChanges();
                 scope.Complete();
-                return true;
+                return (true,qcList);
             }
             catch (Exception ex)
             {
                 _logger.LogError("事務失敗[UpdateAccepItems]：{msg}", ex);
-                return false;
+                return (false,null);
             }
 
         }
 
-        public (bool,string?) UpdateAccepItem(PurchaseMainSheet purchaseMain, AcceptanceItem existingAcceptanceItem, UpdateAcceptItemRequest updateAcceptItem, WarehouseProduct product, string compId, WarehouseMember acceptMember,bool isInStocked)
+        public (bool,string?,Qc?) UpdateAccepItem(PurchaseMainSheet purchaseMain, AcceptanceItem existingAcceptanceItem, UpdateAcceptItemRequest updateAcceptItem, WarehouseProduct product, string compId, WarehouseMember acceptMember,bool isInStocked)
         {
             using var scope = new TransactionScope();
             try
             {
-                
+                Qc? qc = new();
                 if (updateAcceptItem.AcceptQuantity.HasValue)
                 {
                     float existingAcceptQty = existingAcceptanceItem.AcceptQuantity ?? 0;
@@ -328,7 +365,45 @@ namespace stock_api.Service
                         DeliverTemperature = existingAcceptanceItem.DeliverTemperature,
                         SavingFunction = existingAcceptanceItem.SavingFunction,
                         SavingTemperature = existingAcceptanceItem.SavingTemperature,
+                        IsNeedQc = product.IsNeedAcceptProcess,
+                        QcType = product.QcType,
+                        QcTestStatus = CommonConstants.QcTestStatus.NONE
                     };
+                    if (inStockItemRecord.IsNeedQc == true)
+                    {
+                        if(inStockItemRecord.QcType == CommonConstants.QcTypeConstants.LOT_NUMBER)
+                        {
+                            var lastInStockedRecord = _dbContext.InStockItemRecords.Where(i=>i.LotNumber==inStockItemRecord.LotNumber).OrderByDescending(i=>i.CreatedAt).FirstOrDefault(); 
+                            if(lastInStockedRecord!=null&&(lastInStockedRecord.QcTestStatus==CommonConstants.QcTestStatus.PASS))
+                            {
+                                // 上一批同批號的已經檢驗pass,表示此批號已經QC過了,不需再QC
+                                inStockItemRecord.QcTestStatus = CommonConstants.QcTestStatus.PASS;
+                            }
+                        }
+                        if(inStockItemRecord.QcType == CommonConstants.QcTypeConstants.LOT_NUMBER_BATCH)
+                        {
+                            var lastInStockedRecord = _dbContext.InStockItemRecords.Where(i => i.LotNumberBatch == inStockItemRecord.LotNumber).OrderByDescending(i => i.CreatedAt).FirstOrDefault();
+                            if (lastInStockedRecord != null && (lastInStockedRecord.QcTestStatus == CommonConstants.QcTestStatus.PASS))
+                            {
+                                // 上一批同批號的已經檢驗pass,表示此批號已經QC過了,不需再QC
+                                inStockItemRecord.QcTestStatus = CommonConstants.QcTestStatus.PASS;
+                            }
+                        }
+
+                        qc.QcType = inStockItemRecord.QcType;
+                        qc.IsNeedQc = inStockItemRecord.IsNeedQc.Value;
+                        Lot lot = new()
+                        {
+                            LotNumber = inStockItemRecord.LotNumber,
+                            LotNumberBatch = inStockItemRecord.LotNumberBatch,
+                            ProductCode = inStockItemRecord.ProductCode,
+                            ProductName = inStockItemRecord.ProductName,
+                        };
+                        qc.Lot = lot;
+                        
+                    }
+
+
                     //更新庫存品項
                     product.InStockQuantity = inStockItemRecord.AfterQuantity;
                     // 應該是出庫時才去更新
@@ -356,12 +431,12 @@ namespace stock_api.Service
                 }
                 _dbContext.SaveChanges();
                 scope.Complete();
-                return (true,null);
+                return (true,null,qc);
             }
             catch (Exception ex)
             {
                 _logger.LogError("事務失敗[UpdateAccepItem]：{msg}", ex);
-                return (false,ex.Message);
+                return (false,ex.Message,null);
             }
 
         }
