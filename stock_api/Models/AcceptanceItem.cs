@@ -160,4 +160,7 @@ public partial class AcceptanceItem
     public string? ArrangeSupplierName { get; set; }
 
     public int LotNumberBatchSeq { get; set; }
+
+    [Column(TypeName = "timestamp")]
+    public DateTime? VerifyAt { get; set; }
 }

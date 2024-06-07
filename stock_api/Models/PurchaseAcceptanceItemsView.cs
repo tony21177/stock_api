@@ -222,4 +222,7 @@ public partial class PurchaseAcceptanceItemsView
 
     [StringLength(100)]
     public string? ArrangeSupplierName { get; set; }
+
+    [Column(TypeName = "timestamp")]
+    public DateTime? VerifyAt { get; set; }
 }
