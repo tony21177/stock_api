@@ -212,7 +212,7 @@ namespace stock_api.Service
                                     ProductCode = inStockItemRecord.ProductCode,
                                     ProductName = inStockItemRecord.ProductName,
                                 };
-                                qc.NeedQcLotList.Add(lot);
+                                qc.Lot = lot;
                                 qcList.Add(qc);
                             }
                             //
