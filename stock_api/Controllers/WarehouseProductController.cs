@@ -12,6 +12,8 @@ using Org.BouncyCastle.Asn1.Ocsp;
 using stock_api.Controllers.Validator;
 using stock_api.Auth;
 using stock_api.Service.ValueObject;
+using static System.Net.Mime.MediaTypeNames;
+using Microsoft.EntityFrameworkCore;
 
 namespace stock_api.Controllers
 {
@@ -33,8 +35,8 @@ namespace stock_api.Controllers
         private readonly IValidator<UpdateProductRequest> _updateProductValidator;
         private readonly IValidator<AdminUpdateProductRequest> _adminUpdateProductValidator;
 
-        public WarehouseProductController(AuthLayerService authLayerService, WarehouseProductService warehouseProductService,CompanyService companyService, GroupService groupService,SupplierService supplierService,
-            ManufacturerService manufacturerService,IMapper mapper, ILogger<AuthlayerController> logger, AuthHelpers authHelpers)
+        public WarehouseProductController(AuthLayerService authLayerService, WarehouseProductService warehouseProductService, CompanyService companyService, GroupService groupService, SupplierService supplierService,
+            ManufacturerService manufacturerService, IMapper mapper, ILogger<AuthlayerController> logger, AuthHelpers authHelpers)
         {
             _authLayerService = authLayerService;
             _warehouseProductService = warehouseProductService;
@@ -46,8 +48,8 @@ namespace stock_api.Controllers
             _authHelpers = authHelpers;
             _companyService = companyService;
             _searchProductRequestValidator = new SearchProductRequestValidator(companyService, groupService);
-            _updateProductValidator = new UpdateProductValidator(supplierService,groupService);
-            _adminUpdateProductValidator = new AdminUpdateProductValidator(supplierService, groupService,manufacturerService);
+            _updateProductValidator = new UpdateProductValidator(supplierService, groupService);
+            _adminUpdateProductValidator = new AdminUpdateProductValidator(supplierService, groupService, manufacturerService);
         }
 
         [HttpPost("search")]
@@ -63,7 +65,7 @@ namespace stock_api.Controllers
                 searchRequest.CompId = compId;
             }
 
-            if(searchRequest.CompId!=null&& searchRequest.CompId != compId && compType != CommonConstants.CompanyType.OWNER)
+            if (searchRequest.CompId != null && searchRequest.CompId != compId && compType != CommonConstants.CompanyType.OWNER)
             {
                 return BadRequest(CommonResponse<dynamic>.BuildNotAuthorizeResponse());
             }
@@ -75,16 +77,16 @@ namespace stock_api.Controllers
             }
 
 
-            var (data,totalPages) = _warehouseProductService.SearchProduct(searchRequest);
+            var (data, totalPages) = _warehouseProductService.SearchProduct(searchRequest);
             var warehouseProductVoList = _mapper.Map<List<WarehouseProductVo>>(data);
             var distictProductCodeList = warehouseProductVoList.Select(x => x.ProductCode).Distinct().ToList();
             var productsInAnotherComp = _warehouseProductService.GetProductByProductCodeList(distictProductCodeList);
 
-            if (compType == CommonConstants.CompanyType.OWNER&& productsInAnotherComp.Count>0)
+            if (compType == CommonConstants.CompanyType.OWNER && productsInAnotherComp.Count > 0)
             {
                 foreach (var item in warehouseProductVoList)
                 {
-                    var matchedProdcutsInAnotherComp = productsInAnotherComp.Where(p => p.ProductCode.Contains(item.ProductCode)&&p.CompId!=compId).ToList();
+                    var matchedProdcutsInAnotherComp = productsInAnotherComp.Where(p => p.ProductCode.Contains(item.ProductCode) && p.CompId != compId).ToList();
                     if (matchedProdcutsInAnotherComp.Count > 0)
                     {
                         // 因為金萬林此product的unit在不同醫院單位都會設成一樣,故只取第一筆
@@ -192,7 +194,7 @@ namespace stock_api.Controllers
                 return BadRequest(CommonResponse<dynamic>.BuildNotAuthorizeResponse());
             }
 
-            var validationResult =  _updateProductValidator.Validate(request);
+            var validationResult = _updateProductValidator.Validate(request);
 
             if (!validationResult.IsValid)
             {
@@ -200,17 +202,18 @@ namespace stock_api.Controllers
             }
 
 
-            var existingProduct = _warehouseProductService.GetProductByProductIdAndCompId(request.ProductId,compId);
+            var existingProduct = _warehouseProductService.GetProductByProductIdAndCompId(request.ProductId, compId);
             if (existingProduct == null)
             {
-                return BadRequest(new CommonResponse<dynamic>(){
+                return BadRequest(new CommonResponse<dynamic>()
+                {
                     Result = false,
                     Message = "品項不存在"
                 });
             }
             var groups = _groupService.GetGroupsByIdList(request.GroupIds);
 
-            var result = _warehouseProductService.UpdateProduct(request,existingProduct,groups);
+            var result = _warehouseProductService.UpdateProduct(request, existingProduct, groups);
 
 
             var response = new CommonResponse<WarehouseProduct>()
@@ -271,6 +274,87 @@ namespace stock_api.Controllers
             };
             return Ok(response);
 
+        }
+
+        [HttpPost("uploadImage")]
+        [Authorize]
+        public async Task<IActionResult> UploadImage([FromForm]  UploadProductImageRequest request)
+        {
+            var memberAndPermissionSetting = _authHelpers.GetMemberAndPermissionSetting(User);
+            var compId = memberAndPermissionSetting.CompanyWithUnit.CompId;
+            request.CompId = compId;
+            if (memberAndPermissionSetting.PermissionSetting.IsItemManage == false)
+            {
+                return BadRequest(CommonResponse<dynamic>.BuildNotAuthorizeResponse());
+            }
+
+            if (request.Image==null || request.Image.Length == 0)
+            {
+                return BadRequest(new CommonResponse<dynamic>
+                {
+                    Result = false,
+                    Message = "無效的圖檔"
+                });
+            }
+            var product = _warehouseProductService.GetProductByProductIdAndCompId(request.ProductId,compId);
+            if (product == null)
+            {
+                return BadRequest(new CommonResponse<dynamic>
+                {
+                    Result = false,
+                    Message = "此品項不存在"
+                });
+            }
+
+            using var memoryStream = new MemoryStream();
+            await request.Image.CopyToAsync(memoryStream);
+            var imageBytes = memoryStream.ToArray();
+            var imageBase64 = Convert.ToBase64String(imageBytes);
+            bool result = _warehouseProductService.UpdateOrAddProductImage(imageBase64, request.ProductId, request.CompId);
+            return Ok(new CommonResponse<dynamic>()
+            {
+                Result = result
+            }); ;
+
+        }
+
+        [HttpGet("image/{productId}")]
+        [Authorize]
+        public async Task<IActionResult> GetProductImage(string productId)
+        {
+            var memberAndPermissionSetting = _authHelpers.GetMemberAndPermissionSetting(User);
+            var compId = memberAndPermissionSetting.CompanyWithUnit.CompId;
+            if (memberAndPermissionSetting.PermissionSetting.IsItemManage == false)
+            {
+                return BadRequest(CommonResponse<dynamic>.BuildNotAuthorizeResponse());
+            }
+
+            var product = _warehouseProductService.GetProductByProductIdAndCompId(productId, compId);
+            if (product == null)
+            {
+                return BadRequest(new CommonResponse<dynamic>
+                {
+                    Result = false,
+                    Message = "此品項不存在"
+                });
+            }
+
+            try
+            {
+                var productImage = _warehouseProductService.GetProductImage(productId,compId);
+                if (product == null || string.IsNullOrEmpty(productImage.Image))
+                {
+                    return NotFound("Product or image not found.");
+                }
+
+                var imageBytes = Convert.FromBase64String(productImage.Image);
+                return File(imageBytes, "image/jpeg"); // Assuming the image is a jpeg, you can change the MIME type as needed.
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "An error occurred while retrieving the image.");
+                return StatusCode(StatusCodes.Status500InternalServerError, "An error occurred while retrieving the image.");
+            }
         }
     }
 }

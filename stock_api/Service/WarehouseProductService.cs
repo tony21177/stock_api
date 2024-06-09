@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using stock_api.Controllers.Request;
@@ -324,6 +325,45 @@ namespace stock_api.Service
             }
 
             
+        }
+
+        public bool UpdateOrAddProductImage(string ImageBase64String,string ProductId,string CompId)
+        {
+            using var scope = new TransactionScope();
+            try
+            {
+                var existingProductImage = _dbContext.ProductImages.Where(i => i.ProductId == ProductId && i.CompId == CompId).FirstOrDefault();
+                if (existingProductImage == null)
+                {
+                    var newProductImage = new ProductImage()
+                    {
+                        ProductId = ProductId,
+                        CompId = CompId,
+                        Image = ImageBase64String
+                    };
+
+                    _dbContext.ProductImages.Add(newProductImage);
+
+                }
+                else
+                {
+                    existingProductImage.Image = ImageBase64String;
+                }
+
+                _dbContext.SaveChanges();
+                scope.Complete();
+                return true;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError("事務失敗[UpdateOrAddProductImage]：{msg}", ex);
+                return false;
+            }
+        }
+
+        public ProductImage? GetProductImage(string ProductId, string CompId) {
+        
+            return _dbContext.ProductImages.FirstOrDefault(i=>i.ProductId==ProductId && i.CompId== CompId);
         }
 
     }

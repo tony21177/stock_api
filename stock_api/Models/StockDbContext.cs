@@ -39,6 +39,8 @@ public partial class StockDbContext : DbContext
 
     public virtual DbSet<OutstockRelatetoInstock> OutstockRelatetoInstocks { get; set; }
 
+    public virtual DbSet<ProductImage> ProductImages { get; set; }
+
     public virtual DbSet<PurchaseAcceptanceItemsView> PurchaseAcceptanceItemsViews { get; set; }
 
     public virtual DbSet<PurchaseFlow> PurchaseFlows { get; set; }
@@ -340,6 +342,16 @@ public partial class StockDbContext : DbContext
             entity.HasKey(e => e.OutStockId).HasName("PRIMARY");
 
             entity.ToTable("outstock_relateto_instock", tb => tb.HasComment("出庫對應入庫,可能是多對多"));
+
+            entity.Property(e => e.CreatedAt).HasDefaultValueSql("CURRENT_TIMESTAMP");
+            entity.Property(e => e.UpdatedAt)
+                .ValueGeneratedOnAddOrUpdate()
+                .HasDefaultValueSql("CURRENT_TIMESTAMP");
+        });
+
+        modelBuilder.Entity<ProductImage>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("PRIMARY");
 
             entity.Property(e => e.CreatedAt).HasDefaultValueSql("CURRENT_TIMESTAMP");
             entity.Property(e => e.UpdatedAt)

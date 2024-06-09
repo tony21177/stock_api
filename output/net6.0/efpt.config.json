@@ -68,6 +68,10 @@
          "ObjectType": 0
       },
       {
+         "Name": "product_image",
+         "ObjectType": 0
+      },
+      {
          "Name": "purchase_flow",
          "ObjectType": 0
       },
