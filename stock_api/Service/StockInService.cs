@@ -311,9 +311,10 @@ namespace stock_api.Service
                     existingAcceptanceItem.InStockStatus = CommonConstants.PurchaseSubItemReceiveStatus.DONE;
                     existingAcceptanceItem.VerifyAt = DateTime.Now;
                 }
-                // 判斷是否部分驗收
-                if (existingAcceptanceItem.AcceptQuantity != null && existingAcceptanceItem.AcceptQuantity >0&& existingAcceptanceItem.AcceptQuantity<existingAcceptanceItem.OrderQuantity)
+                else if(existingAcceptanceItem.AcceptQuantity != null && existingAcceptanceItem.AcceptQuantity >0&& existingAcceptanceItem.AcceptQuantity<existingAcceptanceItem.OrderQuantity)
                 {
+                    // 判斷是否部分驗收
+                    _logger.LogInformation("[部分驗收] AcceptId:${acceptId},AcceptQuantity:${AcceptQuantity},OrderQuantity:${}", existingAcceptanceItem.AcceptId,existingAcceptanceItem.AcceptQuantity,existingAcceptanceItem.OrderQuantity);
                     existingAcceptanceItem.InStockStatus = CommonConstants.PurchaseSubItemReceiveStatus.PART;
                     existingAcceptanceItem.VerifyAt = DateTime.Now;
                 }
