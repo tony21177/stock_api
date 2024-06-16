@@ -14,6 +14,7 @@ using stock_api.Auth;
 using stock_api.Service.ValueObject;
 using static System.Net.Mime.MediaTypeNames;
 using Microsoft.EntityFrameworkCore;
+using System.Text.RegularExpressions;
 
 namespace stock_api.Controllers
 {
@@ -34,9 +35,10 @@ namespace stock_api.Controllers
         private readonly IValidator<WarehouseProductSearchRequest> _searchProductRequestValidator;
         private readonly IValidator<UpdateProductRequest> _updateProductValidator;
         private readonly IValidator<AdminUpdateProductRequest> _adminUpdateProductValidator;
+        private readonly FileUploadService _fileUploadService;
 
         public WarehouseProductController(AuthLayerService authLayerService, WarehouseProductService warehouseProductService, CompanyService companyService, GroupService groupService, SupplierService supplierService,
-            ManufacturerService manufacturerService, IMapper mapper, ILogger<AuthlayerController> logger, AuthHelpers authHelpers)
+            ManufacturerService manufacturerService, IMapper mapper, ILogger<AuthlayerController> logger, AuthHelpers authHelpers,FileUploadService fileUploadService)
         {
             _authLayerService = authLayerService;
             _warehouseProductService = warehouseProductService;
@@ -50,6 +52,7 @@ namespace stock_api.Controllers
             _searchProductRequestValidator = new SearchProductRequestValidator(companyService, groupService);
             _updateProductValidator = new UpdateProductValidator(supplierService, groupService);
             _adminUpdateProductValidator = new AdminUpdateProductValidator(supplierService, groupService, manufacturerService);
+            _fileUploadService = fileUploadService;
         }
 
         [HttpPost("search")]
@@ -276,9 +279,51 @@ namespace stock_api.Controllers
 
         }
 
+        //[HttpPost("uploadImage")]
+        //[Authorize]
+        //public async Task<IActionResult> UploadImage([FromForm]  UploadProductImageRequest request)
+        //{
+        //    var memberAndPermissionSetting = _authHelpers.GetMemberAndPermissionSetting(User);
+        //    var compId = memberAndPermissionSetting.CompanyWithUnit.CompId;
+        //    request.CompId = compId;
+        //    if (memberAndPermissionSetting.PermissionSetting.IsItemManage == false)
+        //    {
+        //        return BadRequest(CommonResponse<dynamic>.BuildNotAuthorizeResponse());
+        //    }
+
+        //    if (request.Image==null || request.Image.Length == 0)
+        //    {
+        //        return BadRequest(new CommonResponse<dynamic>
+        //        {
+        //            Result = false,
+        //            Message = "無效的圖檔"
+        //        });
+        //    }
+        //    var product = _warehouseProductService.GetProductByProductIdAndCompId(request.ProductId,compId);
+        //    if (product == null)
+        //    {
+        //        return BadRequest(new CommonResponse<dynamic>
+        //        {
+        //            Result = false,
+        //            Message = "此品項不存在"
+        //        });
+        //    }
+
+        //    using var memoryStream = new MemoryStream();
+        //    await request.Image.CopyToAsync(memoryStream);
+        //    var imageBytes = memoryStream.ToArray();
+        //    var imageBase64 = Convert.ToBase64String(imageBytes);
+        //    bool result = _warehouseProductService.UpdateOrAddProductImage(imageBase64, request.ProductId, request.CompId);
+        //    return Ok(new CommonResponse<dynamic>()
+        //    {
+        //        Result = result
+        //    }); ;
+
+        //}
+
         [HttpPost("uploadImage")]
         [Authorize]
-        public async Task<IActionResult> UploadImage([FromForm]  UploadProductImageRequest request)
+        public async Task<IActionResult> UploadImage( UploadProductImageRequest request)
         {
             var memberAndPermissionSetting = _authHelpers.GetMemberAndPermissionSetting(User);
             var compId = memberAndPermissionSetting.CompanyWithUnit.CompId;
@@ -288,7 +333,7 @@ namespace stock_api.Controllers
                 return BadRequest(CommonResponse<dynamic>.BuildNotAuthorizeResponse());
             }
 
-            if (request.Image==null || request.Image.Length == 0)
+            if (string.IsNullOrEmpty(request.Image))
             {
                 return BadRequest(new CommonResponse<dynamic>
                 {
@@ -296,7 +341,7 @@ namespace stock_api.Controllers
                     Message = "無效的圖檔"
                 });
             }
-            var product = _warehouseProductService.GetProductByProductIdAndCompId(request.ProductId,compId);
+            var product = _warehouseProductService.GetProductByProductIdAndCompId(request.ProductId, compId);
             if (product == null)
             {
                 return BadRequest(new CommonResponse<dynamic>
@@ -306,11 +351,16 @@ namespace stock_api.Controllers
                 });
             }
 
-            using var memoryStream = new MemoryStream();
-            await request.Image.CopyToAsync(memoryStream);
-            var imageBytes = memoryStream.ToArray();
-            var imageBase64 = Convert.ToBase64String(imageBytes);
-            bool result = _warehouseProductService.UpdateOrAddProductImage(imageBase64, request.ProductId, request.CompId);
+            var data = new Regex(@"^data:image\/[a-zA-Z]+;base64,").Replace(request.Image, string.Empty);
+            var bytes = Convert.FromBase64String(data);
+            using var stream = new MemoryStream(bytes);
+            var file = new FormFile(stream, 0, bytes.Length, product.ProductId, product.ProductId)
+            {
+                Headers = new HeaderDictionary(),
+                ContentType = "application/octet-stream" 
+            };
+
+            bool result = await _warehouseProductService.UpdateOrAddProductImage(file, request.ProductId, request.CompId);
             return Ok(new CommonResponse<dynamic>()
             {
                 Result = result
@@ -342,13 +392,13 @@ namespace stock_api.Controllers
             try
             {
                 var productImage = _warehouseProductService.GetProductImage(productId,compId);
-                if (product == null || string.IsNullOrEmpty(productImage.Image))
+                if (product == null || productImage ==null|| productImage.Image==null)
                 {
                     return NotFound("Product or image not found.");
                 }
 
-                var imageBytes = Convert.FromBase64String(productImage.Image);
-                return File(imageBytes, "image/jpeg"); // Assuming the image is a jpeg, you can change the MIME type as needed.
+                var fileStream = _fileUploadService.Download(productImage.Image, productImage.ProductId, "image/png");
+                return fileStream;
             }
             catch (Exception ex)
             {

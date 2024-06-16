@@ -16,7 +16,8 @@ namespace stock_api.Models;
 public partial class InventoryAdjustMain
 {
     [Key]
-    public int InventoryId { get; set; }
+    [StringLength(100)]
+    public string MainId { get; set; } = null!;
 
     /// <summary>
     /// 該單據所屬的公司ID

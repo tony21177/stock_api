@@ -52,6 +52,10 @@
          "ObjectType": 0
       },
       {
+         "Name": "inventory_adjust_item",
+         "ObjectType": 0
+      },
+      {
          "Name": "inventory_adjust_main",
          "ObjectType": 0
       },

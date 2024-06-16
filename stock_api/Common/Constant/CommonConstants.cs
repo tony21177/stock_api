@@ -177,6 +177,32 @@ namespace stock_api.Common.Constant
             }
         }
 
+        public static class AdjustType
+        {
+            public const string SHIFT = "SHIFT";
+            public const string ADJUST = "ADJUST";
+            public const string RETURN = "RETURN";
+            public const string RETURN_OUT = "RETURN_OUT";
+
+            public static List<string> GetAllValues()
+            {
+                return new List<string> { SHIFT, ADJUST, RETURN, RETURN_OUT };
+            }
+        }
+
+        public static class AdjustStatus
+        {
+            public const string APPLY = "APPLY";
+            public const string AGREE = "AGREE";
+            public const string REJECT = "REJECT";
+            public const string CLOSE = "CLOSE";
+
+            public static List<string> GetAllValues()
+            {
+                return new List<string> { APPLY, AGREE, REJECT, CLOSE };
+            }
+        }
+
         public static class DeliverFunctionType
         {
             public const string NORMAL = "NORMAL";

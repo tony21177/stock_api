@@ -39,7 +39,7 @@ public partial class OutStockRecord
     /// 批號
     /// </summary>
     [StringLength(100)]
-    public string LotNumber { get; set; } = null!;
+    public string? LotNumber { get; set; }
 
     /// <summary>
     /// 所屬公司ID
@@ -130,4 +130,10 @@ public partial class OutStockRecord
 
     [Column(TypeName = "timestamp")]
     public DateTime? UpdatedAt { get; set; }
+
+    /// <summary>
+    /// 若此筆出庫是由盤虧而來才有值
+    /// </summary>
+    [StringLength(100)]
+    public string? AdjustItemId { get; set; }
 }

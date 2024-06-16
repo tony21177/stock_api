@@ -26,6 +26,7 @@ namespace stock_api.Common.IoC.Configuration.DI
                 services.AddScoped<PurchaseService>();
                 services.AddScoped<StockInService>();
                 services.AddScoped<StockOutService>();
+                services.AddScoped<AdjustService>();
                 services.AddScoped<IAuthorizationMiddlewareResultHandler, CustomAuthorizationMiddlewareResultHandler>();
             }
         }

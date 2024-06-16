@@ -14,12 +14,14 @@ namespace stock_api.Service
         private readonly StockDbContext _dbContext;
         private readonly IMapper _mapper;
         private readonly ILogger<WarehouseProductService> _logger;
+        private FileUploadService _fileUploadService;
 
-        public WarehouseProductService(StockDbContext dbContext, IMapper mapper, ILogger<WarehouseProductService> logger)
+        public WarehouseProductService(StockDbContext dbContext, IMapper mapper, ILogger<WarehouseProductService> logger, FileUploadService fileUploadService)
         {
             _dbContext = dbContext;
             _mapper = mapper;
             _logger = logger;
+            _fileUploadService = fileUploadService;
         }
 
         public WarehouseProduct? GetProductByProductId(string productId)
@@ -50,6 +52,7 @@ namespace stock_api.Service
         {
             return _dbContext.WarehouseProducts.Where(p => productIdList.Contains(p.ProductId)).ToList();
         }
+
 
         public List<WarehouseProductCommon> GetCommonProductsByProductCodes(List<string> productCodeList)
         {
@@ -327,11 +330,47 @@ namespace stock_api.Service
             
         }
 
-        public bool UpdateOrAddProductImage(string ImageBase64String,string ProductId,string CompId)
+        //public bool UpdateOrAddProductImage(string ImageBase64String,string ProductId,string CompId)
+        //{
+        //    using var scope = new TransactionScope();
+        //    try
+        //    {
+        //        var existingProductImage = _dbContext.ProductImages.Where(i => i.ProductId == ProductId && i.CompId == CompId).FirstOrDefault();
+        //        if (existingProductImage == null)
+        //        {
+        //            var newProductImage = new ProductImage()
+        //            {
+        //                ProductId = ProductId,
+        //                CompId = CompId,
+        //                Image = ImageBase64String
+        //            };
+
+        //            _dbContext.ProductImages.Add(newProductImage);
+
+        //        }
+        //        else
+        //        {
+        //            existingProductImage.Image = ImageBase64String;
+        //        }
+
+        //        _dbContext.SaveChanges();
+        //        scope.Complete();
+        //        return true;
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        _logger.LogError("事務失敗[UpdateOrAddProductImage]：{msg}", ex);
+        //        return false;
+        //    }
+        //}
+
+        public async Task<bool> UpdateOrAddProductImage(IFormFile imagesFile, string ProductId, string CompId)
         {
-            using var scope = new TransactionScope();
+            using var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled);
             try
             {
+                var fileDetails = await _fileUploadService.PostFilesAsync(new List<IFormFile> { imagesFile }, new List<string> { "product" });
+
                 var existingProductImage = _dbContext.ProductImages.Where(i => i.ProductId == ProductId && i.CompId == CompId).FirstOrDefault();
                 if (existingProductImage == null)
                 {
@@ -339,7 +378,7 @@ namespace stock_api.Service
                     {
                         ProductId = ProductId,
                         CompId = CompId,
-                        Image = ImageBase64String
+                        Image = fileDetails[0].FilePath
                     };
 
                     _dbContext.ProductImages.Add(newProductImage);
@@ -347,7 +386,7 @@ namespace stock_api.Service
                 }
                 else
                 {
-                    existingProductImage.Image = ImageBase64String;
+                    existingProductImage.Image = fileDetails[0].FilePath;
                 }
 
                 _dbContext.SaveChanges();

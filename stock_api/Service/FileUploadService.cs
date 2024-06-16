@@ -77,6 +77,7 @@ namespace stock_api.Service
             return fileDetailList;
         }
 
+
         public FileStreamResult Download(FileDetail fileDetail)
         {
             try
@@ -93,6 +94,24 @@ namespace stock_api.Service
                 return null; // Or handle the error in a way that makes sense for your application
             }
         }
+
+        public FileStreamResult Download(string filePath,string productId,string contentType)
+        {
+            try
+            {
+                var fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read);
+                return new FileStreamResult(fileStream, contentType)
+                {
+                    FileDownloadName = productId
+                };
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.StackTrace);
+                return null; // Or handle the error in a way that makes sense for your application
+            }
+        }
+
 
         public Task<string?> RenameFileAsync(FileDetail fileDetail, string newFileName)
         {

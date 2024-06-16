@@ -31,6 +31,8 @@ public partial class StockDbContext : DbContext
 
     public virtual DbSet<InStockItemRecord> InStockItemRecords { get; set; }
 
+    public virtual DbSet<InventoryAdjustItem> InventoryAdjustItems { get; set; }
+
     public virtual DbSet<InventoryAdjustMain> InventoryAdjustMains { get; set; }
 
     public virtual DbSet<Manufacturer> Manufacturers { get; set; }
@@ -241,6 +243,7 @@ public partial class StockDbContext : DbContext
 
             entity.ToTable("in_stock_item_record", tb => tb.HasComment("每一筆要更新庫存紀錄（增加）的操作，都需要寫入一筆記錄在 InStockRecord，包含採購驗收、調撥、盤點（盤盈）、退庫，類型寫在 Type 欄位。"));
 
+            entity.Property(e => e.AdjustItemId).HasComment("若此筆入庫是由盤盈而來才有值");
             entity.Property(e => e.AfterQuantity).HasComment("入庫後數量");
             entity.Property(e => e.BarCodeNumber).HasComment("用來產生條碼的數字，PadLeft : 7個0\nExample : 0000001");
             entity.Property(e => e.CompId).HasComment("所屬公司ID");
@@ -273,9 +276,19 @@ public partial class StockDbContext : DbContext
             entity.Property(e => e.UserName).HasComment("執行入庫人員的UserName");
         });
 
+        modelBuilder.Entity<InventoryAdjustItem>(entity =>
+        {
+            entity.HasKey(e => e.AdjustItemId).HasName("PRIMARY");
+
+            entity.Property(e => e.CreatedAt).HasDefaultValueSql("CURRENT_TIMESTAMP");
+            entity.Property(e => e.UpdatedAt)
+                .ValueGeneratedOnAddOrUpdate()
+                .HasDefaultValueSql("CURRENT_TIMESTAMP");
+        });
+
         modelBuilder.Entity<InventoryAdjustMain>(entity =>
         {
-            entity.HasKey(e => e.InventoryId).HasName("PRIMARY");
+            entity.HasKey(e => e.MainId).HasName("PRIMARY");
 
             entity.ToTable("inventory_adjust_main", tb => tb.HasComment("盤點及調撥處理主要單據\n每一筆要更新庫存紀錄（增加）的操作，都需要寫入一筆記錄在 InStockRecord，包含採購驗收、調撥、盤點（盤盈）、退庫，類型寫在 Type 欄位。"));
 
@@ -315,6 +328,7 @@ public partial class StockDbContext : DbContext
             entity.ToTable("out_stock_record", tb => tb.HasComment("每一筆要更新庫存紀錄（增加）的操作，都需要寫入一筆記錄在 InStockRecord，包含採購驗收、調撥、盤點（盤盈）、退庫，類型寫在 Type 欄位。"));
 
             entity.Property(e => e.AbnormalReason).HasComment("異常原因，如果沒有異常則保持空");
+            entity.Property(e => e.AdjustItemId).HasComment("若此筆出庫是由盤虧而來才有值");
             entity.Property(e => e.AfterQuantity).HasComment("入庫後數量");
             entity.Property(e => e.ApplyQuantity).HasComment("出庫數量");
             entity.Property(e => e.BarCodeNumber).HasComment("用來產生條碼的數字，PadLeft : 7個0\nExample : 0000001");
