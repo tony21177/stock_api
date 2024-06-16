@@ -391,14 +391,31 @@ namespace stock_api.Controllers
 
             try
             {
-                var productImage = _warehouseProductService.GetProductImage(productId,compId);
-                if (product == null || productImage ==null|| productImage.Image==null)
-                {
-                    return NotFound("Product or image not found.");
-                }
+                //var productImage = _warehouseProductService.GetProductImage(productId,compId);
+                //if (product == null || productImage ==null|| productImage.Image==null)
+                //{
+                //    return NotFound("Product or image not found.");
+                //}
 
-                var fileStream = _fileUploadService.Download(productImage.Image, productImage.ProductId, "image/png");
-                return fileStream;
+                //var fileStream = _fileUploadService.Download(productImage.Image, productImage.ProductId, "image/png");
+                //return fileStream;
+                var productImage = _warehouseProductService.GetProductImage(productId, compId);
+                if (product == null || productImage == null || productImage.Image == null)
+                {
+                    return BadRequest(new CommonResponse<dynamic>
+                    {
+                        Result= false,
+                        Message = "品項或圖片找不到"
+                    });
+                }
+                var imageByteArray = _fileUploadService.DownloadToByte(productImage.Image);
+                var data = Convert.ToBase64String(imageByteArray);
+                return Ok(new CommonResponse<dynamic>
+                {
+                    Result = false,
+                    Data = data
+                });
+
             }
             catch (Exception ex)
             {

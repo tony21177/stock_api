@@ -95,6 +95,21 @@ namespace stock_api.Service
             }
         }
 
+        public byte[] DownloadToByte(string filePath)
+        {
+            try
+            {
+                var fileBytes = System.IO.File.ReadAllBytes(filePath);
+                return fileBytes;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "An error occurred while downloading the file."); // Log the error with the exception message.
+                return null; // Or handle the error in a way that makes sense for your application.
+            }
+        }
+
+
         public FileStreamResult Download(string filePath,string productId,string contentType)
         {
             try
