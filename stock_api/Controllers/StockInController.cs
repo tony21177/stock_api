@@ -560,7 +560,18 @@ namespace stock_api.Controllers
                 return BadRequest(CommonResponse<dynamic>.BuildNotAuthorizeResponse());
             }
 
-            var data = _stockInService.GetProductInStockRecordsByAcceptId(accepItem.ItemId);
+            var inStockRecords = _stockInService.GetProductInStockRecordsByAcceptId(accepItem.ItemId);
+            var productIdList = inStockRecords.Select(item=>item.ProductId).ToList();
+            var products = _warehouseProductService.GetProductsByProductIdsAndCompId(productIdList, compId);
+
+            List<InStockRecordForPrint> data =  _mapper.Map<List<InStockRecordForPrint>>(inStockRecords);
+
+            data.ForEach(item =>
+            {
+                var matchedProduct = products.Where(p=>p.ProductId == item.ProductId).FirstOrDefault();
+                item.Unit = matchedProduct?.Unit;
+            });
+
 
             return Ok(new CommonResponse<dynamic>
             {

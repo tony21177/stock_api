@@ -100,6 +100,8 @@ namespace stock_api.Common.AutoMapper
             .ForAllMembers(opt => opt.Condition((src, dest, srcMember) => srcMember != null));
             CreateMap<PurchaseAcceptanceItemsView, PurchaseAcceptItemsVo>()
             .ForAllMembers(opt => opt.Condition((src, dest, srcMember) => srcMember != null));
+            CreateMap<InStockItemRecord, InStockRecordForPrint>()
+            .ForAllMembers(opt => opt.Condition((src, dest, srcMember) => srcMember != null));
 
             // OutStockRecord
             CreateMap<OutStockRecord, OutStockRecordVo>()
