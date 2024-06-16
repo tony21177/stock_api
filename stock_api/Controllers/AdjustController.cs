@@ -32,7 +32,7 @@ namespace stock_api.Controllers
             _adjustmentService = adjustService;
         }
 
-        [HttpPost("/generalAdjust")]
+        [HttpPost("generalAdjust")]
         [AuthorizeRoles("1","3")]
         public ActionResult Adjust(AdjustRequest adjustRequest) 
         {
