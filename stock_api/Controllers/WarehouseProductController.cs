@@ -403,7 +403,7 @@ namespace stock_api.Controllers
             catch (Exception ex)
             {
                 _logger.LogError(ex, "An error occurred while retrieving the image.");
-                return StatusCode(StatusCodes.Status500InternalServerError, "An error occurred while retrieving the image.");
+                return StatusCode(StatusCodes.Status404NotFound, "An error occurred while retrieving the image.");
             }
         }
     }
