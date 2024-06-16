@@ -59,6 +59,8 @@ public partial class StockDbContext : DbContext
 
     public virtual DbSet<Supplier> Suppliers { get; set; }
 
+    public virtual DbSet<SupplierTraceLog> SupplierTraceLogs { get; set; }
+
     public virtual DbSet<TempInStockItemRecord> TempInStockItemRecords { get; set; }
 
     public virtual DbSet<TempOutStockRecord> TempOutStockRecords { get; set; }
@@ -603,6 +605,18 @@ public partial class StockDbContext : DbContext
                 .HasComment("是否激活狀態");
             entity.Property(e => e.Name).HasComment("供應商名稱");
             entity.Property(e => e.Remark).HasComment("備註訊息");
+            entity.Property(e => e.UpdatedAt)
+                .ValueGeneratedOnAddOrUpdate()
+                .HasDefaultValueSql("CURRENT_TIMESTAMP");
+        });
+
+        modelBuilder.Entity<SupplierTraceLog>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("PRIMARY");
+
+            entity.Property(e => e.AbnormalType).HasComment("RECEIVE_ABNORMAL:收貨異常,\nVERIFY_ABNORMAL:驗收異常,\nQA_ABNORMAL:品管異常,\nOTHER_ABNORMAL:其他異常\n");
+            entity.Property(e => e.CreatedAt).HasDefaultValueSql("CURRENT_TIMESTAMP");
+            entity.Property(e => e.SourceType).HasComment("IN_STOCK(入庫),QA(品質確效),MANUAL(手動登陸)");
             entity.Property(e => e.UpdatedAt)
                 .ValueGeneratedOnAddOrUpdate()
                 .HasDefaultValueSql("CURRENT_TIMESTAMP");

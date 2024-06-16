@@ -100,6 +100,10 @@
          "ObjectType": 0
       },
       {
+         "Name": "supplier_trace_log",
+         "ObjectType": 0
+      },
+      {
          "Name": "temp_in_stock_item_record",
          "ObjectType": 0
       },

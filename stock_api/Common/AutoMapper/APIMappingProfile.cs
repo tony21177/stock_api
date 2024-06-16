@@ -106,6 +106,17 @@ namespace stock_api.Common.AutoMapper
             // OutStockRecord
             CreateMap<OutStockRecord, OutStockRecordVo>()
             .ForAllMembers(opt => opt.Condition((src, dest, srcMember) => srcMember != null));
+
+            // SupplierTrace
+            CreateMap<ManualCreateSupplierTraceLogRequest, SupplierTraceLog>()
+                .ForMember(dest => dest.AbnormalDate, opt => opt.MapFrom(src =>
+                    src.AbnormalDate != null ? DateTimeHelper.ParseDateString(src.AbnormalDate) : (DateTime?)null));
+            CreateMap<ManualUpdateSupplierTraceLogRequest, SupplierTraceLog>()
+                .ForMember(dest => dest.AbnormalDate, opt => opt.MapFrom(src =>
+                    src.AbnormalDate != null ? DateTimeHelper.ParseDateString(src.AbnormalDate) : (DateTime?)null));
+            CreateMap<SupplierTraceLog, SupplierTraceLog>()
+            .ForAllMembers(opt => opt.Condition((src, dest, srcMember) => srcMember != null));
+
         }
         
     }

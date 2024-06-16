@@ -290,6 +290,31 @@ namespace stock_api.Common.Constant
             }
         }
 
+        public static class AbnormalType
+        {
+            public const string RECEIVE_ABNORMAL = "RECEIVE_ABNORMAL";
+            public const string VERIFY_ABNORMAL = "VERIFY_ABNORMAL";
+            public const string QA_ABNORMAL = "QA_ABNORMAL";
+            public const string OTHER_ABNORMAL = "OTHER_ABNORMAL";
+
+            public static List<string> GetAllValues()
+            {
+                return new List<string> { RECEIVE_ABNORMAL, VERIFY_ABNORMAL, QA_ABNORMAL, OTHER_ABNORMAL };
+            }
+        }
+
+        public static class SourceType
+        {
+            public const string IN_STOCK = "IN_STOCK";
+            public const string QA = "QA";
+            public const string MANUAL = "MANUAL";
+
+            public static List<string> GetAllValues()
+            {
+                return new List<string> { IN_STOCK, QA, MANUAL };
+            }
+        }
+
     }
 
     
