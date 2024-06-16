@@ -69,8 +69,8 @@ namespace stock_api.Service
                             ProductSpec = matchedProduct.ProductSpec,
                             Type = CommonConstants.StockInType.ADJUST,
                             LotNumber = item.LotNumber,
-                            LotNumberBatch = item.LotNumberBatch??"AI"+nowDateTimeString,
-                            BarCodeNumber = item.LotNumberBatch ?? "AI" + nowDateTimeString,
+                            LotNumberBatch = item.LotNumberBatch??matchedProduct.ProductCode+"AI"+nowDateTimeString,
+                            BarCodeNumber = item.LotNumberBatch ?? matchedProduct.ProductCode + "AI" + nowDateTimeString,
                             UserId = user.UserId,
                             UserName = user.DisplayName,
                             AfterQuantity = item.AfterQuantity,
@@ -98,7 +98,7 @@ namespace stock_api.Service
                         {
                             OutStockId = Guid.NewGuid().ToString(),
                             ApplyQuantity = item.BeforeQuantity - item.AfterQuantity,
-                            LotNumberBatch = item.LotNumberBatch ?? "AO" + nowDateTimeString,
+                            LotNumberBatch = item.LotNumberBatch ?? matchedProduct.ProductCode + "AO" + nowDateTimeString,
                             LotNumber = item.LotNumber,
                             CompId = user.CompId,
                             IsAbnormal = false,
@@ -111,7 +111,7 @@ namespace stock_api.Service
                             UserName = user.DisplayName,
                             OriginalQuantity = item.BeforeQuantity,
                             AfterQuantity = item.AfterQuantity,
-                            BarCodeNumber = item.LotNumberBatch ?? "AO" + nowDateTimeString,
+                            BarCodeNumber = matchedProduct.ProductCode + "AO" + nowDateTimeString,
                             AdjustItemId = adjustItem.AdjustItemId
                         };
                         outStockRecords.Add(outStockRecord);
