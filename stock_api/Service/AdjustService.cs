@@ -76,6 +76,7 @@ namespace stock_api.Service
                             AfterQuantity = item.AfterQuantity,
                             AdjustItemId = adjustItem.AdjustItemId,
                         };
+                        matchedProduct.InStockQuantity = item.AfterQuantity;
                         inStockItemRecords.Add(record);
 
                     }
@@ -114,6 +115,7 @@ namespace stock_api.Service
                             BarCodeNumber = matchedProduct.ProductCode + "AO" + nowDateTimeString,
                             AdjustItemId = adjustItem.AdjustItemId
                         };
+                        matchedProduct.InStockQuantity = item.AfterQuantity;
                         outStockRecords.Add(outStockRecord);
                     }
                 }
