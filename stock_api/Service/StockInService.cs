@@ -250,6 +250,8 @@ namespace stock_api.Service
             try
             {
                 Qc? qc = new();
+                var existingInStockRecord = _dbContext.InStockItemRecords.Where(i => i.ItemId == existingAcceptanceItem.ItemId).OrderByDescending(i => i.CreatedAt).FirstOrDefault();
+
                 if (updateAcceptItem.AcceptQuantity.HasValue)
                 {
                     float existingAcceptQty = existingAcceptanceItem.AcceptQuantity ?? 0;
@@ -259,15 +261,18 @@ namespace stock_api.Service
                 {
                     existingAcceptanceItem.AcceptUserId = updateAcceptItem.AcceptUserId;
                 }
-                if (updateAcceptItem.LotNumber != null)
+                if (updateAcceptItem.LotNumber != null&&existingInStockRecord==null)
                 {
                     existingAcceptanceItem.LotNumber = updateAcceptItem.LotNumber;
                 }
                 //var now = DateTime.Now;
                 //var nowDateTimeString = DateTimeHelper.FormatDateString(now, "yyyyMMddHHmm");
                 //existingAcceptanceItem.LotNumberBatch = $"{product.ProductCode}{nowDateTimeString}";
-                existingAcceptanceItem.LotNumberBatch = existingAcceptanceItem.LotNumberBatchSeq.ToString("D12");
-                if (updateAcceptItem.ExpirationDate != null)
+                if(existingInStockRecord == null)
+                {
+                    existingAcceptanceItem.LotNumberBatch = existingAcceptanceItem.LotNumberBatchSeq.ToString("D12");
+                }
+                if (updateAcceptItem.ExpirationDate != null && existingInStockRecord == null)
                 {
                     existingAcceptanceItem.ExpirationDate = DateOnly.FromDateTime(DateTimeHelper.ParseDateString(updateAcceptItem.ExpirationDate).Value);
                 }
@@ -318,13 +323,29 @@ namespace stock_api.Service
                     existingAcceptanceItem.InStockStatus = CommonConstants.PurchaseSubItemReceiveStatus.PART;
                     existingAcceptanceItem.VerifyAt = DateTime.Now;
                 }
+                
+                var lotNumberBatch = existingAcceptanceItem.LotNumberBatch;
+                if (existingInStockRecord != null)
+                {
+                    var inStockLotNumberBatch  = existingInStockRecord.LotNumberBatch;
+                    if (inStockLotNumberBatch.Contains('-'))
+                    {
+                        var batchSeq = inStockLotNumberBatch.Split("-", StringSplitOptions.None)[1];
+                        var nextBatchSeq = batchSeq + 1;
+                        lotNumberBatch = lotNumberBatch + "-" + nextBatchSeq;
+                    }
+                    else
+                    {
+                        lotNumberBatch += "-2";
+                    }
+                }
 
                 if (updateAcceptItem.AcceptQuantity!=null)
                 {
                     var tempInStockItemRecord = new TempInStockItemRecord()
                     {
                         InStockId = Guid.NewGuid().ToString(),
-                        LotNumberBatch = existingAcceptanceItem.LotNumberBatch,
+                        LotNumberBatch = lotNumberBatch,
                         LotNumber = updateAcceptItem.LotNumber,
                         CompId = compId,
                         OriginalQuantity = product.InStockQuantity.Value,
@@ -348,7 +369,7 @@ namespace stock_api.Service
                     var inStockItemRecord = new InStockItemRecord()
                     {
                         InStockId = Guid.NewGuid().ToString(),
-                        LotNumberBatch = existingAcceptanceItem.LotNumberBatch,
+                        LotNumberBatch = lotNumberBatch,
                         LotNumber = updateAcceptItem.LotNumber,
                         CompId = compId,
                         OriginalQuantity = product.InStockQuantity.Value,
@@ -586,5 +607,11 @@ namespace stock_api.Service
             return _dbContext.InStockItemRecords.Where(record => record.CompId == compId && record.ProductCode == productCode
             && record.OutStockStatus != CommonConstants.OutStockStatus.ALL).OrderBy(record => record.ExpirationDate).ThenBy(record=>record.CreatedAt).ToList();
         }
+
+        public List<InStockItemRecord> GetProductInStockRecordsByAcceptId(string itemId)
+        {
+            return _dbContext.InStockItemRecords.Where(record => record.ItemId == itemId).OrderBy(r => r.CreatedAt).ToList();
+        }
+
     }
 }

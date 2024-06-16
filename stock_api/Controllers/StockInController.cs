@@ -539,6 +539,35 @@ namespace stock_api.Controllers
             });
         }
 
+        [HttpPost("acceptItem/print/inStockRecords")]
+        [Authorize]
+        public IActionResult GetInStockRecordsByAcceptId(GetInStockRecordsByAcceptIdRequest request)
+        {
+            var memberAndPermissionSetting = _authHelpers.GetMemberAndPermissionSetting(User);
+            var compId = memberAndPermissionSetting.CompanyWithUnit.CompId;
+
+            var accepItem = _stockInService.GetAcceptanceItemByAcceptId(request.AcceptId);
+            if (accepItem == null)
+            {
+                return BadRequest(new CommonResponse<dynamic>
+                {
+                    Result = false,
+                    Message = "驗收項目不存在"
+                });
+            }
+            if (accepItem.CompId!=compId)
+            {
+                return BadRequest(CommonResponse<dynamic>.BuildNotAuthorizeResponse());
+            }
+
+            var data = _stockInService.GetProductInStockRecordsByAcceptId(accepItem.ItemId);
+
+            return Ok(new CommonResponse<dynamic>
+            {
+                Result = true,
+                Data = data,
+            });
+        }
     }
 
     public class SupplierAccepItemsVo
