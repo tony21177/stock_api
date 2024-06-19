@@ -15,6 +15,8 @@ public partial class StockDbContext : DbContext
 
     public virtual DbSet<AcceptanceItem> AcceptanceItems { get; set; }
 
+    public virtual DbSet<AdjustMainItemListView> AdjustMainItemListViews { get; set; }
+
     public virtual DbSet<ApplyNewProductFlow> ApplyNewProductFlows { get; set; }
 
     public virtual DbSet<ApplyNewProductMain> ApplyNewProductMains { get; set; }
@@ -112,6 +114,25 @@ public partial class StockDbContext : DbContext
             entity.Property(e => e.UpdatedAt)
                 .ValueGeneratedOnAddOrUpdate()
                 .HasDefaultValueSql("CURRENT_TIMESTAMP");
+        });
+
+        modelBuilder.Entity<AdjustMainItemListView>(entity =>
+        {
+            entity.ToView("adjust_main_item_list_view");
+
+            entity.Property(e => e.AdjustCompId).HasComment("如果單據屬於調撥單，則填入被調撥的公司ID。\n非調撥單，保持空值");
+            entity.Property(e => e.CompId).HasComment("該單據所屬的公司ID");
+            entity.Property(e => e.CreatedAt).HasDefaultValueSql("CURRENT_TIMESTAMP");
+            entity.Property(e => e.CurrentStatus).HasComment("目前狀態\nAPPLY : 申請中\nAGREE : 同意\nREJECT : 拒絕\nCLOSE : 結案");
+            entity.Property(e => e.ItemCreatedAt).HasDefaultValueSql("CURRENT_TIMESTAMP");
+            entity.Property(e => e.ItemUpdatedAt)
+                .ValueGeneratedOnAddOrUpdate()
+                .HasDefaultValueSql("CURRENT_TIMESTAMP");
+            entity.Property(e => e.Type).HasComment("SHIFT : 調撥\nADJUST : 盤點調整\nRETURN : 退庫\nRETURN_OUT : 退貨");
+            entity.Property(e => e.UpdatedAt)
+                .ValueGeneratedOnAddOrUpdate()
+                .HasDefaultValueSql("CURRENT_TIMESTAMP");
+            entity.Property(e => e.UserId).HasComment("此單據的建立者");
         });
 
         modelBuilder.Entity<ApplyNewProductFlow>(entity =>

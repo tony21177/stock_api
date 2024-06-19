@@ -5,7 +5,9 @@ using Microsoft.AspNetCore.Mvc;
 using stock_api.Auth;
 using stock_api.Common;
 using stock_api.Controllers.Request;
+using stock_api.Controllers.Validator;
 using stock_api.Service;
+using stock_api.Service.ValueObject;
 using stock_api.Utils;
 
 namespace stock_api.Controllers
@@ -21,8 +23,9 @@ namespace stock_api.Controllers
         private readonly StockOutService _stockOutService;
         private readonly WarehouseProductService _warehouseProductService;
         private readonly AdjustService _adjustmentService;
+        private readonly IValidator<ListAdjustItemsRequest> _listAdjustItemsRequestValidator;
 
-        public AdjustController(IMapper mapper, AuthHelpers authHelpers, StockInService stockInService, StockOutService stockOutService, WarehouseProductService warehouseProductService,AdjustService adjustService)
+        public AdjustController(IMapper mapper, AuthHelpers authHelpers, StockInService stockInService, StockOutService stockOutService, WarehouseProductService warehouseProductService, AdjustService adjustService)
         {
             _mapper = mapper;
             _authHelpers = authHelpers;
@@ -30,19 +33,20 @@ namespace stock_api.Controllers
             _stockOutService = stockOutService;
             _warehouseProductService = warehouseProductService;
             _adjustmentService = adjustService;
+            _listAdjustItemsRequestValidator = new ListAdjustItemsValidator();
         }
 
         [HttpPost("generalAdjust")]
-        [AuthorizeRoles("1","3")]
-        public ActionResult Adjust(AdjustRequest adjustRequest) 
+        [AuthorizeRoles("1", "3")]
+        public ActionResult Adjust(AdjustRequest adjustRequest)
         {
             var memberAndPermissionSetting = _authHelpers.GetMemberAndPermissionSetting(User);
             var compId = memberAndPermissionSetting.CompanyWithUnit.CompId;
 
             adjustRequest.CompId = compId;
-            
+
             var productIds = adjustRequest.AdjustItems.Select(x => x.ProductId).ToList();
-            var products = _warehouseProductService.GetProductsByProductIdsAndCompId(productIds,compId);
+            var products = _warehouseProductService.GetProductsByProductIdsAndCompId(productIds, compId);
 
             foreach (var item in adjustRequest.AdjustItems)
             {
@@ -65,10 +69,35 @@ namespace stock_api.Controllers
                 }
             }
 
-            var (result,errorMsg) = _adjustmentService.AdjustItems(adjustRequest.AdjustItems, products, memberAndPermissionSetting.Member);
-            return Ok(new CommonResponse<dynamic>(){
+            var (result, errorMsg) = _adjustmentService.AdjustItems(adjustRequest.AdjustItems, products, memberAndPermissionSetting.Member);
+            return Ok(new CommonResponse<dynamic>()
+            {
                 Result = result,
                 Message = errorMsg
+            });
+        }
+
+        [HttpPost("list")]
+        [Authorize]
+        public ActionResult ListAdjustItemView(ListAdjustItemsRequest request)
+        {
+            var memberAndPermissionSetting = _authHelpers.GetMemberAndPermissionSetting(User);
+            var compId = memberAndPermissionSetting.CompanyWithUnit.CompId;
+
+            request.CompId = compId;
+            var validationResult = _listAdjustItemsRequestValidator.Validate(request);
+
+            if (!validationResult.IsValid)
+            {
+                return BadRequest(CommonResponse<dynamic>.BuildValidationFailedResponse(validationResult));
+            }
+            var (data,totalPages) = _adjustmentService.ListAdjustMainWithItemsByCondition(request);
+
+            return Ok(new CommonResponse<List<AdjustMainWithItemsVo>>
+            {
+                Result = true,
+                Data = data,
+                TotalPages = totalPages
             });
         }
     }

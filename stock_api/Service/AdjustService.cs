@@ -1,8 +1,10 @@
-﻿using stock_api.Common;
+﻿using MySqlX.XDevAPI.Common;
+using stock_api.Common;
 using stock_api.Common.Constant;
 using stock_api.Common.Utils;
 using stock_api.Controllers.Request;
 using stock_api.Models;
+using stock_api.Service.ValueObject;
 using System.Transactions;
 
 namespace stock_api.Service
@@ -141,6 +143,124 @@ namespace stock_api.Service
                 _logger.LogError("事務失敗[AdjustItems]：{msg}", ex);
                 return (false,ex.Message);
             }
+        }
+
+        public (List<AdjustMainWithItemsVo>,int) ListAdjustMainWithItemsByCondition(ListAdjustItemsRequest request)
+        {
+            IQueryable<AdjustMainItemListView> query = _dbContext.AdjustMainItemListViews;
+            if (request.CompId != null)
+            {
+                query = query.Where(h => h.CompId == request.CompId);
+            }
+            if (request.MainId != null)
+            {
+                query = query.Where(h => h.MainId == request.MainId);
+            }
+            if (request.AdjustCompId != null)
+            {
+                query = query.Where(h => h.AdjustCompId == request.AdjustCompId);
+            }
+            if (request.Type != null)
+            {
+                query = query.Where(h => h.Type == request.Type);
+            }
+            if (request.UserId != null)
+            {
+                query = query.Where(h => h.UserId == request.UserId);
+            }
+            if (request.CurrentStatus != null)
+            {
+                query = query.Where(h => h.CurrentStatus == request.CurrentStatus);
+            }
+            if (request.StartDate != null)
+            {
+                var startDateTime = DateTimeHelper.ParseDateString(request.StartDate);
+                query = query.Where(h => h.CreatedAt>=startDateTime);
+            }
+            if (request.EndDate != null)
+            {
+                var endDateTime = DateTimeHelper.ParseDateString(request.EndDate).Value.AddDays(1);
+                query = query.Where(h => h.CreatedAt < endDateTime);
+            }
+            if (request.ProductId != null)
+            {
+                query = query.Where(h => h.ProductId == request.ProductId);
+            }
+            if (request.ProductCode != null)
+            {
+                query = query.Where(h => h.ProductCode == request.ProductCode);
+            }
+
+            if (request.PaginationCondition.IsDescOrderBy)
+            {
+                query = request.PaginationCondition.OrderByField switch
+                {
+                    "createdAt" => query.OrderByDescending(h => h.CreatedAt),
+                    "updatedAt" => query.OrderByDescending(h => h.UpdatedAt),
+                    _ => query.OrderByDescending(h => h.CreatedAt),
+                };
+            }
+            else
+            {
+                query = request.PaginationCondition.OrderByField switch
+                {
+                    "createdAt" => query.OrderBy(h => h.CreatedAt),
+                    "updatedAt" => query.OrderBy(h => h.UpdatedAt),
+                    _ => query.OrderBy(h => h.CreatedAt),
+                };
+            }
+            int totalItems = query.Count();
+            int totalPages = (int)Math.Ceiling((double)totalItems / request.PaginationCondition.PageSize);
+
+            query = query.Skip((request.PaginationCondition.Page - 1) * request.PaginationCondition.PageSize).Take(request.PaginationCondition.PageSize);
+            var itemsView = query.ToList();
+
+            Dictionary<string, List<AdjustMainItemListView>> mainIdMap = new Dictionary<string, List<AdjustMainItemListView>>();
+            foreach (var mainWithItem in itemsView)
+            {
+                if (!mainIdMap.ContainsKey(mainWithItem.MainId))
+                {
+                    mainIdMap.Add(mainWithItem.MainId, new List<AdjustMainItemListView>());
+                }
+                var voList = mainIdMap.GetValueOrDefault(mainWithItem.MainId);
+                voList?.Add(mainWithItem);
+            }
+
+            List<AdjustMainWithItemsVo> adjustMainWithItemsVoList = new ();
+            foreach (var kvp in mainIdMap)
+            {
+                List<AdjustItemVo> Items = new List<AdjustItemVo>();
+                kvp.Value.ForEach(vo =>
+                {
+                    var adjustItemVo = new AdjustItemVo()
+                    {
+                        AdjustItemId = vo.AdjustItemId,
+                        ProductId = vo.ProductId,
+                        ProductCode = vo.ProductCode,
+                        BeforeQuantity = vo.BeforeQuantity,
+                        AfterQuantity = vo.AfterQuantity,
+                        ItemCreatedAt = vo.ItemCreatedAt,
+                        ItemUpdatedAt = vo.ItemUpdatedAt,
+                    };
+                    Items.Add(adjustItemVo);
+                });
+
+                var mainVo = new AdjustMainWithItemsVo
+                {
+                    MainId = kvp.Key,
+                    CompId = kvp.Value[0].CompId,
+                    AdjustCompId = kvp.Value[0].AdjustCompId,
+                    Type = kvp.Value[0].Type,
+                    UserId = kvp.Value[0].UserId,
+                    CurrentStatus = kvp.Value[0].CurrentStatus,
+                    CreatedAt = kvp.Value[0].CreatedAt,
+                    UpdatedAt = kvp.Value[0].UpdatedAt,
+                };
+                mainVo.Items = Items;
+                adjustMainWithItemsVoList.Add(mainVo);
+            }
+            return (adjustMainWithItemsVoList,totalPages);
+
         }
     }
 }
