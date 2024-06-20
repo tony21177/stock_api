@@ -434,10 +434,10 @@ namespace stock_api.Service
                     //product.LotNumber = updateAcceptItem.LotNumber;
                     //product.LotNumberBatch = existingAcceptanceItem.LotNumberBatch;
                     //
-                    product.DeliverFunction = existingAcceptanceItem.DeliverFunction;
-                    product.DeliverTemperature = existingAcceptanceItem.DeliverTemperature;
-                    product.SavingFunction = existingAcceptanceItem.SavingFunction;
-                    product.SavingTemperature = existingAcceptanceItem.SavingTemperature;
+                    product.DeliverFunction = updateAcceptItem.DeliverFunction;
+                    product.DeliverTemperature = updateAcceptItem.DeliverTemperature;
+                    product.SavingFunction = updateAcceptItem.SavingFunction;
+                    product.SavingTemperature = updateAcceptItem.SavingTemperature;
 
                     _dbContext.TempInStockItemRecords.Add(tempInStockItemRecord);
                     _dbContext.InStockItemRecords.Add(inStockItemRecord);
@@ -465,7 +465,7 @@ namespace stock_api.Service
 
         }
 
-        public List<AcceptanceItem> acceptanceItemsByUdiSerialCode(string udiserialCode,string compId)
+        public List<AcceptanceItem> AcceptanceItemsByUdiSerialCode(string udiserialCode,string compId)
         {
             return _dbContext.AcceptanceItems.Where(i=>i.UdiserialCode==udiserialCode&&i.CompId==compId).ToList();
         }

@@ -184,7 +184,7 @@ namespace stock_api.Controllers
             var userId = memberAndPermissionSetting.Member.UserId;
 
 
-            List<AcceptanceItem> acceptanceItems = _stockInService.acceptanceItemsByUdiSerialCode(request.UdiserialCode, compId).Where(i => i.AcceptUserId == null).ToList();
+            List<AcceptanceItem> acceptanceItems = _stockInService.AcceptanceItemsByUdiSerialCode(request.UdiserialCode, compId).Where(i => i.AcceptUserId == null).ToList();
             var unVerifyAcceptance = acceptanceItems.Where(i => i.InStockStatus != CommonConstants.PurchaseSubItemReceiveStatus.DONE).OrderByDescending(i => i.UpdatedAt).FirstOrDefault();
             if (unVerifyAcceptance == null)
             {
