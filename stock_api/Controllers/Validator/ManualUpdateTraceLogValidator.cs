@@ -30,6 +30,11 @@ namespace stock_api.Controllers.Validator
                .When(request => request.AbnormalType != null)
                    .WithMessage($"abnormalType必須為{string.Join(",", CommonConstants.AbnormalType.GetAllValues())}");
 
+            RuleFor(request => request.SourceType)
+               .Must(sourceType => CommonConstants.SourceType.GetAllValues().Contains(sourceType))
+               .When(request => request.SourceType != null)
+                   .WithMessage($"sourceType必須為{string.Join(",", CommonConstants.SourceType.GetAllValues())}");
+
         }
 
         private bool BeValidSupplier(int? supplierId, ValidationContext<ManualUpdateSupplierTraceLogRequest> context)

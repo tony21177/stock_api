@@ -8,5 +8,7 @@
 
         public string? CompId { get; set; }
 
+        public string? ProductId { get; set;}
+
     }
 }

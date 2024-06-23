@@ -59,4 +59,10 @@ public partial class SupplierTraceLog
 
     [Column(TypeName = "timestamp")]
     public DateTime? AbnormalDate { get; set; }
+
+    [StringLength(100)]
+    public string? ProductId { get; set; }
+
+    [StringLength(200)]
+    public string? ProductName { get; set; }
 }

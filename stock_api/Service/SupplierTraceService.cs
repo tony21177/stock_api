@@ -66,6 +66,21 @@ namespace stock_api.Service
                 var afterDateInDays = DateTime.Now.AddDays(listSupplierTraceLogRequest.InDays.Value + 1).Date;
                 query = query.Where(h => h.CreatedAt < afterDateInDays);
             }
+            if (listSupplierTraceLogRequest.ProductId != null)
+            {
+                query = query.Where(h => h.ProductId==listSupplierTraceLogRequest.ProductId);
+            }
+            if (!string.IsNullOrEmpty(listSupplierTraceLogRequest.Keywords))
+            {
+                var groupNameList =
+                query = query.Where(h => (h.ProductName != null && h.ProductName.Contains(listSupplierTraceLogRequest.Keywords))
+                || (h.SourceType != null && h.SourceType.Contains(listSupplierTraceLogRequest.Keywords))
+                || (h.SupplierName != null && h.SupplierName.Contains(listSupplierTraceLogRequest.Keywords))
+                || (h.AbnormalContent != null && h.AbnormalContent.Contains(listSupplierTraceLogRequest.Keywords))
+                || (h.AbnormalType != null && h.AbnormalType.Contains(listSupplierTraceLogRequest.Keywords)));
+            }
+
+
             if (listSupplierTraceLogRequest.PaginationCondition.IsDescOrderBy)
             {
                 query = listSupplierTraceLogRequest.PaginationCondition.OrderByField switch

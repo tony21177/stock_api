@@ -9,6 +9,7 @@ using stock_api.Controllers.Validator;
 using stock_api.Models;
 using stock_api.Service;
 using stock_api.Utils;
+using System.Runtime.CompilerServices;
 
 namespace stock_api.Controllers
 {
@@ -20,16 +21,18 @@ namespace stock_api.Controllers
         private readonly AuthHelpers _authHelpers;
         private readonly SupplierService _supplierService;
         private readonly SupplierTraceService _supplierTraceService;
+        private readonly WarehouseProductService _warehouseProductService;
         private readonly IValidator<ManualCreateSupplierTraceLogRequest> _manualCreateSupplierTraceLogValidator;
         private readonly IValidator<ManualUpdateSupplierTraceLogRequest> _manualUpdateSupplierTraceLogValidator;
         private readonly IValidator<ListSupplierTraceLogRequest> _listSupplierTraceLogValidator;
 
-        public SupplierTraceController(IMapper mapper, AuthHelpers authHelpers, SupplierService supplierService, SupplierTraceService supplierTraceService)
+        public SupplierTraceController(IMapper mapper, AuthHelpers authHelpers, SupplierService supplierService, SupplierTraceService supplierTraceService,WarehouseProductService warehouseProductService)
         {
             _mapper = mapper;
             _authHelpers = authHelpers;
             _supplierService = supplierService;
             _supplierTraceService = supplierTraceService;
+            _warehouseProductService = warehouseProductService;
             _manualCreateSupplierTraceLogValidator = new ManualCreateTraceLogValidator(supplierService);
             _manualUpdateSupplierTraceLogValidator = new ManualUpdateTraceLogValidator(supplierService);
             _listSupplierTraceLogValidator = new ListSupplierTraceLogValidator();
@@ -49,12 +52,29 @@ namespace stock_api.Controllers
             {
                 return BadRequest(CommonResponse<dynamic>.BuildValidationFailedResponse(validationResult));
             }
-            var supplier = _supplierService.GetSupplierById(request.SupplierId);
+
             var newSupplierTraceLog = _mapper.Map<SupplierTraceLog>(request);
+            if (request.ProductId != null)
+            {
+                var product = _warehouseProductService.GetProductByProductIdAndCompId(request.ProductId, compId);
+                if (product == null)
+                {
+                    return BadRequest(new CommonResponse<dynamic>
+                    {
+                        Result = false,
+                        Message = "該品項不存在"
+                    });
+                }
+                newSupplierTraceLog.ProductId = product.ProductId;
+                newSupplierTraceLog.ProductName = product.ProductName;
+            }
+
+            var supplier = _supplierService.GetSupplierById(request.SupplierId);
+            
             newSupplierTraceLog.SupplierName = supplier.Name;
             newSupplierTraceLog.UserId = memberAndPermissionSetting.Member.UserId;
             newSupplierTraceLog.UserName = memberAndPermissionSetting.Member.DisplayName;
-            newSupplierTraceLog.SourceType = CommonConstants.SourceType.MANUAL;
+            newSupplierTraceLog.SourceType = request.SourceType;
             _supplierTraceService.CreateSupplierTrace(newSupplierTraceLog);
             return Ok(new CommonResponse<dynamic>
             {
@@ -88,6 +108,21 @@ namespace stock_api.Controllers
             }
 
             var updateSupplierTraceLog = _mapper.Map<SupplierTraceLog>(request);
+            if (request.ProductId != null)
+            {
+                var product = _warehouseProductService.GetProductByProductIdAndCompId(request.ProductId, compId);
+                if (product == null)
+                {
+                    return BadRequest(new CommonResponse<dynamic>
+                    {
+                        Result = false,
+                        Message = "該品項不存在"
+                    });
+                }
+                updateSupplierTraceLog.ProductId = product.ProductId;
+                updateSupplierTraceLog.ProductName = product.ProductName;
+            }
+
 
             if (request.SupplierId != null)
             {
