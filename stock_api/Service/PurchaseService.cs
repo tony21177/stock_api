@@ -322,6 +322,22 @@ namespace stock_api.Service
                     item.flows = matchedFlows;
                 }
             }
+            if (!string.IsNullOrEmpty(listPurchaseRequest.Keywords))
+            {
+                string keyWords = listPurchaseRequest.Keywords;
+                purchaseMainAndSubItemVoList = purchaseMainAndSubItemVoList.FindAll(purchaseMainAndSubItemVo =>
+                {
+                    var matchedVo = purchaseMainAndSubItemVo.Items.Find(item => item.ProductName.Contains(keyWords)
+                    || item.ProductId.Contains(listPurchaseRequest.Keywords)
+                    || item.ProductCode.Contains(listPurchaseRequest.Keywords)
+                    || item.ProductModel.Contains(listPurchaseRequest.Keywords)
+                    || item.ProductSpec.Contains(listPurchaseRequest.Keywords)
+                    || item.ProductMachine.Contains(listPurchaseRequest.Keywords));
+                    if (matchedVo != null) return true;
+                    return false;
+                });
+            }
+
 
             return purchaseMainAndSubItemVoList;
         }

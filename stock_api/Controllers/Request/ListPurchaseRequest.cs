@@ -1,6 +1,6 @@
 ﻿namespace stock_api.Controllers.Request
 {
-    public class ListPurchaseRequest
+    public class ListPurchaseRequest : BaseSearchRequest
     {
         public string? CompId { get; set; }
         public string? StartDate { get; set; }
