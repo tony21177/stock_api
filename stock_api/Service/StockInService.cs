@@ -612,6 +612,10 @@ namespace stock_api.Service
         {
             return _dbContext.InStockItemRecords.Where(record => record.ItemId == itemId).OrderBy(r => r.CreatedAt).ToList();
         }
+        
+        public List<string> GetDuplicateBatchList(List<string> lotNumberBatchList) {
+            return _dbContext.InStockItemRecords.Where(record=>lotNumberBatchList.Contains(record.LotNumberBatch)).Select(i=>i.LotNumberBatch).ToList();
+        }
 
     }
 }

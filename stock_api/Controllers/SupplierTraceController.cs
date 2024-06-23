@@ -35,7 +35,7 @@ namespace stock_api.Controllers
             _warehouseProductService = warehouseProductService;
             _manualCreateSupplierTraceLogValidator = new ManualCreateTraceLogValidator(supplierService);
             _manualUpdateSupplierTraceLogValidator = new ManualUpdateTraceLogValidator(supplierService);
-            _listSupplierTraceLogValidator = new ListSupplierTraceLogValidator();
+            _listSupplierTraceLogValidator = new ListSupplierTraceLogValidator(supplierService);
         }
 
         [HttpPost("manualCreate")]

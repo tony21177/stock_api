@@ -70,6 +70,11 @@ namespace stock_api.Service
             {
                 query = query.Where(h => h.ProductId==listSupplierTraceLogRequest.ProductId);
             }
+            if(listSupplierTraceLogRequest.SupplierId != null)
+            {
+                query = query.Where(h => h.SupplierId == listSupplierTraceLogRequest.SupplierId);
+            }
+
             if (!string.IsNullOrEmpty(listSupplierTraceLogRequest.Keywords))
             {
                 var groupNameList =

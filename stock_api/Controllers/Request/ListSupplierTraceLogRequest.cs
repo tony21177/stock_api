@@ -9,6 +9,7 @@
         public string? CompId { get; set; }
 
         public string? ProductId { get; set;}
+        public int? SupplierId { get; set; }    
 
     }
 }

@@ -9,10 +9,12 @@ namespace stock_api.Controllers.Validator
 {
     public class ListAdjustItemsValidator : AbstractValidator<ListAdjustItemsRequest>
     {
-       
+     
+        private readonly SupplierService _supplierService;
 
-        public ListAdjustItemsValidator()
+        public ListAdjustItemsValidator(SupplierService supplierService)
         {
+            _supplierService = supplierService;
 
             RuleFor(x => x.StartDate).Must((request, date, context) => BeValidDate(date, context))
                 .WithMessage("無效格式日期");
@@ -27,7 +29,7 @@ namespace stock_api.Controllers.Validator
                 .Cascade(CascadeMode.Stop) // Stop on first failure
                 .Must(status => CommonConstants.AdjustStatus.GetAllValues().Contains(status)).When(request => !string.IsNullOrEmpty(request.CurrentStatus)) // Only validate when Type is not empty
                     .WithMessage($"currentStatus必須為{string.Join(",", CommonConstants.AdjustStatus.GetAllValues())}");
-            
+
         }
 
 

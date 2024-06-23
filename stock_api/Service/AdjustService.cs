@@ -190,6 +190,7 @@ namespace stock_api.Service
             {
                 query = query.Where(h => h.ProductCode == request.ProductCode);
             }
+           
 
             if (request.PaginationCondition.IsDescOrderBy)
             {

@@ -22,18 +22,20 @@ namespace stock_api.Controllers
         private readonly StockInService _stockInService;
         private readonly StockOutService _stockOutService;
         private readonly WarehouseProductService _warehouseProductService;
+        private readonly SupplierService _supplierService;
         private readonly AdjustService _adjustmentService;
         private readonly IValidator<ListAdjustItemsRequest> _listAdjustItemsRequestValidator;
 
-        public AdjustController(IMapper mapper, AuthHelpers authHelpers, StockInService stockInService, StockOutService stockOutService, WarehouseProductService warehouseProductService, AdjustService adjustService)
+        public AdjustController(IMapper mapper, AuthHelpers authHelpers, StockInService stockInService, StockOutService stockOutService, WarehouseProductService warehouseProductService, AdjustService adjustService,SupplierService supplierService)
         {
             _mapper = mapper;
             _authHelpers = authHelpers;
             _stockInService = stockInService;
             _stockOutService = stockOutService;
             _warehouseProductService = warehouseProductService;
+            _supplierService = supplierService;
             _adjustmentService = adjustService;
-            _listAdjustItemsRequestValidator = new ListAdjustItemsValidator();
+            _listAdjustItemsRequestValidator = new ListAdjustItemsValidator(supplierService);
         }
 
         [HttpPost("generalAdjust")]
@@ -47,6 +49,20 @@ namespace stock_api.Controllers
 
             var productIds = adjustRequest.AdjustItems.Select(x => x.ProductId).ToList();
             var products = _warehouseProductService.GetProductsByProductIdsAndCompId(productIds, compId);
+            var lotNumberBatchList = adjustRequest.AdjustItems.Select(i=>i.LotNumberBatch).Where(batch=>batch!=null).ToList();
+            if (lotNumberBatchList.Count > 0)
+            {
+                var duplicateBatchList = _stockInService.GetDuplicateBatchList(lotNumberBatchList);
+                if (duplicateBatchList.Count > 0)
+                {
+                    return BadRequest(new CommonResponse<dynamic>
+                    {
+                        Result = false,
+                        Message = $"批次:{string.Join(",", duplicateBatchList)}已重複"
+                    });
+                }
+            }
+
 
             foreach (var item in adjustRequest.AdjustItems)
             {
