@@ -108,6 +108,28 @@ namespace stock_api.Controllers
                 return BadRequest(CommonResponse<dynamic>.BuildValidationFailedResponse(validationResult));
             }
             var (data,totalPages) = _adjustmentService.ListAdjustMainWithItemsByCondition(request);
+            var allProductIdList = data.SelectMany(main=>main.Items.Select(item=>item.ProductId)).Distinct().ToList();
+            var products = _warehouseProductService.GetProductsByProductIdsAndCompId(allProductIdList, compId);
+
+            foreach (var main in data)
+            {
+                foreach (var item in main.Items)
+                {
+                    var matchedProduct = products.Where(p=>p.ProductId==item.ProductId).FirstOrDefault();
+                    if (matchedProduct != null)
+                    {
+                        item.ProductName = matchedProduct.ProductName;
+                        item.GroupName = matchedProduct.GroupNames;
+                        item.ProductSpec = matchedProduct.ProductSpec;
+                        item.ProductUnit = matchedProduct.Unit;
+                        item.DefaultSupplierName = matchedProduct.DefaultSupplierName;
+                    }
+
+
+                }
+
+            }
+
 
             return Ok(new CommonResponse<List<AdjustMainWithItemsVo>>
             {

@@ -21,6 +21,13 @@ namespace stock_api.Service.ValueObject
     {
         public string AdjustItemId { get; set; } = null!;
         public string ProductId { get; set; } = null!;
+
+        public string? ProductName { get; set; }
+        public string? GroupName { get; set; }  
+        public string? ProductSpec { get; set; }
+        public string? ProductUnit { get; set; }
+        public string? DefaultSupplierName {  get; set; }
+        
         public string ProductCode { get; set; } = null!;
         public float BeforeQuantity { get; set; }
         public float AfterQuantity { get; set; }
