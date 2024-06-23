@@ -77,8 +77,13 @@ namespace stock_api.Service
             }
             if (searchRequest.GroupId != null)
             {
-                query = query.Where(h => h.GroupIds.Contains(searchRequest.GroupId));
+                query = query.Where(h => h.GroupIds!=null && h.GroupIds.Contains(searchRequest.GroupId));
             }
+            if (searchRequest.DefaultSupplierId != null)
+            {
+                query = query.Where(h => h.DefaultSupplierId!=null&&h.DefaultSupplierId==searchRequest.DefaultSupplierId);
+            }
+
             query = query.Where(h => h.CompId == searchRequest.CompId);
 
             if (!string.IsNullOrEmpty(searchRequest.Keywords))

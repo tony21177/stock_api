@@ -7,7 +7,7 @@
         public string? ProductMachine { get; set;}
         public int? OpenDeadline { get; set;}
         public string? GroupId { get; set;}
-
+        public int? DefaultSupplierId { get; set; }
         public string? Keywords { get; set;}
     }
 }
