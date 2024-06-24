@@ -120,6 +120,21 @@ namespace stock_api.Service
                         matchedProduct.InStockQuantity = item.AfterQuantity;
                         outStockRecords.Add(outStockRecord);
                     }
+                    if(item.BeforeQuantity == item.AfterQuantity)
+                    {
+                        InventoryAdjustItem adjustItem = new()
+                        {
+                            AdjustItemId = Guid.NewGuid().ToString(),
+                            MainId = main.MainId,
+                            ProductId = item.ProductId,
+                            ProductCode = matchedProduct.ProductCode,
+                            CompId = user.CompId,
+                            BeforeQuantity = item.BeforeQuantity,
+                            AfterQuantity = item.AfterQuantity,
+                        };
+                        inventoryAdjustItems.Add(adjustItem);
+                    }
+
                 }
                 _dbContext.InventoryAdjustMains.Add(main);
                 if (inventoryAdjustItems.Count > 0)
