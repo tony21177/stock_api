@@ -124,10 +124,8 @@ namespace stock_api.Controllers
                         item.ProductUnit = matchedProduct.Unit;
                         item.DefaultSupplierName = matchedProduct.DefaultSupplierName;
                     }
-
-
                 }
-
+                main.Items = main.Items.OrderBy(i => i.ProductCode).ToList();
             }
 
 
