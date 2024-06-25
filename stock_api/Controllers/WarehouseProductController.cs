@@ -432,9 +432,11 @@ namespace stock_api.Controllers
             var compId = memberAndPermissionSetting.CompanyWithUnit.CompId;
             var allDistinctProducts = request.ModifyProductDtoList.Select(x=>x.ProductCode).Distinct().ToList();
             var allProducts = _warehouseProductService.GetProductByProductCodeList(allDistinctProducts);
+            var allDistinctGroupNames = request.ModifyProductDtoList.Select(i=>i.GroupNames).Where(i=>i!=null).SelectMany(i=>i.Split(','))
+                .Distinct().ToList();
+            var allGroups = _groupService.GetGroupsByGroupNameList(allDistinctGroupNames);
 
-
-            var (result,errorMsg) = _warehouseProductService.UpdateProducts(request.ModifyProductDtoList, allProducts);
+            var (result,errorMsg) = _warehouseProductService.UpdateProducts(request.ModifyProductDtoList, allProducts, allGroups);
             return Ok(new CommonResponse<dynamic>
             {
                 Result = result,
@@ -451,9 +453,11 @@ namespace stock_api.Controllers
 
             var allDistinctProducts = request.ModifyProductDtoList.Select(x => x.ProductCode).Distinct().ToList();
             var allProducts = _warehouseProductService.GetProductsByProductCodesAndCompId(allDistinctProducts, compId);
+            var allDistinctGroupNames = request.ModifyProductDtoList.Select(i => i.GroupNames).Where(i => i != null).SelectMany(i => i.Split(','))
+               .Distinct().ToList();
+            var allGroups = _groupService.GetGroupsByGroupNameListAndCompId(allDistinctGroupNames,compId);
 
-
-            var (result, errorMsg) = _warehouseProductService.UpdateProducts(request.ModifyProductDtoList,allProducts,compId);
+            var (result, errorMsg) = _warehouseProductService.UpdateProducts(request.ModifyProductDtoList,allProducts, allGroups, compId);
             return Ok(new CommonResponse<dynamic>
             {
                 Result = result,

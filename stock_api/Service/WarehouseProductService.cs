@@ -420,62 +420,73 @@ namespace stock_api.Service
         }
 
 
-        public (bool, string?) UpdateProducts(List<ModifyProductDto> modifyProductDtos,List<WarehouseProduct> products)
+        public (bool, string?) UpdateProducts(List<ModifyProductDto> modifyProductDtos,List<WarehouseProduct> products,List<WarehouseGroup> allGroups)
         {
             using var scope = new TransactionScope();
             try
             {
                 foreach (var modifyProductDto in modifyProductDtos)
                 {
-                    var product = products.Where(p => p.ProductCode == modifyProductDto.ProductCode).FirstOrDefault();
+                    var updateProducts = products.Where(p => p.ProductCode == modifyProductDto.ProductCode).ToList();
 
-                    if (product == null)
+                    if (updateProducts.Count==0)
                     {
                         _logger.LogWarning("Product with code:{productCode} not found", modifyProductDto.ProductCode);
                         continue;
                     }
 
                     if (modifyProductDto.DeadlineRule.HasValue)
-                        product.DeadlineRule = modifyProductDto.DeadlineRule.Value;
+
+                        updateProducts.ForEach(p=>p.DeadlineRule = modifyProductDto.DeadlineRule.Value) ;
 
                     if (!string.IsNullOrWhiteSpace(modifyProductDto.DeliverRemarks))
-                        product.DeliverRemarks = modifyProductDto.DeliverRemarks;
+                        updateProducts.ForEach(p => p.DeliverRemarks = modifyProductDto.DeliverRemarks);
 
                     if (!string.IsNullOrWhiteSpace(modifyProductDto.GroupNames))
-                        product.GroupNames = modifyProductDto.GroupNames;
+                    {
+
+                        foreach(var updateProduct in updateProducts)
+                        {
+                            var updateCompId = updateProduct.CompId;
+                            var updateGroupNameList = modifyProductDto.GroupNames.Split(',').ToList();
+                            var matchedUpdateGroup = allGroups.Where(g=>g.CompId==updateCompId&&g.GroupName!=null).Where(g=>updateGroupNameList.Contains(g.GroupName)).ToList();
+                            updateProduct.GroupIds = string.Join(",", matchedUpdateGroup.Select(g => g.GroupId));
+                            updateProduct.GroupNames = string.Join(",", matchedUpdateGroup.Select(g => g.GroupName));
+                        }
+                    }
+                       
 
                     if (!string.IsNullOrWhiteSpace(modifyProductDto.Manager))
-                        product.Manager = modifyProductDto.Manager;
+                        updateProducts.ForEach(p => p.Manager = modifyProductDto.Manager);
 
                     if (modifyProductDto.MaxSafeQuantity.HasValue)
-                        product.MaxSafeQuantity = (float)modifyProductDto.MaxSafeQuantity.Value;
+                        updateProducts.ForEach(p => p.MaxSafeQuantity = (float)modifyProductDto.MaxSafeQuantity.Value);
 
                     if (!string.IsNullOrWhiteSpace(modifyProductDto.OpenedSealName))
-                        product.OpenedSealName = modifyProductDto.OpenedSealName;
+                        updateProducts.ForEach(p => p.OpenedSealName = modifyProductDto.OpenedSealName);
 
                     if (modifyProductDto.PreOrderDays.HasValue)
-                        product.PreOrderDays = modifyProductDto.PreOrderDays.Value;
+                        updateProducts.ForEach(p => p.PreOrderDays = modifyProductDto.PreOrderDays.Value);
 
                     if (!string.IsNullOrWhiteSpace(modifyProductDto.ProductCategory))
-                        product.ProductCategory = modifyProductDto.ProductCategory;
+                        updateProducts.ForEach(p => p.ProductCategory = modifyProductDto.ProductCategory);
 
                     if (!string.IsNullOrWhiteSpace(modifyProductDto.ProductRemarks))
-                        product.ProductRemarks = modifyProductDto.ProductRemarks;
+                        updateProducts.ForEach(p => p.ProductRemarks = modifyProductDto.ProductRemarks);
 
                     if (!string.IsNullOrWhiteSpace(modifyProductDto.Unit))
-                        product.Unit = modifyProductDto.Unit;
+                        updateProducts.ForEach(p => p.Unit = modifyProductDto.Unit);
 
                     if (!string.IsNullOrWhiteSpace(modifyProductDto.ProductMachine))
-                        product.ProductMachine = modifyProductDto.ProductMachine;
+                        updateProducts.ForEach(p => p.ProductMachine = modifyProductDto.ProductMachine);
 
                     if (modifyProductDto.IsNeedAcceptProcess.HasValue)
-                        product.IsNeedAcceptProcess = modifyProductDto.IsNeedAcceptProcess.Value;
+                        updateProducts.ForEach(p => p.IsNeedAcceptProcess = modifyProductDto.IsNeedAcceptProcess);
 
                     if (!string.IsNullOrWhiteSpace(modifyProductDto.StockLocation))
-                        product.StockLocation = modifyProductDto.StockLocation;
+                        updateProducts.ForEach(p => p.StockLocation = modifyProductDto.StockLocation);
 
                 }
-
                 _dbContext.SaveChanges();
                 scope.Complete();
                 return (true, null);
@@ -563,59 +574,71 @@ namespace stock_api.Service
             //}
         }
 
-        public (bool, string?) UpdateProducts(List<ModifyProductDto> modifyProductDtos, List<WarehouseProduct> products, string compId)
+        public (bool, string?) UpdateProducts(List<ModifyProductDto> modifyProductDtos, List<WarehouseProduct> products, List<WarehouseGroup> allGroups, string compId)
         {
             using var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled);
             try
             {
                 foreach (var modifyProductDto in modifyProductDtos)
                 {
-                    var product = products.Where(p => p.ProductCode == modifyProductDto.ProductCode && p.CompId == compId).FirstOrDefault();
+                    var updateProducts = products.Where(p => p.ProductCode == modifyProductDto.ProductCode&&p.CompId==compId).ToList();
 
-                    if (product == null)
+                    if (updateProducts.Count == 0)
                     {
                         _logger.LogWarning("Product with code:{productCode} not found", modifyProductDto.ProductCode);
                         continue;
                     }
 
                     if (modifyProductDto.DeadlineRule.HasValue)
-                        product.DeadlineRule = modifyProductDto.DeadlineRule.Value;
+
+                        updateProducts.ForEach(p => p.DeadlineRule = modifyProductDto.DeadlineRule.Value);
 
                     if (!string.IsNullOrWhiteSpace(modifyProductDto.DeliverRemarks))
-                        product.DeliverRemarks = modifyProductDto.DeliverRemarks;
+                        updateProducts.ForEach(p => p.DeliverRemarks = modifyProductDto.DeliverRemarks);
 
                     if (!string.IsNullOrWhiteSpace(modifyProductDto.GroupNames))
-                        product.GroupNames = modifyProductDto.GroupNames;
+                    {
+
+                        foreach (var updateProduct in updateProducts)
+                        {
+                            var updateCompId = updateProduct.CompId;
+                            var updateGroupNameList = modifyProductDto.GroupNames.Split(',').ToList();
+                            var matchedUpdateGroup = allGroups.Where(g => g.CompId == updateCompId && g.GroupName != null).Where(g => updateGroupNameList.Contains(g.GroupName)).ToList();
+                            updateProduct.GroupIds = string.Join(",", matchedUpdateGroup.Select(g => g.GroupId));
+                            updateProduct.GroupNames = string.Join(",", matchedUpdateGroup.Select(g => g.GroupName));
+                        }
+                    }
+
 
                     if (!string.IsNullOrWhiteSpace(modifyProductDto.Manager))
-                        product.Manager = modifyProductDto.Manager;
+                        updateProducts.ForEach(p => p.Manager = modifyProductDto.Manager);
 
                     if (modifyProductDto.MaxSafeQuantity.HasValue)
-                        product.MaxSafeQuantity = modifyProductDto.MaxSafeQuantity.Value;
+                        updateProducts.ForEach(p => p.MaxSafeQuantity = (float)modifyProductDto.MaxSafeQuantity.Value);
 
                     if (!string.IsNullOrWhiteSpace(modifyProductDto.OpenedSealName))
-                        product.OpenedSealName = modifyProductDto.OpenedSealName;
+                        updateProducts.ForEach(p => p.OpenedSealName = modifyProductDto.OpenedSealName);
 
                     if (modifyProductDto.PreOrderDays.HasValue)
-                        product.PreOrderDays = modifyProductDto.PreOrderDays.Value;
+                        updateProducts.ForEach(p => p.PreOrderDays = modifyProductDto.PreOrderDays.Value);
 
                     if (!string.IsNullOrWhiteSpace(modifyProductDto.ProductCategory))
-                        product.ProductCategory = modifyProductDto.ProductCategory;
+                        updateProducts.ForEach(p => p.ProductCategory = modifyProductDto.ProductCategory);
 
                     if (!string.IsNullOrWhiteSpace(modifyProductDto.ProductRemarks))
-                        product.ProductRemarks = modifyProductDto.ProductRemarks;
+                        updateProducts.ForEach(p => p.ProductRemarks = modifyProductDto.ProductRemarks);
 
                     if (!string.IsNullOrWhiteSpace(modifyProductDto.Unit))
-                        product.Unit = modifyProductDto.Unit;
+                        updateProducts.ForEach(p => p.Unit = modifyProductDto.Unit);
 
                     if (!string.IsNullOrWhiteSpace(modifyProductDto.ProductMachine))
-                        product.ProductMachine = modifyProductDto.ProductMachine;
+                        updateProducts.ForEach(p => p.ProductMachine = modifyProductDto.ProductMachine);
 
                     if (modifyProductDto.IsNeedAcceptProcess.HasValue)
-                        product.IsNeedAcceptProcess = modifyProductDto.IsNeedAcceptProcess.Value;
+                        updateProducts.ForEach(p => p.IsNeedAcceptProcess = modifyProductDto.IsNeedAcceptProcess);
 
                     if (!string.IsNullOrWhiteSpace(modifyProductDto.StockLocation))
-                        product.StockLocation = modifyProductDto.StockLocation;
+                        updateProducts.ForEach(p => p.StockLocation = modifyProductDto.StockLocation);
 
                 }
 
