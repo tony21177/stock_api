@@ -38,7 +38,7 @@ namespace stock_api.Controllers
         private readonly FileUploadService _fileUploadService;
 
         public WarehouseProductController(AuthLayerService authLayerService, WarehouseProductService warehouseProductService, CompanyService companyService, GroupService groupService, SupplierService supplierService,
-            ManufacturerService manufacturerService, IMapper mapper, ILogger<AuthlayerController> logger, AuthHelpers authHelpers,FileUploadService fileUploadService)
+            ManufacturerService manufacturerService, IMapper mapper, ILogger<AuthlayerController> logger, AuthHelpers authHelpers, FileUploadService fileUploadService)
         {
             _authLayerService = authLayerService;
             _warehouseProductService = warehouseProductService;
@@ -323,7 +323,7 @@ namespace stock_api.Controllers
 
         [HttpPost("uploadImage")]
         [Authorize]
-        public async Task<IActionResult> UploadImage( UploadProductImageRequest request)
+        public async Task<IActionResult> UploadImage(UploadProductImageRequest request)
         {
             var memberAndPermissionSetting = _authHelpers.GetMemberAndPermissionSetting(User);
             var compId = memberAndPermissionSetting.CompanyWithUnit.CompId;
@@ -357,7 +357,7 @@ namespace stock_api.Controllers
             var file = new FormFile(stream, 0, bytes.Length, product.ProductId, product.ProductId)
             {
                 Headers = new HeaderDictionary(),
-                ContentType = "application/octet-stream" 
+                ContentType = "application/octet-stream"
             };
 
             bool result = await _warehouseProductService.UpdateOrAddProductImage(file, request.ProductId, request.CompId);
@@ -404,7 +404,7 @@ namespace stock_api.Controllers
                 {
                     return BadRequest(new CommonResponse<dynamic>
                     {
-                        Result= false,
+                        Result = false,
                         Message = "品項或圖片找不到"
                     });
                 }
@@ -422,6 +422,36 @@ namespace stock_api.Controllers
                 _logger.LogError(ex, "An error occurred while retrieving the image.");
                 return StatusCode(StatusCodes.Status404NotFound, "An error occurred while retrieving the image.");
             }
+        }
+
+        [HttpPost("updateAllCompProduct")]
+        [Authorize]
+        public IActionResult BatchUpdateAllCompProduct(List<ModifyProductDto> modifyProductDtoList)
+        {
+            var memberAndPermissionSetting = _authHelpers.GetMemberAndPermissionSetting(User);
+            var compId = memberAndPermissionSetting.CompanyWithUnit.CompId;
+            var (result,errorMsg) = _warehouseProductService.UpdateProducts(modifyProductDtoList);
+            return Ok(new CommonResponse<dynamic>
+            {
+                Result = result,
+                Message = errorMsg
+            });
+        }
+
+        [HttpPost("updateOwnCompProduct")]
+        [Authorize]
+        public IActionResult BatchUpdateOwnCompProduct(List<ModifyProductDto> modifyProductDtoList)
+        {
+            var memberAndPermissionSetting = _authHelpers.GetMemberAndPermissionSetting(User);
+            var compId = memberAndPermissionSetting.CompanyWithUnit.CompId;
+            var (result, errorMsg) = _warehouseProductService.UpdateProducts(modifyProductDtoList,compId);
+            return Ok(new CommonResponse<dynamic>
+            {
+                Result = result,
+                Message = errorMsg
+            });
+
+
         }
     }
 }

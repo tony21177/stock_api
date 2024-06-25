@@ -4,6 +4,8 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using stock_api.Controllers.Request;
 using stock_api.Models;
+using stock_api.Service.ValueObject;
+using System.ComponentModel;
 using System.Linq;
 using System.Transactions;
 
@@ -33,7 +35,7 @@ namespace stock_api.Service
             return _dbContext.WarehouseProducts.Where(p => productCodeList.Contains(p.ProductCode)).ToList();
         }
 
-        public WarehouseProduct? GetProductByProductIdAndCompId(string productId,string compId)
+        public WarehouseProduct? GetProductByProductIdAndCompId(string productId, string compId)
         {
             return _dbContext.WarehouseProducts.Where(p => p.ProductId == productId && p.CompId == compId).FirstOrDefault();
         }
@@ -65,7 +67,7 @@ namespace stock_api.Service
 
             if (searchRequest.ProductCategory != null)
             {
-                query = query.Where(h => h.ProductCategory==searchRequest.ProductCategory);
+                query = query.Where(h => h.ProductCategory == searchRequest.ProductCategory);
             }
             if (searchRequest.ProductMachine != null)
             {
@@ -77,18 +79,18 @@ namespace stock_api.Service
             }
             if (searchRequest.GroupId != null)
             {
-                query = query.Where(h => h.GroupIds!=null && h.GroupIds.Contains(searchRequest.GroupId));
+                query = query.Where(h => h.GroupIds != null && h.GroupIds.Contains(searchRequest.GroupId));
             }
             if (searchRequest.DefaultSupplierId != null)
             {
-                query = query.Where(h => h.DefaultSupplierId!=null&&h.DefaultSupplierId==searchRequest.DefaultSupplierId);
+                query = query.Where(h => h.DefaultSupplierId != null && h.DefaultSupplierId == searchRequest.DefaultSupplierId);
             }
 
             query = query.Where(h => h.CompId == searchRequest.CompId);
 
             if (!string.IsNullOrEmpty(searchRequest.Keywords))
             {
-                var groupNameList = 
+                var groupNameList =
                 query = query.Where(h => h.LotNumberBatch.Contains(searchRequest.Keywords)
                 || h.LotNumber.Contains(searchRequest.Keywords)
                 || h.ManufacturerName.Contains(searchRequest.Keywords)
@@ -171,7 +173,7 @@ namespace stock_api.Service
 
             if (request.ProductMachine != null)
             {
-                query = query.Where(h => h.ProductMachine==request.ProductMachine);
+                query = query.Where(h => h.ProductMachine == request.ProductMachine);
             }
 
             if (request.SupplierId != null)
@@ -184,7 +186,7 @@ namespace stock_api.Service
 
         }
 
-        public bool UpdateProduct(UpdateProductRequest request,WarehouseProduct existingProduct,List<WarehouseGroup> groups)
+        public bool UpdateProduct(UpdateProductRequest request, WarehouseProduct existingProduct, List<WarehouseGroup> groups)
         {
             using var scope = new TransactionScope();
             try
@@ -194,7 +196,7 @@ namespace stock_api.Service
                 // 尚未驗收的AcceptanceItem也需更新udiSerialcode
                 if (request.UdiserialCode != null && request.UdiserialCode != existingProduct.UdiserialCode)
                 {
-                    _dbContext.AcceptanceItems.Where(item => item.CompId==request.CompId&&item.ProductId== existingProduct.ProductId)
+                    _dbContext.AcceptanceItems.Where(item => item.CompId == request.CompId && item.ProductId == existingProduct.ProductId)
                         .ExecuteUpdate(item => item.SetProperty(x => x.UdiserialCode, request.UdiserialCode));
                     _dbContext.PurchaseSubItems.Where(i => i.CompId == request.CompId && i.ProductCode == existingProduct.ProductCode).
                         ExecuteUpdate(i => i.SetProperty(x => x.UdiserialCode, request.UdiserialCode));
@@ -241,10 +243,10 @@ namespace stock_api.Service
                 return false;
             }
 
-            
+
         }
 
-        public bool AdminUpdateProduct(AdminUpdateProductRequest request, WarehouseProduct existingProduct, Supplier? supplier,Manufacturer? manufacturer, List<WarehouseGroup> groups)
+        public bool AdminUpdateProduct(AdminUpdateProductRequest request, WarehouseProduct existingProduct, Supplier? supplier, Manufacturer? manufacturer, List<WarehouseGroup> groups)
         {
             using var scope = new TransactionScope();
             try
@@ -255,7 +257,7 @@ namespace stock_api.Service
                     _dbContext.AcceptanceItems.Where(item => item.CompId == request.CompId && item.ProductId == existingProduct.ProductId)
                         .ExecuteUpdate(item => item.SetProperty(x => x.UdiserialCode, request.UdiserialCode));
                 }
-                
+
                 var updateProduct = new WarehouseProduct()
                 {
                     CompId = existingProduct.CompId,
@@ -332,7 +334,7 @@ namespace stock_api.Service
                 return false;
             }
 
-            
+
         }
 
         //public bool UpdateOrAddProductImage(string ImageBase64String,string ProductId,string CompId)
@@ -405,10 +407,149 @@ namespace stock_api.Service
             }
         }
 
-        public ProductImage? GetProductImage(string ProductId, string CompId) {
-        
-            return _dbContext.ProductImages.FirstOrDefault(i=>i.ProductId==ProductId && i.CompId== CompId);
+        public ProductImage? GetProductImage(string ProductId, string CompId)
+        {
+
+            return _dbContext.ProductImages.FirstOrDefault(i => i.ProductId == ProductId && i.CompId == CompId);
         }
 
+
+        public (bool, string?) UpdateProducts(List<ModifyProductDto> modifyProductDtos)
+        {
+            using var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled);
+            try
+            {
+                foreach (var modifyProductDto in modifyProductDtos)
+                {
+                    var product = _dbContext.WarehouseProducts
+                        .FirstOrDefault(p => p.ProductCode == modifyProductDto.ProductCode);
+
+                    if (product == null)
+                    {
+                        _logger.LogWarning("Product with code:{productCode} not found", modifyProductDto.ProductCode);
+                        continue;
+                    }
+
+                    if (modifyProductDto.DeadlineRule.HasValue)
+                        product.DeadlineRule = modifyProductDto.DeadlineRule.Value;
+
+                    if (!string.IsNullOrWhiteSpace(modifyProductDto.DeliverRemarks))
+                        product.DeliverRemarks = modifyProductDto.DeliverRemarks;
+
+                    if (!string.IsNullOrWhiteSpace(modifyProductDto.GroupNames))
+                        product.GroupNames = modifyProductDto.GroupNames;
+
+                    if (!string.IsNullOrWhiteSpace(modifyProductDto.Manager))
+                        product.Manager = modifyProductDto.Manager;
+
+                    if (modifyProductDto.MaxSafeQuantity.HasValue)
+                        product.MaxSafeQuantity = modifyProductDto.MaxSafeQuantity.Value;
+
+                    if (!string.IsNullOrWhiteSpace(modifyProductDto.OpenedSealName))
+                        product.OpenedSealName = modifyProductDto.OpenedSealName;
+
+                    if (modifyProductDto.PreOrderDays.HasValue)
+                        product.PreOrderDays = modifyProductDto.PreOrderDays.Value;
+
+                    if (!string.IsNullOrWhiteSpace(modifyProductDto.ProductCategory))
+                        product.ProductCategory = modifyProductDto.ProductCategory;
+
+                    if (!string.IsNullOrWhiteSpace(modifyProductDto.ProductRemarks))
+                        product.ProductRemarks = modifyProductDto.ProductRemarks;
+
+                    if (!string.IsNullOrWhiteSpace(modifyProductDto.Unit))
+                        product.Unit = modifyProductDto.Unit;
+
+                    if (!string.IsNullOrWhiteSpace(modifyProductDto.ProductMachine))
+                        product.ProductMachine = modifyProductDto.ProductMachine;
+
+                    if (modifyProductDto.IsNeedAcceptProcess.HasValue)
+                        product.IsNeedAcceptProcess = modifyProductDto.IsNeedAcceptProcess.Value;
+
+                    if (!string.IsNullOrWhiteSpace(modifyProductDto.StockLocation))
+                        product.StockLocation = modifyProductDto.StockLocation;
+
+                    _dbContext.WarehouseProducts.Update(product);
+                }
+
+                _dbContext.SaveChangesAsync();
+                return (true, null);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError("事務失敗[UpdateProducts]：{msg}", ex);
+                return (false, ex.Message);
+            }
+
+        }
+
+        public (bool, string?) UpdateProducts(List<ModifyProductDto> modifyProductDtos,string compId)
+        {
+            using var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled);
+            try
+            {
+                foreach (var modifyProductDto in modifyProductDtos)
+                {
+                    var product = _dbContext.WarehouseProducts
+                        .FirstOrDefault(p => p.ProductCode == modifyProductDto.ProductCode&&p.CompId== compId);
+
+                    if (product == null)
+                    {
+                        _logger.LogWarning("Product with code:{productCode} not found", modifyProductDto.ProductCode);
+                        continue;
+                    }
+
+                    if (modifyProductDto.DeadlineRule.HasValue)
+                        product.DeadlineRule = modifyProductDto.DeadlineRule.Value;
+
+                    if (!string.IsNullOrWhiteSpace(modifyProductDto.DeliverRemarks))
+                        product.DeliverRemarks = modifyProductDto.DeliverRemarks;
+
+                    if (!string.IsNullOrWhiteSpace(modifyProductDto.GroupNames))
+                        product.GroupNames = modifyProductDto.GroupNames;
+
+                    if (!string.IsNullOrWhiteSpace(modifyProductDto.Manager))
+                        product.Manager = modifyProductDto.Manager;
+
+                    if (modifyProductDto.MaxSafeQuantity.HasValue)
+                        product.MaxSafeQuantity = modifyProductDto.MaxSafeQuantity.Value;
+
+                    if (!string.IsNullOrWhiteSpace(modifyProductDto.OpenedSealName))
+                        product.OpenedSealName = modifyProductDto.OpenedSealName;
+
+                    if (modifyProductDto.PreOrderDays.HasValue)
+                        product.PreOrderDays = modifyProductDto.PreOrderDays.Value;
+
+                    if (!string.IsNullOrWhiteSpace(modifyProductDto.ProductCategory))
+                        product.ProductCategory = modifyProductDto.ProductCategory;
+
+                    if (!string.IsNullOrWhiteSpace(modifyProductDto.ProductRemarks))
+                        product.ProductRemarks = modifyProductDto.ProductRemarks;
+
+                    if (!string.IsNullOrWhiteSpace(modifyProductDto.Unit))
+                        product.Unit = modifyProductDto.Unit;
+
+                    if (!string.IsNullOrWhiteSpace(modifyProductDto.ProductMachine))
+                        product.ProductMachine = modifyProductDto.ProductMachine;
+
+                    if (modifyProductDto.IsNeedAcceptProcess.HasValue)
+                        product.IsNeedAcceptProcess = modifyProductDto.IsNeedAcceptProcess.Value;
+
+                    if (!string.IsNullOrWhiteSpace(modifyProductDto.StockLocation))
+                        product.StockLocation = modifyProductDto.StockLocation;
+
+                    _dbContext.WarehouseProducts.Update(product);
+                }
+
+                _dbContext.SaveChangesAsync();
+                return (true, null);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError("事務失敗[UpdateProducts]：{msg}", ex);
+                return (false, ex.Message);
+            }
+
+        }
     }
 }
