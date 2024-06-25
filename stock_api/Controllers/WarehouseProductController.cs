@@ -426,11 +426,11 @@ namespace stock_api.Controllers
 
         [HttpPost("updateAllCompProduct")]
         [Authorize]
-        public IActionResult BatchUpdateAllCompProduct(List<ModifyProductDto> modifyProductDtoList)
+        public IActionResult BatchUpdateAllCompProduct(BatchUpdateProducts request)
         {
             var memberAndPermissionSetting = _authHelpers.GetMemberAndPermissionSetting(User);
             var compId = memberAndPermissionSetting.CompanyWithUnit.CompId;
-            var (result,errorMsg) = _warehouseProductService.UpdateProducts(modifyProductDtoList);
+            var (result,errorMsg) = _warehouseProductService.UpdateProducts(request.ModifyProductDtoList);
             return Ok(new CommonResponse<dynamic>
             {
                 Result = result,
@@ -440,11 +440,11 @@ namespace stock_api.Controllers
 
         [HttpPost("updateOwnCompProduct")]
         [Authorize]
-        public IActionResult BatchUpdateOwnCompProduct(List<ModifyProductDto> modifyProductDtoList)
+        public IActionResult BatchUpdateOwnCompProduct(BatchUpdateProducts request)
         {
             var memberAndPermissionSetting = _authHelpers.GetMemberAndPermissionSetting(User);
             var compId = memberAndPermissionSetting.CompanyWithUnit.CompId;
-            var (result, errorMsg) = _warehouseProductService.UpdateProducts(modifyProductDtoList,compId);
+            var (result, errorMsg) = _warehouseProductService.UpdateProducts(request.ModifyProductDtoList);
             return Ok(new CommonResponse<dynamic>
             {
                 Result = result,
