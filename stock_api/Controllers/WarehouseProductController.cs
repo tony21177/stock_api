@@ -430,7 +430,11 @@ namespace stock_api.Controllers
         {
             var memberAndPermissionSetting = _authHelpers.GetMemberAndPermissionSetting(User);
             var compId = memberAndPermissionSetting.CompanyWithUnit.CompId;
-            var (result,errorMsg) = _warehouseProductService.UpdateProducts(request.ModifyProductDtoList);
+            var allDistinctProducts = request.ModifyProductDtoList.Select(x=>x.ProductCode).Distinct().ToList();
+            var allProducts = _warehouseProductService.GetProductByProductCodeList(allDistinctProducts);
+
+
+            var (result,errorMsg) = _warehouseProductService.UpdateProducts(request.ModifyProductDtoList, allProducts);
             return Ok(new CommonResponse<dynamic>
             {
                 Result = result,
@@ -444,7 +448,12 @@ namespace stock_api.Controllers
         {
             var memberAndPermissionSetting = _authHelpers.GetMemberAndPermissionSetting(User);
             var compId = memberAndPermissionSetting.CompanyWithUnit.CompId;
-            var (result, errorMsg) = _warehouseProductService.UpdateProducts(request.ModifyProductDtoList);
+
+            var allDistinctProducts = request.ModifyProductDtoList.Select(x => x.ProductCode).Distinct().ToList();
+            var allProducts = _warehouseProductService.GetProductsByProductCodesAndCompId(allDistinctProducts, compId);
+
+
+            var (result, errorMsg) = _warehouseProductService.UpdateProducts(request.ModifyProductDtoList,allProducts,compId);
             return Ok(new CommonResponse<dynamic>
             {
                 Result = result,
