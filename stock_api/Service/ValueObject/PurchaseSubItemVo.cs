@@ -46,7 +46,7 @@ namespace stock_api.Service.ValueObject
         public string? WithCompName { get; set; }
         public string? WithItemId { get; set; }
 
-        public string? StockLocatin { get; set;}
+        public string? StockLocation { get; set;}
 
     }
 }
