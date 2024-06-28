@@ -306,6 +306,7 @@ namespace stock_api.Controllers
                 item.ProductCode = matchedProduct?.ProductCode;
                 item.SupplierUnit = matchedProduct?.SupplierUnit;
                 item.SupplierUnitConvertsion = matchedProduct?.SupplierUnitConvertsion;
+                item.StockLocatin = matchedProduct?.StockLocation;
                 if (item.WithCompId != null)
                 {
                     var matchedCompanyWithUnitVo = companyWithUnitVoList.Where(c=>c.CompId==item.WithCompId).FirstOrDefault();
