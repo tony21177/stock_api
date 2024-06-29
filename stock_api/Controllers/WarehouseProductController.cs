@@ -36,9 +36,10 @@ namespace stock_api.Controllers
         private readonly IValidator<UpdateProductRequest> _updateProductValidator;
         private readonly IValidator<AdminUpdateProductRequest> _adminUpdateProductValidator;
         private readonly FileUploadService _fileUploadService;
-
+        private readonly StockInService _stockInService;
+    
         public WarehouseProductController(AuthLayerService authLayerService, WarehouseProductService warehouseProductService, CompanyService companyService, GroupService groupService, SupplierService supplierService,
-            ManufacturerService manufacturerService, IMapper mapper, ILogger<AuthlayerController> logger, AuthHelpers authHelpers, FileUploadService fileUploadService)
+            ManufacturerService manufacturerService, IMapper mapper, ILogger<AuthlayerController> logger, AuthHelpers authHelpers, FileUploadService fileUploadService,StockInService stockInService)
         {
             _authLayerService = authLayerService;
             _warehouseProductService = warehouseProductService;
@@ -53,6 +54,7 @@ namespace stock_api.Controllers
             _updateProductValidator = new UpdateProductValidator(supplierService, groupService);
             _adminUpdateProductValidator = new AdminUpdateProductValidator(supplierService, groupService, manufacturerService);
             _fileUploadService = fileUploadService;
+            _stockInService = stockInService;
         }
 
         [HttpPost("search")]
@@ -100,6 +102,72 @@ namespace stock_api.Controllers
                 }
             }
 
+
+            var response = new CommonResponse<List<WarehouseProductVo>>()
+            {
+                Result = true,
+                Message = "",
+                Data = warehouseProductVoList,
+                TotalPages = totalPages
+            };
+            return Ok(response);
+
+        }
+
+        [HttpPost("searchForAdjust")]
+        [Authorize]
+        public IActionResult SearchWarehouseProductForAdjust(WarehouseProductSearchRequest searchRequest)
+        {
+            var memberAndPermissionSetting = _authHelpers.GetMemberAndPermissionSetting(User);
+            var compId = memberAndPermissionSetting.CompanyWithUnit.CompId;
+            var compType = memberAndPermissionSetting.CompanyWithUnit.Type;
+
+            if (searchRequest.CompId == null)
+            {
+                searchRequest.CompId = compId;
+            }
+
+            if (searchRequest.CompId != null && searchRequest.CompId != compId && compType != CommonConstants.CompanyType.OWNER)
+            {
+                return BadRequest(CommonResponse<dynamic>.BuildNotAuthorizeResponse());
+            }
+            var validationResult = _searchProductRequestValidator.Validate(searchRequest);
+
+            if (!validationResult.IsValid)
+            {
+                return BadRequest(CommonResponse<dynamic>.BuildValidationFailedResponse(validationResult));
+            }
+
+
+            var (data, totalPages) = _warehouseProductService.SearchProduct(searchRequest);
+            var warehouseProductVoList = _mapper.Map<List<WarehouseProductVo>>(data);
+            var distictProductCodeList = warehouseProductVoList.Select(x => x.ProductCode).Distinct().ToList();
+            var productsInAnotherComp = _warehouseProductService.GetProductByProductCodeList(distictProductCodeList);
+
+            if (compType == CommonConstants.CompanyType.OWNER && productsInAnotherComp.Count > 0)
+            {
+                foreach (var item in warehouseProductVoList)
+                {
+                    var matchedProdcutsInAnotherComp = productsInAnotherComp.Where(p => p.ProductCode.Contains(item.ProductCode) && p.CompId != compId).ToList();
+                    if (matchedProdcutsInAnotherComp.Count > 0)
+                    {
+                        // 因為金萬林此product的unit在不同醫院單位都會設成一樣,故只取第一筆
+                        var matchedProdcutInAnotherComp = matchedProdcutsInAnotherComp[0];
+                        item.AnotherUnit = matchedProdcutInAnotherComp.Unit;
+                        item.AnotherUnitConversion = matchedProdcutInAnotherComp.UnitConversion;
+                    }
+                }
+            }
+            List<string> allProductCodeList = warehouseProductVoList.Where(p=>p.ProductCode!=null).Select(p=>p.ProductCode).Distinct().ToList();
+            var (allInStockRecords, allOutStockRecords) = _stockInService.GetAllInAndOutRecordByProductCodeList(allProductCodeList, compId);
+
+            warehouseProductVoList.ForEach(vo =>
+            {
+                var matchedInStockRecords = allInStockRecords.Where(r=>r.ProductCode==vo.ProductCode).OrderByDescending(r => r.UpdatedAt).ToList();
+                var matchedOutStockRecords = allOutStockRecords.Where(r => r.ProductCode == vo.ProductCode).OrderByDescending(r => r.UpdatedAt).ToList();
+                vo.InStockRecords = matchedInStockRecords;
+                vo.OutStockRecords = matchedOutStockRecords;
+            });
 
             var response = new CommonResponse<List<WarehouseProductVo>>()
             {

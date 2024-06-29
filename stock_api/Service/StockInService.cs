@@ -617,5 +617,13 @@ namespace stock_api.Service
             return _dbContext.InStockItemRecords.Where(record=>lotNumberBatchList.Contains(record.LotNumberBatch)).Select(i=>i.LotNumberBatch).ToList();
         }
 
+        public (List<InStockItemRecord>,List<OutStockRecord>) GetAllInAndOutRecordByProductCodeList(List<string> productCodeList,string compId)
+        {
+            var inStockRecords = _dbContext.InStockItemRecords.Where(r => productCodeList.Contains(r.ProductCode) && r.CompId == compId).ToList();
+
+            var outStockRecords = _dbContext.OutStockRecords.Where(r => productCodeList.Contains(r.ProductCode) && r.CompId == compId).ToList();
+            return (inStockRecords, outStockRecords);
+        }
+
     }
 }
