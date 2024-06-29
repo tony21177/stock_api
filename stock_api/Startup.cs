@@ -57,7 +57,16 @@ builder.Services.AddCors(options =>
 // 配置 MySQL 和 Entity Framework
 var serverVersion = new MySqlServerVersion(new Version(5, 7, 29));
 builder.Services.AddDbContext<StockDbContext>(options =>
+
 {
+    //options.UseMySql(builder.Configuration.GetConnectionString("DefaultConnection"), serverVersion, mySqlOptions =>
+    //{
+    //    mySqlOptions.EnableRetryOnFailure(
+    //        maxRetryCount: 5, // 最大重试次数
+    //        maxRetryDelay: TimeSpan.FromSeconds(30), // 重试之间的最大延迟
+    //        errorNumbersToAdd: null // 要添加的错误编号（可选）
+    //    );
+    //});
     options.UseMySql(builder.Configuration.GetConnectionString("DefaultConnection"), serverVersion);
     options.UseLoggerFactory(serilogLoggerFactory) // 使用 Serilog 的 LoggerFactory
            .EnableSensitiveDataLogging(); // 如果需要敏感數據記錄

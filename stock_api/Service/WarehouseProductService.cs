@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using stock_api.Common.Utils;
 using stock_api.Controllers.Request;
 using stock_api.Models;
 using stock_api.Service.ValueObject;
@@ -652,6 +653,93 @@ namespace stock_api.Service
                 return (false, ex.Message);
             }
 
+        }
+
+        public (bool,string?) AddNewProduct(AddNewProductRequest request)
+        {
+
+            using var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled);
+            try
+            {
+                string productCode ="";
+                string? existingMaxProductCode = _dbContext.WarehouseProducts.Where(p => request.CompIds.Contains(p.CompId)).OrderByDescending(p => p.ProductCode).Select(p => p.ProductCode).FirstOrDefault();
+                if (existingMaxProductCode != null)
+                {
+                    productCode = (int.Parse(existingMaxProductCode) + 1).ToString("D3");
+                }
+                else
+                {
+                    productCode = 1.ToString("D3");
+                }
+
+                foreach (var compId in request.CompIds)
+                {
+                    var newProduct = new WarehouseProduct();
+                    newProduct.ProductCode = productCode; 
+                    var comp = _dbContext.Companies.Where(c=>c.CompId==compId).FirstOrDefault();
+                    newProduct.CompId = compId;
+                    newProduct.CompName = comp.Name;
+                    if (request.ManufacturerId != null)
+                    {
+                        var manufacturer = _dbContext.Manufacturers.Where(m => m.Id == request.ManufacturerId).FirstOrDefault();
+                        newProduct.ManufacturerId = manufacturer.Id;
+                        newProduct.ManufacturerName = manufacturer.Name;
+                    }
+                    if(request.DeadlineRule!=null) newProduct.DeadlineRule = request.DeadlineRule;
+                    if(request.DeliverRemarks!=null) newProduct.DeliverRemarks = request.DeliverRemarks;
+                    if(request.InStockQuantity!=null) newProduct.InStockQuantity = request.InStockQuantity;
+                    if (request.Manager != null) newProduct.Manager = request.Manager;
+                    if (request.MaxSafeQuantity != null) newProduct.MaxSafeQuantity = request.MaxSafeQuantity;
+                    if (request.OpenDeadline != null) newProduct.OpenDeadline = request.OpenDeadline;
+                    if (request.OpenedSealName != null) newProduct.OpenedSealName = request.OpenedSealName;
+                    if (request.OriginalDeadline != null)
+                    {
+                        newProduct.OriginalDeadline = DateOnly.FromDateTime(DateTimeHelper.ParseDateString(request.OriginalDeadline).Value);
+                    }
+                    if (request.PackageWay != null) newProduct.PackageWay = request.PackageWay;
+                    if (request.PreDeadline != null) newProduct.PreDeadline = request.PreDeadline;
+                    if (request.PreOrderDays != null) newProduct.PreOrderDays = request.PreOrderDays;
+                    if (request.ProductCategory != null) newProduct.ProductCategory = request.ProductCategory;
+
+                    
+
+                    newProduct.ProductId = Guid.NewGuid().ToString();
+                    if (request.ProductModel != null) newProduct.ProductModel = request.ProductModel;
+                    if (request.ProductName != null) newProduct.ProductName = request.ProductName;
+                    if (request.ProductRemarks != null) newProduct.ProductRemarks = request.ProductRemarks;
+                    if (request.ProductSpec != null) newProduct.ProductSpec = request.ProductSpec;
+                    if (request.SafeQuantity != null) newProduct.SafeQuantity = request.SafeQuantity;
+                    if (request.UdibatchCode != null) newProduct.UdibatchCode = request.UdibatchCode;
+                    if (request.UdicreateCode != null) newProduct.UdicreateCode = request.UdicreateCode;
+                    if (request.UdiserialCode != null) newProduct.UdiserialCode = request.UdiserialCode;
+                    if (request.UdiverifyDateCode != null) newProduct.UdiverifyDateCode = request.UdiverifyDateCode;
+                    if (request.Unit != null) newProduct.Unit = request.Unit;
+                    if (request.Weight != null) newProduct.Weight = request.Weight;
+                    if (request.ProductMachine != null) newProduct.ProductMachine = request.ProductMachine;
+                    if (request.DefaultSupplierId != null)
+                    {
+                        var supplier = _dbContext.Suppliers.Where(s => s.Id == request.DefaultSupplierId).FirstOrDefault();
+                        newProduct.DefaultSupplierId = supplier.Id;
+                        newProduct.DefaultSupplierName = supplier.Name;
+                    }
+                    if (request.IsNeedAcceptProcess != null) newProduct.IsNeedAcceptProcess = request.IsNeedAcceptProcess;
+
+                    if (request.QcType != null) newProduct.QcType = request.QcType;
+                    if (request.AllowReceiveDateRange != null) newProduct.AllowReceiveDateRange = request.AllowReceiveDateRange;
+                    if (request.UnitConversion != null) newProduct.UnitConversion = request.UnitConversion;
+                    if (request.TestCount != null) newProduct.TestCount = request.TestCount;
+                    if (request.IsActive != null) newProduct.IsActive = request.IsActive;
+                    _dbContext.WarehouseProducts.Add(newProduct);
+                }
+                _dbContext.SaveChanges();
+                scope.Complete();
+                return (true, null);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError("事務失敗[AddNewProduct]：{msg}", ex);
+                return (false, ex.Message);
+            }
         }
     }
 }

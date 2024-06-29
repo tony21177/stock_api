@@ -66,6 +66,10 @@ namespace stock_api.Service
         {
             return _dbContext.Companies.Where(cp => cp.CompId == compId).FirstOrDefault();
         }
+        public List<Company> GetCompanyByCompIds(List<string> compIds)
+        {
+            return _dbContext.Companies.Where(cp => compIds.Contains(cp.CompId)).ToList();
+        }
 
         public CompanyWithUnitVo? GetCompanyWithUnitByCompanyId(string compId)
         {

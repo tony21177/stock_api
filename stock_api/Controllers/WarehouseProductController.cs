@@ -35,6 +35,7 @@ namespace stock_api.Controllers
         private readonly IValidator<WarehouseProductSearchRequest> _searchProductRequestValidator;
         private readonly IValidator<UpdateProductRequest> _updateProductValidator;
         private readonly IValidator<AdminUpdateProductRequest> _adminUpdateProductValidator;
+        private readonly IValidator<AddNewProductRequest> _addNewProductRequestValidator;
         private readonly FileUploadService _fileUploadService;
         private readonly StockInService _stockInService;
     
@@ -53,6 +54,7 @@ namespace stock_api.Controllers
             _searchProductRequestValidator = new SearchProductRequestValidator(companyService, groupService);
             _updateProductValidator = new UpdateProductValidator(supplierService, groupService);
             _adminUpdateProductValidator = new AdminUpdateProductValidator(supplierService, groupService, manufacturerService);
+            _addNewProductRequestValidator = new AddNewProductValidator(supplierService, manufacturerService, companyService);
             _fileUploadService = fileUploadService;
             _stockInService = stockInService;
         }
@@ -531,8 +533,35 @@ namespace stock_api.Controllers
                 Result = result,
                 Message = errorMsg
             });
-
-
         }
+
+        [HttpPost("addNewProduct")]
+        [Authorize]
+        public IActionResult AddNewProductForOwner(AddNewProductRequest request)
+        {
+            var memberAndPermissionSetting = _authHelpers.GetMemberAndPermissionSetting(User);
+            var compId = memberAndPermissionSetting.CompanyWithUnit.CompId;
+            if (memberAndPermissionSetting.CompanyWithUnit.Type != CommonConstants.CompanyType.OWNER)
+            {
+                return BadRequest(CommonResponse<dynamic>.BuildNotAuthorizeResponse());
+            }
+            var validationResult = _addNewProductRequestValidator.Validate(request);
+
+            if (!validationResult.IsValid)
+            {
+            
+                return BadRequest(CommonResponse<dynamic>.BuildValidationFailedResponse(validationResult));
+            }
+            request.CompIds.Add(compId);
+            request.CompIds = request.CompIds.Distinct().ToList();
+
+            var (result, errorMsg) = _warehouseProductService.AddNewProduct(request);
+            return Ok(new CommonResponse<dynamic>
+            {
+                Result = result,
+                Message = errorMsg
+            });
+        }
+
     }
 }

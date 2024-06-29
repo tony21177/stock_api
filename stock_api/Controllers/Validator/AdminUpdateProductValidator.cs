@@ -87,7 +87,7 @@ namespace stock_api.Controllers.Validator
             return true;
         }
 
-        private bool BeValidDate(string? date, ValidationContext<AdminUpdateProductRequest> context)
+        private static bool BeValidDate(string? date, ValidationContext<AdminUpdateProductRequest> context)
         {
             if (date == null)
             {
