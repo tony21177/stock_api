@@ -289,6 +289,14 @@ namespace stock_api.Service
                     Items.Add(subItem);
                 });
 
+                var differentMainSheetId = purchaseMainAndSubItemVoList.Select(m => m.PurchaseMainId).Distinct().ToList();
+                var flows = GetFlowsByPurchaseMainIds(differentMainSheetId).OrderBy(f => f.Sequence);
+                foreach (var item in purchaseMainAndSubItemVoList)
+                {
+                    var matchedFlows = flows.Where(f => f.PurchaseMainId == item.PurchaseMainId).ToList();
+                    item.flows = matchedFlows;
+                }
+
 
                 var vo = new PurchaseMainAndSubItemVo
                 {
