@@ -424,13 +424,13 @@ namespace stock_api.Service
             return _dbContext.PurchaseFlows.Where(f=>f.Sequence<nowFlow.Sequence&&f.CompId==nowFlow.CompId&&f.PurchaseMainId==nowFlow.PurchaseMainId).OrderBy(f=>f.Sequence).ToList();
         }
 
-        public bool AnswerFlow(PurchaseFlow flow, MemberAndPermissionSetting verifierMemberAndPermission, string answer, string? reason)
+        public bool AnswerFlow(PurchaseFlow flow, MemberAndPermissionSetting verifierMemberAndPermission, string answer, string? reason,bool? isOwner)
         {
             string purchaseMainId = flow.PurchaseMainId;
             PurchaseMainSheet purchaseMain = GetPurchaseMainByMainId(purchaseMainId);
             List<PurchaseSubItem> purchaseSubItems = GetPurchaseSubItemsByMainId(purchaseMainId);
             var (preFlow, nextFlow) = FindPreviousAndNextFlow(flow);
-            return AnswerFlowInTransactionScope(preFlow, nextFlow, flow, purchaseMain, purchaseSubItems, verifierMemberAndPermission, answer, reason);
+            return AnswerFlowInTransactionScope(preFlow, nextFlow, flow, purchaseMain, purchaseSubItems, verifierMemberAndPermission, answer, reason,isOwner);
         }
 
         public (PurchaseFlow?, PurchaseFlow?) FindPreviousAndNextFlow(PurchaseFlow flow)
@@ -440,7 +440,7 @@ namespace stock_api.Service
             return (purchaseFlows.FirstOrDefault(f => f.Sequence < flow.Sequence), purchaseFlows.FirstOrDefault(f => f.Sequence > flow.Sequence));
         }
 
-        private bool AnswerFlowInTransactionScope(PurchaseFlow? preFlow, PurchaseFlow? nextPurchase, PurchaseFlow currentFlow, PurchaseMainSheet purchaseMain,List<PurchaseSubItem> purchaseSubItems, MemberAndPermissionSetting verifierMemberAndPermission, string answer, string? reason)
+        private bool AnswerFlowInTransactionScope(PurchaseFlow? preFlow, PurchaseFlow? nextPurchase, PurchaseFlow currentFlow, PurchaseMainSheet purchaseMain,List<PurchaseSubItem> purchaseSubItems, MemberAndPermissionSetting verifierMemberAndPermission, string answer, string? reason,bool? isOwner)
         {
             WarehouseMember verifyMember = verifierMemberAndPermission.Member;
             var verifyCompId = verifierMemberAndPermission.CompanyWithUnit.CompId;
@@ -489,7 +489,7 @@ namespace stock_api.Service
                     currentFlow.Status = answer;
                     purchaseMain.CurrentStatus = CommonConstants.PurchaseApplyStatus.REJECT;
                 }
-                if (answer == CommonConstants.AnswerPurchaseFlow.BACK)
+                if (answer == CommonConstants.AnswerPurchaseFlow.BACK&&isOwner!=true)
                 {
                     currentFlow.Status = answer;
 
@@ -500,6 +500,12 @@ namespace stock_api.Service
                         preFlow.Answer = "";
                     }
                 }
+                if (answer == CommonConstants.AnswerPurchaseFlow.BACK && isOwner == true)
+                {
+                    currentFlow.Status = "";
+                    currentFlow.Answer = "";
+                }
+
 
                 // 新增log
                 var newFlowLog = new PurchaseFlowLog()

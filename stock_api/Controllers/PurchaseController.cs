@@ -356,12 +356,15 @@ namespace stock_api.Controllers
             if(purchaseFlow!=null && memberAndPermissionSetting.CompanyWithUnit.Type == CommonConstants.CompanyType.OWNER&&request.Answer==CommonConstants.AnswerPurchaseFlow.BACK)
             {
                 // 金萬林退回
-
-
+                var backResult = _purchaseService.AnswerFlow(purchaseFlow, memberAndPermissionSetting, request.Answer, request.Reason,true);
+                var backResponse = new CommonResponse<dynamic>
+                {
+                    Result = backResult,
+                    Data = null
+                };
+                return Ok(backResponse);
 
             }
-
-
 
             if (purchaseFlow != null && purchaseFlow.CompId != compId)
             {
