@@ -400,7 +400,7 @@ namespace stock_api.Controllers
                 });
             }
 
-            var result = _purchaseService.AnswerFlow(purchaseFlow, memberAndPermissionSetting, request.Answer, request.Reason);
+            var result = _purchaseService.AnswerFlow(purchaseFlow, memberAndPermissionSetting, request.Answer, request.Reason,false);
 
 
             var response = new CommonResponse<dynamic>
