@@ -12,7 +12,7 @@
         public string? Unit { get; set; }
         public string? ProductMachine { get; set; }
         public int? DefaultSupplierId { get; set; }
-        public int? UnitConversion { get; set; }
+        public float? UnitConversion { get; set; }
         public int? TestCount { get; set; }
         public string? Manager { get; set; }
         public int? MaxSafeQuantity { get; set; }
