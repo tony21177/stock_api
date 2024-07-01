@@ -352,6 +352,17 @@ namespace stock_api.Controllers
                 return BadRequest(CommonResponse<dynamic>.BuildValidationFailedResponse(validationResult));
             }
             var purchaseFlow = _purchaseService.GetFlowsByFlowId(request.FlowId);
+
+            if(purchaseFlow!=null && memberAndPermissionSetting.CompanyWithUnit.Type == CommonConstants.CompanyType.OWNER&&request.Answer==CommonConstants.AnswerPurchaseFlow.BACK)
+            {
+                // 金萬林退回
+
+
+
+            }
+
+
+
             if (purchaseFlow != null && purchaseFlow.CompId != compId)
             {
                 return BadRequest(CommonResponse<dynamic>.BuildNotAuthorizeResponse());
