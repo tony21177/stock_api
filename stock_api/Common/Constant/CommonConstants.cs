@@ -24,6 +24,7 @@ namespace stock_api.Common.Constant
             public const string APPLY = "APPLY";
             public const string AGREE = "AGREE";
             public const string REJECT = "REJECT";
+            public const string BACK = "BACK";
             public const string CLOSE = "CLOSE";
 
             public static List<string> GetAllValues()

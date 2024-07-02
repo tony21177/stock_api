@@ -499,11 +499,13 @@ namespace stock_api.Service
                         preFlow.Status = "";
                         preFlow.Answer = "";
                     }
+                    purchaseMain.CurrentStatus = CommonConstants.PurchaseApplyStatus.BACK;
                 }
                 if (answer == CommonConstants.AnswerPurchaseFlow.BACK && isOwner == true)
                 {
                     currentFlow.Status = "";
                     currentFlow.Answer = "";
+                    purchaseMain.CurrentStatus = CommonConstants.PurchaseApplyStatus.BACK;
                 }
 
 
