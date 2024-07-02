@@ -449,9 +449,13 @@ namespace stock_api.Service
             {
                 // 更新Flow
                 currentFlow.Reason = reason;
-                currentFlow.VerifyCompId = verifyCompId;
-                currentFlow.VerifyUserId = verifyMember.UserId;
-                currentFlow.VerifyUserName = verifyMember.DisplayName;
+                if (answer!= CommonConstants.PurchaseApplyStatus.BACK)
+                {
+                    currentFlow.VerifyCompId = verifyCompId;
+                    currentFlow.VerifyUserId = verifyMember.UserId;
+                    currentFlow.VerifyUserName = verifyMember.DisplayName;
+                }
+                
                 currentFlow.Answer = answer;
                 currentFlow.SubmitAt = DateTime.Now;
 
