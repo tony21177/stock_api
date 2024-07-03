@@ -537,7 +537,7 @@ namespace stock_api.Controllers
 
         [HttpPost("addNewProduct")]
         [Authorize]
-        public IActionResult AddNewProductForOwner(AddNewProductRequest request)
+        public IActionResult AddNewProduct(AddNewProductRequest request)
         {
             var memberAndPermissionSetting = _authHelpers.GetMemberAndPermissionSetting(User);
             var compId = memberAndPermissionSetting.CompanyWithUnit.CompId;

@@ -90,7 +90,7 @@ namespace stock_api.Controllers.Request
         /// <summary>
         /// 品項名稱
         /// </summary>
-        public string? ProductName { get; set; }
+        public string ProductName { get; set; }
 
         /// <summary>
         /// 品項備註
