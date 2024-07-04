@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using Serilog;
 using stock_api.Common.Constant;
 using stock_api.Common.Utils;
 using stock_api.Controllers.Request;
@@ -443,13 +444,21 @@ namespace stock_api.Service
                     _dbContext.InStockItemRecords.Add(inStockItemRecord);
                 }
                 //更新採購主單
-                List<AcceptanceItem> existingAcceptanceItems = _dbContext.AcceptanceItems.Where(i=>i.PurchaseMainId == purchaseMain.PurchaseMainId && i.CompId==compId).ToList();
+                List<AcceptanceItem> allExistingAcceptanceItems = _dbContext.AcceptanceItems.Where(i=>i.PurchaseMainId == purchaseMain.PurchaseMainId && i.CompId==compId).ToList();
+                List<AcceptanceItem> otherExistingAcceptanceItems = allExistingAcceptanceItems.Where(i=>i.AcceptId!= existingAcceptanceItem.AcceptId).ToList();
+                var acceptIds = otherExistingAcceptanceItems.Select(i=>i.AcceptId).ToList();
+                var inStockStatusList = otherExistingAcceptanceItems.Select(i=>i.InStockStatus).ToList();
 
-                if (existingAcceptanceItems.All(item => item.InStockStatus==CommonConstants.PurchaseSubItemReceiveStatus.DONE ))
+                Log.Information("other acceptId list:${acceptIds}",string.Join(",", acceptIds));
+                Log.Information("other inStockStatusList list:${inStockStatusList}", string.Join(",", inStockStatusList));
+                Log.Information("current update acceptId:${acceptId} ", existingAcceptanceItem.AcceptId);
+                Log.Information("current update acceptId:${inStockStatus}", existingAcceptanceItem.InStockStatus);
+
+                if (otherExistingAcceptanceItems.All(item => item.InStockStatus==CommonConstants.PurchaseSubItemReceiveStatus.DONE )&&existingAcceptanceItem.InStockStatus== CommonConstants.PurchaseSubItemReceiveStatus.DONE)
                 {
                     purchaseMain.ReceiveStatus = CommonConstants.PurchaseReceiveStatus.ALL_ACCEPT;
                 }
-                else if (existingAcceptanceItems.Any(item => item.InStockStatus == CommonConstants.PurchaseSubItemReceiveStatus.PART))
+                else if (otherExistingAcceptanceItems.Any(item => item.InStockStatus == CommonConstants.PurchaseSubItemReceiveStatus.PART || existingAcceptanceItem.InStockStatus == CommonConstants.PurchaseSubItemReceiveStatus.PART))
                 {
                     purchaseMain.ReceiveStatus = CommonConstants.PurchaseReceiveStatus.PART_ACCEPT;
                 }
