@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using stock_api.Common.Constant;
 using stock_api.Common.Utils;
 using stock_api.Controllers.Request;
 using stock_api.Models;
@@ -263,6 +264,13 @@ namespace stock_api.Service
                 {
                     _dbContext.AcceptanceItems.Where(item => item.CompId == request.CompId && item.ProductId == existingProduct.ProductId)
                         .ExecuteUpdate(item => item.SetProperty(x => x.UdiserialCode, request.UdiserialCode));
+                }
+
+                // 尚未任何入庫的採購品項其ProductSpec也須更新
+                if (request.ProductSpec != null && request.ProductSpec != existingProduct.ProductSpec)
+                {
+                    _dbContext.PurchaseSubItems.Where(item => item.CompId == request.CompId && item.ProductId == existingProduct.ProductId && item.ReceiveStatus
+                    == CommonConstants.PurchaseReceiveStatus.NONE).ExecuteUpdate(item => item.SetProperty(x => x.ProductSpec, request.ProductSpec));
                 }
 
                 var updateProduct = new WarehouseProduct()
