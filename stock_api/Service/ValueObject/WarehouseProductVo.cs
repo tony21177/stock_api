@@ -8,5 +8,7 @@ namespace stock_api.Service.ValueObject
         public float? AnotherUnitConversion { get; set; }
         public List<InStockItemRecord> InStockRecords { get; set; } = new List<InStockItemRecord>();
         public List<OutStockRecord> OutStockRecords { get; set; } = new List<OutStockRecord>();
+        public float InProcessingOrderQuantity { get; set; } = 0;
+        public float NeedOrderedQuantity { get; set; } = 0;
     }
 }

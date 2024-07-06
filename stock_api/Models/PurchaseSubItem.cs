@@ -73,7 +73,8 @@ public partial class PurchaseSubItem
     public float? ReceiveQuantity { get; set; }
 
     /// <summary>
-    /// 送單到金萬林後，目前狀態\nNONE : 尚未收到結果\nPART : 部分驗收入庫\nDONE : 全部驗收入庫\nCLOSE:金萬林不同意拆單後的採購項目
+    /// 送單到金萬林後，目前狀態\\nNONE : 尚未收到結果\\nPART : 部分驗收入庫\\nDONE : 全部驗收入庫\\nCLOSE:金萬林不同意拆單後的採購項目
+    /// 這欄位暫時沒更新,也沒有用,看acceptance_item.ReceiveStatus
     /// </summary>
     [StringLength(45)]
     public string ReceiveStatus { get; set; } = null!;
@@ -144,4 +145,6 @@ public partial class PurchaseSubItem
 
     [StringLength(45)]
     public string? OwnerProcess { get; set; }
+
+    public float? InStockQuantity { get; set; }
 }

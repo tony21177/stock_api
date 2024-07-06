@@ -44,6 +44,17 @@ namespace stock_api.Service
             return _dbContext.PurchaseSubItems.Where(s => s.ItemId == itemId).FirstOrDefault();
         }
 
+        public List<PurchaseSubItem> GetPurchaseSubItemByItemIdList(List<string> itemIdList)
+        {
+            return _dbContext.PurchaseSubItems.Where(s => itemIdList.Contains(s.ItemId)).ToList() ;
+        }
+
+        public List<PurchaseSubItem> GetNotDonePurchaseSubItemByProductIdList(List<string> productIdList)
+        {
+            return _dbContext.PurchaseSubItems.Where(s => s.ReceiveStatus!=CommonConstants.PurchaseSubItemReceiveStatus.CLOSE
+            && s.ReceiveStatus != CommonConstants.PurchaseSubItemReceiveStatus.DONE).ToList();
+        }
+
         public List<PurchaseSubItem> GetPurchaseSubItemsByMainIdList(List<string> purchaseMainIdList)
         {
             return _dbContext.PurchaseSubItems.Where(s => purchaseMainIdList.Contains(s.PurchaseMainId)).ToList();

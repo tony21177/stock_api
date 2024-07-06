@@ -271,6 +271,17 @@ namespace stock_api.Controllers
                     Message = "驗收品項不存在"
                 });
             }
+            var purchaseSubItem = _purchaseService.GetPurchaseSubItemByItemId(existingAcceptItem.ItemId);
+            if (purchaseSubItem == null)
+            {
+                return BadRequest(new CommonResponse<dynamic>
+                {
+                    Result = false,
+                    Message = "對應的採購品項不存在"
+                });
+            }
+
+
             if (existingAcceptItem.CompId != compId)
             {
                 return BadRequest(CommonResponse<dynamic>.BuildNotAuthorizeResponse());
@@ -329,7 +340,7 @@ namespace stock_api.Controllers
             List<InStockItemRecord> existingStockInRecords = _stockInService.GetInStockRecordsHistory(existingAcceptItem.ProductId, compId).OrderByDescending(item => item.CreatedAt).ToList();
             var lastLotNumber = existingStockInRecords.FirstOrDefault()?.LotNumber;
             List<string> newLotNumberIdList = new();
-            var (result, message,qc) = _stockInService.UpdateAccepItem(purchaseMain, existingAcceptItem, request, product, compId, memberAndPermissionSetting.Member, request.IsInStocked);
+            var (result, message,qc) = _stockInService.UpdateAccepItem(purchaseMain, purchaseSubItem, existingAcceptItem, request, product, compId, memberAndPermissionSetting.Member, request.IsInStocked);
             if (request.LotNumber != lastLotNumber)
             {
                 newLotNumberIdList.Add(request.AcceptId);
@@ -400,6 +411,10 @@ namespace stock_api.Controllers
             }
             var updateAcceptIdList = request.UpdateAcceptItemList.Select(i => i.AcceptId).ToList();
             var existingAcceptItemList = _stockInService.GetAcceptanceItemByAcceptIdList(updateAcceptIdList);
+            var existingItemId = existingAcceptItemList.Select(item=>item.ItemId).ToList();
+            var existingPurchaseSubItems = _purchaseService.GetPurchaseSubItemByItemIdList(existingItemId);
+
+
             var existingAcceptIdList = existingAcceptItemList.Select(i => i.AcceptId).ToList();
             var notExistAcceptIdList = updateAcceptIdList.Except(existingAcceptIdList).ToList();
             if (notExistAcceptIdList.Count > 0)
@@ -438,6 +453,9 @@ namespace stock_api.Controllers
                     Message = $"庫存品項 {string.Join(",", notExistProductIdList)} 不存在"
                 });
             }
+
+
+
 
             var updatePurchaseMainIdList = existingAcceptItemList.Select(i => i.PurchaseMainId).ToList();
             var purchaseMainList = _purchaseService.GetPurchaseMainsByMainIdList(updatePurchaseMainIdList);
@@ -491,6 +509,7 @@ namespace stock_api.Controllers
                 var matchedExistAcceptItem = existingAcceptItemList.Where(i => i.AcceptId == item.AcceptId).FirstOrDefault();
                 var matchedProduct = existingProductList.Where(p => p.ProductId == matchedExistAcceptItem.ProductId).FirstOrDefault();
                 var matchedPurchaseMain = purchaseMainList.Where(p => p.PurchaseMainId == matchedExistAcceptItem.PurchaseMainId).FirstOrDefault();
+                var matchedPurchaseSubItem = existingPurchaseSubItems.Where(s=>s.ItemId==matchedExistAcceptItem.ItemId).FirstOrDefault();
 
                 List<InStockItemRecord> existingStockInRecords = _stockInService.GetInStockRecordsHistory(matchedExistAcceptItem.ProductId, compId).OrderByDescending(item => item.CreatedAt).ToList();
                 var lastLotNumber = existingStockInRecords.FirstOrDefault()?.LotNumber;
@@ -498,7 +517,7 @@ namespace stock_api.Controllers
                 {
                     newLotNumberIdList.Add(item.AcceptId);
                 }
-                var (result, message,qc) = _stockInService.UpdateAccepItem(matchedPurchaseMain, matchedExistAcceptItem, item, matchedProduct, compId, memberAndPermissionSetting.Member, item.IsInStocked);
+                var (result, message,qc) = _stockInService.UpdateAccepItem(matchedPurchaseMain, matchedPurchaseSubItem, matchedExistAcceptItem, item, matchedProduct, compId, memberAndPermissionSetting.Member, item.IsInStocked);
                 if (result != true)
                 {
                     failedIdList.Add(matchedExistAcceptItem.AcceptId);

@@ -38,9 +38,10 @@ namespace stock_api.Controllers
         private readonly IValidator<AddNewProductRequest> _addNewProductRequestValidator;
         private readonly FileUploadService _fileUploadService;
         private readonly StockInService _stockInService;
+        private readonly PurchaseService _purchaseService;
     
         public WarehouseProductController(AuthLayerService authLayerService, WarehouseProductService warehouseProductService, CompanyService companyService, GroupService groupService, SupplierService supplierService,
-            ManufacturerService manufacturerService, IMapper mapper, ILogger<AuthlayerController> logger, AuthHelpers authHelpers, FileUploadService fileUploadService,StockInService stockInService)
+            ManufacturerService manufacturerService, IMapper mapper, ILogger<AuthlayerController> logger, AuthHelpers authHelpers, FileUploadService fileUploadService,StockInService stockInService,PurchaseService purchaseService)
         {
             _authLayerService = authLayerService;
             _warehouseProductService = warehouseProductService;
@@ -57,6 +58,7 @@ namespace stock_api.Controllers
             _addNewProductRequestValidator = new AddNewProductValidator(supplierService, manufacturerService, companyService);
             _fileUploadService = fileUploadService;
             _stockInService = stockInService;
+            _purchaseService = purchaseService;
         }
 
         [HttpPost("search")]
@@ -103,6 +105,18 @@ namespace stock_api.Controllers
                     }
                 }
             }
+
+            var allProductIsList = warehouseProductVoList.Select(p=>p.ProductId).ToList();
+            var allSubItems = _purchaseService.GetNotDonePurchaseSubItemByProductIdList(allProductIsList);
+
+            warehouseProductVoList.ForEach(p =>
+            {
+                var matchedOngoingSubItems = allSubItems.Where(s => s.ProductId == p.ProductId);
+                var inProcessingOrderQuantity = matchedOngoingSubItems.Select(s => s.Quantity - s.InStockQuantity).DefaultIfEmpty(0).Sum();
+                var needOrderedQuantity = p.MaxSafeQuantity ?? 0 - p.InStockQuantity ?? 0 - inProcessingOrderQuantity;
+                p.InProcessingOrderQuantity = inProcessingOrderQuantity??0;
+                p.NeedOrderedQuantity = needOrderedQuantity ?? 0;
+            });
 
 
             var response = new CommonResponse<List<WarehouseProductVo>>()

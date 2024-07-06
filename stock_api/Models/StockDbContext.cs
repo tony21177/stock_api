@@ -518,7 +518,7 @@ public partial class StockDbContext : DbContext
             entity.Property(e => e.DemandDate).HasComment("需求日期");
             entity.Property(e => e.GroupIds).HasComment("設定此單據所屬的組別，參考 Warehouse_Group");
             entity.Property(e => e.ItemGroupIds).HasComment("品項可以設定組別ID\\n在醫院端可以依照組別拆單顯示");
-            entity.Property(e => e.ItemReceiveStatus).HasComment("送單到金萬林後，目前狀態\\nNONE : 尚未收到結果\\nPART : 部分驗收入庫\\nDONE : 全部驗收入庫\\nCLOSE:金萬林不同意拆單後的採購項目");
+            entity.Property(e => e.ItemReceiveStatus).HasComment("送單到金萬林後，目前狀態\\\\nNONE : 尚未收到結果\\\\nPART : 部分驗收入庫\\\\nDONE : 全部驗收入庫\\\\nCLOSE:金萬林不同意拆單後的採購項目\n這欄位暫時沒更新,也沒有用,看acceptance_item.ReceiveStatus");
             entity.Property(e => e.MainSplitPrcoess)
                 .HasDefaultValueSql("'NONE'")
                 .HasComment("NONE(所有sub_item都尚未經過OWNER拆單),PART(部分sub_item經過OWNER拆單),DONE(所有sub_item經過OWNER拆單)");
@@ -589,6 +589,7 @@ public partial class StockDbContext : DbContext
             entity.Property(e => e.CreatedAt).HasDefaultValueSql("CURRENT_TIMESTAMP");
             entity.Property(e => e.CurrentInStockQuantity).HasComment("採購單項目在建立當下的庫存數量");
             entity.Property(e => e.GroupIds).HasComment("品項可以設定組別ID\\n在醫院端可以依照組別拆單顯示");
+            entity.Property(e => e.InStockQuantity).HasDefaultValueSql("'0'");
             entity.Property(e => e.OwnerProcess).HasDefaultValueSql("'NONE'");
             entity.Property(e => e.ProductCategory).HasComment("品項的 ProductCategory, 用來醫院拆單用");
             entity.Property(e => e.ProductId).HasComment("品項的PK，\n參考 Product Table");
@@ -597,7 +598,7 @@ public partial class StockDbContext : DbContext
             entity.Property(e => e.PurchaseMainId).HasComment("PurchaseMainSheet PK");
             entity.Property(e => e.Quantity).HasComment("數量");
             entity.Property(e => e.ReceiveQuantity).HasComment("已收到的數量");
-            entity.Property(e => e.ReceiveStatus).HasComment("送單到金萬林後，目前狀態\\nNONE : 尚未收到結果\\nPART : 部分驗收入庫\\nDONE : 全部驗收入庫\\nCLOSE:金萬林不同意拆單後的採購項目");
+            entity.Property(e => e.ReceiveStatus).HasComment("送單到金萬林後，目前狀態\\\\nNONE : 尚未收到結果\\\\nPART : 部分驗收入庫\\\\nDONE : 全部驗收入庫\\\\nCLOSE:金萬林不同意拆單後的採購項目\n這欄位暫時沒更新,也沒有用,看acceptance_item.ReceiveStatus");
             entity.Property(e => e.SplitProcess)
                 .HasDefaultValueSql("'NONE'")
                 .HasComment("NONE(表示OWNER尚未拆單過), DONE(表示OWNER已經拆單過)\n");
@@ -788,6 +789,7 @@ public partial class StockDbContext : DbContext
 
             entity.Property(e => e.CompId).HasComment("品項所屬的組織ID");
             entity.Property(e => e.AllowReceiveDateRange).HasComment("該品項期限距離現在的最小天數");
+            entity.Property(e => e.CompName).HasDefaultValueSql("''");
             entity.Property(e => e.CreatedAt).HasDefaultValueSql("CURRENT_TIMESTAMP");
             entity.Property(e => e.DeadlineRule).HasComment("有效期限規範");
             entity.Property(e => e.DefaultSupplierId).HasComment("預設供應商");
@@ -795,9 +797,16 @@ public partial class StockDbContext : DbContext
             entity.Property(e => e.Delievery)
                 .HasDefaultValueSql("'VENDOR'")
                 .HasComment("VENDOR:廠商直寄,\nOWNER:得標廠商(金萬林)供貨");
-            entity.Property(e => e.DeliverRemarks).HasComment("運送備註");
-            entity.Property(e => e.GroupIds).HasComment("屬於數個組別");
-            entity.Property(e => e.GroupNames).HasComment("組別名稱");
+            entity.Property(e => e.DeliverFunction).HasDefaultValueSql("''");
+            entity.Property(e => e.DeliverRemarks)
+                .HasDefaultValueSql("''")
+                .HasComment("運送備註");
+            entity.Property(e => e.GroupIds)
+                .HasDefaultValueSql("''")
+                .HasComment("屬於數個組別");
+            entity.Property(e => e.GroupNames)
+                .HasDefaultValueSql("''")
+                .HasComment("組別名稱");
             entity.Property(e => e.InStockQuantity)
                 .HasDefaultValueSql("'0'")
                 .HasComment("庫存數量");
@@ -809,43 +818,76 @@ public partial class StockDbContext : DbContext
             entity.Property(e => e.LastOutStockDate).HasComment("最後出庫日期");
             entity.Property(e => e.LotNumber).HasComment("批號");
             entity.Property(e => e.LotNumberBatch).HasComment("批次");
-            entity.Property(e => e.Manager).HasComment("管理者");
-            entity.Property(e => e.ManufacturerId).HasComment("品項所屬的製造商ID");
+            entity.Property(e => e.Manager)
+                .HasDefaultValueSql("''")
+                .HasComment("管理者");
+            entity.Property(e => e.ManufacturerId)
+                .HasDefaultValueSql("''")
+                .HasComment("品項所屬的製造商ID");
             entity.Property(e => e.ManufacturerName).HasComment("品項所屬的製造商名稱");
             entity.Property(e => e.MaxSafeQuantity).HasComment("最高安庫量");
             entity.Property(e => e.OpenDeadline).HasComment("開封有效期限\n數字（開封後可以用幾天），檢查資料庫是不是int");
-            entity.Property(e => e.OpenedSealName).HasComment("開封列印名稱");
+            entity.Property(e => e.OpenedSealName)
+                .HasDefaultValueSql("''")
+                .HasComment("開封列印名稱");
             entity.Property(e => e.OriginalDeadline).HasComment("原始有效期限");
-            entity.Property(e => e.PackageWay).HasComment("包裝方式");
+            entity.Property(e => e.PackageWay)
+                .HasDefaultValueSql("''")
+                .HasComment("包裝方式");
             entity.Property(e => e.PreDeadline).HasComment("已入庫未使用，當前日期在末效日期前幾天通知用");
             entity.Property(e => e.PreOrderDays).HasComment("前置天數");
-            entity.Property(e => e.ProductCategory).HasComment("產品類別\n[耗材, 試劑, 其他]");
+            entity.Property(e => e.ProductCategory)
+                .HasDefaultValueSql("''")
+                .HasComment("產品類別\\\\n[耗材, 試劑, 其他]");
             entity.Property(e => e.ProductCode).HasComment("產品編碼");
             entity.Property(e => e.ProductMachine).HasComment("品項所屬儀器");
-            entity.Property(e => e.ProductModel).HasComment("品項型號");
-            entity.Property(e => e.ProductName).HasComment("品項名稱");
-            entity.Property(e => e.ProductRemarks).HasComment("品項備註");
-            entity.Property(e => e.ProductSpec).HasComment("品項規格");
+            entity.Property(e => e.ProductModel)
+                .HasDefaultValueSql("''")
+                .HasComment("品項型號");
+            entity.Property(e => e.ProductName)
+                .HasDefaultValueSql("''")
+                .HasComment("品項名稱");
+            entity.Property(e => e.ProductRemarks)
+                .HasDefaultValueSql("''")
+                .HasComment("品項備註");
+            entity.Property(e => e.ProductSpec)
+                .HasDefaultValueSql("''")
+                .HasComment("品項規格");
             entity.Property(e => e.QcType)
                 .HasDefaultValueSql("'NONE'")
                 .HasComment("NONE,LOT_NUMBER,LOT_NUMBER_BATCH");
             entity.Property(e => e.SafeQuantity).HasComment("最小安庫量");
+            entity.Property(e => e.SavingFunction).HasDefaultValueSql("''");
+            entity.Property(e => e.StockLocation).HasDefaultValueSql("''");
+            entity.Property(e => e.SupplierUnit).HasDefaultValueSql("''");
             entity.Property(e => e.SupplierUnitConvertsion).HasDefaultValueSql("'1'");
             entity.Property(e => e.TestCount)
                 .HasDefaultValueSql("'1'")
                 .HasComment("在總覽表與目前庫存數量(InStockQuantity)相乘顯示給使用者知道目前可用的數量用的欄位");
-            entity.Property(e => e.UdibatchCode).HasComment("UDI 碼");
-            entity.Property(e => e.UdicreateCode).HasComment("UDI 碼");
-            entity.Property(e => e.UdiserialCode).HasComment("UDI 碼");
-            entity.Property(e => e.UdiverifyDateCode).HasComment("UDI 碼");
-            entity.Property(e => e.Unit).HasComment("單位");
+            entity.Property(e => e.UdibatchCode)
+                .HasDefaultValueSql("''")
+                .HasComment("UDI 碼");
+            entity.Property(e => e.UdicreateCode)
+                .HasDefaultValueSql("''")
+                .HasComment("UDI 碼");
+            entity.Property(e => e.UdiserialCode)
+                .HasDefaultValueSql("''")
+                .HasComment("UDI 碼");
+            entity.Property(e => e.UdiverifyDateCode)
+                .HasDefaultValueSql("''")
+                .HasComment("UDI 碼");
+            entity.Property(e => e.Unit)
+                .HasDefaultValueSql("''")
+                .HasComment("單位");
             entity.Property(e => e.UnitConversion)
                 .HasDefaultValueSql("'1'")
                 .HasComment("用來在訂購時將最小單位轉為訂購規格及驗收時 將訂購規格轉為最小單位數量用的欄位");
             entity.Property(e => e.UpdatedAt)
                 .ValueGeneratedOnAddOrUpdate()
                 .HasDefaultValueSql("CURRENT_TIMESTAMP");
-            entity.Property(e => e.Weight).HasComment("重量");
+            entity.Property(e => e.Weight)
+                .HasDefaultValueSql("''")
+                .HasComment("重量");
         });
 
         modelBuilder.Entity<WarehouseProductCommon>(entity =>

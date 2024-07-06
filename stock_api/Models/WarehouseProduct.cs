@@ -132,8 +132,7 @@ public partial class WarehouseProduct
     public int? PreOrderDays { get; set; }
 
     /// <summary>
-    /// 產品類別
-    /// [耗材, 試劑, 其他]
+    /// 產品類別\\n[耗材, 試劑, 其他]
     /// </summary>
     [StringLength(100)]
     public string? ProductCategory { get; set; }
