@@ -74,6 +74,9 @@ namespace stock_api.Controllers
                 purchaseMainIdAndAcceptionItemListMap[item.PurchaseMainId].Add(item);
             });
 
+            List<string> distinctItemIdList = purchaseAcceptanceItemsViewList.Select(a => a.ItemId).Distinct().ToList();
+            List<PurchaseSubItem> purchaseSubItems = _purchaseService.GetPurchaseSubItemByItemIdList(distinctItemIdList);
+
             List<PurchaseAcceptItemsVo> data = new();
 
             foreach (var keyValuePair in purchaseMainIdAndAcceptionItemListMap)
@@ -95,6 +98,9 @@ namespace stock_api.Controllers
                         item.ArrangeSupplierId = item.ArrangeSupplierId;
                         item.ArrangeSupplierName = item.ArrangeSupplierName;
                     }
+                    var matchedSubItem = purchaseSubItems.Where(s=>s.ItemId==item.ItemId).FirstOrDefault();
+                    item.PurchaseSubItem = matchedSubItem;
+
                 }
 
                 if (request.Keywords == null)

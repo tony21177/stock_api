@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations.Schema;
 using System.ComponentModel.DataAnnotations;
+using stock_api.Models;
 
 namespace stock_api.Service.ValueObject
 {
@@ -104,6 +105,8 @@ namespace stock_api.Service.ValueObject
         public int? ArrangeSupplierId { get; set; }
         public string? ArrangeSupplierName { get; set; }
         public string InStockStatus { get; set; }
+
+        public PurchaseSubItem PurchaseSubItem { get; set; }
         public bool IsContainKeywords(string keywords)
         {
             return ($"{this.AcceptId} {this.AcceptUserId} {this.LotNumberBatch} {this.LotNumber} {this.PackagingStatus} {this.ProductId} {this.ProductName} {this.ProductSpec} {this.UdiserialCode}" +
