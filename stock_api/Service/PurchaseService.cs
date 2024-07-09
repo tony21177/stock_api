@@ -631,5 +631,11 @@ namespace stock_api.Service
                 return false;
             }
         }
+
+        public List<PurchaseSubItem> GetUndonePurchaseSubItems(string compId,string productId)
+        {
+            return _dbContext.PurchaseSubItems.Where(s=>s.ReceiveStatus!=CommonConstants.PurchaseSubItemReceiveStatus.DONE&& s.ReceiveStatus != CommonConstants.PurchaseSubItemReceiveStatus.CLOSE
+            &&s.CompId == compId&&s.ProductId==productId).ToList();
+        }
     }
 }

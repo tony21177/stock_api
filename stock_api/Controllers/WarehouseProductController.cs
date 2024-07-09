@@ -15,6 +15,7 @@ using stock_api.Service.ValueObject;
 using static System.Net.Mime.MediaTypeNames;
 using Microsoft.EntityFrameworkCore;
 using System.Text.RegularExpressions;
+using MySqlX.XDevAPI.Common;
 
 namespace stock_api.Controllers
 {
@@ -39,9 +40,9 @@ namespace stock_api.Controllers
         private readonly FileUploadService _fileUploadService;
         private readonly StockInService _stockInService;
         private readonly PurchaseService _purchaseService;
-    
+
         public WarehouseProductController(AuthLayerService authLayerService, WarehouseProductService warehouseProductService, CompanyService companyService, GroupService groupService, SupplierService supplierService,
-            ManufacturerService manufacturerService, IMapper mapper, ILogger<AuthlayerController> logger, AuthHelpers authHelpers, FileUploadService fileUploadService,StockInService stockInService,PurchaseService purchaseService)
+            ManufacturerService manufacturerService, IMapper mapper, ILogger<AuthlayerController> logger, AuthHelpers authHelpers, FileUploadService fileUploadService, StockInService stockInService, PurchaseService purchaseService)
         {
             _authLayerService = authLayerService;
             _warehouseProductService = warehouseProductService;
@@ -106,7 +107,7 @@ namespace stock_api.Controllers
                 }
             }
 
-            var allProductIsList = warehouseProductVoList.Select(p=>p.ProductId).ToList();
+            var allProductIsList = warehouseProductVoList.Select(p => p.ProductId).ToList();
             var allSubItems = _purchaseService.GetNotDonePurchaseSubItemByProductIdList(allProductIsList);
 
             warehouseProductVoList.ForEach(p =>
@@ -114,7 +115,7 @@ namespace stock_api.Controllers
                 var matchedOngoingSubItems = allSubItems.Where(s => s.ProductId == p.ProductId);
                 var inProcessingOrderQuantity = matchedOngoingSubItems.Select(s => s.Quantity - s.InStockQuantity).DefaultIfEmpty(0).Sum();
                 var needOrderedQuantity = p.MaxSafeQuantity ?? 0 - p.InStockQuantity ?? 0 - inProcessingOrderQuantity;
-                p.InProcessingOrderQuantity = inProcessingOrderQuantity??0;
+                p.InProcessingOrderQuantity = inProcessingOrderQuantity ?? 0;
                 p.NeedOrderedQuantity = needOrderedQuantity ?? 0;
             });
 
@@ -255,12 +256,12 @@ namespace stock_api.Controllers
                     }
                 }
             }
-            List<string> allProductCodeList = warehouseProductVoList.Where(p=>p.ProductCode!=null).Select(p=>p.ProductCode).Distinct().ToList();
+            List<string> allProductCodeList = warehouseProductVoList.Where(p => p.ProductCode != null).Select(p => p.ProductCode).Distinct().ToList();
             var (allInStockRecords, allOutStockRecords) = _stockInService.GetAllInAndOutRecordByProductCodeList(allProductCodeList, compId);
 
             warehouseProductVoList.ForEach(vo =>
             {
-                var matchedInStockRecords = allInStockRecords.Where(r=>r.ProductCode==vo.ProductCode).OrderByDescending(r => r.UpdatedAt).ToList();
+                var matchedInStockRecords = allInStockRecords.Where(r => r.ProductCode == vo.ProductCode).OrderByDescending(r => r.UpdatedAt).ToList();
                 var matchedOutStockRecords = allOutStockRecords.Where(r => r.ProductCode == vo.ProductCode).OrderByDescending(r => r.UpdatedAt).ToList();
                 vo.InStockRecords = matchedInStockRecords;
                 vo.OutStockRecords = matchedOutStockRecords;
@@ -595,13 +596,13 @@ namespace stock_api.Controllers
         {
             var memberAndPermissionSetting = _authHelpers.GetMemberAndPermissionSetting(User);
             var compId = memberAndPermissionSetting.CompanyWithUnit.CompId;
-            var allDistinctProducts = request.ModifyProductDtoList.Select(x=>x.ProductCode).Distinct().ToList();
+            var allDistinctProducts = request.ModifyProductDtoList.Select(x => x.ProductCode).Distinct().ToList();
             var allProducts = _warehouseProductService.GetProductByProductCodeList(allDistinctProducts);
-            var allDistinctGroupNames = request.ModifyProductDtoList.Select(i=>i.GroupNames).Where(i=>i!=null).SelectMany(i=>i.Split(','))
+            var allDistinctGroupNames = request.ModifyProductDtoList.Select(i => i.GroupNames).Where(i => i != null).SelectMany(i => i.Split(','))
                 .Distinct().ToList();
             var allGroups = _groupService.GetGroupsByGroupNameList(allDistinctGroupNames);
 
-            var (result,errorMsg) = _warehouseProductService.UpdateProducts(request.ModifyProductDtoList, allProducts, allGroups);
+            var (result, errorMsg) = _warehouseProductService.UpdateProducts(request.ModifyProductDtoList, allProducts, allGroups);
             return Ok(new CommonResponse<dynamic>
             {
                 Result = result,
@@ -620,9 +621,9 @@ namespace stock_api.Controllers
             var allProducts = _warehouseProductService.GetProductsByProductCodesAndCompId(allDistinctProducts, compId);
             var allDistinctGroupNames = request.ModifyProductDtoList.Select(i => i.GroupNames).Where(i => i != null).SelectMany(i => i.Split(','))
                .Distinct().ToList();
-            var allGroups = _groupService.GetGroupsByGroupNameListAndCompId(allDistinctGroupNames,compId);
+            var allGroups = _groupService.GetGroupsByGroupNameListAndCompId(allDistinctGroupNames, compId);
 
-            var (result, errorMsg) = _warehouseProductService.UpdateProducts(request.ModifyProductDtoList,allProducts, allGroups, compId);
+            var (result, errorMsg) = _warehouseProductService.UpdateProducts(request.ModifyProductDtoList, allProducts, allGroups, compId);
             return Ok(new CommonResponse<dynamic>
             {
                 Result = result,
@@ -644,7 +645,7 @@ namespace stock_api.Controllers
 
             if (!validationResult.IsValid)
             {
-            
+
                 return BadRequest(CommonResponse<dynamic>.BuildValidationFailedResponse(validationResult));
             }
             request.CompIds.Add(compId);
@@ -658,5 +659,28 @@ namespace stock_api.Controllers
             });
         }
 
+        [HttpPost("unDonePurchaseItems")]
+        [Authorize]
+        public IActionResult GetUndonePurchaseItems(GetUndonePurchaseRequest request)
+        {
+            var memberAndPermissionSetting = _authHelpers.GetMemberAndPermissionSetting(User);
+            var compId = memberAndPermissionSetting.CompanyWithUnit.CompId;
+            request.CompId ??= compId;
+            List<PurchaseSubItem> purchaseSubItems = _purchaseService.GetUndonePurchaseSubItems(request.CompId, request.ProductId);
+            List<string> mainIdList = purchaseSubItems.Select(s => s.PurchaseMainId).Distinct().ToList();
+            List<PurchaseMainSheet> purchaseMainSheets = _purchaseService.GetPurchaseMainsByMainIdList(mainIdList);
+            List<UnDonePurchaseSubItem> unDonePurchaseSubItems = _mapper.Map<List<UnDonePurchaseSubItem>>(purchaseSubItems);
+            unDonePurchaseSubItems.ForEach(unDonePurchaseSubItem =>
+            {
+                var matchedPurchaseMain = purchaseMainSheets.Where(m => m.PurchaseMainId == unDonePurchaseSubItem.PurchaseMainId).FirstOrDefault();
+                unDonePurchaseSubItem.PurchaseMain = matchedPurchaseMain;
+            });
+            return Ok(new CommonResponse<dynamic>
+            {
+                Result = true,
+                Data = unDonePurchaseSubItems
+            });
+
+        }
     }
 }

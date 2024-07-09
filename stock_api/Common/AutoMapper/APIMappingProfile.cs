@@ -71,6 +71,9 @@ namespace stock_api.Common.AutoMapper
                 src.GroupIds != null ? src.GroupIds.Split(",", StringSplitOptions.RemoveEmptyEntries).ToList() : null))
             .ForMember(dest => dest.GroupNames, opt => opt.MapFrom(src =>
                 src.GroupNames != null ? src.GroupNames.Split(",", StringSplitOptions.RemoveEmptyEntries).ToList() : null));
+            CreateMap<PurchaseSubItem, UnDonePurchaseSubItem>()
+                .ForAllMembers(opt => opt.Condition((src, dest, srcMember) => srcMember != null));
+
 
             // product
             CreateMap<UpdateProductRequest, WarehouseProduct>()
