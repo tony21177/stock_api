@@ -670,10 +670,13 @@ namespace stock_api.Controllers
             List<string> mainIdList = purchaseSubItems.Select(s => s.PurchaseMainId).Distinct().ToList();
             List<PurchaseMainSheet> purchaseMainSheets = _purchaseService.GetPurchaseMainsByMainIdList(mainIdList);
             List<UnDonePurchaseSubItem> unDonePurchaseSubItems = _mapper.Map<List<UnDonePurchaseSubItem>>(purchaseSubItems);
+            List<WarehouseProduct> products = _warehouseProductService.GetProductsByProductIdsAndCompId(unDonePurchaseSubItems.Select(s=>s.ProductId).ToList(), request.CompId);
             unDonePurchaseSubItems.ForEach(unDonePurchaseSubItem =>
             {
                 var matchedPurchaseMain = purchaseMainSheets.Where(m => m.PurchaseMainId == unDonePurchaseSubItem.PurchaseMainId).FirstOrDefault();
+                var matchedProduct = products.Where(m => m.ProductId==unDonePurchaseSubItem.ProductId).FirstOrDefault();
                 unDonePurchaseSubItem.PurchaseMain = matchedPurchaseMain;
+                unDonePurchaseSubItem.Unit = matchedProduct.Unit;
             });
             return Ok(new CommonResponse<dynamic>
             {
