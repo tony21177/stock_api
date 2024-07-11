@@ -170,6 +170,7 @@ namespace stock_api.Controllers
                 };
                 return Ok(responseGroup);
             }
+            data.ForEach(e => e.AcceptItems = e.AcceptItems.OrderBy(a => a.ProductCode).ToList());
 
 
             var response = new CommonResponse<List<PurchaseAcceptItemsVo>>

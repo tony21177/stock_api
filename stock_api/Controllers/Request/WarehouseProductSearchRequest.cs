@@ -3,6 +3,8 @@
     public class WarehouseProductSearchRequest: BaseSearchRequest
     {
         public string? CompId { get; set; }
+
+        public string? ProductId { get; set; } = null;
         public string? ProductCategory { get; set; }
         public string? ProductMachine { get; set;}
         public int? OpenDeadline { get; set;}

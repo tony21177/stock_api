@@ -81,6 +81,10 @@ namespace stock_api.Service
             {
                 query = query.Where(h => h.ProductMachine == searchRequest.ProductMachine);
             }
+            if (searchRequest.ProductId != null)
+            {
+                query = query.Where(h => h.ProductId == searchRequest.ProductId);
+            }
             if (searchRequest.OpenDeadline != null)
             {
                 query = query.Where(h => h.OpenDeadline == searchRequest.OpenDeadline);

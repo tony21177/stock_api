@@ -52,7 +52,7 @@ namespace stock_api.Service
         public List<PurchaseSubItem> GetNotDonePurchaseSubItemByProductIdList(List<string> productIdList)
         {
             return _dbContext.PurchaseSubItems.Where(s => s.ReceiveStatus!=CommonConstants.PurchaseSubItemReceiveStatus.CLOSE
-            && s.ReceiveStatus != CommonConstants.PurchaseSubItemReceiveStatus.DONE).ToList();
+            && s.ReceiveStatus != CommonConstants.PurchaseSubItemReceiveStatus.DONE&&productIdList.Contains(s.ProductId)).ToList();
         }
 
         public List<PurchaseSubItem> GetPurchaseSubItemsByMainIdList(List<string> purchaseMainIdList)

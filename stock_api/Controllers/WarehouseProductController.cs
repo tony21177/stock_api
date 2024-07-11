@@ -112,11 +112,13 @@ namespace stock_api.Controllers
 
             warehouseProductVoList.ForEach(p =>
             {
-                var matchedOngoingSubItems = allSubItems.Where(s => s.ProductId == p.ProductId);
-                var inProcessingOrderQuantity = matchedOngoingSubItems.Select(s => s.Quantity - s.InStockQuantity).DefaultIfEmpty(0).Sum();
+                var matchedOngoingSubItems = allSubItems.Where(s => s.ProductId == p.ProductId).ToList();
+                var inProcessingOrderQuantity = matchedOngoingSubItems
+                    .Select(s => (s.Quantity - (s.InStockQuantity ?? 0.0f)))
+                    .Sum();
                 var needOrderedQuantity = p.MaxSafeQuantity ?? 0 - p.InStockQuantity ?? 0 - inProcessingOrderQuantity;
-                p.InProcessingOrderQuantity = inProcessingOrderQuantity ?? 0;
-                p.NeedOrderedQuantity = needOrderedQuantity ?? 0;
+                p.InProcessingOrderQuantity = inProcessingOrderQuantity??0.0f ;
+                p.NeedOrderedQuantity = needOrderedQuantity ?? 0.0f;
             });
 
 
