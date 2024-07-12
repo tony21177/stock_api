@@ -143,7 +143,7 @@ namespace stock_api.Service
                     "CreatedAt" => query.OrderByDescending(h => h.CreatedAt),
                     "UpdatedAt" => query.OrderByDescending(h => h.UpdatedAt),
                     "ProductCode" => query.OrderByDescending(h => h.ProductCode),
-                    "GroupID" => query.OrderByDescending(h => h.groupIds),
+                    "GroupID" => query.OrderByDescending(h => h.GroupName),
                     _ => query.OrderByDescending(h => h.UpdatedAt),
                 };
             }
@@ -164,7 +164,7 @@ namespace stock_api.Service
                     "CreatedAt" => query.OrderBy(h => h.CreatedAt),
                     "UpdatedAt" => query.OrderBy(h => h.UpdatedAt),
                     "ProductCode" => query.OrderBy(h => h.ProductCode),
-                    "GroupID" => query.OrderBy(h => h.groupIds),
+                    "GroupID" => query.OrderBy(h => h.GroupName),
                     _ => query.OrderBy(h => h.UpdatedAt),
                 };
             }
