@@ -142,8 +142,7 @@ namespace stock_api.Service
                     "AllowReceiveDateRange" => query.OrderByDescending(h => h.AllowReceiveDateRange),
                     "CreatedAt" => query.OrderByDescending(h => h.CreatedAt),
                     "UpdatedAt" => query.OrderByDescending(h => h.UpdatedAt),
-                    "ProductCode" => query.OrderByDescending(h => h.ProductCode),
-                    "GroupID" => query.OrderByDescending(h => h.GroupNames, StringComparer.OrdinalIgnoreCase),
+                    "ProductCode" => query.OrderByDescending(h => h.ProductCode)
                     _ => query.OrderByDescending(h => h.UpdatedAt),
                 };
             }
@@ -163,8 +162,7 @@ namespace stock_api.Service
                     "AllowReceiveDateRange" => query.OrderBy(h => h.AllowReceiveDateRange),
                     "CreatedAt" => query.OrderBy(h => h.CreatedAt),
                     "UpdatedAt" => query.OrderBy(h => h.UpdatedAt),
-                    "ProductCode" => query.OrderBy(h => h.ProductCode),
-                    "GroupID" => query.OrderBy(h => h.GroupNames, StringComparer.OrdinalIgnoreCase),
+                    "ProductCode" => query.OrderBy(h => h.ProductCode)
                     _ => query.OrderBy(h => h.UpdatedAt),
                 };
             }
