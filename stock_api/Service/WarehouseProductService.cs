@@ -198,7 +198,7 @@ namespace stock_api.Service
                 query = query.Where(h => h.DefaultSupplierId == request.SupplierId);
             }
             query = query.Where(h => h.CompId == request.CompId);
-            query = query.Where(h => h.SafeQuantity.HasValue && h.InStockQuantity < h.SafeQuantity);
+            query = query.Where(h => h.SafeQuantity.HasValue && h.InStockQuantity <= h.SafeQuantity);
             return query.ToList();
 
         }
