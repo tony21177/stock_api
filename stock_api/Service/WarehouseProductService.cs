@@ -143,7 +143,6 @@ namespace stock_api.Service
                     "CreatedAt" => query.OrderByDescending(h => h.CreatedAt),
                     "UpdatedAt" => query.OrderByDescending(h => h.UpdatedAt),
                     "ProductCode" => query.OrderByDescending(h => h.ProductCode),
-                    "GroupID" => query.OrderByDescending(h => h.GroupName),
                     "GroupID" => query.OrderByDescending(h => h.GroupName, StringComparer.OrdinalIgnoreCase),
                     _ => query.OrderByDescending(h => h.UpdatedAt),
                 };
