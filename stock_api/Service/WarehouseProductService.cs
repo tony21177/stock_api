@@ -144,8 +144,8 @@ namespace stock_api.Service
                     "CreatedAt" => query.OrderByDescending(h => h.CreatedAt),
                     "UpdatedAt" => query.OrderByDescending(h => h.UpdatedAt),
                     "ProductCode" => query.OrderByDescending(h => h.ProductCode),
-                    "GroupId" => query.OrderBy(h => h.GroupIds),
-                    "GroupName" => query.OrderBy(h => h.GroupNames),
+                    "GroupId" => query.OrderByDescending(h => h.GroupIds),
+                    "GroupName" => query.OrderByDescending(h => h.GroupNames),
                     _ => query.OrderByDescending(h => h.UpdatedAt),
                 };
             }
