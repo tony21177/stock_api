@@ -13,10 +13,14 @@ namespace stock_api.Controllers.Validator
         public SearchPurchaseAcceptItemValidator(GroupService groupService)
         {
             _groupService = groupService;
-            RuleFor(request => request.ReceiveStatus)
-                .Cascade(CascadeMode.Stop) // Stop on first failure
-                .Must(receiveStatue => CommonConstants.PurchaseReceiveStatus.GetAllValues().Contains(receiveStatue)).When(request => !string.IsNullOrEmpty(request.ReceiveStatus)) // Only validate when Type is not empty
-                    .WithMessage($"receiveStatue必須為{string.Join(",", CommonConstants.PurchaseReceiveStatus.GetAllValues())}");
+            RuleFor(request => request.ReceiveStatusList)
+                .Cascade(CascadeMode.Stop) 
+                .Must(receiveStatusList => receiveStatusList.All(status=>CommonConstants.PurchaseReceiveStatus.GetAllValues().Contains(status)) ).When(request => request.ReceiveStatusList!=null&&request.ReceiveStatusList.Count>0) 
+                    .WithMessage($"receiveStatusList必須為{string.Join(",", CommonConstants.PurchaseReceiveStatus.GetAllValues())}");
+            RuleFor(request => request.InStockStatusList)
+                .Cascade(CascadeMode.Stop) 
+                .Must(inStockStatusList => inStockStatusList.All(status => CommonConstants.InStockStatus.GetAllValues().Contains(status))).When(request => request.InStockStatusList != null && request.InStockStatusList.Count > 0)
+                    .WithMessage($"inStockStatusList必須為{string.Join(",", CommonConstants.InStockStatus.GetAllValues())}");
             RuleFor(x => x.DemandDateStart).Must((request, date, context) => BeValidDate(date, context))
                 .WithMessage("無效格式日期");
             RuleFor(x => x.DemandDateEnd).Must((request, date, context) => BeValidDate(date, context))

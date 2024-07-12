@@ -4,6 +4,7 @@
     {
         public string? CompId { get; set; }
         public List<string>? ReceiveStatusList { get; set; }
+        public List<string>? InStockStatusList { get; set; }
         public string? DemandDateStart { get; set; }
         public string? DemandDateEnd { get; set; }
         public string? ApplyDateStart { get; set; }

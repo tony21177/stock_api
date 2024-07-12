@@ -241,6 +241,17 @@ namespace stock_api.Common.Constant
                 return new List<string> { NONE, PART, ALL };
             }
         }
+        public static class InStockStatus
+        {
+            public const string NONE = "NONE";
+            public const string PART = "PART";
+            public const string DONE = "DONE";
+
+            public static List<string> GetAllValues()
+            {
+                return new List<string> { NONE, PART, DONE };
+            }
+        }
 
         public static class OutStockType
         {
