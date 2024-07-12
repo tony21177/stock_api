@@ -193,14 +193,14 @@ namespace stock_api.Controllers
             var result = warehouseProductVoList.Where(p => p.InStockQuantity + p.InProcessingOrderQuantity < p.SafeQuantity).ToList();
 
             List<string> allProductCodeList = result.Where(p => p.ProductCode != null).Select(p => p.ProductCode).Distinct().ToList();
-            var (allInStockRecords, allOutStockRecords) = _stockInService.GetAllInAndOutRecordByProductCodeList(allProductCodeList, compId);
-            result.ForEach(vo =>
-             {
-                 var matchedInStockRecords = allInStockRecords.Where(r => r.ProductCode == vo.ProductCode).OrderByDescending(r => r.UpdatedAt).ToList();
-                 var matchedOutStockRecords = allOutStockRecords.Where(r => r.ProductCode == vo.ProductCode).OrderByDescending(r => r.UpdatedAt).ToList();
-                 vo.InStockRecords = matchedInStockRecords;
-                 vo.OutStockRecords = matchedOutStockRecords;
-             });
+            // var (allInStockRecords, allOutStockRecords) = _stockInService.GetAllInAndOutRecordByProductCodeList(allProductCodeList, compId);
+            // result.ForEach(vo =>
+            //  {
+            //      var matchedInStockRecords = allInStockRecords.Where(r => r.ProductCode == vo.ProductCode).OrderByDescending(r => r.UpdatedAt).ToList();
+            //      var matchedOutStockRecords = allOutStockRecords.Where(r => r.ProductCode == vo.ProductCode).OrderByDescending(r => r.UpdatedAt).ToList();
+            //      vo.InStockRecords = matchedInStockRecords;
+            //      vo.OutStockRecords = matchedOutStockRecords;
+            //  });
 
 
             var response = new CommonResponse<List<WarehouseProductVo>>()
