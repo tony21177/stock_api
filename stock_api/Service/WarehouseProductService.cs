@@ -128,6 +128,7 @@ namespace stock_api.Service
 
             if (searchRequest.PaginationCondition.IsDescOrderBy)
             {
+
                 query = searchRequest.PaginationCondition.OrderByField switch
                 {
                     "InStockQuantity" => query.OrderByDescending(h => h.InStockQuantity),
@@ -143,6 +144,8 @@ namespace stock_api.Service
                     "CreatedAt" => query.OrderByDescending(h => h.CreatedAt),
                     "UpdatedAt" => query.OrderByDescending(h => h.UpdatedAt),
                     "ProductCode" => query.OrderByDescending(h => h.ProductCode),
+                    "GroupId" => query.OrderBy(h => h.GroupIds),
+                    "GroupName" => query.OrderBy(h => h.GroupNames),
                     _ => query.OrderByDescending(h => h.UpdatedAt),
                 };
             }
@@ -163,6 +166,8 @@ namespace stock_api.Service
                     "CreatedAt" => query.OrderBy(h => h.CreatedAt),
                     "UpdatedAt" => query.OrderBy(h => h.UpdatedAt),
                     "ProductCode" => query.OrderBy(h => h.ProductCode),
+                    "GroupId"=>query.OrderBy(h => h.GroupIds),
+                    "GroupName"=>query.OrderBy(h=>h.GroupNames),
                     _ => query.OrderBy(h => h.UpdatedAt),
                 };
             }
