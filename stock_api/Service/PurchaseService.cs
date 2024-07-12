@@ -400,12 +400,23 @@ namespace stock_api.Service
                 {
                     main.OwnerProcess = CommonConstants.PurchaseMainOwnerProcessStatus.AGREE;
                     main.SplitPrcoess = CommonConstants.SplitProcess.DONE;
-                    main.ReceiveStatus = CommonConstants.PurchaseReceiveStatus.DELIVERED;
-                }else if (allPurchaseSubItems.Any(s => s.OwnerProcess == CommonConstants.PurchaseMainOwnerProcessStatus.AGREE))
+
+                    // 為什麼做這檢查是因為有可能金萬林忘了按同意 就自行安排出貨,然後單位也接著驗收入庫,main.ReceiveStatus就更改不等於NONE了
+                    // 這時單純金萬霖再補按同意就只更新OwnerProcess,SplitPrcoess
+                    if (main.ReceiveStatus== CommonConstants.PurchaseReceiveStatus.NONE)
+                    {
+                        main.ReceiveStatus = CommonConstants.PurchaseReceiveStatus.DELIVERED;
+                    }
+
+                }
+                else if (allPurchaseSubItems.Any(s => s.OwnerProcess == CommonConstants.PurchaseMainOwnerProcessStatus.AGREE))
                 {
                     main.OwnerProcess = CommonConstants.PurchaseMainOwnerProcessStatus.PART_AGREE;
                     main.SplitPrcoess = CommonConstants.SplitProcess.PART;
-                    main.ReceiveStatus = CommonConstants.PurchaseReceiveStatus.DELIVERED;
+                    if (main.ReceiveStatus == CommonConstants.PurchaseReceiveStatus.NONE)
+                    {
+                        main.ReceiveStatus = CommonConstants.PurchaseReceiveStatus.DELIVERED;
+                    }
                 }else if(allPurchaseSubItems.All(s => s.OwnerProcess == CommonConstants.PurchaseMainOwnerProcessStatus.NOT_AGREE))
                 {
                     main.OwnerProcess = CommonConstants.PurchaseMainOwnerProcessStatus.NOT_AGREE;
