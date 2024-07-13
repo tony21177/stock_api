@@ -28,7 +28,7 @@ namespace stock_api.Service
         {
             IQueryable<PurchaseAcceptanceItemsView> query = _dbContext.PurchaseAcceptanceItemsViews;
 
-            if (request.ReceiveStatusList != null)
+            if (request.ReceiveStatus != null)
             {
                 query = query.Where(h => request.ReceiveStatus==h.ReceiveStatus);
             }
