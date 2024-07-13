@@ -72,6 +72,8 @@ namespace stock_api.Service.ValueObject
 
     public class AcceptItem
     {
+        public string? PurchaseMainId { get; set; }
+        public DateTime? ApplyDate { get; set; }
         public string AcceptId { get; set; }
         public int? AcceptQuantity { get; set; }
         public string AcceptUserId { get; set; }

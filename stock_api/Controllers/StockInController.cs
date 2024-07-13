@@ -122,6 +122,8 @@ namespace stock_api.Controllers
             List<AcceptItem> allAcceptItemList = new();
             if (request.IsGroupBySupplier == true)
             {
+                
+
                 allAcceptItemList = data.SelectMany(item => item.AcceptItems).ToList();
                 Dictionary<int, List<AcceptItem>> supplierIdAndAcceptItemListMap = new();
                 supplierIdAndAcceptItemListMap[-1] = new();
@@ -163,6 +165,15 @@ namespace stock_api.Controllers
                 {
                     result = result.Where(i=>i.Supplier.ArrangeSupplierId==request.SupplierId).ToList();    
                 }
+                var purchaseMainIdList = result.SelectMany(e => e.AcceptItems.Where(i=>i.PurchaseMainId!=null).Select(i => i.PurchaseMainId)).Distinct().ToList();
+                var allPurchaseMainList = _purchaseService.GetPurchaseMainsByMainIdList(purchaseMainIdList);
+                result.ForEach(e => e.AcceptItems.ForEach(i =>
+                {
+                    var matchedPurchaseMain = allPurchaseMainList.Where(m=>m.PurchaseMainId==i.PurchaseMainId).FirstOrDefault();
+                    i.PurchaseMainId = matchedPurchaseMain.PurchaseMainId;
+                    i.ApplyDate = matchedPurchaseMain.ApplyDate;
+                }));
+
                 var responseGroup = new CommonResponse<List<SupplierAccepItemsVo>>
                 {
                     Result = true,

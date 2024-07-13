@@ -25,6 +25,10 @@ namespace stock_api.Controllers.Validator
                 .WithMessage("無效格式日期");
             RuleFor(x => x.DemandDateEnd).Must((request, date, context) => BeValidDate(date, context))
                 .WithMessage("無效格式日期");
+            RuleFor(x => x.VerifyAtStart).Must((request, date, context) => BeValidDate(date, context))
+                .WithMessage("無效格式日期");
+            RuleFor(x => x.VerifyAtEnd).Must((request, date, context) => BeValidDate(date, context))
+                .WithMessage("無效格式日期");
             RuleFor(x => x.ApplyDateStart).Must((request, date, context) => BeValidDate(date, context))
                 .WithMessage("無效格式日期");
             RuleFor(x => x.ApplyDateEnd).Must((request, date, context) => BeValidDate(date, context))

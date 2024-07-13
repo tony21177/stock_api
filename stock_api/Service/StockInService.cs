@@ -64,6 +64,16 @@ namespace stock_api.Service
                 var endDateTime = DateTimeHelper.ParseDateString(request.DemandDateEnd).Value.AddDays(1);
                 query = query.Where(h => h.DemandDate.Value.ToDateTime(new TimeOnly(0, 0)) < endDateTime);
             }
+            if (request.VerifyAtStart != null)
+            {
+                var startDateTime = DateTimeHelper.ParseDateString(request.VerifyAtStart).Value;
+                query = query.Where(h => h.VerifyAt >= startDateTime);
+            }
+            if (request.VerifyAtEnd != null)
+            {
+                var endDateTime = DateTimeHelper.ParseDateString(request.VerifyAtEnd).Value.AddDays(1);
+                query = query.Where(h => h.VerifyAt< endDateTime);
+            }
             if (request.ApplyDateStart != null)
             {
                 query = query.Where(h => h.ApplyDate >= DateTimeHelper.ParseDateString(request.ApplyDateStart).Value);

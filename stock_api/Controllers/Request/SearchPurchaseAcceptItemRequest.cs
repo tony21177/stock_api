@@ -8,6 +8,8 @@
         public List<string>? InStockStatusList { get; set; }
         public string? DemandDateStart { get; set; }
         public string? DemandDateEnd { get; set; }
+        public string? VerifyAtStart { get; set; }
+        public string? VerifyAtEnd { get; set; }
         public string? ApplyDateStart { get; set; }
         public string? ApplyDateEnd { get; set; }
         public string? GroupId { get; set; }
