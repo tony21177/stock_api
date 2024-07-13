@@ -30,6 +30,10 @@ namespace stock_api.Service
 
             if (request.ReceiveStatusList != null)
             {
+                query = query.Where(h => request.ReceiveStatus==h.ReceiveStatus);
+            }
+            if (request.ReceiveStatusList != null)
+            {
                 query = query.Where(h => request.ReceiveStatusList.Contains(h.ReceiveStatus));
             }
             if (request.InStockStatusList != null)
