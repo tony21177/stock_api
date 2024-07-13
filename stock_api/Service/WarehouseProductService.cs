@@ -180,8 +180,11 @@ namespace stock_api.Service
         }
 
 
-        public List<WarehouseProduct> ListNotEnoughProducts(ListNotEnoughProductsRequest request)
+        public List<NotEnoughQuantityProduct> ListNotEnoughProducts(ListNotEnoughProductsRequest request)
         {
+            var allOngoingPurchaseItems = _dbContext.PurchaseSubItems.Where(s => s.ReceiveStatus != CommonConstants.PurchaseSubItemReceiveStatus.CLOSE &&
+            s.ReceiveStatus != CommonConstants.PurchaseSubItemReceiveStatus.DONE && s.CompId == request.CompId).ToList();
+
             IQueryable<WarehouseProduct> query = _dbContext.WarehouseProducts;
             if (request.GroupId != null)
             {
@@ -199,7 +202,25 @@ namespace stock_api.Service
             }
             query = query.Where(h => h.CompId == request.CompId);
             query = query.Where(h => h.SafeQuantity.HasValue && h.InStockQuantity <= h.SafeQuantity);
-            return query.ToList();
+
+            var products = query.ToList();
+           var matchedProducts = _mapper.Map<List<NotEnoughQuantityProduct>>(products);
+            var notEnoughProducts = matchedProducts.FindAll(p =>
+            {
+                var matchedSubItems = allOngoingPurchaseItems.Where(i => i.ProductId == p.ProductId).ToList();
+                var ongoingOrderQuantities = matchedSubItems.Select(i => i.Quantity).Sum();
+
+                if (p.MaxSafeQuantity - p.InStockQuantity - ongoingOrderQuantities > 0)
+                {
+                    p.InProcessingOrderQuantity = ongoingOrderQuantities??0.0f;
+                    p.NeedOrderedQuantity = p.MaxSafeQuantity??0.0f - p.InStockQuantity ?? 0.0f - ongoingOrderQuantities ?? 0.0f;
+                    return true;
+                }
+                return false;
+            });
+            
+
+            return notEnoughProducts;
 
         }
 
