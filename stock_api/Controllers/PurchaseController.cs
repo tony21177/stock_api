@@ -194,6 +194,7 @@ namespace stock_api.Controllers
                     item.ProductCode = matchedProduct?.ProductCode;
                     item.SupplierUnitConvertsion = matchedProduct?.SupplierUnitConvertsion;
                     item.SupplierUnit = matchedProduct?.SupplierUnit;
+                    item.StockLocation = matchedProduct?.StockLocation;
                 }
             }
             data = data.OrderByDescending(item => item.ApplyDate).ToList();
@@ -285,6 +286,7 @@ namespace stock_api.Controllers
                     item.SupplierUnitConvertsion = matchedProduct?.SupplierUnitConvertsion;
                     item.SupplierUnit = matchedProduct?.SupplierUnit;
                     item.OpenedSealName = matchedProduct?.OpenedSealName;
+                    item.StockLocation = matchedProduct?.StockLocation;
                 }
             }
             data = data.OrderByDescending(item => item.ApplyDate).ToList();
