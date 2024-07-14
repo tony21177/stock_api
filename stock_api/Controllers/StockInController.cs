@@ -117,7 +117,14 @@ namespace stock_api.Controllers
                 }
 
             }
-            data = data.OrderByDescending(item => item.ApplyDate).ToList();
+            if (request.GroupId != null)
+            {
+                foreach (var mainAndAccptItems in data)
+                {
+                    mainAndAccptItems.AcceptItems = mainAndAccptItems.AcceptItems.Where(a => a.PurchaseSubItem != null && a.PurchaseSubItem.GroupIds.Contains(request.GroupId)).ToList();
+                }
+                data = data.Where(e=>e.AcceptItems.Count>0).ToList();
+            }
 
             List<AcceptItem> allAcceptItemList = new();
             if (request.IsGroupBySupplier == true)
@@ -183,19 +190,48 @@ namespace stock_api.Controllers
             }
             data.ForEach(e => e.AcceptItems = e.AcceptItems.OrderBy(a => a.ProductCode).ToList());
 
-            //if (request.PaginationCondition.IsDescOrderBy)
-            //{
-            //    switch
+            int totalPages = 0;
+            if (request.PaginationCondition.OrderByField == null) request.PaginationCondition.OrderByField = "ProductCode";
+            if (request.PaginationCondition.IsDescOrderBy)
+            {
+                var orderByField = StringUtils.CapitalizeFirstLetter(request.PaginationCondition.OrderByField);
 
-            //    warehouseProductVoList = warehouseProductVoList.OrderByDescending(p => p.NeedOrderedQuantityUnit).ToList();
-            //}
-            //else
-            //{
-            //    warehouseProductVoList = warehouseProductVoList.OrderBy(p => p.NeedOrderedQuantityUnit).ToList();
-            //}
-            //int totalItems = warehouseProductVoList.Count;
-            //totalPages = (int)Math.Ceiling((double)totalItems / searchRequest.PaginationCondition.PageSize);
-            //warehouseProductVoList = warehouseProductVoList.Skip((searchRequest.PaginationCondition.Page - 1) * searchRequest.PaginationCondition.PageSize).Take(searchRequest.PaginationCondition.PageSize).ToList();
+                switch (orderByField)
+                {
+                    case "ApplyDate":
+                        data = data.OrderByDescending(item => item.ApplyDate).ToList();
+                        break;
+                    case "DemandDate":
+                        data = data.OrderByDescending(item => item.DemandDate).ToList();
+                        break;
+                    case "GroupId":
+                        data = data.OrderBy(item => item.GroupIds).ToList();
+                        break;
+                    default:
+                        break;
+                }
+            }
+            else
+            {
+                var orderByField = StringUtils.CapitalizeFirstLetter(request.PaginationCondition.OrderByField);
+                switch (orderByField)
+                {
+                    case "ApplyDate":
+                        data = data.OrderBy(item => item.ApplyDate).ToList();
+                        break;
+                    case "DemandDate":
+                        data = data.OrderBy(item => item.DemandDate).ToList();
+                        break;
+                    case "GroupId":
+                        data = data.OrderBy(item => item.GroupIds).ToList();
+                        break;
+                    default:
+                        break;
+                }
+            }
+            int totalItems = data.Count;
+            totalPages = (int)Math.Ceiling((double)totalItems / request.PaginationCondition.PageSize);
+            data = data.Skip((request.PaginationCondition.Page - 1) * request.PaginationCondition.PageSize).Take(request.PaginationCondition.PageSize).ToList();
 
 
             var response = new CommonResponse<List<PurchaseAcceptItemsVo>>

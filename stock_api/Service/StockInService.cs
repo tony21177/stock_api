@@ -83,10 +83,11 @@ namespace stock_api.Service
                 DateTime endDateTime = DateTimeHelper.ParseDateString(request.ApplyDateEnd).Value.AddDays(1);
                 query = query.Where(h => h.ApplyDate < endDateTime);
             }
-            if (request.GroupId != null)
-            {
-                query = query.Where(h => h.GroupIds.Contains(request.GroupId));
-            }
+            // 是要過濾SubItems的
+            //if (request.GroupId != null)
+            //{
+            //    query = query.Where(h => h.GroupIds.Contains(request.GroupId));
+            //}
             if (request.Type != null)
             {
                 query = query.Where(h => h.Type == request.Type);
