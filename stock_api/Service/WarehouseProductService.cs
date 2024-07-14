@@ -125,58 +125,59 @@ namespace stock_api.Service
                 || h.DefaultSupplierName.Contains(searchRequest.Keywords));
             }
 
-
-            if (searchRequest.PaginationCondition.IsDescOrderBy)
+            int totalPages = 0;
+            if (searchRequest.PaginationCondition.OrderByField != "insufficientQuantity")
             {
-
-                query = searchRequest.PaginationCondition.OrderByField switch
+                if (searchRequest.PaginationCondition.IsDescOrderBy)
                 {
-                    "InStockQuantity" => query.OrderByDescending(h => h.InStockQuantity),
-                    "MaxSafeQuantity" => query.OrderByDescending(h => h.MaxSafeQuantity),
-                    "LastAbleDate" => query.OrderByDescending(h => h.LastAbleDate),
-                    "LastOutStockDate" => query.OrderByDescending(h => h.LastOutStockDate),
-                    "OpenDeadline" => query.OrderByDescending(h => h.OpenDeadline),
-                    "OriginalDeadline" => query.OrderByDescending(h => h.OriginalDeadline),
-                    "PreDeadline" => query.OrderByDescending(h => h.PreDeadline),
-                    "PreOrderDays" => query.OrderByDescending(h => h.PreOrderDays),
-                    "SafeQuantity" => query.OrderByDescending(h => h.SafeQuantity),
-                    "AllowReceiveDateRange" => query.OrderByDescending(h => h.AllowReceiveDateRange),
-                    "CreatedAt" => query.OrderByDescending(h => h.CreatedAt),
-                    "UpdatedAt" => query.OrderByDescending(h => h.UpdatedAt),
-                    "ProductCode" => query.OrderByDescending(h => h.ProductCode),
-                    "GroupId" => query.OrderByDescending(h => h.GroupIds),
-                    "GroupName" => query.OrderByDescending(h => h.GroupNames),
-                    _ => query.OrderByDescending(h => h.UpdatedAt),
-                };
-            }
-            else
-            {
-                query = searchRequest.PaginationCondition.OrderByField switch
+                    query = searchRequest.PaginationCondition.OrderByField switch
+                    {
+                        "InStockQuantity" => query.OrderByDescending(h => h.InStockQuantity),
+                        "MaxSafeQuantity" => query.OrderByDescending(h => h.MaxSafeQuantity),
+                        "LastAbleDate" => query.OrderByDescending(h => h.LastAbleDate),
+                        "LastOutStockDate" => query.OrderByDescending(h => h.LastOutStockDate),
+                        "OpenDeadline" => query.OrderByDescending(h => h.OpenDeadline),
+                        "OriginalDeadline" => query.OrderByDescending(h => h.OriginalDeadline),
+                        "PreDeadline" => query.OrderByDescending(h => h.PreDeadline),
+                        "PreOrderDays" => query.OrderByDescending(h => h.PreOrderDays),
+                        "SafeQuantity" => query.OrderByDescending(h => h.SafeQuantity),
+                        "AllowReceiveDateRange" => query.OrderByDescending(h => h.AllowReceiveDateRange),
+                        "CreatedAt" => query.OrderByDescending(h => h.CreatedAt),
+                        "UpdatedAt" => query.OrderByDescending(h => h.UpdatedAt),
+                        "ProductCode" => query.OrderByDescending(h => h.ProductCode),
+                        "GroupId" => query.OrderByDescending(h => h.GroupIds),
+                        "GroupName" => query.OrderByDescending(h => h.GroupNames),
+                        _ => query.OrderByDescending(h => h.UpdatedAt),
+                    };
+                }
+                else
                 {
-                    "InStockQuantity" => query.OrderBy(h => h.InStockQuantity),
-                    "MaxSafeQuantity" => query.OrderBy(h => h.MaxSafeQuantity),
-                    "LastAbleDate" => query.OrderBy(h => h.LastAbleDate),
-                    "LastOutStockDate" => query.OrderBy(h => h.LastOutStockDate),
-                    "OpenDeadline" => query.OrderBy(h => h.OpenDeadline),
-                    "OriginalDeadline" => query.OrderBy(h => h.OriginalDeadline),
-                    "PreDeadline" => query.OrderBy(h => h.PreDeadline),
-                    "PreOrderDays" => query.OrderBy(h => h.PreOrderDays),
-                    "SafeQuantity" => query.OrderBy(h => h.SafeQuantity),
-                    "AllowReceiveDateRange" => query.OrderBy(h => h.AllowReceiveDateRange),
-                    "CreatedAt" => query.OrderBy(h => h.CreatedAt),
-                    "UpdatedAt" => query.OrderBy(h => h.UpdatedAt),
-                    "ProductCode" => query.OrderBy(h => h.ProductCode),
-                    "GroupId"=>query.OrderBy(h => h.GroupIds),
-                    "GroupName"=>query.OrderBy(h=>h.GroupNames),
-                    _ => query.OrderBy(h => h.UpdatedAt),
-                };
+                    query = searchRequest.PaginationCondition.OrderByField switch
+                    {
+                        "InStockQuantity" => query.OrderBy(h => h.InStockQuantity),
+                        "MaxSafeQuantity" => query.OrderBy(h => h.MaxSafeQuantity),
+                        "LastAbleDate" => query.OrderBy(h => h.LastAbleDate),
+                        "LastOutStockDate" => query.OrderBy(h => h.LastOutStockDate),
+                        "OpenDeadline" => query.OrderBy(h => h.OpenDeadline),
+                        "OriginalDeadline" => query.OrderBy(h => h.OriginalDeadline),
+                        "PreDeadline" => query.OrderBy(h => h.PreDeadline),
+                        "PreOrderDays" => query.OrderBy(h => h.PreOrderDays),
+                        "SafeQuantity" => query.OrderBy(h => h.SafeQuantity),
+                        "AllowReceiveDateRange" => query.OrderBy(h => h.AllowReceiveDateRange),
+                        "CreatedAt" => query.OrderBy(h => h.CreatedAt),
+                        "UpdatedAt" => query.OrderBy(h => h.UpdatedAt),
+                        "ProductCode" => query.OrderBy(h => h.ProductCode),
+                        "GroupId" => query.OrderBy(h => h.GroupIds),
+                        "GroupName" => query.OrderBy(h => h.GroupNames),
+                        _ => query.OrderBy(h => h.UpdatedAt),
+                    };
+                }
+                int totalItems = query.Count();
+                totalPages = (int)Math.Ceiling((double)totalItems / searchRequest.PaginationCondition.PageSize);
+                query = query.Skip((searchRequest.PaginationCondition.Page - 1) * searchRequest.PaginationCondition.PageSize).Take(searchRequest.PaginationCondition.PageSize);
             }
-            int totalItems = query.Count();
-            int totalPages = (int)Math.Ceiling((double)totalItems / searchRequest.PaginationCondition.PageSize);
-
-            query = query.Skip((searchRequest.PaginationCondition.Page - 1) * searchRequest.PaginationCondition.PageSize).Take(searchRequest.PaginationCondition.PageSize);
+            
             return (query.ToList(), totalPages);
-
         }
 
 
@@ -214,6 +215,9 @@ namespace stock_api.Service
                 {
                     p.InProcessingOrderQuantity = ongoingOrderQuantities??0.0f;
                     p.NeedOrderedQuantity = p.MaxSafeQuantity??0.0f - p.InStockQuantity ?? 0.0f - ongoingOrderQuantities ?? 0.0f;
+                    var needOrderedQuantityUnitFloat = p.NeedOrderedQuantity * p.UnitConversion;
+                    var needOrderedQuantityUnit = Math.Ceiling((decimal)needOrderedQuantityUnitFloat.Value * 100) / 100;
+                    p.NeedUnorderedQuantityUnit = (float)needOrderedQuantityUnit;
                     return true;
                 }
                 return false;

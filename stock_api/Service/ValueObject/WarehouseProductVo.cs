@@ -10,5 +10,6 @@ namespace stock_api.Service.ValueObject
         public List<OutStockRecord> OutStockRecords { get; set; } = new List<OutStockRecord>();
         public float InProcessingOrderQuantity { get; set; } = 0;
         public float NeedOrderedQuantity { get; set; } = 0;
+        public float NeedOrderedQuantityUnit { get; set; } = 0;
     }
 }

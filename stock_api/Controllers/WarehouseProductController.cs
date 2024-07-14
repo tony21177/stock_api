@@ -16,6 +16,8 @@ using static System.Net.Mime.MediaTypeNames;
 using Microsoft.EntityFrameworkCore;
 using System.Text.RegularExpressions;
 using MySqlX.XDevAPI.Common;
+using AutoMapper.Execution;
+using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 
 namespace stock_api.Controllers
 {
@@ -117,10 +119,28 @@ namespace stock_api.Controllers
                     .Select(s => (s.Quantity - (s.InStockQuantity ?? 0.0f)))
                     .Sum();
                 var needOrderedQuantity = p.MaxSafeQuantity ?? 0 - p.InStockQuantity ?? 0 - inProcessingOrderQuantity;
+                var needOrderedQuantityUnitFloat = needOrderedQuantity * p.UnitConversion;
+                var needOrderedQuantityUnit = Math.Ceiling((decimal)needOrderedQuantityUnitFloat.Value*100) / 100;  
                 p.InProcessingOrderQuantity = inProcessingOrderQuantity??0.0f ;
                 p.NeedOrderedQuantity = needOrderedQuantity ?? 0.0f;
+                p.NeedOrderedQuantityUnit = (float)needOrderedQuantityUnit;
             });
 
+            // 當過濾欄位為NeedOrderedQuantityUnit 需要特別處理
+            if (searchRequest.PaginationCondition.OrderByField == "insufficientQuantity")
+            {
+                if (searchRequest.PaginationCondition.IsDescOrderBy)
+                {
+                    warehouseProductVoList = warehouseProductVoList.OrderByDescending(p=>p.NeedOrderedQuantityUnit).ToList();
+                }
+                else
+                {
+                    warehouseProductVoList = warehouseProductVoList.OrderBy(p => p.NeedOrderedQuantityUnit).ToList();
+                }
+                int totalItems = warehouseProductVoList.Count;
+                totalPages = (int)Math.Ceiling((double)totalItems / searchRequest.PaginationCondition.PageSize);
+                warehouseProductVoList = warehouseProductVoList.Skip((searchRequest.PaginationCondition.Page - 1) * searchRequest.PaginationCondition.PageSize).Take(searchRequest.PaginationCondition.PageSize).ToList();
+            }
 
             var response = new CommonResponse<List<WarehouseProductVo>>()
             {

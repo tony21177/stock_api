@@ -7,5 +7,6 @@ namespace stock_api.Service.ValueObject
         public float InProcessingOrderQuantity { get; set; } = 0;
         public float NeedOrderedQuantity { get; set; } = 0;
 
+        public float NeedUnorderedQuantityUnit { get; set; } = 0;
     }
 }
