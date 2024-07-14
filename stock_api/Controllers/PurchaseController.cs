@@ -198,6 +198,45 @@ namespace stock_api.Controllers
             }
             data = data.OrderByDescending(item => item.ApplyDate).ToList();
 
+            //
+            int totalPages = 0;
+            var orderByField = request.PaginationCondition.OrderByField;
+            if (orderByField != null)
+            {
+                orderByField = StringUtils.CapitalizeFirstLetter(orderByField);
+                if (request.PaginationCondition.IsDescOrderBy)
+                {
+                    switch (orderByField)
+                    {
+                        case "ApplyDate":
+                            data = data.OrderByDescending(item => item.ApplyDate).ToList();
+                            break;
+                        case "DemandDate":
+                            data = data.OrderByDescending(item => item.DemandDate).ToList();
+                            break;
+                        default:
+                            break;
+                    }
+                }
+                else
+                {
+                    switch (orderByField)
+                    {
+                        case "ApplyDate":
+                            data = data.OrderBy(item => item.ApplyDate).ToList();
+                            break;
+                        case "DemandDate":
+                            data = data.OrderBy(item => item.DemandDate).ToList();
+                            break;
+                        default:
+                            break;
+                    }
+                }
+                int totalItems = data.Count;
+                totalPages = (int)Math.Ceiling((double)totalItems / request.PaginationCondition.PageSize);
+                data = data.Skip((request.PaginationCondition.Page - 1) * request.PaginationCondition.PageSize).Take(request.PaginationCondition.PageSize).ToList();
+            }
+
             var response = new CommonResponse<List<PurchaseMainAndSubItemVo>>
             {
                 Result = true,

@@ -205,23 +205,25 @@ namespace stock_api.Service
             {
                 query = query.Where(h => h.ProductCode == request.ProductCode);
             }
-           
 
+            if (request.PaginationCondition.OrderByField == null) request.PaginationCondition.OrderByField = "UpdatedAt";
             if (request.PaginationCondition.IsDescOrderBy)
             {
-                query = request.PaginationCondition.OrderByField switch
+                var orderByField = StringUtils.CapitalizeFirstLetter(request.PaginationCondition.OrderByField);
+                query = orderByField switch
                 {
-                    "createdAt" => query.OrderByDescending(h => h.CreatedAt),
-                    "updatedAt" => query.OrderByDescending(h => h.UpdatedAt),
+                    "CreatedAt" => query.OrderByDescending(h => h.CreatedAt),
+                    "UpdatedAt" => query.OrderByDescending(h => h.UpdatedAt),
                     _ => query.OrderByDescending(h => h.CreatedAt),
                 };
             }
             else
             {
-                query = request.PaginationCondition.OrderByField switch
+                var orderByField = StringUtils.CapitalizeFirstLetter(request.PaginationCondition.OrderByField);
+                query = orderByField switch
                 {
-                    "createdAt" => query.OrderBy(h => h.CreatedAt),
-                    "updatedAt" => query.OrderBy(h => h.UpdatedAt),
+                    "CreatedAt" => query.OrderBy(h => h.CreatedAt),
+                    "UpdatedAt" => query.OrderBy(h => h.UpdatedAt),
                     _ => query.OrderBy(h => h.CreatedAt),
                 };
             }

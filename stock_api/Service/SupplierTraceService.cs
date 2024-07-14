@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using Microsoft.EntityFrameworkCore;
 using Org.BouncyCastle.Asn1.Ocsp;
+using stock_api.Common.Utils;
 using stock_api.Controllers.Request;
 using stock_api.Models;
 using stock_api.Service.ValueObject;
@@ -85,24 +86,26 @@ namespace stock_api.Service
                 || (h.AbnormalType != null && h.AbnormalType.Contains(listSupplierTraceLogRequest.Keywords)));
             }
 
-
+            if (listSupplierTraceLogRequest.PaginationCondition.OrderByField == null) listSupplierTraceLogRequest.PaginationCondition.OrderByField = "UpdatedAt";
             if (listSupplierTraceLogRequest.PaginationCondition.IsDescOrderBy)
             {
-                query = listSupplierTraceLogRequest.PaginationCondition.OrderByField switch
+                var orderByField = StringUtils.CapitalizeFirstLetter(listSupplierTraceLogRequest.PaginationCondition.OrderByField);
+                query = orderByField switch
                 {
-                    "abnormalDate" => query.OrderByDescending(h => h.AbnormalDate),
-                    "createdAt" => query.OrderByDescending(h => h.CreatedAt),
-                    "updatedAt" => query.OrderByDescending(h => h.UpdatedAt),
+                    "AbnormalDate" => query.OrderByDescending(h => h.AbnormalDate),
+                    "CreatedAt" => query.OrderByDescending(h => h.CreatedAt),
+                    "UpdatedAt" => query.OrderByDescending(h => h.UpdatedAt),
                     _ => query.OrderByDescending(h => h.UpdatedAt),
                 };
             }
             else
             {
-                query = listSupplierTraceLogRequest.PaginationCondition.OrderByField switch
+                var orderByField = StringUtils.CapitalizeFirstLetter(listSupplierTraceLogRequest.PaginationCondition.OrderByField);
+                query = orderByField switch
                 {
-                    "abnormalDate" => query.OrderByDescending(h => h.AbnormalDate),
-                    "createdAt" => query.OrderByDescending(h => h.CreatedAt),
-                    "updatedAt" => query.OrderByDescending(h => h.UpdatedAt),
+                    "AbnormalDate" => query.OrderByDescending(h => h.AbnormalDate),
+                    "CreatedAt" => query.OrderByDescending(h => h.CreatedAt),
+                    "UpdatedAt" => query.OrderByDescending(h => h.UpdatedAt),
                     _ => query.OrderBy(h => h.UpdatedAt),
                 };
             }

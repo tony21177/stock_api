@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion.Internal;
 using Microsoft.IdentityModel.Tokens;
 using stock_api.Common.Constant;
 using stock_api.Common.Utils;
@@ -128,9 +129,11 @@ namespace stock_api.Service
             int totalPages = 0;
             if (searchRequest.PaginationCondition.OrderByField != "insufficientQuantity")
             {
+                if (searchRequest.PaginationCondition.OrderByField == null) searchRequest.PaginationCondition.OrderByField = "UpdatedAt";
                 if (searchRequest.PaginationCondition.IsDescOrderBy)
                 {
-                    query = searchRequest.PaginationCondition.OrderByField switch
+                    var orderByField = StringUtils.CapitalizeFirstLetter(searchRequest.PaginationCondition.OrderByField);
+                    query = orderByField switch
                     {
                         "InStockQuantity" => query.OrderByDescending(h => h.InStockQuantity),
                         "MaxSafeQuantity" => query.OrderByDescending(h => h.MaxSafeQuantity),
@@ -152,7 +155,8 @@ namespace stock_api.Service
                 }
                 else
                 {
-                    query = searchRequest.PaginationCondition.OrderByField switch
+                    var orderByField = StringUtils.CapitalizeFirstLetter(searchRequest.PaginationCondition.OrderByField);
+                    query = orderByField switch
                     {
                         "InStockQuantity" => query.OrderBy(h => h.InStockQuantity),
                         "MaxSafeQuantity" => query.OrderBy(h => h.MaxSafeQuantity),

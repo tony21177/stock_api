@@ -1,6 +1,6 @@
 ﻿namespace stock_api.Controllers.Request
 {
-    public class SearchPurchaseAcceptItemRequest
+    public class SearchPurchaseAcceptItemRequest:BaseSearchRequest
     {
         public string? CompId { get; set; }
         public string? ReceiveStatus { get; set; }

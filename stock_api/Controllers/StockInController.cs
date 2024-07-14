@@ -183,6 +183,20 @@ namespace stock_api.Controllers
             }
             data.ForEach(e => e.AcceptItems = e.AcceptItems.OrderBy(a => a.ProductCode).ToList());
 
+            //if (request.PaginationCondition.IsDescOrderBy)
+            //{
+            //    switch
+
+            //    warehouseProductVoList = warehouseProductVoList.OrderByDescending(p => p.NeedOrderedQuantityUnit).ToList();
+            //}
+            //else
+            //{
+            //    warehouseProductVoList = warehouseProductVoList.OrderBy(p => p.NeedOrderedQuantityUnit).ToList();
+            //}
+            //int totalItems = warehouseProductVoList.Count;
+            //totalPages = (int)Math.Ceiling((double)totalItems / searchRequest.PaginationCondition.PageSize);
+            //warehouseProductVoList = warehouseProductVoList.Skip((searchRequest.PaginationCondition.Page - 1) * searchRequest.PaginationCondition.PageSize).Take(searchRequest.PaginationCondition.PageSize).ToList();
+
 
             var response = new CommonResponse<List<PurchaseAcceptItemsVo>>
             {
@@ -400,7 +414,7 @@ namespace stock_api.Controllers
             request.CompId = compId;
             if (request.PaginationCondition.OrderByField == null)
             {
-                request.PaginationCondition.OrderByField = "updatedAt";
+                request.PaginationCondition.OrderByField = "UpdatedAt";
             }
 
             var (data, pages) = _stockInService.ListStockInRecords(request);

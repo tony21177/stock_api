@@ -418,28 +418,31 @@ namespace stock_api.Service
                 || h.DeliverFunction.Contains(request.Keywords)
                 || h.SavingFunction.Contains(request.Keywords));
             }
+            if (request.PaginationCondition.OrderByField == null) request.PaginationCondition.OrderByField = "UpdatedAt";
 
             if (request.PaginationCondition.IsDescOrderBy)
             {
-                query = request.PaginationCondition.OrderByField switch
+                var orderByField = StringUtils.CapitalizeFirstLetter(request.PaginationCondition.OrderByField);
+                query = orderByField switch
                 {
-                    "lotNumberBatch" => query.OrderByDescending(h => h.LotNumberBatch),
-                    "lotNumber" => query.OrderByDescending(h => h.LotNumber),
-                    "expirationDate" => query.OrderByDescending(h => h.ExpirationDate),
-                    "createdAt" => query.OrderByDescending(h => h.CreatedAt),
-                    "updatedAt" => query.OrderByDescending(h => h.UpdatedAt),
+                    "LotNumberBatch" => query.OrderByDescending(h => h.LotNumberBatch),
+                    "LotNumber" => query.OrderByDescending(h => h.LotNumber),
+                    "ExpirationDate" => query.OrderByDescending(h => h.ExpirationDate),
+                    "CreatedAt" => query.OrderByDescending(h => h.CreatedAt),
+                    "UpdatedAt" => query.OrderByDescending(h => h.UpdatedAt),
                     _ => query.OrderByDescending(h => h.UpdatedAt),
                 };
             }
             else
             {
-                query = request.PaginationCondition.OrderByField switch
+                var orderByField = StringUtils.CapitalizeFirstLetter(request.PaginationCondition.OrderByField);
+                query = orderByField switch
                 {
-                    "lotNumberBatch" => query.OrderBy(h => h.LotNumberBatch),
-                    "lotNumber" => query.OrderBy(h => h.LotNumber),
-                    "expirationDate" => query.OrderBy(h => h.ExpirationDate),
-                    "createdAt" => query.OrderBy(h => h.CreatedAt),
-                    "updatedAt" => query.OrderBy(h => h.UpdatedAt),
+                    "LotNumberBatch" => query.OrderBy(h => h.LotNumberBatch),
+                    "LotNumber" => query.OrderBy(h => h.LotNumber),
+                    "ExpirationDate" => query.OrderBy(h => h.ExpirationDate),
+                    "CreatedAt" => query.OrderBy(h => h.CreatedAt),
+                    "UpdatedAt" => query.OrderBy(h => h.UpdatedAt),
                     _ => query.OrderBy(h => h.UpdatedAt),
                 };
             }
