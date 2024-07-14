@@ -222,6 +222,22 @@ namespace stock_api.Controllers
             //      vo.OutStockRecords = matchedOutStockRecords;
             //  });
 
+            // 當過濾欄位為NeedOrderedQuantityUnit 需要特別處理
+            if (searchRequest.PaginationCondition.OrderByField == "insufficientQuantity")
+            {
+                if (searchRequest.PaginationCondition.IsDescOrderBy)
+                {
+                    warehouseProductVoList = warehouseProductVoList.OrderByDescending(p => p.NeedOrderedQuantityUnit).ToList();
+                }
+                else
+                {
+                    warehouseProductVoList = warehouseProductVoList.OrderBy(p => p.NeedOrderedQuantityUnit).ToList();
+                }
+                int totalItems = warehouseProductVoList.Count;
+                totalPages = (int)Math.Ceiling((double)totalItems / searchRequest.PaginationCondition.PageSize);
+                warehouseProductVoList = warehouseProductVoList.Skip((searchRequest.PaginationCondition.Page - 1) * searchRequest.PaginationCondition.PageSize).Take(searchRequest.PaginationCondition.PageSize).ToList();
+            }
+
 
             var response = new CommonResponse<List<WarehouseProductVo>>()
             {
@@ -288,6 +304,22 @@ namespace stock_api.Controllers
                 vo.InStockRecords = matchedInStockRecords;
                 vo.OutStockRecords = matchedOutStockRecords;
             });
+
+            // 當過濾欄位為NeedOrderedQuantityUnit 需要特別處理
+            if (searchRequest.PaginationCondition.OrderByField == "insufficientQuantity")
+            {
+                if (searchRequest.PaginationCondition.IsDescOrderBy)
+                {
+                    warehouseProductVoList = warehouseProductVoList.OrderByDescending(p => p.NeedOrderedQuantityUnit).ToList();
+                }
+                else
+                {
+                    warehouseProductVoList = warehouseProductVoList.OrderBy(p => p.NeedOrderedQuantityUnit).ToList();
+                }
+                int totalItems = warehouseProductVoList.Count;
+                totalPages = (int)Math.Ceiling((double)totalItems / searchRequest.PaginationCondition.PageSize);
+                warehouseProductVoList = warehouseProductVoList.Skip((searchRequest.PaginationCondition.Page - 1) * searchRequest.PaginationCondition.PageSize).Take(searchRequest.PaginationCondition.PageSize).ToList();
+            }
 
             var response = new CommonResponse<List<WarehouseProductVo>>()
             {
