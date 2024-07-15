@@ -37,6 +37,12 @@ public partial class StockDbContext : DbContext
 
     public virtual DbSet<InventoryAdjustMain> InventoryAdjustMains { get; set; }
 
+    public virtual DbSet<LastMonthUsage> LastMonthUsages { get; set; }
+
+    public virtual DbSet<LastYearUsage> LastYearUsages { get; set; }
+
+    public virtual DbSet<LastYearUsageByMonth> LastYearUsageByMonths { get; set; }
+
     public virtual DbSet<Manufacturer> Manufacturers { get; set; }
 
     public virtual DbSet<OutStockRecord> OutStockRecords { get; set; }
@@ -326,6 +332,27 @@ public partial class StockDbContext : DbContext
             entity.Property(e => e.UserId).HasComment("此單據的建立者");
         });
 
+        modelBuilder.Entity<LastMonthUsage>(entity =>
+        {
+            entity.ToView("last_month_usage");
+
+            entity.Property(e => e.ProductId).HasComment("品項PK");
+        });
+
+        modelBuilder.Entity<LastYearUsage>(entity =>
+        {
+            entity.ToView("last_year_usage");
+
+            entity.Property(e => e.ProductId).HasComment("品項PK");
+        });
+
+        modelBuilder.Entity<LastYearUsageByMonth>(entity =>
+        {
+            entity.ToView("last_year_usage_by_month");
+
+            entity.Property(e => e.ProductId).HasComment("品項PK");
+        });
+
         modelBuilder.Entity<Manufacturer>(entity =>
         {
             entity.HasKey(e => e.Id).HasName("PRIMARY");
@@ -430,7 +457,9 @@ public partial class StockDbContext : DbContext
             entity.Property(e => e.ProductSpec).HasComment("品項規格");
             entity.Property(e => e.QcComment).HasComment("二次驗收填寫相關原因");
             entity.Property(e => e.QcStatus).HasComment("驗收測試品管結果\nPASS : 通過\nFAIL : 不通過\nNONEED : 不需側\nOTHER : 其他");
-            entity.Property(e => e.ReceiveStatus).HasComment("送單到金萬林後，目前狀態\nNONE : 尚未收到結果\nDELIVERED : 金萬林已出貨\nIN_ACCEPTANCE_CHECK : 驗收中\nPART_ACCEPT : 部分驗收入庫\nALL_ACCEPT : 全部驗收入庫");
+            entity.Property(e => e.ReceiveStatus)
+                .HasDefaultValueSql("'NONE'")
+                .HasComment("送單到金萬林後，目前狀態\\\\nNONE : 系統處理中\\\\nDELIVERED : 得標廠商處理中\\\\nIN_ACCEPTANCE_CHECK :單位 驗收中\\\\nPART_ACCEPT : 部分驗收入庫\\\\nALL_ACCEPT : 全部驗收入庫");
             entity.Property(e => e.Remarks).HasComment("備註內容");
             entity.Property(e => e.SplitPrcoess)
                 .HasDefaultValueSql("'NONE'")
@@ -518,7 +547,7 @@ public partial class StockDbContext : DbContext
             entity.Property(e => e.DemandDate).HasComment("需求日期");
             entity.Property(e => e.GroupIds).HasComment("設定此單據所屬的組別，參考 Warehouse_Group");
             entity.Property(e => e.ItemGroupIds).HasComment("品項可以設定組別ID\\n在醫院端可以依照組別拆單顯示");
-            entity.Property(e => e.ItemReceiveStatus).HasComment("送單到金萬林後，目前狀態\\\\nNONE : 尚未收到結果\\\\nPART : 部分驗收入庫\\\\nDONE : 全部驗收入庫\\\\nCLOSE:金萬林不同意拆單後的採購項目\n這欄位暫時沒更新,也沒有用,看acceptance_item.ReceiveStatus");
+            entity.Property(e => e.ItemReceiveStatus).HasComment("送單到金萬林後，目前狀態\\\\\\\\nNONE : 尚未收到結果\\\\\\\\nPART : 部分驗收入庫\\\\\\\\nDONE : 全部驗收入庫\\\\\\\\nCLOSE:金萬林不同意拆單後的採購項目\\n");
             entity.Property(e => e.MainSplitPrcoess)
                 .HasDefaultValueSql("'NONE'")
                 .HasComment("NONE(所有sub_item都尚未經過OWNER拆單),PART(部分sub_item經過OWNER拆單),DONE(所有sub_item經過OWNER拆單)");
@@ -531,7 +560,9 @@ public partial class StockDbContext : DbContext
             entity.Property(e => e.ProductSpec).HasComment("品項規格");
             entity.Property(e => e.Quantity).HasComment("數量");
             entity.Property(e => e.ReceiveQuantity).HasComment("已收到的數量");
-            entity.Property(e => e.ReceiveStatus).HasComment("送單到金萬林後，目前狀態\nNONE : 尚未收到結果\nDELIVERED : 金萬林已出貨\nIN_ACCEPTANCE_CHECK : 驗收中\nPART_ACCEPT : 部分驗收入庫\nALL_ACCEPT : 全部驗收入庫");
+            entity.Property(e => e.ReceiveStatus)
+                .HasDefaultValueSql("'NONE'")
+                .HasComment("送單到金萬林後，目前狀態\\\\nNONE : 系統處理中\\\\nDELIVERED : 得標廠商處理中\\\\nIN_ACCEPTANCE_CHECK :單位 驗收中\\\\nPART_ACCEPT : 部分驗收入庫\\\\nALL_ACCEPT : 全部驗收入庫");
             entity.Property(e => e.Remarks).HasComment("備註內容");
             entity.Property(e => e.SubOwnerProcess).HasDefaultValueSql("'NONE'");
             entity.Property(e => e.SubSplitProcess)
@@ -564,7 +595,9 @@ public partial class StockDbContext : DbContext
             entity.Property(e => e.OwnerProcess)
                 .HasDefaultValueSql("'NONE'")
                 .HasComment("NONE,NOT_AGREE,PART_AGREE,AGREE");
-            entity.Property(e => e.ReceiveStatus).HasComment("送單到金萬林後，目前狀態\nNONE : 尚未收到結果\nDELIVERED : 金萬林已出貨\nIN_ACCEPTANCE_CHECK : 驗收中\nPART_ACCEPT : 部分驗收入庫\nALL_ACCEPT : 全部驗收入庫");
+            entity.Property(e => e.ReceiveStatus)
+                .HasDefaultValueSql("'NONE'")
+                .HasComment("送單到金萬林後，目前狀態\\\\nNONE : 系統處理中\\\\nDELIVERED : 得標廠商處理中\\\\nIN_ACCEPTANCE_CHECK :單位 驗收中\\\\nPART_ACCEPT : 部分驗收入庫\\\\nALL_ACCEPT : 全部驗收入庫");
             entity.Property(e => e.Remarks).HasComment("備註內容");
             entity.Property(e => e.SplitPrcoess)
                 .HasDefaultValueSql("'NONE'")
@@ -598,7 +631,7 @@ public partial class StockDbContext : DbContext
             entity.Property(e => e.PurchaseMainId).HasComment("PurchaseMainSheet PK");
             entity.Property(e => e.Quantity).HasComment("數量");
             entity.Property(e => e.ReceiveQuantity).HasComment("已收到的數量");
-            entity.Property(e => e.ReceiveStatus).HasComment("送單到金萬林後，目前狀態\\\\nNONE : 尚未收到結果\\\\nPART : 部分驗收入庫\\\\nDONE : 全部驗收入庫\\\\nCLOSE:金萬林不同意拆單後的採購項目\n這欄位暫時沒更新,也沒有用,看acceptance_item.ReceiveStatus");
+            entity.Property(e => e.ReceiveStatus).HasComment("送單到金萬林後，目前狀態\\\\\\\\nNONE : 尚未收到結果\\\\\\\\nPART : 部分驗收入庫\\\\\\\\nDONE : 全部驗收入庫\\\\\\\\nCLOSE:金萬林不同意拆單後的採購項目\\n");
             entity.Property(e => e.SplitProcess)
                 .HasDefaultValueSql("'NONE'")
                 .HasComment("NONE(表示OWNER尚未拆單過), DONE(表示OWNER已經拆單過)\n");
@@ -766,7 +799,9 @@ public partial class StockDbContext : DbContext
             entity.ToTable("warehouse_member", tb => tb.HasComment("主要是用來設定系統人員登入的相關資料。"));
 
             entity.Property(e => e.Account).HasDefaultValueSql("'登入帳號'");
-            entity.Property(e => e.AuthValue).HasComment("權限值");
+            entity.Property(e => e.AuthValue)
+                .HasDefaultValueSql("'5'")
+                .HasComment("權限值");
             entity.Property(e => e.CompId).HasComment("屬於庫存系統裡面的哪一個組織所有");
             entity.Property(e => e.CreatedAt).HasDefaultValueSql("CURRENT_TIMESTAMP");
             entity.Property(e => e.DisplayName).HasComment("顯示名稱");

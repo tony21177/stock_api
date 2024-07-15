@@ -60,12 +60,7 @@ public partial class PurchaseAcceptanceItemsView
     public string UserId { get; set; } = null!;
 
     /// <summary>
-    /// 送單到金萬林後，目前狀態
-    /// NONE : 尚未收到結果
-    /// DELIVERED : 金萬林已出貨
-    /// IN_ACCEPTANCE_CHECK : 驗收中
-    /// PART_ACCEPT : 部分驗收入庫
-    /// ALL_ACCEPT : 全部驗收入庫
+    /// 送單到金萬林後，目前狀態\\nNONE : 系統處理中\\nDELIVERED : 得標廠商處理中\\nIN_ACCEPTANCE_CHECK :單位 驗收中\\nPART_ACCEPT : 部分驗收入庫\\nALL_ACCEPT : 全部驗收入庫
     /// </summary>
     [StringLength(100)]
     public string ReceiveStatus { get; set; } = null!;

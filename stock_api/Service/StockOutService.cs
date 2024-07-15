@@ -322,5 +322,15 @@ namespace stock_api.Service
             return (query.ToList(), totalPages);
 
         }
+
+        public List<LastMonthUsage> GetLastMonthUsages(List<string> productIdList)
+        {
+            return _dbContext.LastMonthUsages.ToList();
+        }
+
+        public List<LastYearUsage> GetLastYearUsages(List<string> productIdList)
+        {
+            return _dbContext.LastYearUsages.ToList();
+        }
     }
 }

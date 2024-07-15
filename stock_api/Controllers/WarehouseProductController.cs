@@ -42,9 +42,11 @@ namespace stock_api.Controllers
         private readonly FileUploadService _fileUploadService;
         private readonly StockInService _stockInService;
         private readonly PurchaseService _purchaseService;
+        private readonly StockOutService _stockOutService;
 
         public WarehouseProductController(AuthLayerService authLayerService, WarehouseProductService warehouseProductService, CompanyService companyService, GroupService groupService, SupplierService supplierService,
-            ManufacturerService manufacturerService, IMapper mapper, ILogger<AuthlayerController> logger, AuthHelpers authHelpers, FileUploadService fileUploadService, StockInService stockInService, PurchaseService purchaseService)
+            ManufacturerService manufacturerService, IMapper mapper, ILogger<AuthlayerController> logger, AuthHelpers authHelpers, FileUploadService fileUploadService, StockInService stockInService, PurchaseService purchaseService
+            ,StockOutService stockOutService)
         {
             _authLayerService = authLayerService;
             _warehouseProductService = warehouseProductService;
@@ -62,6 +64,7 @@ namespace stock_api.Controllers
             _fileUploadService = fileUploadService;
             _stockInService = stockInService;
             _purchaseService = purchaseService;
+            _stockOutService = stockOutService;
         }
 
         [HttpPost("search")]
@@ -141,6 +144,17 @@ namespace stock_api.Controllers
                 totalPages = (int)Math.Ceiling((double)totalItems / searchRequest.PaginationCondition.PageSize);
                 warehouseProductVoList = warehouseProductVoList.Skip((searchRequest.PaginationCondition.Page - 1) * searchRequest.PaginationCondition.PageSize).Take(searchRequest.PaginationCondition.PageSize).ToList();
             }
+            var allProductIdListForUsage = warehouseProductVoList.Select(p => p.ProductId).ToList();
+            var productsLastMonthUsage = _stockOutService.GetLastMonthUsages(allProductIdListForUsage);
+            var productsLastYearUsage = _stockOutService.GetLastYearUsages(allProductIdListForUsage);
+
+            warehouseProductVoList.ForEach(p =>
+            {
+                var matchedLastMonthUsage = productsLastMonthUsage.Where(u => u.ProductId == p.ProductId).FirstOrDefault();
+                if (matchedLastMonthUsage != null) p.LastMonthUsageQuantity = matchedLastMonthUsage?.Quantity;
+                var matchedLastYearUsage = productsLastYearUsage.Where(u => u.ProductId == p.ProductId).FirstOrDefault();
+                if (matchedLastYearUsage != null) p.LastYearUsageQuantity = matchedLastYearUsage?.Quantity;
+            });
 
             var response = new CommonResponse<List<WarehouseProductVo>>()
             {
@@ -153,6 +167,7 @@ namespace stock_api.Controllers
 
         }
 
+        
         [HttpPost("searchForUnderSafeQuantity")]
         [Authorize]
         public IActionResult SearchUnderSafeQuantityWarehouseProduct(WarehouseProductSearchRequest searchRequest)
