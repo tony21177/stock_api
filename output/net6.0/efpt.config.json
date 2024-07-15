@@ -136,6 +136,18 @@
          "ObjectType": 3
       },
       {
+         "Name": "last_month_usage",
+         "ObjectType": 3
+      },
+      {
+         "Name": "last_year_usage",
+         "ObjectType": 3
+      },
+      {
+         "Name": "last_year_usage_by_month",
+         "ObjectType": 3
+      },
+      {
          "Name": "purchase_acceptance_items_view",
          "ObjectType": 3
       },

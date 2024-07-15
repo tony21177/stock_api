@@ -20,5 +20,5 @@ public partial class LastYearUsageByMonth
     [StringLength(100)]
     public string ProductId { get; set; } = null!;
 
-    public double? Quantity { get; set; }
+    public double? TotalApplyQuantity { get; set; }
 }

@@ -386,6 +386,9 @@ public partial class StockDbContext : DbContext
             entity.Property(e => e.CreatedAt).HasDefaultValueSql("CURRENT_TIMESTAMP");
             entity.Property(e => e.ExpirationDate).HasComment("保存期限");
             entity.Property(e => e.IsAbnormal).HasComment("是否為出庫異常\n0為false,1為true");
+            entity.Property(e => e.IsReturned)
+                .HasDefaultValueSql("'0'")
+                .HasComment("是否已退庫");
             entity.Property(e => e.ItemId).HasComment("對應 PurchaseSubItem 的 PK\n非採購入庫，NULL");
             entity.Property(e => e.LotNumber).HasComment("批號");
             entity.Property(e => e.LotNumberBatch).HasComment("批次");

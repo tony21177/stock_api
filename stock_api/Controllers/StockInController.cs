@@ -24,13 +24,14 @@ namespace stock_api.Controllers
         private readonly StockInService _stockInService;
         private readonly WarehouseProductService _warehouseProductService;
         private readonly PurchaseService _purchaseService;
+        private readonly StockOutService _stockOutService;
         private readonly IValidator<SearchPurchaseAcceptItemRequest> _searchPurchaseAcceptItemValidator;
         private readonly IValidator<UpdateBatchAcceptItemsRequest> _updateBatchAcceptItemsRequestValidator;
         private readonly IValidator<UpdateAcceptItemRequest> _updateAcceptItemRequestValidator;
         private readonly IValidator<UpdateBatchAcceptItemsRequest> _batchUdateAcceptItemRequestValidator;
         private readonly IValidator<ListStockInRecordsRequest> _listStockInRecordsValidator;
 
-        public StockInController(IMapper mapper, AuthHelpers authHelpers, GroupService groupService, StockInService stockInService, WarehouseProductService warehouseProductService, PurchaseService purchaseService)
+        public StockInController(IMapper mapper, AuthHelpers authHelpers, GroupService groupService, StockInService stockInService, WarehouseProductService warehouseProductService, PurchaseService purchaseService, StockOutService stockOutService)
         {
             _mapper = mapper;
             _authHelpers = authHelpers;
@@ -43,6 +44,7 @@ namespace stock_api.Controllers
             _updateAcceptItemRequestValidator = new UpdateAcceptItemValidator();
             _batchUdateAcceptItemRequestValidator = new UpdateBatchAcceptItemsRequestValidator();
             _listStockInRecordsValidator = new ListStockInRecordsValidator();
+            _stockOutService = stockOutService;
         }
 
         [HttpPost("purchaseAndAcceptItems/list")]
@@ -664,6 +666,31 @@ namespace stock_api.Controllers
             {
                 Result = true,
                 Data = data,
+            });
+        }
+
+        [HttpPost("return")]
+        [Authorize]
+        public IActionResult Return(ReturnRequest request)
+        {
+            var memberAndPermissionSetting = _authHelpers.GetMemberAndPermissionSetting(User);
+            var compId = memberAndPermissionSetting.CompanyWithUnit.CompId;
+            var outStockRecord = _stockOutService.GetOutStockRecordById(request.OutStockId);
+            if (outStockRecord == null)
+            {
+                return BadRequest(new CommonResponse<dynamic>
+                {
+                    Result = false,
+                    Message = "該出庫紀錄不存在"
+                });
+            }
+            var product = _warehouseProductService.GetProductByProductId(outStockRecord.ProductId);
+
+            var (result, errorMsg) = _stockInService.Return(outStockRecord, product, memberAndPermissionSetting.Member);
+            return Ok(new CommonResponse<dynamic>
+            {
+                Result = result,
+                Message = errorMsg,
             });
         }
     }

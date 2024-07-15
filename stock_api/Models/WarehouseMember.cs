@@ -48,6 +48,9 @@ public partial class WarehouseMember
     [StringLength(500)]
     public string? PhotoUrl { get; set; }
 
+    [StringLength(100)]
+    public string? Email { get; set; }
+
     /// <summary>
     /// 屬於庫存系統裡面的哪一個組織所有
     /// </summary>

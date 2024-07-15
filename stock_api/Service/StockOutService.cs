@@ -332,5 +332,10 @@ namespace stock_api.Service
         {
             return _dbContext.LastYearUsages.ToList();
         }
+
+        public OutStockRecord? GetOutStockRecordById(string outStockId)
+        {
+            return _dbContext.OutStockRecords.Where(r => r.OutStockId == outStockId).FirstOrDefault();
+        }
     }
 }

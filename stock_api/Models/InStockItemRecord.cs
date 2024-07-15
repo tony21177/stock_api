@@ -157,4 +157,7 @@ public partial class InStockItemRecord
     /// </summary>
     [StringLength(100)]
     public string? AdjustItemId { get; set; }
+
+    [StringLength(100)]
+    public string? ReturnOutStockId { get; set; }
 }
