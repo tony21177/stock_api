@@ -2,6 +2,7 @@
 using stock_api.Controllers.Request;
 using stock_api.Service;
 using MaiBackend.PublicApi.Consts;
+using System.Runtime.Serialization;
 
 namespace stock_api.Controllers.Validator
 {
@@ -22,10 +23,13 @@ namespace stock_api.Controllers.Validator
                 RuleFor(x => x.IsActive).NotEmpty().WithMessage("isActive為必須");
                 RuleFor(x => x.AuthValue).NotEmpty().WithMessage("authValue為必須");
                 RuleFor(x => x.CompId).NotEmpty().WithMessage("compId為必須");
+                RuleFor(x=>x.Email).NotEmpty().WithMessage("email為必須")
+                    .EmailAddress().WithMessage("無效的email格式");
             }
             if (action == ActionTypeEnum.Update)
             {
                 RuleFor(x => x.UserId).NotEmpty().WithMessage("userId為必須");
+                RuleFor(x => x.Email).EmailAddress().WithMessage("無效的email格式").When(email=>email!=null);
             }
             _authLayerService = authLayerService;
             _memberService = memberService;
@@ -33,9 +37,10 @@ namespace stock_api.Controllers.Validator
 
 
             ClassLevelCascadeMode = CascadeMode.Stop;
-            RuleFor(x => x).Must(ExistAuthValue).WithMessage("此階層不存在");
+            RuleFor(x => x).Must(ExistAuthValue).When(x => x.AuthValue != null).WithMessage("此階層不存在");
             RuleFor(x => x.GroupIds)
                 .Must((request, groupIds, context) => BeValidGroupList(groupIds, context))
+                .When(x=>x.GroupIds!=null)
                 .WithMessage("以下 groupId 為無效的 group: {InvalidGroupIds}");
         }
 
