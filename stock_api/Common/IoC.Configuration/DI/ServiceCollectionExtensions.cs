@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using stock_api.Auth;
+using stock_api.Common.Settings;
 using stock_api.Service;
 using stock_api.Utils;
 using System.Reflection;
@@ -29,6 +30,10 @@ namespace stock_api.Common.IoC.Configuration.DI
                 services.AddScoped<AdjustService>();
                 services.AddScoped<SupplierTraceService>();
                 services.AddScoped<IAuthorizationMiddlewareResultHandler, CustomAuthorizationMiddlewareResultHandler>();
+
+                // Configure EmailService
+                services.Configure<SmtpSettings>(configuration.GetSection("SmtpSettings"));
+                services.AddSingleton<EmailService>();
             }
         }
 

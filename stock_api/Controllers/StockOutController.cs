@@ -26,25 +26,32 @@ namespace stock_api.Controllers
         private readonly StockInService _stockInService;
         private readonly WarehouseProductService _warehouseProductService;
         private readonly StockOutService _stockOutService;
+        private readonly PurchaseService _purchaseService;
         private readonly IValidator<OutboundRequest> _outboundValidator;
         private readonly IValidator<BatchOutboundRequest> _batchOutboundValidator;
         private readonly IValidator<OwnerOutboundRequest> _ownerOutboundValidator;
         private readonly IValidator<BatchOwnerOutboundRequest> _batchOwnerOutboundValidator;
         private readonly IValidator<ListStockOutRecordsRequest> _listStockOutRecordsValidator;
+        private readonly EmailService _emailService;
+        private readonly MemberService _memberService;
 
 
-        public StockOutController(IMapper mapper, AuthHelpers authHelpers, GroupService groupService, StockInService stockInService, WarehouseProductService warehouseProductService, PurchaseService purchaseService, StockOutService stockOutService)
+        public StockOutController(IMapper mapper, AuthHelpers authHelpers, GroupService groupService, StockInService stockInService,
+            WarehouseProductService warehouseProductService, PurchaseService purchaseService, StockOutService stockOutService,EmailService emailService, MemberService memberService)
         {
             _mapper = mapper;
             _authHelpers = authHelpers;
             _stockInService = stockInService;
             _warehouseProductService = warehouseProductService;
             _stockOutService = stockOutService;
+            _purchaseService = purchaseService;
             _outboundValidator = new OutboundValidator();
             _batchOutboundValidator = new BatchOutboundValidator();
             _ownerOutboundValidator = new OwnerOutboundValidator();
             _batchOwnerOutboundValidator = new BatchOwnerOutboundValidator();
             _listStockOutRecordsValidator = new ListStockOutRecordsValidator();
+            _emailService = emailService;
+            _memberService = memberService;
         }
 
 
@@ -133,10 +140,13 @@ namespace stock_api.Controllers
                 });
             }
 
-            var result = _stockOutService.OutStock(request.Type,request, requestLot, product, memberAndPermissionSetting.Member,compId);
+            var (result,errorMsg, notifyProductQuantity) = _stockOutService.OutStock(request.Type,request, requestLot, product, memberAndPermissionSetting.Member,compId);
+            CalculateForQuantityToNotity(new List<NotifyProductQuantity> { notifyProductQuantity});
+
             return Ok(new CommonResponse<dynamic>
             {
                 Result = result,
+                Message = errorMsg
             });
         }
 
@@ -209,7 +219,7 @@ namespace stock_api.Controllers
                     });
                 }
 
-                var successful = _stockOutService.OutStock(request.Type,outItem, requestLot, product, memberAndPermissionSetting.Member,compId);
+                var (successful,_,_) = _stockOutService.OutStock(request.Type,outItem, requestLot, product, memberAndPermissionSetting.Member,compId);
                 if (!successful)
                 {
                     failedOutLotNumberBatchList.Add(outItem.LotNumberBatch);
@@ -828,6 +838,31 @@ namespace stock_api.Controllers
             }
             
             return (notFoundLotNumberBatchList,lotNumberBatchAndToCompAcceptanceItem);
+        }
+
+        private async Task CalculateForQuantityToNotity(List<NotifyProductQuantity> notifyProductQuantityList)
+        {
+            var allProductIdList = notifyProductQuantityList.Select(item => item.ProductId).Distinct().ToList();
+            var allUnDonePurchaseSubItemList = _purchaseService.GetUndonePurchaseSubItems(allProductIdList);
+            foreach (var notifyProductQuantity in notifyProductQuantityList)
+            {
+                var matchedSubItemList = allUnDonePurchaseSubItemList.Where(i=>i.ProductId==notifyProductQuantity.ProductId).ToList();
+                float inProcessingQrderQuantity = matchedSubItemList.Select(i => i.Quantity??0.0f).DefaultIfEmpty(0.0f).Sum();
+                notifyProductQuantity.InProcessingQrderQuantity = (float)inProcessingQrderQuantity ;
+            }
+            notifyProductQuantityList.ForEach(notifyProductQuantity =>
+            {
+                float neededOrderQuantity = notifyProductQuantity.SafeQuantity - notifyProductQuantity.InProcessingQrderQuantity - notifyProductQuantity.InStockQuantity;
+                if (neededOrderQuantity>0)
+                {
+                    string title = $"品項:{notifyProductQuantity.ProductName}庫存量不足,需訂購數量{neededOrderQuantity}";
+                    string content = $"品項名稱:{notifyProductQuantity.ProductName}\n品項編號:{notifyProductQuantity.ProductCode}\n最大庫存量:{notifyProductQuantity.MaxSafeQuantity}\n"
+                    +$"最低庫存量:{notifyProductQuantity.SafeQuantity}\n正在處理中的訂單數量:{notifyProductQuantity.InProcessingQrderQuantity}\n";
+                    List<WarehouseMember> receiverList = _memberService.GetAllMembersOfComp(notifyProductQuantity.CompId).Where(m=>m.IsActive==true).ToList();
+                    List<string> effectiveEmailList = receiverList.Where(r=>!string.IsNullOrEmpty(r.Email)).Select(r=>r.Email).ToList();
+                    effectiveEmailList.ForEach(effectiveEmail => _emailService.SendAsync(title, content, effectiveEmail));
+                }
+            });
         }
     }
 }

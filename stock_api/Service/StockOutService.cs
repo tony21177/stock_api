@@ -1,8 +1,11 @@
 ﻿using AutoMapper;
+using Microsoft.VisualBasic;
 using stock_api.Common.Constant;
 using stock_api.Common.Utils;
+using stock_api.Controllers.Dto;
 using stock_api.Controllers.Request;
 using stock_api.Models;
+using stock_api.Service.ValueObject;
 using System.Linq;
 using System.Security.AccessControl;
 using System.Transactions;
@@ -24,7 +27,7 @@ namespace stock_api.Service
             _warehouseProductService = warehouseProductService;
         }
 
-        public bool OutStock(string outType,OutboundRequest request,InStockItemRecord inStockItem,WarehouseProduct product,WarehouseMember applyUser,string compId)
+        public (bool,string?,NotifyProductQuantity?) OutStock(string outType,OutboundRequest request,InStockItemRecord inStockItem,WarehouseProduct product,WarehouseMember applyUser,string compId)
         {
             using var scope = new TransactionScope();
             try
@@ -112,16 +115,26 @@ namespace stock_api.Service
                 }
                 product.LastOutStockDate = nowDate;
                 product.OriginalDeadline = inStockItem.ExpirationDate;
-
+                NotifyProductQuantity outStockProductQuantity = new()
+                {
+                    ProductCode = product.ProductCode,
+                    ProductId = product.ProductId,
+                    ProductName = product.ProductName,
+                    InStockQuantity = product.InStockQuantity??0.0f,
+                    SafeQuantity = product.SafeQuantity??0.0f,
+                    MaxSafeQuantity = product.MaxSafeQuantity,
+                    OutStockQuantity = request.ApplyQuantity,
+                    CompId = product.CompId,
+                };
 
                 _dbContext.SaveChanges();
                 scope.Complete();
-                return true;
+                return (true,null,outStockProductQuantity);
             }
             catch (Exception ex)
             {
                 _logger.LogError("事務失敗[OutStock]：{msg}", ex);
-                return false;
+                return (false,ex.Message,null);
             }
         }
 

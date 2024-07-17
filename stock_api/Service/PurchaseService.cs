@@ -648,5 +648,19 @@ namespace stock_api.Service
             return _dbContext.PurchaseSubItems.Where(s=>s.ReceiveStatus!=CommonConstants.PurchaseSubItemReceiveStatus.DONE&& s.ReceiveStatus != CommonConstants.PurchaseSubItemReceiveStatus.CLOSE
             &&s.CompId == compId&&s.ProductId==productId).ToList();
         }
+
+        public List<PurchaseSubItem> GetUndonePurchaseSubItems(List<string> productIdList)
+        {
+            return _dbContext.PurchaseSubItems.Where(s => s.ReceiveStatus != CommonConstants.PurchaseSubItemReceiveStatus.DONE && s.ReceiveStatus != CommonConstants.PurchaseSubItemReceiveStatus.CLOSE
+            && productIdList.Contains(s.ProductId)).ToList();
+        }
+
+        public float GetInProcessingOrderQuantity(string productId)
+        {
+            var unDoneProcessingSubItem = _dbContext.PurchaseSubItems.Where(s => s.ReceiveStatus != CommonConstants.PurchaseSubItemReceiveStatus.DONE
+            && s.ReceiveStatus != CommonConstants.PurchaseSubItemReceiveStatus.CLOSE
+            && s.ProductId == productId).ToList();
+            return unDoneProcessingSubItem.Select(s => s.Quantity ?? 0.0f).DefaultIfEmpty(0.0f).Sum();
+        }
     }
 }
