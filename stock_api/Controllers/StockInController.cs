@@ -684,6 +684,14 @@ namespace stock_api.Controllers
                     Message = "該出庫紀錄不存在"
                 });
             }
+            if (outStockRecord.IsReturned==true)
+            {
+                return BadRequest(new CommonResponse<dynamic>
+                {
+                    Result = false,
+                    Message = "該出庫紀錄已經退庫過"
+                });
+            }
             var product = _warehouseProductService.GetProductByProductId(outStockRecord.ProductId);
 
             var (result, errorMsg) = _stockInService.Return(outStockRecord, product, memberAndPermissionSetting.Member);

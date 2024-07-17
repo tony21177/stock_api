@@ -507,13 +507,22 @@ namespace stock_api.Service
             using var scope = new TransactionScope();
             try
             {
-                var sameLotNumberBatchLastOutStockRecord = _dbContext.OutStockRecords.Where(r => r.LotNumberBatch == outStockRecord.LotNumberBatch)
+                var sameLotNumberBatchLastOutStockRecord = _dbContext.OutStockRecords.Where(r => r.LotNumberBatch == outStockRecord.LotNumberBatch&&r.IsReturned==true)
                     .OrderByDescending(i => i.CreatedAt).FirstOrDefault();
+                InStockItemRecord? lastSameInstock = null; 
+                if (sameLotNumberBatchLastOutStockRecord != null)
+                {
+                    var lastOutStockRecordId = sameLotNumberBatchLastOutStockRecord.OutStockId;
+                    lastSameInstock = _dbContext.InStockItemRecords.Where(i=>i.ReturnOutStockId!=null&&i.ReturnOutStockId==lastOutStockRecordId).FirstOrDefault();
+                }
+
+
                 outStockRecord.IsReturned = true;
                 var inStockLotNumberBatch = outStockRecord.LotNumberBatch + "-R1";
-                if (sameLotNumberBatchLastOutStockRecord != null && sameLotNumberBatchLastOutStockRecord.LotNumberBatch.Contains("-R"))
+                if (lastSameInstock != null && lastSameInstock.LotNumberBatch.Contains("-R"))
                 {
-                    var nowSeqString = sameLotNumberBatchLastOutStockRecord.LotNumberBatch.Split("-R")[1];
+                    var lotNumberBatchSplited = lastSameInstock.LotNumberBatch.Split("-R");
+                    var nowSeqString = lotNumberBatchSplited[1];
                     var nowSeqInt = int.Parse(nowSeqString);
                     inStockLotNumberBatch = sameLotNumberBatchLastOutStockRecord.LotNumberBatch.Split("-R")[0] + "-R" + (nowSeqInt + 1).ToString();
                 }

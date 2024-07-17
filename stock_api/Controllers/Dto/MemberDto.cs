@@ -16,6 +16,7 @@ namespace stock_api.Controllers.Dto
         [JsonPropertyName("photoUrls")]
         public string PhotoUrl { get; set; }
         public string Uid { get; set; }
+        public string? Email { get; set; }
 
         public List<string> GroupIds {  get; set; }
 
