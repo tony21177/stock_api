@@ -206,6 +206,7 @@ namespace stock_api.Controllers
 
 
             List<string> failedOutLotNumberBatchList = new();
+            List<NotifyProductQuantity> notifyProductQuantityList = new();
             foreach (var outItem in outableOutBoundItems)
             {
                 var product = lotNumberBatchAndProductMap[outItem.LotNumberBatch];
@@ -219,13 +220,20 @@ namespace stock_api.Controllers
                     });
                 }
 
-                var (successful,_,_) = _stockOutService.OutStock(request.Type,outItem, requestLot, product, memberAndPermissionSetting.Member,compId);
+                var (successful,_, notifyProductQuantity) = _stockOutService.OutStock(request.Type,outItem, requestLot, product, memberAndPermissionSetting.Member,compId);
                 if (!successful)
                 {
                     failedOutLotNumberBatchList.Add(outItem.LotNumberBatch);
                 }
+                else
+                {
+                    notifyProductQuantityList.Add(notifyProductQuantity);
+                }
             }
-
+            if (notifyProductQuantityList.Count > 0)
+            {
+                CalculateForQuantityToNotity(notifyProductQuantityList);
+            }
 
             return Ok(new CommonResponse<dynamic>
             {

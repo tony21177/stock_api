@@ -115,7 +115,7 @@ namespace stock_api.Service
                 }
                 product.LastOutStockDate = nowDate;
                 product.OriginalDeadline = inStockItem.ExpirationDate;
-                NotifyProductQuantity outStockProductQuantity = new()
+                NotifyProductQuantity notifyProductQuantity = new()
                 {
                     ProductCode = product.ProductCode,
                     ProductId = product.ProductId,
@@ -129,7 +129,7 @@ namespace stock_api.Service
 
                 _dbContext.SaveChanges();
                 scope.Complete();
-                return (true,null,outStockProductQuantity);
+                return (true,null,notifyProductQuantity);
             }
             catch (Exception ex)
             {
