@@ -10,9 +10,9 @@ public class EmailService
 {
     private readonly SmtpSettings _smtpSettings;
     private readonly ILogger<EmailService> _logger;
-    public EmailService(IOptions<SmtpSettings> smtpSettings, ILogger<EmailService> logger)
+    public EmailService(SmtpSettings smtpSettings, ILogger<EmailService> logger)
     {
-        _smtpSettings = smtpSettings.Value;
+        _smtpSettings = smtpSettings;
         _logger = logger;
     }
 

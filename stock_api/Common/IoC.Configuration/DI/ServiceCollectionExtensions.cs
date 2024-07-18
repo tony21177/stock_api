@@ -13,7 +13,10 @@ namespace stock_api.Common.IoC.Configuration.DI
         {
             if (services != null)
             {
+
                 services.AddSingleton(configuration);
+                services.AddSingleton<SmtpSettings>();
+
                 services.AddScoped<AuthLayerService>();
                 services.AddScoped<MemberService>();
                 services.AddScoped<AuthHelpers>();
@@ -32,7 +35,6 @@ namespace stock_api.Common.IoC.Configuration.DI
                 services.AddScoped<IAuthorizationMiddlewareResultHandler, CustomAuthorizationMiddlewareResultHandler>();
 
                 // Configure EmailService
-                services.Configure<SmtpSettings>(configuration.GetSection("SmtpSettings"));
                 services.AddSingleton<EmailService>();
             }
         }
