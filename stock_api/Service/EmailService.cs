@@ -1,36 +1,50 @@
-﻿using Microsoft.Extensions.Options;
+﻿using MailKit.Net.Smtp;
+using MimeKit;
+using Microsoft.Extensions.Options;
 using stock_api.Common.Settings;
-using System.Net;
-using System.Net.Mail;
 using System.Threading.Tasks;
+using stock_api.Service;
+using System.Text;
 
 public class EmailService
 {
     private readonly SmtpSettings _smtpSettings;
-
-    public EmailService(IOptions<SmtpSettings> smtpSettings)
+    private readonly ILogger<EmailService> _logger;
+    public EmailService(IOptions<SmtpSettings> smtpSettings, ILogger<EmailService> logger)
     {
         _smtpSettings = smtpSettings.Value;
+        _logger = logger;
     }
 
     public async Task SendAsync(string title, string content, string email)
     {
-        using var client = new SmtpClient(_smtpSettings.Server, _smtpSettings.Port)
+        var message = new MimeMessage();
+        message.From.Add(new MailboxAddress( "Sender Name", _smtpSettings.User));
+        message.To.Add(new MailboxAddress( "Recipient Name", email));
+        message.Subject = title;
+
+        var bodyBuilder = new BodyBuilder
         {
-            Credentials = new NetworkCredential(_smtpSettings.User, _smtpSettings.Password),
-            EnableSsl = true
+            HtmlBody = content
         };
+        message.Body = bodyBuilder.ToMessageBody();
 
-        var mailMessage = new MailMessage
+        using var client = new SmtpClient();
+        try
         {
-            From = new MailAddress(_smtpSettings.User),
-            Subject = title,
-            Body = content,
-            IsBodyHtml = true
-        };
-
-        mailMessage.To.Add(email);
-
-        await client.SendMailAsync(mailMessage);
+            client.Connect(_smtpSettings.Server, _smtpSettings.Port, true);
+            client.Authenticate(_smtpSettings.User, _smtpSettings.Password);
+            var sendResult = client.Send(message);
+            _logger.LogError($"sendResult {sendResult}");
+        }
+        catch (Exception ex)
+        {
+            // Log the exception or handle it accordingly
+            _logger.LogError($"An error occurred while sending an email to {email}: {ex.Message}");
+        }
+        finally
+        {
+            await client.DisconnectAsync(true);
+        }
     }
 }

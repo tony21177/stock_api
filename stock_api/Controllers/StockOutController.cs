@@ -864,8 +864,8 @@ namespace stock_api.Controllers
                 if (neededOrderQuantity>0)
                 {
                     string title = $"品項:{notifyProductQuantity.ProductName}庫存量不足,需訂購數量{neededOrderQuantity}";
-                    string content = $"品項名稱:{notifyProductQuantity.ProductName}\n品項編號:{notifyProductQuantity.ProductCode}\n最大庫存量:{notifyProductQuantity.MaxSafeQuantity}\n"
-                    +$"最低庫存量:{notifyProductQuantity.SafeQuantity}\n正在處理中的訂單數量:{notifyProductQuantity.InProcessingQrderQuantity}\n";
+                    string content = $"品項名稱:{notifyProductQuantity.ProductName}<\br>品項編號:{notifyProductQuantity.ProductCode}<\br>最大庫存量:{notifyProductQuantity.MaxSafeQuantity}<\br>"
+                    +$"最低庫存量:{notifyProductQuantity.SafeQuantity}<\br>目前木存量:{notifyProductQuantity.SafeQuantity}<\br>正在處理中的訂單數量:{notifyProductQuantity.InProcessingQrderQuantity}<\br>";
                     List<WarehouseMember> receiverList = _memberService.GetAllMembersOfComp(notifyProductQuantity.CompId).Where(m=>m.IsActive==true).ToList();
                     List<string> effectiveEmailList = receiverList.Where(r=>!string.IsNullOrEmpty(r.Email)).Select(r=>r.Email).ToList();
                     effectiveEmailList.ForEach(effectiveEmail => _emailService.SendAsync(title, content, effectiveEmail));
