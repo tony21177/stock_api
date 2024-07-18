@@ -16,12 +16,17 @@ namespace stock_api.Service
         private readonly StockDbContext _dbContext;
         private readonly IMapper _mapper;
         private readonly ILogger<PurchaseService> _logger;
+        private readonly EmailService _emailService;
+        private readonly MemberService _memberService;
+    
 
-        public PurchaseService(StockDbContext dbContext, IMapper mapper, ILogger<PurchaseService> logger)
+        public PurchaseService(StockDbContext dbContext, IMapper mapper, ILogger<PurchaseService> logger, EmailService emailService,MemberService memberService)
         {
             _dbContext = dbContext;
             _mapper = mapper;
             _logger = logger;
+            _emailService = emailService;
+            _memberService = memberService;
         }
 
         public PurchaseMainSheet? GetPurchaseMainByMainId(string purchaseMainId)
@@ -189,8 +194,15 @@ namespace stock_api.Service
                             mainIdAndPurchaseMainMapForWith[mainId].SplitPrcoess = CommonConstants.SplitProcess.PART;
                         }
                     }
-                    
 
+                    var flowSettingVo = purchaseFlowSettingList.OrderBy(setting=>setting.Sequence).FirstOrDefault();
+                    if (flowSettingVo!=null)
+                    {
+                        string title = $"採購單:{string.Concat(DateTimeHelper.FormatDateStringForEmail(newPurchasePurchaseMainSheet.ApplyDate), newPurchasePurchaseMainSheet.PurchaseMainId.AsSpan(0, 5))} 需要您審核";
+
+                        string content = $"";
+                        SendMailByFlowSetting(flowSettingVo,title,content);
+                    }
                     _dbContext.SaveChanges();
                     scope.Complete();
                     return true;
@@ -203,6 +215,8 @@ namespace stock_api.Service
             }
 
         }
+
+        
 
         public List<PurchaseMainAndSubItemVo> ListPurchase(ListPurchaseRequest listPurchaseRequest)
         {
@@ -508,6 +522,7 @@ namespace stock_api.Service
                         acceptanceItems.Add(acceptanceItem);
                     }
                     _dbContext.AcceptanceItems.AddRange(acceptanceItems);
+                    
 
                 }
                 if (answer == CommonConstants.AnswerPurchaseFlow.REJECT)
@@ -550,6 +565,46 @@ namespace stock_api.Service
                 _dbContext.PurchaseFlowLogs.Add(newFlowLog);
                 _dbContext.SaveChanges();
                 scope.Complete();
+                if (answer == CommonConstants.AnswerPurchaseFlow.AGREE && nextPurchase == null)
+                {
+                    string title = $"採購單:{string.Concat(DateTimeHelper.FormatDateStringForEmail(purchaseMain.ApplyDate), purchaseMain.PurchaseMainId.AsSpan(0, 5))} 需要您處理";
+                    string content = "";
+                    SendMailToOwner(title, content);
+                }
+                if (answer == CommonConstants.AnswerPurchaseFlow.AGREE && nextPurchase != null)
+                {
+                    string title = $"採購單:{string.Concat(DateTimeHelper.FormatDateStringForEmail(purchaseMain.ApplyDate), purchaseMain.PurchaseMainId.AsSpan(0, 5))} 需要您審核";
+                    string content = "";
+                    SendMailByFlow(nextPurchase,title, content);
+                }
+                if (answer == CommonConstants.AnswerPurchaseFlow.REJECT)
+                {
+                    string title = $"採購單:{string.Concat(DateTimeHelper.FormatDateStringForEmail(purchaseMain.ApplyDate), purchaseMain.PurchaseMainId.AsSpan(0, 5))} 已被拒絕";
+                    string content = "";
+                    SendMailByPurchaseMain(purchaseMain, title, content);
+                }
+                if (answer == CommonConstants.AnswerPurchaseFlow.BACK && isOwner != true)
+                {
+                    if (preFlow != null)
+                    {
+                        string title = $"採購單:{string.Concat(DateTimeHelper.FormatDateStringForEmail(purchaseMain.ApplyDate), purchaseMain.PurchaseMainId.AsSpan(0, 5))} 需要您審核";
+                        string content = "";
+                        SendMailByFlow(preFlow, title, content);
+                    }
+                    else
+                    {
+                        string title = $"採購單:{string.Concat(DateTimeHelper.FormatDateStringForEmail(purchaseMain.ApplyDate), purchaseMain.PurchaseMainId.AsSpan(0, 5))} 已被退回";
+                        string content = "";
+                        SendMailByPurchaseMain(purchaseMain, title, content);
+                    }
+                }
+                if (answer == CommonConstants.AnswerPurchaseFlow.BACK && isOwner == true)
+                {
+                    string title = $"採購單:{string.Concat(DateTimeHelper.FormatDateStringForEmail(purchaseMain.ApplyDate), purchaseMain.PurchaseMainId.AsSpan(0, 5))} 已被退回";
+                    string content = "";
+                    SendMailByFlow(currentFlow, title, content);
+                }
+
                 return true;
             }
             catch (Exception ex)
@@ -661,6 +716,52 @@ namespace stock_api.Service
             && s.ReceiveStatus != CommonConstants.PurchaseSubItemReceiveStatus.CLOSE
             && s.ProductId == productId).ToList();
             return unDoneProcessingSubItem.Select(s => s.Quantity ?? 0.0f).DefaultIfEmpty(0.0f).Sum();
+        }
+
+        private async Task SendMailByFlowSetting(PurchaseFlowSettingVo purchaseFlowSettingVo, String title, String content)
+        {
+            var receiver = _memberService.GetMembersByUserId(purchaseFlowSettingVo.UserId);
+            if (receiver != null)
+            {
+
+                if (!string.IsNullOrEmpty(receiver.Email))
+                    await _emailService.SendAsync(title, content, receiver.Email);
+            }
+        }
+
+        private async Task SendMailByFlow(PurchaseFlow flow, String title, String content)
+        {
+            var receiver = _memberService.GetMembersByUserId(flow.VerifyUserId);
+            if (receiver != null)
+            {
+
+                if (!string.IsNullOrEmpty(receiver.Email))
+                    await _emailService.SendAsync(title, content, receiver.Email);
+            }
+        }
+
+        private async Task SendMailByPurchaseMain(PurchaseMainSheet main, String title, String content)
+        {
+            var receiver = _memberService.GetMembersByUserId(main.UserId);
+            if (receiver != null)
+            {
+
+                if (!string.IsNullOrEmpty(receiver.Email))
+                    await _emailService.SendAsync(title, content, receiver.Email);
+            }
+        }
+
+        private void SendMailToOwner(String title, String content)
+        {
+            List<WarehouseMember> receiver = _memberService.GetOwnerMembers();
+            receiver.ForEach(async r =>
+            {
+                if (!string.IsNullOrEmpty(r.Email))
+                {
+                    await _emailService.SendAsync(title, content, r.Email);
+                }
+            });
+
         }
     }
 }

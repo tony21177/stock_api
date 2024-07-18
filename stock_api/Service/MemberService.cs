@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using stock_api.Common.Constant;
 using stock_api.Controllers.Request;
 using stock_api.Models;
 using stock_api.Service.ValueObject;
@@ -35,6 +36,11 @@ namespace stock_api.Service
             }
 
             return _dbContext.WarehouseMembers.Where(member => userIdList.Contains(member.UserId) && member.IsActive == true && member.CompId==compId).ToList();
+        }
+
+        public WarehouseMember? GetMembersByUserId(string userId)
+        {
+            return _dbContext.WarehouseMembers.Where(member => member.UserId == userId).FirstOrDefault();
         }
 
         public WarehouseMember? GetMemberByAccount(string account)
@@ -170,6 +176,13 @@ namespace stock_api.Service
             return;
         }
 
+
+        public List<WarehouseMember> GetOwnerMembers()
+        {
+            var ownerCompany = _dbContext.Companies.Where(c=>c.Type==CommonConstants.CompanyType.OWNER).FirstOrDefault();
+            if(ownerCompany == null) return new List<WarehouseMember>();
+            return _dbContext.WarehouseMembers.Where(m=>m.CompId==ownerCompany.CompId).ToList();
+        }
       
     }
 }

@@ -336,7 +336,9 @@ namespace stock_api.Controllers
                 }
             }
 
-            var result = _stockOutService.OwnerOutStock(request.Type,request, requestLot, product, memberAndPermissionSetting.Member, toCompAcceptanceItem, compId);
+            var (result,_, notifyProductQuantity) = _stockOutService.OwnerOutStock(request.Type,request, requestLot, product, memberAndPermissionSetting.Member, toCompAcceptanceItem, compId);
+            CalculateForQuantityToNotity(new List<NotifyProductQuantity> { notifyProductQuantity });
+            
             return Ok(new CommonResponse<dynamic>
             {
                 Result = result,
@@ -423,15 +425,24 @@ namespace stock_api.Controllers
 
 
             List<string> failedOutLotNumberBatchList = new();
+            List<NotifyProductQuantity> notifyProductQuantityList = new();
             foreach (var outItem in outableOutBoundItems)
             {
                 var product = lotNumberBatchAndProductMap[outItem.LotNumberBatch];
                 var requestLot = lotNumberBatchRequestLotMap[outItem.LotNumberBatch];
                 var toCompAcceptanceItem = lotNumberBatchAndToCompAcceptanceItem[outItem.LotNumberBatch];
-                var successful = _stockOutService.OwnerOutStock(request.Type,outItem, requestLot, product, memberAndPermissionSetting.Member, toCompAcceptanceItem, compId);
+                var (successful,msg, notifyProductQuantity) = _stockOutService.OwnerOutStock(request.Type,outItem, requestLot, product, memberAndPermissionSetting.Member, toCompAcceptanceItem, compId);
                 if (!successful)
                 {
                     failedOutLotNumberBatchList.Add(outItem.LotNumberBatch);
+                }
+                else
+                {
+                    notifyProductQuantityList.Add(notifyProductQuantity);
+                }
+                if (notifyProductQuantityList.Count > 0)
+                {
+                    CalculateForQuantityToNotity(notifyProductQuantityList);
                 }
             }
             return Ok(new CommonResponse<dynamic>

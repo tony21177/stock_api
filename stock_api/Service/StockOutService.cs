@@ -139,7 +139,7 @@ namespace stock_api.Service
         }
 
 
-        public bool OwnerOutStock(string outType,OwnerOutboundRequest request, InStockItemRecord inStockItem, WarehouseProduct product, WarehouseMember applyUser,AcceptanceItem? toCompAcceptanceItem,string compId)
+        public (bool,string?,NotifyProductQuantity?) OwnerOutStock(string outType,OwnerOutboundRequest request, InStockItemRecord inStockItem, WarehouseProduct product, WarehouseMember applyUser,AcceptanceItem? toCompAcceptanceItem,string compId)
         {
             using var scope = new TransactionScope();
             try
@@ -238,14 +238,27 @@ namespace stock_api.Service
                     toCompAcceptanceItem.ExpirationDate = inStockItem.ExpirationDate;
                 }
 
+                NotifyProductQuantity notifyProductQuantity = new()
+                {
+                    ProductCode = product.ProductCode,
+                    ProductId = product.ProductId,
+                    ProductName = product.ProductName,
+                    InStockQuantity = product.InStockQuantity ?? 0.0f,
+                    SafeQuantity = product.SafeQuantity ?? 0.0f,
+                    MaxSafeQuantity = product.MaxSafeQuantity,
+                    OutStockQuantity = request.ApplyQuantity,
+                    CompId = product.CompId,
+                };
+
+
                 _dbContext.SaveChanges();
                 scope.Complete();
-                return true;
+                return (true,null,notifyProductQuantity);
             }
             catch (Exception ex)
             {
                 _logger.LogError("事務失敗[OutStock]：{msg}", ex);
-                return false;
+                return (false,ex.Message,null);
             }
         }
 

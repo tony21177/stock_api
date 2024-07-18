@@ -66,6 +66,16 @@ namespace stock_api.Common.Utils
             }
             return null;
         }
+        public static string? FormatDateStringForEmail(DateTime? dateTime)
+        {
+            CultureInfo culture = new("zh-TW");
+            culture.DateTimeFormat.Calendar = new TaiwanCalendar();
+            if (dateTime.HasValue)
+            {
+                return dateTime.Value.ToString("yyyyMMdd", culture);
+            }
+            return null;
+        }
 
         public static string? FormatDateString(DateTime? dateTime,string dateTimeFormatString)
         {
