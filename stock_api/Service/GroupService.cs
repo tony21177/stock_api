@@ -59,5 +59,10 @@ namespace stock_api.Service
         {
             return _dbContext.WarehouseGroups.Where(wg => wg.GroupName != null && groupNameList.Contains(wg.GroupName)&&wg.CompId==compId).ToList();
         }
+
+        public List<WarehouseGroup> GetActiveGroupsByGroupIdList(List<string> groupIdList, string compId)
+        {
+            return _dbContext.WarehouseGroups.Where(wg => wg.GroupId!=null&&groupIdList.Contains(wg.GroupId) && wg.CompId == compId).ToList();
+        }
     }
 }

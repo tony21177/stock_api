@@ -41,11 +41,20 @@ public partial class ApplyProductFlowSetting
     /// 此審核流程的審核者
     /// </summary>
     [StringLength(100)]
-    public string UserId { get; set; } = null!;
+    public string? ReviewUserId { get; set; }
 
     [Column(TypeName = "timestamp")]
     public DateTime? CreatedAt { get; set; }
 
     [Column(TypeName = "timestamp")]
     public DateTime? UpdatedAt { get; set; }
+
+    [Required]
+    public bool? IsActive { get; set; }
+
+    /// <summary>
+    /// 負責簽核的組別
+    /// </summary>
+    [StringLength(100)]
+    public string? ReviewGroupId { get; set; }
 }

@@ -66,4 +66,10 @@ public partial class ApplyNewProductFlow
 
     [Column(TypeName = "timestamp")]
     public DateTime UpdatedAt { get; set; }
+
+    /// <summary>
+    /// 負責簽核的組別
+    /// </summary>
+    [StringLength(100)]
+    public string? ReviewGroupId { get; set; }
 }

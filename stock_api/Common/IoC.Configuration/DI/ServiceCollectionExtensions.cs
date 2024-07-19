@@ -32,6 +32,7 @@ namespace stock_api.Common.IoC.Configuration.DI
                 services.AddScoped<StockOutService>();
                 services.AddScoped<AdjustService>();
                 services.AddScoped<SupplierTraceService>();
+                services.AddScoped<ApplyProductFlowSettingService>();
                 services.AddScoped<IAuthorizationMiddlewareResultHandler, CustomAuthorizationMiddlewareResultHandler>();
 
                 // Configure EmailService

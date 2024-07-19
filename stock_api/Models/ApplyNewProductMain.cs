@@ -19,11 +19,6 @@ public partial class ApplyNewProductMain
     public string ApplyId { get; set; } = null!;
 
     /// <summary>
-    /// 申請數量
-    /// </summary>
-    public float ApplyQuantity { get; set; }
-
-    /// <summary>
     /// 申請原因
     /// </summary>
     [StringLength(300)]

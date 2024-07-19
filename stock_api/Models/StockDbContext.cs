@@ -151,6 +151,7 @@ public partial class StockDbContext : DbContext
             entity.Property(e => e.ApplyId).HasComment("對應 ApplyNewProductMain PK");
             entity.Property(e => e.CompId).HasComment("申請者的來源組織ID");
             entity.Property(e => e.CreatedAt).HasDefaultValueSql("CURRENT_TIMESTAMP");
+            entity.Property(e => e.ReviewGroupId).HasComment("負責簽核的組別");
             entity.Property(e => e.Status).HasComment("當下該單據狀態");
             entity.Property(e => e.UpdatedAt)
                 .ValueGeneratedOnAddOrUpdate()
@@ -166,7 +167,6 @@ public partial class StockDbContext : DbContext
 
             entity.ToTable("apply_new_product_main", tb => tb.HasComment("當使用者提出一筆申請品項時，ApplyNewProductMain 就會新增一筆資料。"));
 
-            entity.Property(e => e.ApplyQuantity).HasComment("申請數量");
             entity.Property(e => e.ApplyReason).HasComment("申請原因");
             entity.Property(e => e.ApplyRemarks).HasComment("申請備註內容");
             entity.Property(e => e.CompId).HasComment("申請者的來源組織ID");
@@ -209,11 +209,13 @@ public partial class StockDbContext : DbContext
             entity.Property(e => e.CompId).HasComment("所屬組織ID");
             entity.Property(e => e.CreatedAt).HasDefaultValueSql("CURRENT_TIMESTAMP");
             entity.Property(e => e.FlowName).HasComment("審核流程顯示名稱");
+            entity.Property(e => e.IsActive).HasDefaultValueSql("'1'");
+            entity.Property(e => e.ReviewGroupId).HasComment("負責簽核的組別");
+            entity.Property(e => e.ReviewUserId).HasComment("此審核流程的審核者");
             entity.Property(e => e.Sequence).HasComment("順序");
             entity.Property(e => e.UpdatedAt)
                 .ValueGeneratedOnAddOrUpdate()
                 .HasDefaultValueSql("CURRENT_TIMESTAMP");
-            entity.Property(e => e.UserId).HasComment("此審核流程的審核者");
         });
 
         modelBuilder.Entity<Company>(entity =>
