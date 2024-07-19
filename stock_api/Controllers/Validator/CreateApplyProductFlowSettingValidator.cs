@@ -51,9 +51,9 @@ namespace stock_api.Controllers.Validator
                         context.AddFailure("", "ReviewUserId 和 ReviewGroupId 都需要");
                     }
                 });
-                RuleFor(x => x.ReviewUserId).Must((request, userId, context) => BeValidUser(request, userId))
+                RuleFor(x => x.ReviewUserId).Must((request, userId, context) => BeValidUser(request.CompId, userId))
                     .When(x=>x.ReviewUserId!=null).WithMessage("reviewUserId不存在");
-                RuleFor(x => x.ReviewGroupId).Must((request, groupId, context) => BeValidGroup(request, groupId))
+                RuleFor(x => x.ReviewGroupId).Must((request, groupId, context) => BeValidGroup(request.CompId, groupId))
                     .When(x => x.ReviewGroupId != null).WithMessage("reviewGroupId不存在");
             }
             if (action == ActionTypeEnum.Update)
@@ -70,10 +70,12 @@ namespace stock_api.Controllers.Validator
                         }
                     }
                 });
-
-                RuleFor(x => x.ReviewUserId).Must((request, userId, context) => BeValidUser(request, userId))
+                RuleFor(x => x.Sequence).Must((request, sequence, context) => SequenceUnique(request, sequence.Value))
+                    .When(x=>x.Sequence!=null)
+                    .WithMessage("sequence已存在");
+                RuleFor(x => x.ReviewUserId).Must((request, userId, context) => BeValidUser(request.CompId, userId))
                     .When(x => x.ReviewUserId != null).WithMessage("reviewUserId不存在");
-                RuleFor(x => x.ReviewGroupId).Must((request, groupId, context) => BeValidGroup(request, groupId))
+                RuleFor(x => x.ReviewGroupId).Must((request, groupId, context) => BeValidGroup(request.CompId, groupId))
                     .When(x => x.ReviewGroupId != null).WithMessage("reviewGroupId不存在");
             }
             _groupService = groupService;
@@ -83,31 +85,16 @@ namespace stock_api.Controllers.Validator
         {
             return !_applyProductFlowSettingService.IsSequenceExist(sequence, request.CompId);
         }
-        private bool SequenceUniqueOrNull(CreateOrUpdatePurchaseFlowSettingRequest request, int? sequence)
+        
+        private bool BeValidUser(string compId, string? userId)
         {
-            if (!sequence.HasValue) { return true; };
-            return !_applyProductFlowSettingService.IsSequenceExist(sequence.Value, request.CompId);
-        }
-        private bool BeValidUser(ApplyProductFlowSettingRequest request, string? userId)
-        {
-            return _memberService.GetActiveMembersByUserIds(new List<string>() { userId }, request.CompId).Count > 0;
+            return _memberService.GetActiveMembersByUserIds(new List<string>() { userId }, compId).Count > 0;
         }
 
-        private bool BeValidGroup(ApplyProductFlowSettingRequest request, string? groupId)
+        private bool BeValidGroup(string compId, string? groupId)
         {
-            return _groupService.GetActiveGroupsByGroupIdList(new List<string>() { groupId }, request.CompId).Count > 0;
+            return _groupService.GetActiveGroupsByGroupIdList(new List<string>() { groupId }, compId).Count > 0;
         }
 
-        private  bool BeValidUserOrNull(ApplyProductFlowSettingRequest request, string? userId)
-        {
-            if(userId==null) { return true; };
-            return _memberService.GetActiveMembersByUserIds(new List<string>() { userId },request.CompId).Count > 0;
-        }
-
-        private bool BeValidGroupOrNull(ApplyProductFlowSettingRequest request, string? groupId)
-        {
-            if (groupId == null) { return true; };
-            return _groupService.GetActiveGroupsByGroupIdList(new List<string>() { groupId }, request.CompId).Count > 0;
-        }
     }
 }

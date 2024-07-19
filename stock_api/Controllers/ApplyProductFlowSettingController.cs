@@ -47,6 +47,7 @@ namespace stock_api.Controllers
             var memberAndPermissionSetting = _authHelpers.GetMemberAndPermissionSetting(User);
             var compId = memberAndPermissionSetting.CompanyWithUnit.CompId;
             createRequest.CompId = compId;
+            createRequest.CreateApplyProductFlowSettingList.ForEach(r => r.CompId = compId);
 
             var validationResult = _createApplyProductFlowSettingValidator.Validate(createRequest);
 
@@ -54,7 +55,6 @@ namespace stock_api.Controllers
             {
                 return BadRequest(CommonResponse<dynamic>.BuildValidationFailedResponse(validationResult));
             }
-
 
             _applyProductFlowSettingService.AddApplyProductFlowSetting(createRequest.CreateApplyProductFlowSettingList,createRequest.CompId);
             var response = new CommonResponse<dynamic>
