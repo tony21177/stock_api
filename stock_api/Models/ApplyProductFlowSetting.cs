@@ -49,9 +49,6 @@ public partial class ApplyProductFlowSetting
     [Column(TypeName = "timestamp")]
     public DateTime? UpdatedAt { get; set; }
 
-    [Required]
-    public bool? IsActive { get; set; }
-
     /// <summary>
     /// 負責簽核的組別
     /// </summary>

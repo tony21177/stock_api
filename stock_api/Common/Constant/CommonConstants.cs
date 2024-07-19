@@ -95,6 +95,17 @@ namespace stock_api.Common.Constant
             }
         }
 
+        public static class ApplyNewProductFlowAnswer
+        {
+            public const string AGREE = "AGREE";
+            public const string REJECT = "REJECT";
+            public const string EMPTY = "";
+            public static List<string> GetAllValues()
+            {
+                return new List<string> { AGREE, REJECT, EMPTY };
+            }
+        }
+
         public static class AnswerPurchaseFlow
         {
             public const string AGREE = "AGREE";
@@ -116,6 +127,18 @@ namespace stock_api.Common.Constant
                 return new List<string> { WAIT, AGREE, REJECT };
             }
         }
+
+        public static class ApplyNewProductFlowStatus
+        {
+            public const string WAIT = "WAIT";
+            public const string AGREE = "AGREE";
+            public const string REJECT = "REJECT";
+            public static List<string> GetAllValues()
+            {
+                return new List<string> { WAIT, AGREE, REJECT };
+            }
+        }
+
 
         public static class PurchaseFlowLogAction
         {

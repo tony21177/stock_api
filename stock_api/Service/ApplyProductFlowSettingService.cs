@@ -22,7 +22,7 @@ namespace stock_api.Service
 
         public bool IsSequenceExist(int seq,string compId)
         {
-            return _dbContext.ApplyProductFlowSettings.Where(pfs => pfs.Sequence == seq && pfs.CompId == compId&&pfs.IsActive==true).ToList().Count > 0;
+            return _dbContext.ApplyProductFlowSettings.Where(pfs => pfs.Sequence == seq && pfs.CompId == compId).ToList().Count > 0;
         }
 
         public ApplyProductFlowSettingVo? GetApplyProductFlowSettingVoBySettingId(string settingId)
@@ -43,7 +43,6 @@ namespace stock_api.Service
                              ReviewUserName = member.DisplayName,
                              ReviewGroupId = pfs.ReviewGroupId,
                              ReviewGroupName = g.GroupName,
-                             IsActive = pfs.IsActive,
                              CreatedAt = pfs.CreatedAt,
                              UpdatedAt = pfs.UpdatedAt,
                          };
@@ -56,15 +55,22 @@ namespace stock_api.Service
             return _dbContext.ApplyProductFlowSettings.Where(s => s.SettingId == settingId).FirstOrDefault();
         }
 
-        public void AddApplyProductFlowSetting(ApplyProductFlowSetting newApplyProductFlowSetting)
+        public void AddApplyProductFlowSetting(List<ApplyProductFlowSettingRequest> createApplyProductFlowSettingList,string CompId)
         {
-            newApplyProductFlowSetting.SettingId = Guid.NewGuid().ToString();
-            _dbContext.ApplyProductFlowSettings.Add(newApplyProductFlowSetting);
+            createApplyProductFlowSettingList.ForEach(s => {
+                    s.SettingId = Guid.NewGuid().ToString();
+                    s.CompId = CompId;
+                }) ;
+
+            var newApplyProductFlowSettingList = _mapper.Map<List<ApplyProductFlowSetting>>(createApplyProductFlowSettingList);
+
+
+            _dbContext.ApplyProductFlowSettings.AddRange(newApplyProductFlowSettingList);
             _dbContext.SaveChanges();
             return;
         }
 
-        public void UpdateApplyProductFlowSetting(CreateOrUpdateApplyProductFlowSettingRequest updateRequest,ApplyProductFlowSetting existingApplyProductFlowSetting)
+        public void UpdateApplyProductFlowSetting(ApplyProductFlowSettingRequest updateRequest,ApplyProductFlowSetting existingApplyProductFlowSetting)
         {
             updateRequest.Sequence ??= existingApplyProductFlowSetting.Sequence;
             var updateApplyProductFlowSetting = _mapper.Map<ApplyProductFlowSetting>(updateRequest);
@@ -75,9 +81,9 @@ namespace stock_api.Service
             return;
         }
 
-        public void InactiveOrActiveApplyProductFlowSetting(String settingId,bool isActive)
+        public void DeleteApplyProductFlowSetting(String settingId)
         {
-            _dbContext.ApplyProductFlowSettings.Where(f => f.SettingId == settingId).ExecuteUpdate(f => f.SetProperty(f => f.IsActive, isActive));
+            _dbContext.ApplyProductFlowSettings.Where(f => f.SettingId == settingId).ExecuteDelete();
         }
 
 
@@ -101,7 +107,6 @@ namespace stock_api.Service
                              ReviewUserName = subm.DisplayName,
                              ReviewGroupId = pfs.ReviewGroupId,
                              ReviewGroupName = subg.GroupName,
-                             IsActive = pfs.IsActive,
                              CreatedAt = pfs.CreatedAt,
                              UpdatedAt = pfs.UpdatedAt,
                          };

@@ -37,16 +37,39 @@ public partial class ApplyNewProductMain
     public string CompId { get; set; } = null!;
 
     /// <summary>
-    /// 目前狀態
+    /// 目前狀態\\nAPPLY : 申請中\\nAGREE : 同意\\nREJECT : 拒絕\\nCLOSE : 結案
     /// </summary>
     [StringLength(45)]
     public string CurrentStatus { get; set; } = null!;
 
     /// <summary>
-    /// 申請品項名稱
+    /// 品名
+    /// </summary>
+    [StringLength(200)]
+    public string ApplyProductName { get; set; } = null!;
+
+    /// <summary>
+    /// 規格
+    /// </summary>
+    [StringLength(200)]
+    public string? ApplyProductSpec { get; set; }
+
+    /// <summary>
+    /// 申請數量
+    /// </summary>
+    public float? ApplyQuantity { get; set; }
+
+    /// <summary>
+    /// 品項組別
     /// </summary>
     [StringLength(100)]
-    public string ProductName { get; set; } = null!;
+    public string? ProductGroupId { get; set; }
+
+    /// <summary>
+    /// 品項組別名
+    /// </summary>
+    [StringLength(100)]
+    public string? ProductGroupName { get; set; }
 
     /// <summary>
     /// 申請者的UserID

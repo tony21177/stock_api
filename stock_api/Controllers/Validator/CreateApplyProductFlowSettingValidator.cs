@@ -3,22 +3,39 @@ using stock_api.Controllers.Request;
 using stock_api.Service;
 using MaiBackend.PublicApi.Consts;
 using Org.BouncyCastle.Asn1.Ocsp;
+using Google.Protobuf.WellKnownTypes;
 
 namespace stock_api.Controllers.Validator
 {
-    public class CreateOrUpdateApplyProductFlowSettingValidator : AbstractValidator<CreateOrUpdateApplyProductFlowSettingRequest>
+
+    public class CreateApplyProductFlowSettingValidator : AbstractValidator<CreateApplyProductFlowSettingRequest>
     {
         private readonly ApplyProductFlowSettingService _applyProductFlowSettingService;
         private readonly MemberService _memberService;
-        private readonly CompanyService _companyService;
         private readonly GroupService _groupService;
 
-        public CreateOrUpdateApplyProductFlowSettingValidator(ActionTypeEnum action, ApplyProductFlowSettingService applyProductFlowSettingService,
-            MemberService memberService, CompanyService companyService, GroupService groupService)
+        public CreateApplyProductFlowSettingValidator(ApplyProductFlowSettingService applyProductFlowSettingService, MemberService memberService, GroupService groupService)
         {
             _applyProductFlowSettingService = applyProductFlowSettingService;
             _memberService = memberService;
-            _companyService = companyService;
+            _groupService = groupService;
+            RuleForEach(request => request.CreateApplyProductFlowSettingList).SetValidator(new ApplyProductFlowSettingValidator(ActionTypeEnum.Create,applyProductFlowSettingService,memberService,groupService));
+        }
+    }
+
+
+
+    public class ApplyProductFlowSettingValidator : AbstractValidator<ApplyProductFlowSettingRequest>
+    {
+        private readonly ApplyProductFlowSettingService _applyProductFlowSettingService;
+        private readonly MemberService _memberService;
+        private readonly GroupService _groupService;
+
+        public ApplyProductFlowSettingValidator(ActionTypeEnum action, ApplyProductFlowSettingService applyProductFlowSettingService,
+            MemberService memberService,  GroupService groupService)
+        {
+            _applyProductFlowSettingService = applyProductFlowSettingService;
+            _memberService = memberService;
             _groupService = groupService;
             ClassLevelCascadeMode = CascadeMode.Stop;
 
@@ -29,12 +46,11 @@ namespace stock_api.Controllers.Validator
                 RuleFor(x => x.Sequence).Must((request, sequence, context) => SequenceUnique(request, sequence.Value)).WithMessage("sequence已存在");
                 RuleFor(x => x).Custom((x, context) =>
                 {
-                    if (string.IsNullOrEmpty(x.ReviewUserId) && string.IsNullOrEmpty(x.ReviewGroupId))
+                    if (string.IsNullOrEmpty(x.ReviewUserId) || string.IsNullOrEmpty(x.ReviewGroupId))
                     {
-                        context.AddFailure("", "ReviewUserId 和 ReviewGroupId 其中一個必須存在");
+                        context.AddFailure("", "ReviewUserId 和 ReviewGroupId 都需要");
                     }
                 });
-                RuleFor(x => x.IsActive).NotEmpty().WithMessage("isActive為必須");
                 RuleFor(x => x.ReviewUserId).Must((request, userId, context) => BeValidUser(request, userId))
                     .When(x=>x.ReviewUserId!=null).WithMessage("reviewUserId不存在");
                 RuleFor(x => x.ReviewGroupId).Must((request, groupId, context) => BeValidGroup(request, groupId))
@@ -43,6 +59,18 @@ namespace stock_api.Controllers.Validator
             if (action == ActionTypeEnum.Update)
             {
                 RuleFor(x => x.SettingId).NotEmpty().WithMessage("settingId為必須");
+                RuleFor(x => x).Custom((x, context) =>
+                {
+                    if (!string.IsNullOrEmpty(x.ReviewUserId) || !string.IsNullOrEmpty(x.ReviewGroupId))
+                    {
+                        if (string.IsNullOrEmpty(x.ReviewUserId)|| string.IsNullOrEmpty(x.ReviewGroupId))
+                        {
+                            context.AddFailure("", "ReviewUserId 和 ReviewGroupId 都需要");
+
+                        }
+                    }
+                });
+
                 RuleFor(x => x.ReviewUserId).Must((request, userId, context) => BeValidUser(request, userId))
                     .When(x => x.ReviewUserId != null).WithMessage("reviewUserId不存在");
                 RuleFor(x => x.ReviewGroupId).Must((request, groupId, context) => BeValidGroup(request, groupId))
@@ -51,7 +79,7 @@ namespace stock_api.Controllers.Validator
             _groupService = groupService;
         }
 
-        private bool SequenceUnique(CreateOrUpdateApplyProductFlowSettingRequest request,int sequence)
+        private bool SequenceUnique(ApplyProductFlowSettingRequest request,int sequence)
         {
             return !_applyProductFlowSettingService.IsSequenceExist(sequence, request.CompId);
         }
@@ -60,23 +88,23 @@ namespace stock_api.Controllers.Validator
             if (!sequence.HasValue) { return true; };
             return !_applyProductFlowSettingService.IsSequenceExist(sequence.Value, request.CompId);
         }
-        private bool BeValidUser(CreateOrUpdateApplyProductFlowSettingRequest request, string? userId)
+        private bool BeValidUser(ApplyProductFlowSettingRequest request, string? userId)
         {
             return _memberService.GetActiveMembersByUserIds(new List<string>() { userId }, request.CompId).Count > 0;
         }
 
-        private bool BeValidGroup(CreateOrUpdateApplyProductFlowSettingRequest request, string? groupId)
+        private bool BeValidGroup(ApplyProductFlowSettingRequest request, string? groupId)
         {
             return _groupService.GetActiveGroupsByGroupIdList(new List<string>() { groupId }, request.CompId).Count > 0;
         }
 
-        private  bool BeValidUserOrNull(CreateOrUpdateApplyProductFlowSettingRequest request, string? userId)
+        private  bool BeValidUserOrNull(ApplyProductFlowSettingRequest request, string? userId)
         {
             if(userId==null) { return true; };
             return _memberService.GetActiveMembersByUserIds(new List<string>() { userId },request.CompId).Count > 0;
         }
 
-        private bool BeValidGroupOrNull(CreateOrUpdateApplyProductFlowSettingRequest request, string? groupId)
+        private bool BeValidGroupOrNull(ApplyProductFlowSettingRequest request, string? groupId)
         {
             if (groupId == null) { return true; };
             return _groupService.GetActiveGroupsByGroupIdList(new List<string>() { groupId }, request.CompId).Count > 0;

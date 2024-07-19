@@ -25,8 +25,8 @@ namespace stock_api.Controllers
         private readonly MemberService _memberService;
         private readonly CompanyService _companyService;
         private readonly GroupService _groupService;
-        private readonly IValidator<CreateOrUpdateApplyProductFlowSettingRequest> _createApplyProductFlowSettingValidator;
-        private readonly IValidator<CreateOrUpdateApplyProductFlowSettingRequest> _updateApplyProductFlowSettingValidator;
+        private readonly IValidator<CreateApplyProductFlowSettingRequest> _createApplyProductFlowSettingValidator;
+        private readonly IValidator<ApplyProductFlowSettingRequest> _updateApplyProductFlowSettingValidator;
 
         public ApplyProductFlowSettingController(IMapper mapper, AuthHelpers authHelpers, ApplyProductFlowSettingService applyProductFlowSettingService, MemberService memberService, CompanyService companyService,GroupService groupService)
         {
@@ -36,13 +36,13 @@ namespace stock_api.Controllers
             _companyService = companyService;
             _memberService = memberService;
             _groupService = groupService;
-            _createApplyProductFlowSettingValidator = new CreateOrUpdateApplyProductFlowSettingValidator(ActionTypeEnum.Create, _applyProductFlowSettingService, memberService,companyService,groupService);
-            _updateApplyProductFlowSettingValidator = new CreateOrUpdateApplyProductFlowSettingValidator(ActionTypeEnum.Update, _applyProductFlowSettingService, memberService, companyService, groupService);
+            _createApplyProductFlowSettingValidator = new CreateApplyProductFlowSettingValidator(applyProductFlowSettingService, memberService,groupService);
+            _updateApplyProductFlowSettingValidator = new ApplyProductFlowSettingValidator(ActionTypeEnum.Update,applyProductFlowSettingService,memberService,groupService);
         }
 
         [HttpPost("create")]
         [Authorize]
-        public IActionResult CreatePurchaseFlowSetting(CreateOrUpdateApplyProductFlowSettingRequest createRequest)
+        public IActionResult CreatePurchaseFlowSetting(CreateApplyProductFlowSettingRequest createRequest)
         {
             var memberAndPermissionSetting = _authHelpers.GetMemberAndPermissionSetting(User);
             var compId = memberAndPermissionSetting.CompanyWithUnit.CompId;
@@ -56,8 +56,7 @@ namespace stock_api.Controllers
             }
 
 
-            var newApplyProductFlowSetting = _mapper.Map<ApplyProductFlowSetting>(createRequest);
-            _applyProductFlowSettingService.AddApplyProductFlowSetting(newApplyProductFlowSetting);
+            _applyProductFlowSettingService.AddApplyProductFlowSetting(createRequest.CreateApplyProductFlowSettingList,createRequest.CompId);
             var response = new CommonResponse<dynamic>
             {
                 Result = true,
@@ -68,7 +67,7 @@ namespace stock_api.Controllers
 
         [HttpPost("update")]
         [Authorize]
-        public IActionResult UpdateApplyProductFlowSetting(CreateOrUpdateApplyProductFlowSettingRequest updateRequest)
+        public IActionResult UpdateApplyProductFlowSetting(ApplyProductFlowSettingRequest updateRequest)
         {
             var memberAndPermissionSetting = _authHelpers.GetMemberAndPermissionSetting(User);
             var compId = memberAndPermissionSetting.CompanyWithUnit.CompId;
@@ -159,7 +158,7 @@ namespace stock_api.Controllers
             {
                 return BadRequest(CommonResponse<dynamic>.BuildNotAuthorizeResponse());
             }
-            _applyProductFlowSettingService.InactiveOrActiveApplyProductFlowSetting(existApplyProductFlowSetting.SettingId,false);
+            _applyProductFlowSettingService.DeleteApplyProductFlowSetting(existApplyProductFlowSetting.SettingId);
 
             var response = new CommonResponse<dynamic>
             {

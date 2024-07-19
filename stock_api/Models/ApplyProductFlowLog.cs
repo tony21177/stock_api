@@ -42,6 +42,8 @@ public partial class ApplyProductFlowLog
     [StringLength(100)]
     public string UserName { get; set; } = null!;
 
+    public int Sequence { get; set; }
+
     /// <summary>
     /// 動作
     /// NEXT : 下一步
@@ -56,11 +58,6 @@ public partial class ApplyProductFlowLog
     /// </summary>
     [StringLength(300)]
     public string Remarks { get; set; } = null!;
-
-    /// <summary>
-    /// 流程順序
-    /// </summary>
-    public int Sequence { get; set; }
 
     [Column(TypeName = "timestamp")]
     public DateTime CreatedAt { get; set; }

@@ -63,7 +63,7 @@ namespace stock_api.Common.AutoMapper
                 .ForAllMembers(opt => opt.Condition((src, dest, srcMember) => srcMember != null));
 
             // ApplyProductFlowSetting
-            CreateMap<CreateOrUpdateApplyProductFlowSettingRequest, ApplyProductFlowSetting>()
+            CreateMap<ApplyProductFlowSettingRequest, ApplyProductFlowSetting>()
                 .ForAllMembers(opt => opt.Condition((src, dest, srcMember) => srcMember != null));
             CreateMap<ApplyProductFlowSetting, ApplyProductFlowSetting>()
                 .ForAllMembers(opt => opt.Condition((src, dest, srcMember) => srcMember != null));

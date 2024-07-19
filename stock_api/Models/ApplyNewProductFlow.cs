@@ -45,21 +45,30 @@ public partial class ApplyNewProductFlow
     /// <summary>
     /// 審核此單據的組織ID
     /// </summary>
-    [Column("VerifyCompID")]
+    [Column("ReviewCompID")]
     [StringLength(100)]
-    public string VerifyCompId { get; set; } = null!;
+    public string ReviewCompId { get; set; } = null!;
 
     /// <summary>
     /// 審核此單據的UserID
     /// </summary>
     [StringLength(100)]
-    public string VerifyUserId { get; set; } = null!;
+    public string? ReviewUserId { get; set; }
 
     /// <summary>
     /// 審核此單據的UserName
     /// </summary>
     [StringLength(100)]
-    public string VerifyUserName { get; set; } = null!;
+    public string? ReviewUserName { get; set; }
+
+    /// <summary>
+    /// 負責簽核的組別
+    /// </summary>
+    [StringLength(100)]
+    public string? ReviewGroupId { get; set; }
+
+    [StringLength(100)]
+    public string? ReviewGroupName { get; set; }
 
     [Column(TypeName = "timestamp")]
     public DateTime CreatedAt { get; set; }
@@ -68,8 +77,10 @@ public partial class ApplyNewProductFlow
     public DateTime UpdatedAt { get; set; }
 
     /// <summary>
-    /// 負責簽核的組別
+    /// 送出時間
     /// </summary>
-    [StringLength(100)]
-    public string? ReviewGroupId { get; set; }
+    [Column(TypeName = "timestamp")]
+    public DateTime? SubmitAt { get; set; }
+
+    public int Sequence { get; set; }
 }
