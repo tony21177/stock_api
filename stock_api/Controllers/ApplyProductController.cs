@@ -58,8 +58,8 @@ namespace stock_api.Controllers
                 return BadRequest(CommonResponse<dynamic>.BuildValidationFailedResponse(validationResult));
             }
 
-            List<ApplyProductFlowSettingVo> purchaseFlowSettingList = _applyProductFlowSettingService.GetAllApplyProductFlowSettingsByCompId(createRequest.CompId).ToList();
-            if (purchaseFlowSettingList.Count == 0)
+            List<ApplyProductFlowSettingVo> applyProductFlowSettingList = _applyProductFlowSettingService.GetAllApplyProductFlowSettingsByCompId(createRequest.CompId).ToList();
+            if (applyProductFlowSettingList.Count == 0)
             {
                 return BadRequest(new CommonResponse<dynamic>
                 {
@@ -83,8 +83,8 @@ namespace stock_api.Controllers
                 ProductGroupName = group.GroupName,
                 UserId = memberAndPermissionSetting.Member.UserId
             };
+            _applyProductService.CreateApplyProductMain(newPurchaseMain, applyProductFlowSettingList);
 
-            
             var response = new CommonResponse<dynamic>
             {
                 Result = false,

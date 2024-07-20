@@ -43,7 +43,7 @@ namespace stock_api.Controllers.Validator
             {
                 RuleFor(x => x.FlowName).NotEmpty().WithMessage("flowName為必須");
                 RuleFor(x => x.Sequence).NotEmpty().WithMessage("sequence為必須");
-                RuleFor(x => x.Sequence).Must((request, sequence, context) => SequenceUnique(request, sequence.Value)).WithMessage("sequence已存在");
+                RuleFor(x => x.Sequence).Must((request, sequence, context) => SequenceUnique(request, sequence.Value)).WithMessage("此群組審核流程已存在相同sequence");
                 RuleFor(x => x).Custom((x, context) =>
                 {
                     if (string.IsNullOrEmpty(x.ReviewUserId) || string.IsNullOrEmpty(x.ReviewGroupId))
@@ -70,9 +70,7 @@ namespace stock_api.Controllers.Validator
                         }
                     }
                 });
-                RuleFor(x => x.Sequence).Must((request, sequence, context) => SequenceUnique(request, sequence.Value))
-                    .When(x=>x.Sequence!=null)
-                    .WithMessage("sequence已存在");
+                
                 RuleFor(x => x.ReviewUserId).Must((request, userId, context) => BeValidUser(request.CompId, userId))
                     .When(x => x.ReviewUserId != null).WithMessage("reviewUserId不存在");
                 RuleFor(x => x.ReviewGroupId).Must((request, groupId, context) => BeValidGroup(request.CompId, groupId))
@@ -83,7 +81,7 @@ namespace stock_api.Controllers.Validator
 
         private bool SequenceUnique(ApplyProductFlowSettingRequest request,int sequence)
         {
-            return !_applyProductFlowSettingService.IsSequenceExist(sequence, request.CompId);
+            return !_applyProductFlowSettingService.IsSequenceExistForGroupId(sequence,request.ReviewGroupId, request.CompId);
         }
         
         private bool BeValidUser(string compId, string? userId)

@@ -13,7 +13,7 @@ namespace stock_api.Controllers.Request
         public string ApplyProductName { get; set; } = null!;
         public string? ApplyProductSpec { get; set; }
         public float? ApplyQuantity { get; set; } = 0;
-        public string? ProductGroupId { get; set; }
+        public string ProductGroupId { get; set; }
     }
    
 }

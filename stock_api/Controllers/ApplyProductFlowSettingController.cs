@@ -3,6 +3,8 @@ using FluentValidation;
 using MaiBackend.PublicApi.Consts;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore.Metadata.Internal;
+using Org.BouncyCastle.Asn1.Ocsp;
 using stock_api.Auth;
 using stock_api.Common;
 using stock_api.Controllers.Dto;
@@ -93,6 +95,34 @@ namespace stock_api.Controllers
             {
                 return BadRequest(CommonResponse<dynamic>.BuildValidationFailedResponse(validationResult));
             }
+            if (updateRequest.ReviewGroupId != null || updateRequest.Sequence != null)
+            {
+                bool seqExisted = false;
+                if (updateRequest.ReviewGroupId != null && updateRequest.Sequence != null)
+                {
+                    seqExisted = _applyProductFlowSettingService.IsSequenceExistForGroupId(updateRequest.Sequence.Value, updateRequest.ReviewGroupId, compId);
+                }
+                if(updateRequest.ReviewGroupId != null && updateRequest.Sequence == null)
+                {
+                    seqExisted = _applyProductFlowSettingService.IsSequenceExistForGroupId(existingApplyProductFlowSetting.Sequence, updateRequest.ReviewGroupId, compId);
+                }
+                if (updateRequest.ReviewGroupId == null && updateRequest.Sequence != null)
+                {
+                    seqExisted = _applyProductFlowSettingService.IsSequenceExistForGroupId(updateRequest.Sequence.Value, existingApplyProductFlowSetting.ReviewGroupId, compId);
+                }
+                if (seqExisted)
+                {
+                    return BadRequest(new CommonResponse<dynamic>
+                    {
+                        Result = false,
+                        Message = "此群組審核流程已存在相同sequence"
+                    });
+                }
+
+
+            }
+
+
 
             
             _applyProductFlowSettingService.UpdateApplyProductFlowSetting(updateRequest, existingApplyProductFlowSetting);

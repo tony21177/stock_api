@@ -61,7 +61,7 @@ namespace stock_api.Service
             return _dbContext.ApplyProductFlowLogs.Where(l => applyIdList.Contains(l.ApplyId)).ToList();
         }
 
-        public bool CreatePurchase(ApplyNewProductMain newApplyNewProductMain,  List<ApplyProductFlowSettingVo> applyProductFlowSettingVoList)
+        public bool CreateApplyProductMain(ApplyNewProductMain newApplyNewProductMain,  List<ApplyProductFlowSettingVo> applyProductFlowSettingVoList)
         {
             using (var scope = new TransactionScope())
             {
@@ -73,7 +73,8 @@ namespace stock_api.Service
 
                     List<ApplyNewProductFlow> flows = new();
                     DateTime submitedAt = DateTime.Now;
-                    foreach (var item in applyProductFlowSettingVoList)
+                    var matchedApplyProductFlowSettingVoList = applyProductFlowSettingVoList.Where(s=>s.ReviewGroupId==newApplyNewProductMain.ProductGroupId).ToList();
+                    foreach (var setting in matchedApplyProductFlowSettingVoList)
                     {
                         var flow = new ApplyNewProductFlow()
                         {
@@ -83,18 +84,13 @@ namespace stock_api.Service
                             CompId = newApplyNewProductMain.CompId,
                             Status = CommonConstants.ApplyNewProductFlowStatus.WAIT,
                             SubmitAt = submitedAt,
+                            ReviewCompId = setting.CompId,
+                            ReviewUserId = setting.ReviewUserId,
+                            ReviewUserName = setting.ReviewUserName,
+                            ReviewGroupId = setting.ReviewGroupId,
+                            ReviewGroupName = setting.ReviewGroupName,
+                            Sequence = setting.Sequence,
                         };
-                        if (item.ReviewGroupId != null)
-                        {
-                            //以組別審核為主
-                           flow.ReviewGroupId = item.ReviewGroupId;
-                           flow.ReviewGroupName = item.ReviewGroupName;
-                        }
-                        else
-                        {
-                            flow.ReviewUserId = item.ReviewUserId;
-                            flow.ReviewUserName = item.ReviewUserName;
-                        }
 
                         flows.Add(flow);
                     }

@@ -25,6 +25,11 @@ namespace stock_api.Service
             return _dbContext.ApplyProductFlowSettings.Where(pfs => pfs.Sequence == seq && pfs.CompId == compId).ToList().Count > 0;
         }
 
+        public bool IsSequenceExistForGroupId(int seq,string groupId, string compId)
+        {
+            return _dbContext.ApplyProductFlowSettings.Where(pfs => pfs.Sequence == seq && pfs.CompId == compId&& pfs.ReviewGroupId==groupId).ToList().Count > 0;
+        }
+
         public ApplyProductFlowSettingVo? GetApplyProductFlowSettingVoBySettingId(string settingId)
         {
             var result = from pfs in _dbContext.ApplyProductFlowSettings

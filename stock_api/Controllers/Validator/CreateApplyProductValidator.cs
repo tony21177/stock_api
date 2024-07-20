@@ -18,7 +18,6 @@ namespace stock_api.Controllers.Validator
             ClassLevelCascadeMode = CascadeMode.Stop;
             RuleFor(x => x.ProductGroupId)
                 .Must((request, groupId, context) => BeValidGroup(groupId, context))
-                .When(x=>x.ProductGroupId!=null)
                 .WithMessage("無效的productGroupId");
 
         }
