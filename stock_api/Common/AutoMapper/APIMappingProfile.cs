@@ -70,6 +70,10 @@ namespace stock_api.Common.AutoMapper
             CreateMap<ApplyProductFlowSetting, ApplyProductFlowSettingVo>()
                 .ForAllMembers(opt => opt.Condition((src, dest, srcMember) => srcMember != null));
 
+            // ApplyNewProductMain
+            CreateMap<ApplyNewProductMain, ApplyNewProductMainWithFlowVo>()
+                .ForAllMembers(opt => opt.Condition((src, dest, srcMember) => srcMember != null));
+
             // purchase
             CreateMap<PurchaseMainSheet, PurchaseMainAndSubItemVo>()
            .ForMember(dest => dest.GroupIds, opt => opt.MapFrom(src =>

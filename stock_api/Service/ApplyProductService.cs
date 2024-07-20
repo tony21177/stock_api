@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using Microsoft.EntityFrameworkCore;
+using Org.BouncyCastle.Asn1.Ocsp;
 using stock_api.Common.Constant;
 using stock_api.Common.Settings;
 using stock_api.Common.Utils;
@@ -61,222 +62,152 @@ namespace stock_api.Service
             return _dbContext.ApplyProductFlowLogs.Where(l => applyIdList.Contains(l.ApplyId)).ToList();
         }
 
-        public bool CreateApplyProductMain(ApplyNewProductMain newApplyNewProductMain,  List<ApplyProductFlowSettingVo> applyProductFlowSettingVoList)
+        public (bool,string?) CreateApplyProductMain(ApplyNewProductMain newApplyNewProductMain,  List<ApplyProductFlowSettingVo> applyProductFlowSettingVoList)
         {
-            using (var scope = new TransactionScope())
+            using var scope = new TransactionScope();
+            try
             {
-                try
+
+                _dbContext.ApplyNewProductMains.Add(newApplyNewProductMain);
+
+
+                List<ApplyNewProductFlow> flows = new();
+                DateTime submitedAt = DateTime.Now;
+                var matchedApplyProductFlowSettingVoList = applyProductFlowSettingVoList.Where(s => s.ReviewGroupId == newApplyNewProductMain.ProductGroupId).ToList();
+                foreach (var setting in matchedApplyProductFlowSettingVoList)
                 {
-
-                    _dbContext.ApplyNewProductMains.Add(newApplyNewProductMain);
-
-
-                    List<ApplyNewProductFlow> flows = new();
-                    DateTime submitedAt = DateTime.Now;
-                    var matchedApplyProductFlowSettingVoList = applyProductFlowSettingVoList.Where(s=>s.ReviewGroupId==newApplyNewProductMain.ProductGroupId).ToList();
-                    foreach (var setting in matchedApplyProductFlowSettingVoList)
+                    var flow = new ApplyNewProductFlow()
                     {
-                        var flow = new ApplyNewProductFlow()
-                        {
-                            FlowId = Guid.NewGuid().ToString(),
-                            ApplyId = newApplyNewProductMain.ApplyId,
-                            Answer = CommonConstants.PurchaseFlowAnswer.EMPTY,
-                            CompId = newApplyNewProductMain.CompId,
-                            Status = CommonConstants.ApplyNewProductFlowStatus.WAIT,
-                            SubmitAt = submitedAt,
-                            ReviewCompId = setting.CompId,
-                            ReviewUserId = setting.ReviewUserId,
-                            ReviewUserName = setting.ReviewUserName,
-                            ReviewGroupId = setting.ReviewGroupId,
-                            ReviewGroupName = setting.ReviewGroupName,
-                            Sequence = setting.Sequence,
-                        };
+                        FlowId = Guid.NewGuid().ToString(),
+                        ApplyId = newApplyNewProductMain.ApplyId,
+                        Answer = CommonConstants.PurchaseFlowAnswer.EMPTY,
+                        CompId = newApplyNewProductMain.CompId,
+                        Status = CommonConstants.ApplyNewProductFlowStatus.WAIT,
+                        SubmitAt = submitedAt,
+                        ReviewCompId = setting.CompId,
+                        ReviewUserId = setting.ReviewUserId,
+                        ReviewUserName = setting.ReviewUserName,
+                        ReviewGroupId = setting.ReviewGroupId,
+                        ReviewGroupName = setting.ReviewGroupName,
+                        Sequence = setting.Sequence,
+                    };
 
-                        flows.Add(flow);
-                    }
-                    _dbContext.ApplyNewProductFlows.AddRange(flows);
-
-                    
-
-                    //var flowSettingVo = flows.OrderBy(setting=>setting.Se).FirstOrDefault();
-                    //if (flowSettingVo!=null)
-                    //{
-                    //    DateTime now = DateTime.Now;
-                    //    string title = $"採購單:{string.Concat(DateTimeHelper.FormatDateStringForEmail(now), newPurchasePurchaseMainSheet.PurchaseMainId.AsSpan(0, 5))} 需要您審核";
-
-                    //    string content = $"<a href={_smtpSettings.Domain}/purchase_flow_detail/{purchaseMainId}>{purchaseMainId}</a>";
-                    //    SendMailByFlowSetting(flowSettingVo,title,content);
-                    //}
-                    _dbContext.SaveChanges();
-                    scope.Complete();
-                    return true;
+                    flows.Add(flow);
                 }
-                catch (Exception ex)
-                {
-                    _logger.LogError("事務失敗[CreatePurchaseRequest]：{msg}", ex);
-                    return false;
-                }
+                _dbContext.ApplyNewProductFlows.AddRange(flows);
+
+                var firstFlow = matchedApplyProductFlowSettingVoList.OrderBy(s => s.Sequence).FirstOrDefault();
+                DateTime now = DateTime.Now;
+                string title = $"申請新品項單:{string.Concat(DateTimeHelper.FormatDateStringForEmail(now), firstFlow.SettingId.AsSpan(0, 5))} 需要您審核";
+                string content = $"<a href={_smtpSettings.Domain}/purchase_flow_detail/{firstFlow.SettingId}>{firstFlow.SettingId}</a>";
+                SendMailByFlowSetting(firstFlow, title, content);
+
+                _dbContext.SaveChanges();
+                scope.Complete();
+                return (true, null);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError("事務失敗[CreateApplyProductMain]：{msg}", ex);
+                return (false, ex.Message);
             }
 
         }
 
         
 
-        public List<PurchaseMainAndSubItemVo> ListPurchase(ListPurchaseRequest listPurchaseRequest)
+        public (List<ApplyNewProductMainWithFlowVo>,int) ListApplyNewProductMain(ListApplyNewProductMainRequest listRequest)
         {
-            IQueryable<PurchaseItemListView> query = _dbContext.PurchaseItemListViews;
-            if (listPurchaseRequest.CompId != null)
+            IQueryable<ApplyNewProductMain> query = _dbContext.ApplyNewProductMains;
+            if (listRequest.CompId != null)
             {
-                query = query.Where(h => h.CompId == listPurchaseRequest.CompId);
+                query = query.Where(h => h.CompId == listRequest.CompId);
             }
-            //if (listPurchaseRequest.StartDate != null)
-            //{
-            //    var startDateTime = DateTimeHelper.ParseDateString(listPurchaseRequest.StartDate);
-            //    query = query.Where(h => h.UpdatedAt >= startDateTime);
-            //}
-            //if (listPurchaseRequest.EndDate != null)
-            //{
-            //    var endDateTime = DateTimeHelper.ParseDateString(listPurchaseRequest.EndDate).Value.AddDays(1);
-            //    query = query.Where(h => h.UpdatedAt < endDateTime);
-            //}
-            if (listPurchaseRequest.StartDate != null)
+            if (listRequest.ApplyId != null)
             {
-                var startDateTime = DateTimeHelper.ParseDateString(listPurchaseRequest.StartDate);
-                query = query.Where(h => h.UpdatedAt >= startDateTime);
+                query = query.Where(h => h.ApplyId == listRequest.ApplyId);
             }
-            if (listPurchaseRequest.EndDate != null)
+            if (listRequest.StartDate != null)
             {
-                var endDateTime = DateTimeHelper.ParseDateString(listPurchaseRequest.EndDate).Value.AddDays(1);
-                query = query.Where(h => h.UpdatedAt < endDateTime);
+                var startDateTime = DateTimeHelper.ParseDateString(listRequest.StartDate);
+                query = query.Where(h => h.CreatedAt >= startDateTime);
             }
-            if (listPurchaseRequest.GroupId != null)
+            if (listRequest.EndDate != null)
             {
-                query = query.Where(h => h.GroupIds.Contains(listPurchaseRequest.GroupId));
+                var endDateTime = DateTimeHelper.ParseDateString(listRequest.EndDate).Value.AddDays(1);
+                query = query.Where(h => h.CreatedAt < endDateTime);
             }
-            if (listPurchaseRequest.Type != null)
+            if (listRequest.ProductGroupId != null)
             {
-                query = query.Where(h => h.Type == listPurchaseRequest.Type);
+                query = query.Where(h => h.ProductGroupId== listRequest.ProductGroupId);
             }
-            if (listPurchaseRequest.CurrentStatus != null)
+            
+            if (listRequest.CurrentStatus != null)
             {
-                query = query.Where(h => h.CurrentStatus == listPurchaseRequest.CurrentStatus);
+                query = query.Where(h => h.CurrentStatus == listRequest.CurrentStatus);
             }
-            if (listPurchaseRequest.ReceiveStatus != null)
-            {
-                query = query.Where(h => h.ReceiveStatus == listPurchaseRequest.ReceiveStatus);
-            }
-            if (listPurchaseRequest.IsActive != null)
-            {
-                query = query.Where(h => h.IsActive == listPurchaseRequest.IsActive);
-            }
-
             var result = query.ToList();
-            Dictionary<string, List<PurchaseItemListView>> mainSheetIdMap = new Dictionary<string, List<PurchaseItemListView>>();
 
-            foreach (var item in result)
+
+            if (!string.IsNullOrEmpty(listRequest.Keywords))
             {
-                if (!mainSheetIdMap.ContainsKey(item.PurchaseMainId))
-                {
-                    mainSheetIdMap.Add(item.PurchaseMainId, new List<PurchaseItemListView>());
-                }
-                var voList = mainSheetIdMap.GetValueOrDefault(item.PurchaseMainId);
-                if (voList != null)
-                {
-                    voList.Add(item);
-                }
+                query = query.Where(h => 
+                 h.ApplyReason!=null && h.ApplyReason.Contains(listRequest.Keywords)
+                || h.ApplyReason != null && h.ApplyReason.Contains(listRequest.Keywords)
+                || h.ApplyRemarks != null && h.ApplyRemarks.Contains(listRequest.Keywords)
+                || h.ApplyProductName != null && h.ApplyProductName.Contains(listRequest.Keywords)
+                || h.ApplyProductSpec != null && h.ApplyProductSpec.Contains(listRequest.Keywords)
+                || h.ProductGroupId != null && h.ProductGroupId.Contains(listRequest.Keywords)
+                || h.ProductGroupName != null && h.ProductGroupName.Contains(listRequest.Keywords)
+                || h.ApplyId != null && h.ApplyId.Contains(listRequest.Keywords)
+                );
             }
-
-            List<PurchaseMainAndSubItemVo> purchaseMainAndSubItemVoList = new List<PurchaseMainAndSubItemVo> { };
-            foreach (var kvp in mainSheetIdMap)
+            if (listRequest.PaginationCondition.OrderByField == null) listRequest.PaginationCondition.OrderByField = "CreatedAt";
+            if (listRequest.PaginationCondition.IsDescOrderBy)
             {
-                List<PurchaseSubItemVo> Items = new List<PurchaseSubItemVo>();
-                kvp.Value.ForEach(vo =>
+                var orderByField = StringUtils.CapitalizeFirstLetter(listRequest.PaginationCondition.OrderByField);
+                query = orderByField switch
                 {
-                    var subItem = new PurchaseSubItemVo()
-                    {
-                        ItemId = vo.ItemId,
-                        Comment = vo.Comment,
-                        CompId = vo.CompId,
-                        ProductCategory = vo.ProductCategory,
-                        ProductName = vo.ProductName,
-                        ProductId = vo.ProductId,
-                        ProductSpec = vo.ProductSpec,
-                        PurchaseMainId = vo.PurchaseMainId,
-                        Quantity = vo.Quantity,
-                        ReceiveQuantity = vo.ReceiveQuantity,
-                        ReceiveStatus = vo.ItemReceiveStatus,
-                        GroupIds = vo.GroupIds.Split(',').ToList(),
-                        GroupNames = vo.ItemGroupNames.Split(",").ToList(),
-                        ArrangeSupplierId = vo.ArrangeSupplierId,
-                        ArrangeSupplierName = vo.ArrangeSupplierName,
-                        CurrentInStockQuantity = vo.CurrentInStockQuantity,
-                        CreatedAt = vo.CreatedAt.Value,
-                        UpdatedAt = vo.UpdatedAt.Value,
-                        SplitProcess = vo.SubSplitProcess,
-                        OwnerProcess = vo.SubOwnerProcess
-                    };
-                    Items.Add(subItem);
-                });
-
-                var differentMainSheetId = purchaseMainAndSubItemVoList.Select(m => m.PurchaseMainId).Distinct().ToList();
-                var flows = GetFlowsByPurchaseMainIds(differentMainSheetId).OrderBy(f => f.Sequence);
-                foreach (var item in purchaseMainAndSubItemVoList)
-                {
-                    var matchedFlows = flows.Where(f => f.PurchaseMainId == item.PurchaseMainId).ToList();
-                    item.flows = matchedFlows;
-                }
-
-
-                var vo = new PurchaseMainAndSubItemVo
-                {
-                    PurchaseMainId = kvp.Key,
-                    ApplyDate = kvp.Value[0].ApplyDate,
-                    CompId = kvp.Value[0].CompId,
-                    CurrentStatus = kvp.Value[0].CurrentStatus,
-                    DemandDate = kvp.Value[0].DemandDate,
-                    GroupIds = kvp.Value[0].GroupIds.Split(",", StringSplitOptions.None).ToList(),
-                    Remarks = kvp.Value[0].Remarks,
-                    UserId = kvp.Value[0].UserId,
-                    ReceiveStatus = kvp.Value[0].ReceiveStatus,
-                    Type = kvp.Value[0].Type,
-                    CreatedAt = kvp.Value[0].CreatedAt,
-                    UpdatedAt = kvp.Value[0].UpdatedAt,
-                    IsActive = kvp.Value[0].IsActive,
-                    SplitProcess = kvp.Value[0].MainSplitPrcoess,
-                    OwnerProcess = kvp.Value[0].OwnerProcess,   
-                    Items = Items,
+                    "ApplyProductName" => query.OrderByDescending(h => h.ApplyProductName),
+                    "CurrentStatus" => query.OrderByDescending(h => h.CurrentStatus),
+                    "ApplyQuantity" => query.OrderByDescending(h => h.ApplyQuantity),
+                    "ProductGroupId" => query.OrderByDescending(h => h.ProductGroupId),
+                    "CreatedAt" => query.OrderByDescending(h => h.CreatedAt),
+                    "UpdatedAt" => query.OrderByDescending(h => h.UpdatedAt),
+                    _ => query.OrderByDescending(h => h.CreatedAt),
                 };
-                purchaseMainAndSubItemVoList.Add(vo);
             }
-
-            if (listPurchaseRequest.IsNeedFlow == true)
+            else
             {
-                var differentMainSheetId = purchaseMainAndSubItemVoList.Select(m => m.PurchaseMainId).Distinct().ToList();
-                var flows = GetFlowsByPurchaseMainIds(differentMainSheetId).OrderBy(f => f.Sequence);
-                foreach (var item in purchaseMainAndSubItemVoList)
+                var orderByField = StringUtils.CapitalizeFirstLetter(listRequest.PaginationCondition.OrderByField);
+                query = orderByField switch
                 {
-                    var matchedFlows = flows.Where(f => f.PurchaseMainId == item.PurchaseMainId).ToList();
-                    item.flows = matchedFlows;
-                }
+                    "ApplyProductName" => query.OrderBy(h => h.ApplyProductName),
+                    "CurrentStatus" => query.OrderBy(h => h.CurrentStatus),
+                    "ApplyQuantity" => query.OrderBy(h => h.ApplyQuantity),
+                    "ProductGroupId" => query.OrderBy(h => h.ProductGroupId),
+                    "CreatedAt" => query.OrderBy(h => h.CreatedAt),
+                    "UpdatedAt" => query.OrderBy(h => h.UpdatedAt),
+                    _ => query.OrderBy(h => h.CreatedAt),
+                };
             }
-            if (!string.IsNullOrEmpty(listPurchaseRequest.Keywords))
+            int totalItems = query.Count();
+            int totalPages = (int)Math.Ceiling((double)totalItems / listRequest.PaginationCondition.PageSize);
+            query = query.Skip((listRequest.PaginationCondition.Page - 1) * listRequest.PaginationCondition.PageSize).Take(listRequest.PaginationCondition.PageSize);
+            var applyNewProductMainList = query.ToList();
+            var applyNewProductMainWithFlowList = _mapper.Map<List<ApplyNewProductMainWithFlowVo>>(applyNewProductMainList);
+
+            var allApplyId = applyNewProductMainList.Select(m=>m.ApplyId).Distinct().ToList();
+
+            var allRelatedFlows =  _dbContext.ApplyNewProductFlows.Where(f=>allApplyId.Contains(f.ApplyId)).ToList();
+
+            applyNewProductMainWithFlowList.ForEach(main =>
             {
-                string keyWords = listPurchaseRequest.Keywords;
-                purchaseMainAndSubItemVoList = purchaseMainAndSubItemVoList.FindAll(purchaseMainAndSubItemVo =>
-                {
-                    var matchedVo = purchaseMainAndSubItemVo.Items.Find(item => (item.ProductName!=null&& item.ProductName.Contains(keyWords))
-                    || (item.ProductId!=null&& item.ProductId.Contains(listPurchaseRequest.Keywords))
-                    || (item.ProductCode != null && item.ProductCode.Contains(listPurchaseRequest.Keywords))
-                    || (item.ProductModel != null && item.ProductModel.Contains(listPurchaseRequest.Keywords))
-                    || (item.ProductSpec != null && item.ProductSpec.Contains(listPurchaseRequest.Keywords))
-                    || (item.ProductMachine != null && item.ProductMachine.Contains(listPurchaseRequest.Keywords)));
-                    if (matchedVo != null) return true;
-                    return false;
-                });
-            }
+                var matchedFlows = allRelatedFlows.Where(f => f.ApplyId == main.ApplyId).OrderByDescending(f => f.Sequence).ToList();
+                main.Flows = matchedFlows;
+            });
 
-
-            return purchaseMainAndSubItemVoList;
+            return (applyNewProductMainWithFlowList,totalPages);
         }
 
         public List<PurchaseFlow> GetFlowsByPurchaseMainIds(List<string> purchaseMainIdList)
@@ -622,9 +553,9 @@ namespace stock_api.Service
             return unDoneProcessingSubItem.Select(s => s.Quantity ?? 0.0f).DefaultIfEmpty(0.0f).Sum();
         }
 
-        private async Task SendMailByFlowSetting(PurchaseFlowSettingVo purchaseFlowSettingVo, String title, String content)
+        private async Task SendMailByFlowSetting(ApplyProductFlowSetting applyProductFlowSetting, String title, String content)
         {
-            var receiver = _memberService.GetMembersByUserId(purchaseFlowSettingVo.UserId);
+            var receiver = _memberService.GetMembersByUserId(applyProductFlowSetting.ReviewUserId);
             if (receiver != null)
             {
 

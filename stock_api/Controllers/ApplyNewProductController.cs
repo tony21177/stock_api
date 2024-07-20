@@ -16,7 +16,7 @@ namespace stock_api.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    public class ApplyProductController : ControllerBase
+    public class ApplyNewProductController : ControllerBase
     {
 
         private readonly IMapper _mapper;
@@ -27,9 +27,10 @@ namespace stock_api.Controllers
         private readonly ApplyProductService _applyProductService;
         private readonly GroupService _groupService;
         private readonly IValidator<CreateApplyProductMainRequest> _createApplyProductValidator;
+        private readonly IValidator<ListApplyNewProductMainRequest> _listApplyNewProductMainRequestValidator;
         //private readonly IValidator<AnswerFlowRequest> _answerFlowRequestValidator;
 
-        public ApplyProductController(IMapper mapper, AuthHelpers authHelpers, ApplyProductFlowSettingService applyProductFlowSettingService, MemberService memberService, CompanyService companyService, ApplyProductService applyProductService, GroupService groupService)
+        public ApplyNewProductController(IMapper mapper, AuthHelpers authHelpers, ApplyProductFlowSettingService applyProductFlowSettingService, MemberService memberService, CompanyService companyService, ApplyProductService applyProductService, GroupService groupService)
         {
             _mapper = mapper;
             _authHelpers = authHelpers;
@@ -39,6 +40,7 @@ namespace stock_api.Controllers
             _applyProductService = applyProductService;
             _groupService = groupService;
             _createApplyProductValidator = new CreateApplyProductValidator(groupService);
+            _listApplyNewProductMainRequestValidator = new ListApplyNewProductValidator(groupService);
             //_answerFlowRequestValidator = answerFlowRequestValidator;
         }
 
@@ -83,12 +85,39 @@ namespace stock_api.Controllers
                 ProductGroupName = group.GroupName,
                 UserId = memberAndPermissionSetting.Member.UserId
             };
-            _applyProductService.CreateApplyProductMain(newPurchaseMain, applyProductFlowSettingList);
+            var (result,msg) = _applyProductService.CreateApplyProductMain(newPurchaseMain, applyProductFlowSettingList);
 
             var response = new CommonResponse<dynamic>
             {
-                Result = false,
-                Data = null
+                Result = result,
+                Message = msg
+            };
+            return Ok(response);
+        }
+
+        [HttpPost("list")]
+        [Authorize]
+        public IActionResult ListApplyNewProductMain(ListApplyNewProductMainRequest request)
+        {
+            var memberAndPermissionSetting = _authHelpers.GetMemberAndPermissionSetting(User);
+            var compId = memberAndPermissionSetting.CompanyWithUnit.CompId;
+
+            if (request.CompId == null) request.CompId = compId;
+            
+            var validationResult = _listApplyNewProductMainRequestValidator.Validate(request);
+
+            if (!validationResult.IsValid)
+            {
+                return BadRequest(CommonResponse<dynamic>.BuildValidationFailedResponse(validationResult));
+            }
+            var (data,total) = _applyProductService.ListApplyNewProductMain(request);
+            
+
+            var response = new CommonResponse<List<ApplyNewProductMainWithFlowVo>>
+            {
+                Result = true,
+                Data = data,
+                TotalPages = total
             };
             return Ok(response);
         }

@@ -19,8 +19,8 @@ public class EmailService
     public async Task SendAsync(string title, string content, string email)
     {
         var message = new MimeMessage();
-        message.From.Add(new MailboxAddress( "Sender Name", _smtpSettings.User));
-        message.To.Add(new MailboxAddress( "Recipient Name", email));
+        message.From.Add(new MailboxAddress( "庫存系統", _smtpSettings.User));
+        message.To.Add(new MailboxAddress("庫存系統成員", email));
         message.Subject = title;
 
         var bodyBuilder = new BodyBuilder

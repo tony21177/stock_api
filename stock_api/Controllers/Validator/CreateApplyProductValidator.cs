@@ -1,8 +1,5 @@
 ﻿using FluentValidation;
-using stock_api.Common.Constant;
-using stock_api.Common.Utils;
 using stock_api.Controllers.Request;
-using stock_api.Models;
 using stock_api.Service;
 
 namespace stock_api.Controllers.Validator
