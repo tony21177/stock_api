@@ -574,5 +574,11 @@ namespace stock_api.Service
                 SendMailByFlow(currentFlow, title, content);
             }
         }
+
+        public void UpdateApplyNewProductToDone(ApplyNewProductMain main)
+        {
+            main.CurrentStatus = CommonConstants.ApplyNewProductCurrentStatus.DONE;
+            _dbContext.SaveChanges();
+        }
     }
 }

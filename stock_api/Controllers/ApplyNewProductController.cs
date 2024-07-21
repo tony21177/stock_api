@@ -30,6 +30,7 @@ namespace stock_api.Controllers
         private readonly IValidator<CreateApplyProductMainRequest> _createApplyProductValidator;
         private readonly IValidator<ListApplyNewProductMainRequest> _listApplyNewProductMainRequestValidator;
         private readonly IValidator<AnswerFlowRequest> _answerFlowRequest;
+        private readonly IValidator<CloseOrDoneApplyNewProductRequest> _closeOrDoneApplyNewProductValidator;
 
         public ApplyNewProductController(IMapper mapper, AuthHelpers authHelpers, ApplyProductFlowSettingService applyProductFlowSettingService, MemberService memberService, CompanyService companyService, ApplyProductService applyProductService, GroupService groupService)
         {
@@ -43,6 +44,7 @@ namespace stock_api.Controllers
             _createApplyProductValidator = new CreateApplyProductValidator(groupService);
             _listApplyNewProductMainRequestValidator = new ListApplyNewProductValidator(groupService);
             _answerFlowRequest = new AnswerApplyNewProductFlowValidator();
+            _closeOrDoneApplyNewProductValidator = new CloseOrDoneApplyNewProductValidator();
         }
 
 
@@ -70,6 +72,16 @@ namespace stock_api.Controllers
                     Message = "尚未建立審核流程關卡"
                 });
             }
+            var matchedFlowOfGroup = applyProductFlowSettingList.Where(f=>f.ReviewGroupId== createRequest.ProductGroupId).ToList();
+            if (matchedFlowOfGroup.Count==0)
+            {
+                return BadRequest(new CommonResponse<dynamic>
+                {
+                    Result = false,
+                    Message = "尚未建立該組別的審核流程關卡"
+                });
+            }
+
 
             var group = _groupService.GetGroupByGroupId(createRequest.ProductGroupId);
 
@@ -222,6 +234,51 @@ namespace stock_api.Controllers
             {
                 Result = result,
                 Data = null
+            };
+            return Ok(response);
+        }
+
+        [HttpPost("owner/doneOrClose")]
+        [Authorize]
+        public IActionResult DoneOrCloseApplyNewProduct(CloseOrDoneApplyNewProductRequest request)
+        {
+            var memberAndPermissionSetting = _authHelpers.GetMemberAndPermissionSetting(User);
+            var compId = memberAndPermissionSetting.CompanyWithUnit.CompId;
+            if (memberAndPermissionSetting.CompanyWithUnit.Type != CommonConstants.CompanyType.OWNER)
+            {
+                return BadRequest(CommonResponse<dynamic>.BuildNotAuthorizeResponse());
+            }
+
+            var validationResult = _closeOrDoneApplyNewProductValidator.Validate(request);
+
+            if (!validationResult.IsValid)
+            {
+                return BadRequest(CommonResponse<dynamic>.BuildValidationFailedResponse(validationResult));
+            }
+
+            var main = _applyProductService.GetApplyNewProductMainByApplyId(request.ApplyId);
+            if (main == null)
+            {
+                return BadRequest(new CommonResponse<dynamic>
+                {
+                    Result = false,
+                    Message = "該單據不存在"
+                });
+            }
+            if (main.CurrentStatus != CommonConstants.ApplyNewProductCurrentStatus.AGREE)
+            {
+                return BadRequest(new CommonResponse<dynamic>
+                {
+                    Result = false,
+                    Message = "單位還在審核"
+                });
+            }
+
+            _applyProductService.UpdateApplyNewProductToDone(main);
+
+            var response = new CommonResponse<dynamic>
+            {
+                Result = true,
             };
             return Ok(response);
         }
