@@ -484,6 +484,7 @@ namespace stock_api.Service
         {
             WarehouseMember verifyMember = verifierMemberAndPermission.Member;
             var verifyCompId = verifierMemberAndPermission.CompanyWithUnit.CompId;
+            List<WarehouseMember> ownerList = new();
             using var scope = new TransactionScope();
             try
             {
@@ -544,7 +545,11 @@ namespace stock_api.Service
                         preFlow.Status = "";
                         preFlow.Answer = "";
                     }
-                    purchaseMain.CurrentStatus = CommonConstants.PurchaseApplyStatus.BACK;
+                    else
+                    {
+                        purchaseMain.CurrentStatus = CommonConstants.PurchaseApplyStatus.REJECT;
+
+                    }
                 }
                 if (answer == CommonConstants.AnswerPurchaseFlow.BACK && isOwner == true)
                 {
@@ -566,56 +571,59 @@ namespace stock_api.Service
                     Action = answer,
                     Remarks = reason
                 };
+                ownerList = _memberService.GetOwnerMembers();
                 _dbContext.PurchaseFlowLogs.Add(newFlowLog);
                 _dbContext.SaveChanges();
                 scope.Complete();
-                if (answer == CommonConstants.AnswerPurchaseFlow.AGREE && nextPurchase == null)
-                {
-                    string title = $"採購單:{string.Concat(DateTimeHelper.FormatDateStringForEmail(purchaseMain.ApplyDate), purchaseMain.PurchaseMainId.AsSpan(0, 5))} 需要您處理";
-                    string content = $"<a href={_smtpSettings.Domain}/purchase_flow_detail/{purchaseMain.PurchaseMainId}>{purchaseMain.PurchaseMainId}</a>";
-                    SendMailToOwner(title, content);
-                }
-                if (answer == CommonConstants.AnswerPurchaseFlow.AGREE && nextPurchase != null)
-                {
-                    string title = $"採購單:{string.Concat(DateTimeHelper.FormatDateStringForEmail(purchaseMain.ApplyDate), purchaseMain.PurchaseMainId.AsSpan(0, 5))} 需要您審核";
-                    string content = $"<a href={_smtpSettings.Domain}/purchase_flow_detail/{purchaseMain.PurchaseMainId}>{purchaseMain.PurchaseMainId}</a>";
-                    SendMailByFlow(nextPurchase,title, content);
-                }
-                if (answer == CommonConstants.AnswerPurchaseFlow.REJECT)
-                {
-                    string title = $"採購單:{string.Concat(DateTimeHelper.FormatDateStringForEmail(purchaseMain.ApplyDate), purchaseMain.PurchaseMainId.AsSpan(0, 5))} 已被拒絕";
-                    string content = $"<a href={_smtpSettings.Domain}/purchase_flow_detail/{purchaseMain.PurchaseMainId}>{purchaseMain.PurchaseMainId}</a>";
-                    SendMailByPurchaseMain(purchaseMain, title, content);
-                }
-                if (answer == CommonConstants.AnswerPurchaseFlow.BACK && isOwner != true)
-                {
-                    if (preFlow != null)
-                    {
-                        string title = $"採購單:{string.Concat(DateTimeHelper.FormatDateStringForEmail(purchaseMain.ApplyDate), purchaseMain.PurchaseMainId.AsSpan(0, 5))} 需要您審核";
-                        string content = $"<a href={_smtpSettings.Domain}/purchase_flow_detail/{purchaseMain.PurchaseMainId}>{purchaseMain.PurchaseMainId}</a>";
-                        SendMailByFlow(preFlow, title, content);
-                    }
-                    else
-                    {
-                        string title = $"採購單:{string.Concat(DateTimeHelper.FormatDateStringForEmail(purchaseMain.ApplyDate), purchaseMain.PurchaseMainId.AsSpan(0, 5))} 已被退回";
-                        string content = $"<a href={_smtpSettings.Domain}/purchase_flow_detail/{purchaseMain.PurchaseMainId}>{purchaseMain.PurchaseMainId}</a>";
-                        SendMailByPurchaseMain(purchaseMain, title, content);
-                    }
-                }
-                if (answer == CommonConstants.AnswerPurchaseFlow.BACK && isOwner == true)
-                {
-                    string title = $"採購單:{string.Concat(DateTimeHelper.FormatDateStringForEmail(purchaseMain.ApplyDate), purchaseMain.PurchaseMainId.AsSpan(0, 5))} 已被退回";
-                    string content = $"<a href={_smtpSettings.Domain}/purchase_flow_detail/{purchaseMain.PurchaseMainId}>{purchaseMain.PurchaseMainId}</a>";
-                    SendMailByFlow(currentFlow, title, content);
-                }
-
-                return true;
+                
             }
             catch (Exception ex)
             {
                 _logger.LogError("事務失敗[AnswerFlow]：{msg}", ex);
                 return false;
             }
+
+            if (answer == CommonConstants.AnswerPurchaseFlow.AGREE && nextPurchase == null)
+            {
+                string title = $"採購單:{string.Concat(DateTimeHelper.FormatDateStringForEmail(purchaseMain.ApplyDate), purchaseMain.PurchaseMainId.AsSpan(0, 5))} 需要您處理";
+                string content = $"<a href={_smtpSettings.Domain}/purchase_flow_detail/{purchaseMain.PurchaseMainId}>{purchaseMain.PurchaseMainId}</a>";
+                SendMailToOwner(title, content,ownerList);
+            }
+            if (answer == CommonConstants.AnswerPurchaseFlow.AGREE && nextPurchase != null)
+            {
+                string title = $"採購單:{string.Concat(DateTimeHelper.FormatDateStringForEmail(purchaseMain.ApplyDate), purchaseMain.PurchaseMainId.AsSpan(0, 5))} 需要您審核";
+                string content = $"<a href={_smtpSettings.Domain}/purchase_flow_detail/{purchaseMain.PurchaseMainId}>{purchaseMain.PurchaseMainId}</a>";
+                SendMailByFlow(nextPurchase, title, content);
+            }
+            if (answer == CommonConstants.AnswerPurchaseFlow.REJECT)
+            {
+                string title = $"採購單:{string.Concat(DateTimeHelper.FormatDateStringForEmail(purchaseMain.ApplyDate), purchaseMain.PurchaseMainId.AsSpan(0, 5))} 已被拒絕";
+                string content = $"<a href={_smtpSettings.Domain}/purchase_flow_detail/{purchaseMain.PurchaseMainId}>{purchaseMain.PurchaseMainId}</a>";
+                SendMailByPurchaseMain(purchaseMain, title, content);
+            }
+            if (answer == CommonConstants.AnswerPurchaseFlow.BACK && isOwner != true)
+            {
+                if (preFlow != null)
+                {
+                    string title = $"採購單:{string.Concat(DateTimeHelper.FormatDateStringForEmail(purchaseMain.ApplyDate), purchaseMain.PurchaseMainId.AsSpan(0, 5))} 需要您審核";
+                    string content = $"<a href={_smtpSettings.Domain}/purchase_flow_detail/{purchaseMain.PurchaseMainId}>{purchaseMain.PurchaseMainId}</a>";
+                    SendMailByFlow(preFlow, title, content);
+                }
+                else
+                {
+                    string title = $"採購單:{string.Concat(DateTimeHelper.FormatDateStringForEmail(purchaseMain.ApplyDate), purchaseMain.PurchaseMainId.AsSpan(0, 5))} 已被退回";
+                    string content = $"<a href={_smtpSettings.Domain}/purchase_flow_detail/{purchaseMain.PurchaseMainId}>{purchaseMain.PurchaseMainId}</a>";
+                    SendMailByPurchaseMain(purchaseMain, title, content);
+                }
+            }
+            if (answer == CommonConstants.AnswerPurchaseFlow.BACK && isOwner == true)
+            {
+                string title = $"採購單:{string.Concat(DateTimeHelper.FormatDateStringForEmail(purchaseMain.ApplyDate), purchaseMain.PurchaseMainId.AsSpan(0, 5))} 已被退回";
+                string content = $"<a href={_smtpSettings.Domain}/purchase_flow_detail/{purchaseMain.PurchaseMainId}>{purchaseMain.PurchaseMainId}</a>";
+                SendMailByFlow(currentFlow, title, content);
+            }
+
+            return true;
         }
 
         public List<PurchaseSubItem> GetPurchaseSubItemListByItemList(List<string> itemIdList)
@@ -755,10 +763,10 @@ namespace stock_api.Service
             }
         }
 
-        private void SendMailToOwner(String title, String content)
+        private void SendMailToOwner(String title, String content,List<WarehouseMember> ownerList)
         {
-            List<WarehouseMember> receiver = _memberService.GetOwnerMembers();
-            receiver.ForEach(async r =>
+            
+            ownerList.ForEach(async r =>
             {
                 if (!string.IsNullOrEmpty(r.Email))
                 {
