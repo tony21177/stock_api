@@ -10,7 +10,7 @@ namespace stock_api.Controllers.Validator
         {
             RuleFor(request => request.Answer)
                .Must(answer => CommonConstants.AnswerPurchaseFlow.GetAllValues().Contains(answer))
-                   .WithMessage($"type必須為{string.Join(",", CommonConstants.AnswerPurchaseFlow.GetAllValues())}");
+                   .WithMessage($"answer必須為{string.Join(",", CommonConstants.AnswerPurchaseFlow.GetAllValues())}");
         }
     }
 }

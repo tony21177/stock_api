@@ -11,6 +11,7 @@ using stock_api.Service;
 using stock_api.Service.ValueObject;
 using stock_api.Utils;
 using stock_api.Controllers.Validator;
+using Microsoft.IdentityModel.Tokens;
 
 namespace stock_api.Controllers
 {
@@ -28,7 +29,7 @@ namespace stock_api.Controllers
         private readonly GroupService _groupService;
         private readonly IValidator<CreateApplyProductMainRequest> _createApplyProductValidator;
         private readonly IValidator<ListApplyNewProductMainRequest> _listApplyNewProductMainRequestValidator;
-        //private readonly IValidator<AnswerFlowRequest> _answerFlowRequestValidator;
+        private readonly IValidator<AnswerFlowRequest> _answerFlowRequest;
 
         public ApplyNewProductController(IMapper mapper, AuthHelpers authHelpers, ApplyProductFlowSettingService applyProductFlowSettingService, MemberService memberService, CompanyService companyService, ApplyProductService applyProductService, GroupService groupService)
         {
@@ -41,7 +42,7 @@ namespace stock_api.Controllers
             _groupService = groupService;
             _createApplyProductValidator = new CreateApplyProductValidator(groupService);
             _listApplyNewProductMainRequestValidator = new ListApplyNewProductValidator(groupService);
-            //_answerFlowRequestValidator = answerFlowRequestValidator;
+            _answerFlowRequest = new AnswerApplyNewProductFlowValidator();
         }
 
 
@@ -110,7 +111,7 @@ namespace stock_api.Controllers
             {
                 return BadRequest(CommonResponse<dynamic>.BuildValidationFailedResponse(validationResult));
             }
-            var (data,total) = _applyProductService.ListApplyNewProductMain(request);
+            var (data,total) = _applyProductService.ListApplyNewProductMain(request,true);
             
 
             var response = new CommonResponse<List<ApplyNewProductMainWithFlowVo>>
@@ -118,6 +119,109 @@ namespace stock_api.Controllers
                 Result = true,
                 Data = data,
                 TotalPages = total
+            };
+            return Ok(response);
+        }
+
+        [HttpGet("owner/list")]
+        [Authorize]
+        public IActionResult ListApplyNewProductMainForOwner()
+        {
+            var memberAndPermissionSetting = _authHelpers.GetMemberAndPermissionSetting(User);
+            var compId = memberAndPermissionSetting.CompanyWithUnit.CompId;
+
+            if (memberAndPermissionSetting.CompanyWithUnit.Type != CommonConstants.CompanyType.OWNER)
+            {
+                return BadRequest(CommonResponse<dynamic>.BuildNotAuthorizeResponse());
+            }
+            ListApplyNewProductMainRequest request = new() { CurrentStatus = CommonConstants.PurchaseFlowAnswer.AGREE };
+
+            var (data, total) = _applyProductService.ListApplyNewProductMain(request,false);
+            
+            
+
+            var response = new CommonResponse<dynamic>
+            {
+                Result = true,
+                Data = data,
+                TotalPages = total
+            };
+            return Ok(response);
+        }
+
+        [HttpPost("flow/answer")]
+        [Authorize]
+        public IActionResult FlowSign(AnswerFlowRequest request)
+        {
+            var memberAndPermissionSetting = _authHelpers.GetMemberAndPermissionSetting(User);
+            var verifier = memberAndPermissionSetting.Member;
+            var compId = memberAndPermissionSetting.CompanyWithUnit.CompId;
+
+            var validationResult = _answerFlowRequest.Validate(request);
+
+            if (!validationResult.IsValid)
+            {
+                return BadRequest(CommonResponse<dynamic>.BuildValidationFailedResponse(validationResult));
+            }
+            var applyNewProductFlow = _applyProductService.GetFlowsByFlowId(request.FlowId);
+
+            if (applyNewProductFlow == null)
+            {
+                return BadRequest(new CommonResponse<dynamic>
+                {
+                    Result = false,
+                    Message = "該審核流程不存在"
+                });
+            }
+
+
+            if (applyNewProductFlow != null && memberAndPermissionSetting.CompanyWithUnit.Type == CommonConstants.CompanyType.OWNER && request.Answer == CommonConstants.AnswerPurchaseFlow.BACK)
+            {
+                // 金萬林退回
+                var backResult = _applyProductService.AnswerFlow(applyNewProductFlow, request.Answer, request.Reason, true);
+                var backResponse = new CommonResponse<dynamic>
+                {
+                    Result = backResult,
+                    Data = null
+                };
+                return Ok(backResponse);
+
+            }
+
+            if (applyNewProductFlow != null && applyNewProductFlow.CompId != compId)
+            {
+                return BadRequest(CommonResponse<dynamic>.BuildNotAuthorizeResponse());
+            }
+            if (applyNewProductFlow != null && applyNewProductFlow.ReviewUserId != verifier.UserId)
+            {
+                return BadRequest(CommonResponse<dynamic>.BuildNotAuthorizeResponse());
+            }
+            if (applyNewProductFlow != null && !applyNewProductFlow.Answer.IsNullOrEmpty())
+            {
+                return BadRequest(new CommonResponse<dynamic>()
+                {
+                    Result = false,
+                    Message = "不能重複審核"
+                });
+            }
+
+            var beforeFlows = _applyProductService.GetBeforeFlows(applyNewProductFlow);
+            if (beforeFlows.Any(f => f.Answer == CommonConstants.PurchaseFlowAnswer.EMPTY))
+            {
+                return BadRequest(new CommonResponse<dynamic>()
+                {
+                    Result = false,
+                    Message = "之前的審核流程還在跑"
+                });
+            }
+
+            var result = _applyProductService.AnswerFlow(applyNewProductFlow, request.Answer, request.Reason, false);
+
+
+            var response = new CommonResponse<dynamic>
+            {
+                Result = result,
+                Data = null
             };
             return Ok(response);
         }

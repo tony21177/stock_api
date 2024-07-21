@@ -33,7 +33,7 @@ namespace stock_api.Service
             _smtpSettings = smtpSettings;
         }
 
-        public ApplyNewProductMain? GetApplyNewProductMainByMainId(string applyId)
+        public ApplyNewProductMain? GetApplyNewProductMainByApplyId(string applyId)
         {
             return _dbContext.ApplyNewProductMains.Where(m => m.ApplyId == applyId).FirstOrDefault();
         }
@@ -116,7 +116,7 @@ namespace stock_api.Service
 
         
 
-        public (List<ApplyNewProductMainWithFlowVo>,int) ListApplyNewProductMain(ListApplyNewProductMainRequest listRequest)
+        public (List<ApplyNewProductMainWithFlowVo>,int) ListApplyNewProductMain(ListApplyNewProductMainRequest listRequest,bool enablePagination)
         {
             IQueryable<ApplyNewProductMain> query = _dbContext.ApplyNewProductMains;
             if (listRequest.CompId != null)
@@ -193,7 +193,11 @@ namespace stock_api.Service
             }
             int totalItems = query.Count();
             int totalPages = (int)Math.Ceiling((double)totalItems / listRequest.PaginationCondition.PageSize);
-            query = query.Skip((listRequest.PaginationCondition.Page - 1) * listRequest.PaginationCondition.PageSize).Take(listRequest.PaginationCondition.PageSize);
+            if (enablePagination)
+            {
+                query = query.Skip((listRequest.PaginationCondition.Page - 1) * listRequest.PaginationCondition.PageSize).Take(listRequest.PaginationCondition.PageSize);
+            }
+
             var applyNewProductMainList = query.ToList();
             var applyNewProductMainWithFlowList = _mapper.Map<List<ApplyNewProductMainWithFlowVo>>(applyNewProductMainList);
 
@@ -210,121 +214,108 @@ namespace stock_api.Service
             return (applyNewProductMainWithFlowList,totalPages);
         }
 
-        public List<PurchaseFlow> GetFlowsByPurchaseMainIds(List<string> purchaseMainIdList)
+        public List<ApplyNewProductFlow> GetFlowsByApplyIds(List<string> applyIdList)
         {
-            return _dbContext.PurchaseFlows.Where(f => purchaseMainIdList.Contains(f.PurchaseMainId)).ToList();
+            return _dbContext.ApplyNewProductFlows.Where(f => applyIdList.Contains(f.ApplyId)).ToList();
 
         }
 
-        public PurchaseFlow? GetFlowsByPurchaseMainId(string purchaseMainId)
+        public ApplyNewProductFlow? GetFlowsByFlowId(string flowId)
         {
-            return _dbContext.PurchaseFlows.Where(f => f.PurchaseMainId == purchaseMainId).FirstOrDefault();
+            return _dbContext.ApplyNewProductFlows.Where(f => f.FlowId == flowId).FirstOrDefault();
 
         }
 
-        public PurchaseFlow? GetFlowsByFlowId(string flowId)
-        {
-            return _dbContext.PurchaseFlows.Where(f => f.FlowId == flowId).FirstOrDefault();
+      
 
-        }
-
-        public List<PurchaseFlow> GetFlowsByUserId(string userId)
-        {
-            return _dbContext.PurchaseFlows.Where(f => f.VerifyUserId == userId).ToList();
-
-        }
-
-        public bool UpdatePurchaseOwnerProcess(PurchaseMainSheet main,List<PurchaseSubItem> allPurchaseSubItems ,UpdateOwnerProcessRequest request)
-        {
-            using var scope = new TransactionScope();
-            try
-            {
-                List<PurchaseSubItem> toUpdateSubItems = new();
-                if (request.ItemIds != null)
-                {
-                    toUpdateSubItems = allPurchaseSubItems.Where(s => request.ItemIds.Contains(s.ItemId)).ToList();
-                }
-                toUpdateSubItems.ForEach(s => { s.OwnerProcess = request.OwnerProcess;s.SplitProcess = CommonConstants.SplitProcess.DONE; });
-                if (allPurchaseSubItems.All(s => s.OwnerProcess == CommonConstants.PurchaseMainOwnerProcessStatus.AGREE))
-                {
-                    main.OwnerProcess = CommonConstants.PurchaseMainOwnerProcessStatus.AGREE;
-                    main.SplitPrcoess = CommonConstants.SplitProcess.DONE;
-
-                    // 為什麼做這檢查是因為有可能金萬林忘了按同意 就自行安排出貨,然後單位也接著驗收入庫,main.ReceiveStatus就更改不等於NONE了
-                    // 這時單純金萬霖再補按同意就只更新OwnerProcess,SplitPrcoess
-                    if (main.ReceiveStatus== CommonConstants.PurchaseReceiveStatus.NONE)
-                    {
-                        main.ReceiveStatus = CommonConstants.PurchaseReceiveStatus.DELIVERED;
-                    }
-
-                }
-                else if (allPurchaseSubItems.Any(s => s.OwnerProcess == CommonConstants.PurchaseMainOwnerProcessStatus.AGREE))
-                {
-                    main.OwnerProcess = CommonConstants.PurchaseMainOwnerProcessStatus.PART_AGREE;
-                    main.SplitPrcoess = CommonConstants.SplitProcess.PART;
-                    if (main.ReceiveStatus == CommonConstants.PurchaseReceiveStatus.NONE)
-                    {
-                        main.ReceiveStatus = CommonConstants.PurchaseReceiveStatus.DELIVERED;
-                    }
-                }else if(allPurchaseSubItems.All(s => s.OwnerProcess == CommonConstants.PurchaseMainOwnerProcessStatus.NOT_AGREE))
-                {
-                    main.OwnerProcess = CommonConstants.PurchaseMainOwnerProcessStatus.NOT_AGREE;
-                    main.SplitPrcoess = CommonConstants.SplitProcess.DONE;
-                    main.CurrentStatus = CommonConstants.PurchaseApplyStatus.CLOSE;
-                }
-
-                _dbContext.SaveChanges();
-                scope.Complete();
-                return true;
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError("事務失敗[UpdatePurchaseOwnerProcess]：{msg}", ex);
-                return false;
-            }
-        }
-
-        public void PurchaseFlowRead(PurchaseFlow flow)
-        {
-            flow.ReadAt = DateTime.Now;
-            _dbContext.SaveChanges();
-        }
-
-        public List<PurchaseFlow> GetBeforeFlows(PurchaseFlow nowFlow)
-        {
-            return _dbContext.PurchaseFlows.Where(f=>f.Sequence<nowFlow.Sequence&&f.CompId==nowFlow.CompId&&f.PurchaseMainId==nowFlow.PurchaseMainId).OrderBy(f=>f.Sequence).ToList();
-        }
-
-        //public bool AnswerFlow(PurchaseFlow flow, MemberAndPermissionSetting verifierMemberAndPermission, string answer, string? reason,bool? isOwner)
+        //public bool UpdateApplyNewProductMainStatus(PurchaseMainSheet main,List<PurchaseSubItem> allPurchaseSubItems ,UpdateOwnerProcessRequest request)
         //{
-        //    string purchaseMainId = flow.PurchaseMainId;
-        //    PurchaseMainSheet purchaseMain = GetPurchaseMainByMainId(purchaseMainId);
-        //    List<PurchaseSubItem> purchaseSubItems = GetPurchaseSubItemsByMainId(purchaseMainId);
-        //    var (preFlow, nextFlow) = FindPreviousAndNextFlow(flow);
-        //    return AnswerFlowInTransactionScope(preFlow, nextFlow, flow, purchaseMain, purchaseSubItems, verifierMemberAndPermission, answer, reason,isOwner);
+        //    using var scope = new TransactionScope();
+        //    try
+        //    {
+        //        List<PurchaseSubItem> toUpdateSubItems = new();
+        //        if (request.ItemIds != null)
+        //        {
+        //            toUpdateSubItems = allPurchaseSubItems.Where(s => request.ItemIds.Contains(s.ItemId)).ToList();
+        //        }
+        //        toUpdateSubItems.ForEach(s => { s.OwnerProcess = request.OwnerProcess;s.SplitProcess = CommonConstants.SplitProcess.DONE; });
+        //        if (allPurchaseSubItems.All(s => s.OwnerProcess == CommonConstants.PurchaseMainOwnerProcessStatus.AGREE))
+        //        {
+        //            main.OwnerProcess = CommonConstants.PurchaseMainOwnerProcessStatus.AGREE;
+        //            main.SplitPrcoess = CommonConstants.SplitProcess.DONE;
+
+        //             為什麼做這檢查是因為有可能金萬林忘了按同意 就自行安排出貨,然後單位也接著驗收入庫,main.ReceiveStatus就更改不等於NONE了
+        //             這時單純金萬霖再補按同意就只更新OwnerProcess,SplitPrcoess
+        //            if (main.ReceiveStatus== CommonConstants.PurchaseReceiveStatus.NONE)
+        //            {
+        //                main.ReceiveStatus = CommonConstants.PurchaseReceiveStatus.DELIVERED;
+        //            }
+
+        //        }
+        //        else if (allPurchaseSubItems.Any(s => s.OwnerProcess == CommonConstants.PurchaseMainOwnerProcessStatus.AGREE))
+        //        {
+        //            main.OwnerProcess = CommonConstants.PurchaseMainOwnerProcessStatus.PART_AGREE;
+        //            main.SplitPrcoess = CommonConstants.SplitProcess.PART;
+        //            if (main.ReceiveStatus == CommonConstants.PurchaseReceiveStatus.NONE)
+        //            {
+        //                main.ReceiveStatus = CommonConstants.PurchaseReceiveStatus.DELIVERED;
+        //            }
+        //        }else if(allPurchaseSubItems.All(s => s.OwnerProcess == CommonConstants.PurchaseMainOwnerProcessStatus.NOT_AGREE))
+        //        {
+        //            main.OwnerProcess = CommonConstants.PurchaseMainOwnerProcessStatus.NOT_AGREE;
+        //            main.SplitPrcoess = CommonConstants.SplitProcess.DONE;
+        //            main.CurrentStatus = CommonConstants.PurchaseApplyStatus.CLOSE;
+        //        }
+
+        //        _dbContext.SaveChanges();
+        //        scope.Complete();
+        //        return true;
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        _logger.LogError("事務失敗[UpdatePurchaseOwnerProcess]：{msg}", ex);
+        //        return false;
+        //    }
         //}
 
-        public (PurchaseFlow?, PurchaseFlow?) FindPreviousAndNextFlow(PurchaseFlow flow)
-        {
-            List<PurchaseFlow> purchaseFlows = _dbContext.PurchaseFlows.Where(f => f.PurchaseMainId == flow.PurchaseMainId).OrderBy(f => f.Sequence).ToList();
+      
 
-            return (purchaseFlows.FirstOrDefault(f => f.Sequence < flow.Sequence), purchaseFlows.FirstOrDefault(f => f.Sequence > flow.Sequence));
+        public List<ApplyNewProductFlow> GetBeforeFlows(ApplyNewProductFlow nowFlow)
+        {
+            return _dbContext.ApplyNewProductFlows.Where(f=>f.Sequence<nowFlow.Sequence&&f.CompId==nowFlow.CompId&&f.ApplyId==nowFlow.ApplyId).OrderBy(f=>f.Sequence).ToList();
         }
 
-        private bool AnswerFlowInTransactionScope(PurchaseFlow? preFlow, PurchaseFlow? nextPurchase, PurchaseFlow currentFlow, PurchaseMainSheet purchaseMain,List<PurchaseSubItem> purchaseSubItems, MemberAndPermissionSetting verifierMemberAndPermission, string answer, string? reason,bool? isOwner)
+        public bool AnswerFlow(ApplyNewProductFlow flow, string answer, string? reason, bool? isOwner)
         {
-            WarehouseMember verifyMember = verifierMemberAndPermission.Member;
-            var verifyCompId = verifierMemberAndPermission.CompanyWithUnit.CompId;
+            string applyId = flow.ApplyId;
+            ApplyNewProductMain main = GetApplyNewProductMainByApplyId(applyId);
+            var (preFlow, nextFlow) = FindPreviousAndNextFlow(flow);
+            return AnswerFlowInTransactionScope(preFlow, nextFlow, flow, main, answer, reason, isOwner);
+        }
+
+        public (ApplyNewProductFlow?, ApplyNewProductFlow?) FindPreviousAndNextFlow(ApplyNewProductFlow flow)
+        {
+            List<ApplyNewProductFlow> flows = _dbContext.ApplyNewProductFlows.Where(f => f.ApplyId == flow.ApplyId).OrderBy(f => f.Sequence).ToList();
+
+            return (flows.FirstOrDefault(f => f.Sequence < flow.Sequence), flows.FirstOrDefault(f => f.Sequence > flow.Sequence));
+        }
+
+        private bool AnswerFlowInTransactionScope(ApplyNewProductFlow? preFlow, ApplyNewProductFlow? nextPurchase, ApplyNewProductFlow currentFlow, ApplyNewProductMain applyNewProductMain, string answer, string? reason,bool? isOwner)
+        {
+            List<WarehouseMember> ownerList = new();
             using var scope = new TransactionScope();
             try
             {
+                ownerList = _memberService.GetOwnerMembers();
                 // 更新Flow
                 currentFlow.Reason = reason;
-                if (answer!= CommonConstants.PurchaseApplyStatus.BACK)
+                if (answer != CommonConstants.AnswerApplyNewProductFlow.BACK)
                 {
-                    currentFlow.VerifyCompId = verifyCompId;
-                    currentFlow.VerifyUserId = verifyMember.UserId;
-                    currentFlow.VerifyUserName = verifyMember.DisplayName;
+                    currentFlow.ReviewCompId = currentFlow.ReviewCompId;
+                    currentFlow.ReviewUserId = currentFlow.ReviewUserId;
+                    currentFlow.ReviewUserName = currentFlow.ReviewUserName;
+                    currentFlow.ReviewGroupId = currentFlow.ReviewGroupId;
+                    currentFlow.ReviewGroupName = currentFlow.ReviewGroupName;
                 }
                 
                 currentFlow.Answer = answer;
@@ -334,36 +325,12 @@ namespace stock_api.Service
                 if (answer == CommonConstants.AnswerPurchaseFlow.AGREE && nextPurchase == null)
                 {
                     currentFlow.Status = answer;
-                    // 已完成所有flow 更新主單狀態
-                    purchaseMain.CurrentStatus = CommonConstants.PurchaseApplyStatus.AGREE;
-                    List<AcceptanceItem> acceptanceItems = new();
-                    foreach (var item in purchaseSubItems)
-                    {
-                        var acceptanceItem = new AcceptanceItem()
-                        {
-                            AcceptId = Guid.NewGuid().ToString(),
-                            CompId = item.CompId,
-                            ItemId = item.ItemId,
-                            OrderQuantity = item.Quantity??0,
-                            ProductId = item.ProductId,
-                            ProductCode = item.ProductCode,
-                            ProductName = item.ProductName,
-                            ProductSpec = item.ProductSpec,
-                            UdiserialCode = item.UdiserialCode,
-                            PurchaseMainId = purchaseMain.PurchaseMainId,
-                            ArrangeSupplierId = item.ArrangeSupplierId,
-                            ArrangeSupplierName = item.ArrangeSupplierName,
-                        };
-                        acceptanceItems.Add(acceptanceItem);
-                    }
-                    _dbContext.AcceptanceItems.AddRange(acceptanceItems);
-                    
-
+                    applyNewProductMain.CurrentStatus = CommonConstants.PurchaseApplyStatus.AGREE;
                 }
                 if (answer == CommonConstants.AnswerPurchaseFlow.REJECT)
                 {
                     currentFlow.Status = answer;
-                    purchaseMain.CurrentStatus = CommonConstants.PurchaseApplyStatus.REJECT;
+                    applyNewProductMain.CurrentStatus = CommonConstants.PurchaseApplyStatus.REJECT;
                 }
                 if (answer == CommonConstants.AnswerPurchaseFlow.BACK&&isOwner!=true)
                 {
@@ -375,78 +342,45 @@ namespace stock_api.Service
                         preFlow.Status = "";
                         preFlow.Answer = "";
                     }
-                    purchaseMain.CurrentStatus = CommonConstants.PurchaseApplyStatus.BACK;
+                    else
+                    {
+                        applyNewProductMain.CurrentStatus = CommonConstants.PurchaseApplyStatus.REJECT;
+
+                    }
                 }
                 if (answer == CommonConstants.AnswerPurchaseFlow.BACK && isOwner == true)
                 {
                     currentFlow.Status = "";
                     currentFlow.Answer = "";
-                    purchaseMain.CurrentStatus = CommonConstants.PurchaseApplyStatus.BACK;
+                    applyNewProductMain.CurrentStatus = CommonConstants.PurchaseApplyStatus.BACK;
                 }
 
 
                 // 新增log
-                var newFlowLog = new PurchaseFlowLog()
+                var newFlowLog = new ApplyProductFlowLog()
                 {
                     LogId = Guid.NewGuid().ToString(),
                     CompId = currentFlow.CompId,
-                    PurchaseMainId = currentFlow.PurchaseMainId,
-                    UserId = verifyMember.UserId,
-                    UserName = verifyMember.DisplayName,
+                    ApplyId = currentFlow.ApplyId,
+                    UserId = currentFlow.ReviewUserId,
+                    UserName = currentFlow.ReviewUserName,
                     Sequence = currentFlow.Sequence,
                     Action = answer,
                     Remarks = reason
                 };
-                _dbContext.PurchaseFlowLogs.Add(newFlowLog);
+                _dbContext.ApplyProductFlowLogs.Add(newFlowLog);
                 _dbContext.SaveChanges();
                 scope.Complete();
-                if (answer == CommonConstants.AnswerPurchaseFlow.AGREE && nextPurchase == null)
-                {
-                    string title = $"採購單:{string.Concat(DateTimeHelper.FormatDateStringForEmail(purchaseMain.ApplyDate), purchaseMain.PurchaseMainId.AsSpan(0, 5))} 需要您處理";
-                    string content = $"<a href={_smtpSettings.Domain}/purchase_flow_detail/{purchaseMain.PurchaseMainId}>{purchaseMain.PurchaseMainId}</a>";
-                    SendMailToOwner(title, content);
-                }
-                if (answer == CommonConstants.AnswerPurchaseFlow.AGREE && nextPurchase != null)
-                {
-                    string title = $"採購單:{string.Concat(DateTimeHelper.FormatDateStringForEmail(purchaseMain.ApplyDate), purchaseMain.PurchaseMainId.AsSpan(0, 5))} 需要您審核";
-                    string content = $"<a href={_smtpSettings.Domain}/purchase_flow_detail/{purchaseMain.PurchaseMainId}>{purchaseMain.PurchaseMainId}</a>";
-                    SendMailByFlow(nextPurchase,title, content);
-                }
-                if (answer == CommonConstants.AnswerPurchaseFlow.REJECT)
-                {
-                    string title = $"採購單:{string.Concat(DateTimeHelper.FormatDateStringForEmail(purchaseMain.ApplyDate), purchaseMain.PurchaseMainId.AsSpan(0, 5))} 已被拒絕";
-                    string content = $"<a href={_smtpSettings.Domain}/purchase_flow_detail/{purchaseMain.PurchaseMainId}>{purchaseMain.PurchaseMainId}</a>";
-                    SendMailByPurchaseMain(purchaseMain, title, content);
-                }
-                if (answer == CommonConstants.AnswerPurchaseFlow.BACK && isOwner != true)
-                {
-                    if (preFlow != null)
-                    {
-                        string title = $"採購單:{string.Concat(DateTimeHelper.FormatDateStringForEmail(purchaseMain.ApplyDate), purchaseMain.PurchaseMainId.AsSpan(0, 5))} 需要您審核";
-                        string content = $"<a href={_smtpSettings.Domain}/purchase_flow_detail/{purchaseMain.PurchaseMainId}>{purchaseMain.PurchaseMainId}</a>";
-                        SendMailByFlow(preFlow, title, content);
-                    }
-                    else
-                    {
-                        string title = $"採購單:{string.Concat(DateTimeHelper.FormatDateStringForEmail(purchaseMain.ApplyDate), purchaseMain.PurchaseMainId.AsSpan(0, 5))} 已被退回";
-                        string content = $"<a href={_smtpSettings.Domain}/purchase_flow_detail/{purchaseMain.PurchaseMainId}>{purchaseMain.PurchaseMainId}</a>";
-                        SendMailByPurchaseMain(purchaseMain, title, content);
-                    }
-                }
-                if (answer == CommonConstants.AnswerPurchaseFlow.BACK && isOwner == true)
-                {
-                    string title = $"採購單:{string.Concat(DateTimeHelper.FormatDateStringForEmail(purchaseMain.ApplyDate), purchaseMain.PurchaseMainId.AsSpan(0, 5))} 已被退回";
-                    string content = $"<a href={_smtpSettings.Domain}/purchase_flow_detail/{purchaseMain.PurchaseMainId}>{purchaseMain.PurchaseMainId}</a>";
-                    SendMailByFlow(currentFlow, title, content);
-                }
-
-                return true;
+                
             }
             catch (Exception ex)
             {
-                _logger.LogError("事務失敗[AnswerFlow]：{msg}", ex);
+                _logger.LogError("事務失敗[AnswerFlowInTransactionScope]：{msg}", ex);
                 return false;
             }
+            // 發送郵件通知
+            SendNotificationEmails(answer, applyNewProductMain, preFlow, nextPurchase, currentFlow, isOwner,ownerList);
+            return true;
         }
 
         public List<PurchaseSubItem> GetPurchaseSubItemListByItemList(List<string> itemIdList)
@@ -564,9 +498,9 @@ namespace stock_api.Service
             }
         }
 
-        private async Task SendMailByFlow(PurchaseFlow flow, String title, String content)
+        private async Task SendMailByFlow(ApplyNewProductFlow flow, String title, String content)
         {
-            var receiver = _memberService.GetMembersByUserId(flow.VerifyUserId);
+            var receiver = _memberService.GetMembersByUserId(flow.ReviewUserId);
             if (receiver != null)
             {
 
@@ -575,7 +509,7 @@ namespace stock_api.Service
             }
         }
 
-        private async Task SendMailByPurchaseMain(PurchaseMainSheet main, String title, String content)
+        private async Task SendMailByMain(ApplyNewProductMain main, String title, String content)
         {
             var receiver = _memberService.GetMembersByUserId(main.UserId);
             if (receiver != null)
@@ -586,10 +520,9 @@ namespace stock_api.Service
             }
         }
 
-        private void SendMailToOwner(String title, String content)
+        private void SendMailToOwner(String title, String content,List<WarehouseMember> ownerList)
         {
-            List<WarehouseMember> receiver = _memberService.GetOwnerMembers();
-            receiver.ForEach(async r =>
+            ownerList.ForEach(async r =>
             {
                 if (!string.IsNullOrEmpty(r.Email))
                 {
@@ -597,6 +530,49 @@ namespace stock_api.Service
                 }
             });
 
+        }
+
+        private void SendNotificationEmails(string answer, ApplyNewProductMain applyNewProductMain, ApplyNewProductFlow? preFlow, ApplyNewProductFlow? nextPurchase, ApplyNewProductFlow currentFlow, bool? isOwner,List<WarehouseMember> ownerList)
+        {
+            if (answer == CommonConstants.AnswerApplyNewProductFlow.AGREE && nextPurchase == null)
+            {
+                string title = $"申請新品項單據:{string.Concat(DateTimeHelper.FormatDateStringForEmail(applyNewProductMain.CreatedAt), applyNewProductMain.ApplyId.AsSpan(0, 5))} 需要您處理";
+                string content = $"<a href={_smtpSettings.Domain}/apply_new_product_flow_detail/{applyNewProductMain.ApplyId}>{applyNewProductMain.ApplyId}</a>";
+                SendMailToOwner(title, content, ownerList);
+            }
+            if (answer == CommonConstants.AnswerApplyNewProductFlow.AGREE && nextPurchase != null)
+            {
+                string title = $"申請新品項單據:{string.Concat(DateTimeHelper.FormatDateStringForEmail(applyNewProductMain.CreatedAt), applyNewProductMain.ApplyId.AsSpan(0, 5))} 需要您審核";
+                string content = $"<a href={_smtpSettings.Domain}/apply_new_product_flow_detail/{applyNewProductMain.ApplyId}>{applyNewProductMain.ApplyId}</a>";
+                SendMailByFlow(nextPurchase, title, content);
+            }
+            if (answer == CommonConstants.AnswerApplyNewProductFlow.REJECT)
+            {
+                string title = $"申請新品項單據:{string.Concat(DateTimeHelper.FormatDateStringForEmail(applyNewProductMain.CreatedAt), applyNewProductMain.ApplyId.AsSpan(0, 5))} 已被拒絕";
+                string content = $"<a href={_smtpSettings.Domain}/apply_new_product_flow_detail/{applyNewProductMain.ApplyId}>{applyNewProductMain.ApplyId}</a>";
+                SendMailByMain(applyNewProductMain, title, content);
+            }
+            if (answer == CommonConstants.AnswerApplyNewProductFlow.BACK && isOwner != true)
+            {
+                if (preFlow != null)
+                {
+                    string title = $"申請新品項單據:{string.Concat(DateTimeHelper.FormatDateStringForEmail(applyNewProductMain.CreatedAt), applyNewProductMain.ApplyId.AsSpan(0, 5))} 需要您審核";
+                    string content = $"<a href={_smtpSettings.Domain}/apply_new_product_flow_detail/{applyNewProductMain.ApplyId}>{applyNewProductMain.ApplyId}</a>";
+                    SendMailByFlow(preFlow, title, content);
+                }
+                else
+                {
+                    string title = $"申請新品項單據:{string.Concat(DateTimeHelper.FormatDateStringForEmail(applyNewProductMain.CreatedAt), applyNewProductMain.ApplyId.AsSpan(0, 5))} 已被退回";
+                    string content = $"<a href={_smtpSettings.Domain}/apply_new_product_flow_detail/{applyNewProductMain.ApplyId}>{applyNewProductMain.ApplyId}</a>";
+                    SendMailByMain(applyNewProductMain, title, content);
+                }
+            }
+            if (answer == CommonConstants.AnswerPurchaseFlow.BACK && isOwner == true)
+            {
+                string title = $"申請新品項單據:{string.Concat(DateTimeHelper.FormatDateStringForEmail(applyNewProductMain.CreatedAt), applyNewProductMain.ApplyId.AsSpan(0, 5))} 已被退回";
+                string content = $"<a href={_smtpSettings.Domain}/apply_new_product_flow_detail/{applyNewProductMain.ApplyId}>{applyNewProductMain.ApplyId}</a>";
+                SendMailByFlow(currentFlow, title, content);
+            }
         }
     }
 }

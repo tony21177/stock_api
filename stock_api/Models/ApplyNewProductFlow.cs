@@ -30,6 +30,9 @@ public partial class ApplyNewProductFlow
     [StringLength(45)]
     public string Answer { get; set; } = null!;
 
+    [StringLength(300)]
+    public string? Reason { get; set; }
+
     /// <summary>
     /// 申請者的來源組織ID
     /// </summary>
