@@ -203,8 +203,12 @@ namespace stock_api.Service
                     {
                         DateTime now = DateTime.Now;
                         string title = $"採購單:{string.Concat(DateTimeHelper.FormatDateStringForEmail(now), newPurchasePurchaseMainSheet.PurchaseMainId.AsSpan(0, 5))} 需要您審核";
-
                         string content = $"<a href={_smtpSettings.Domain}/purchase_flow_detail/{purchaseMainId}>{purchaseMainId}</a>";
+                        if (newPurchasePurchaseMainSheet.Type == CommonConstants.PurchaseType.URGENT)
+                        {
+                            title = "!!!!急件" + title;
+                            content = $"<h2 style='color: red;'>急件請盡速處理</h2>" + content;
+                        }
                         SendMailByFlowSetting(flowSettingVo,title,content);
                     }
                     _dbContext.SaveChanges();
@@ -587,18 +591,33 @@ namespace stock_api.Service
             {
                 string title = $"採購單:{string.Concat(DateTimeHelper.FormatDateStringForEmail(purchaseMain.ApplyDate), purchaseMain.PurchaseMainId.AsSpan(0, 5))} 需要您處理";
                 string content = $"<a href={_smtpSettings.Domain}/purchase_flow_detail/{purchaseMain.PurchaseMainId}>{purchaseMain.PurchaseMainId}</a>";
+                if (purchaseMain.Type == CommonConstants.PurchaseType.URGENT)
+                {
+                    title = "!!!!急件" + title;
+                    content = $"<h2 style='color: red;'>急件請盡速處理</h2>" + content;
+                }
                 SendMailToOwner(title, content,ownerList);
             }
             if (answer == CommonConstants.AnswerPurchaseFlow.AGREE && nextPurchase != null)
             {
                 string title = $"採購單:{string.Concat(DateTimeHelper.FormatDateStringForEmail(purchaseMain.ApplyDate), purchaseMain.PurchaseMainId.AsSpan(0, 5))} 需要您審核";
                 string content = $"<a href={_smtpSettings.Domain}/purchase_flow_detail/{purchaseMain.PurchaseMainId}>{purchaseMain.PurchaseMainId}</a>";
+                if (purchaseMain.Type == CommonConstants.PurchaseType.URGENT)
+                {
+                    title = "!!!!急件" + title;
+                    content = $"<h2 style='color: red;'>急件請盡速處理</h2>" + content;
+                }
                 SendMailByFlow(nextPurchase, title, content);
             }
             if (answer == CommonConstants.AnswerPurchaseFlow.REJECT)
             {
                 string title = $"採購單:{string.Concat(DateTimeHelper.FormatDateStringForEmail(purchaseMain.ApplyDate), purchaseMain.PurchaseMainId.AsSpan(0, 5))} 已被拒絕";
                 string content = $"<a href={_smtpSettings.Domain}/purchase_flow_detail/{purchaseMain.PurchaseMainId}>{purchaseMain.PurchaseMainId}</a>";
+                if (purchaseMain.Type == CommonConstants.PurchaseType.URGENT)
+                {
+                    title = "!!!!急件" + title;
+                    content = $"<h2 style='color: red;'>急件已被退件</h2>" + content;
+                }
                 SendMailByPurchaseMain(purchaseMain, title, content);
             }
             if (answer == CommonConstants.AnswerPurchaseFlow.BACK && isOwner != true)
@@ -607,12 +626,22 @@ namespace stock_api.Service
                 {
                     string title = $"採購單:{string.Concat(DateTimeHelper.FormatDateStringForEmail(purchaseMain.ApplyDate), purchaseMain.PurchaseMainId.AsSpan(0, 5))} 需要您審核";
                     string content = $"<a href={_smtpSettings.Domain}/purchase_flow_detail/{purchaseMain.PurchaseMainId}>{purchaseMain.PurchaseMainId}</a>";
+                    if (purchaseMain.Type == CommonConstants.PurchaseType.URGENT)
+                    {
+                        title = "!!!!急件" + title;
+                        content = $"<h2 style='color: red;'>急件請盡速處理</h2>" + content;
+                    }
                     SendMailByFlow(preFlow, title, content);
                 }
                 else
                 {
                     string title = $"採購單:{string.Concat(DateTimeHelper.FormatDateStringForEmail(purchaseMain.ApplyDate), purchaseMain.PurchaseMainId.AsSpan(0, 5))} 已被退回";
                     string content = $"<a href={_smtpSettings.Domain}/purchase_flow_detail/{purchaseMain.PurchaseMainId}>{purchaseMain.PurchaseMainId}</a>";
+                    if (purchaseMain.Type == CommonConstants.PurchaseType.URGENT)
+                    {
+                        title = "!!!!急件" + title;
+                        content = $"<h2 style='color: red;'>急件已被退回</h2>" + content;
+                    }
                     SendMailByPurchaseMain(purchaseMain, title, content);
                 }
             }
@@ -620,6 +649,11 @@ namespace stock_api.Service
             {
                 string title = $"採購單:{string.Concat(DateTimeHelper.FormatDateStringForEmail(purchaseMain.ApplyDate), purchaseMain.PurchaseMainId.AsSpan(0, 5))} 已被退回";
                 string content = $"<a href={_smtpSettings.Domain}/purchase_flow_detail/{purchaseMain.PurchaseMainId}>{purchaseMain.PurchaseMainId}</a>";
+                if (purchaseMain.Type == CommonConstants.PurchaseType.URGENT)
+                {
+                    title = "!!!!急件" + title;
+                    content = $"<h2 style='color: red;'>急件已被退回</h2>" + content;
+                }
                 SendMailByFlow(currentFlow, title, content);
             }
 

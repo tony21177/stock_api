@@ -20,13 +20,25 @@ namespace stock_api.Service
         private readonly IMapper _mapper;
         private readonly ILogger<WarehouseProductService> _logger;
         private FileUploadService _fileUploadService;
+        private PurchaseService _purchaseService;
 
-        public WarehouseProductService(StockDbContext dbContext, IMapper mapper, ILogger<WarehouseProductService> logger, FileUploadService fileUploadService)
+        public WarehouseProductService(StockDbContext dbContext, IMapper mapper, ILogger<WarehouseProductService> logger, FileUploadService fileUploadService, PurchaseService purchaseService)
         {
             _dbContext = dbContext;
             _mapper = mapper;
             _logger = logger;
             _fileUploadService = fileUploadService;
+            _purchaseService = purchaseService;
+        }
+
+        public List<WarehouseProduct> GetAllProducts()
+        {
+            return _dbContext.WarehouseProducts.Where(p => p.IsActive==true).ToList();
+        }
+
+        public List<WarehouseProduct> GetAllProducts(String compId)
+        {
+            return _dbContext.WarehouseProducts.Where(p => p.IsActive == true&&p.CompId==compId).ToList();
         }
 
         public WarehouseProduct? GetProductByProductId(string productId)
@@ -786,6 +798,77 @@ namespace stock_api.Service
                 _logger.LogError("事務失敗[AddNewProduct]：{msg}", ex);
                 return (false, ex.Message);
             }
+        }
+
+        public async Task<List<NotifyProductQuantity>> FindAllProductQuantityNotifyList()
+        {
+            var allProducts = GetAllProducts();
+            var allProductIdList = allProducts.Select(x => x.ProductId).ToList();
+            List<NotifyProductQuantity> notifyProductQuantityList = new();
+            var allUnDonePurchaseSubItemList = _purchaseService.GetUndonePurchaseSubItems(allProductIdList);
+            allProducts.ForEach(product =>
+            {
+                var matchedUndoneSubItemList = allUnDonePurchaseSubItemList.Where(i => i.ProductId == product.ProductId).ToList();
+                float inProcessingQrderQuantity = matchedUndoneSubItemList.Select(i => i.Quantity ?? 0.0f).DefaultIfEmpty(0.0f).Sum();
+                NotifyProductQuantity notifyProductQuantity = new()
+                {
+                    ProductCode = product.ProductCode,
+                    ProductId = product.ProductId,
+                    ProductName = product.ProductName,
+                    InStockQuantity = product.InStockQuantity ?? 0.0f,
+                    SafeQuantity = product.SafeQuantity ?? 0.0f,
+                    MaxSafeQuantity = product.MaxSafeQuantity,
+                    CompId = product.CompId,
+                };
+                notifyProductQuantityList.Add(notifyProductQuantity);
+            });
+
+            notifyProductQuantityList = notifyProductQuantityList.Where(p =>
+            {
+                float neededOrderQuantity = p.SafeQuantity - p.InProcessingQrderQuantity - p.InStockQuantity;
+                if (neededOrderQuantity > 0)
+                {
+                    return true;
+                }
+                return false;
+            }).ToList();
+            return notifyProductQuantityList;
+        }
+
+        public async Task<List<NotifyProductQuantity>> FindAllProductQuantityNotifyList(string compId)
+        {
+
+            var allProducts = GetAllProducts(compId);
+            var allProductIdList = allProducts.Select(x => x.ProductId).ToList();
+            List<NotifyProductQuantity> notifyProductQuantityList = new();
+            var allUnDonePurchaseSubItemList = _purchaseService.GetUndonePurchaseSubItems(allProductIdList);
+            allProducts.ForEach(product =>
+            {
+                var matchedUndoneSubItemList = allUnDonePurchaseSubItemList.Where(i => i.ProductId == product.ProductId).ToList();
+                float inProcessingQrderQuantity = matchedUndoneSubItemList.Select(i => i.Quantity ?? 0.0f).DefaultIfEmpty(0.0f).Sum();
+                NotifyProductQuantity notifyProductQuantity = new()
+                {
+                    ProductCode = product.ProductCode,
+                    ProductId = product.ProductId,
+                    ProductName = product.ProductName,
+                    InStockQuantity = product.InStockQuantity ?? 0.0f,
+                    SafeQuantity = product.SafeQuantity ?? 0.0f,
+                    MaxSafeQuantity = product.MaxSafeQuantity,
+                    CompId = product.CompId,
+                };
+                notifyProductQuantityList.Add(notifyProductQuantity);
+            });
+
+            notifyProductQuantityList = notifyProductQuantityList.Where(p =>
+            {
+                float neededOrderQuantity = p.SafeQuantity - p.InProcessingQrderQuantity - p.InStockQuantity;
+                if (neededOrderQuantity > 0)
+                {
+                    return true;
+                }
+                return false;
+            }).ToList();
+            return notifyProductQuantityList;
         }
     }
 }

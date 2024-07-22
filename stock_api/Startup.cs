@@ -9,6 +9,11 @@ using System.Text.Json;
 using Serilog;
 using Microsoft.AspNetCore.Hosting;
 using Serilog.Enrichers.CallerInfo;
+using Hangfire;
+using Hangfire.MySql;
+using System.Transactions;
+using stock_api.Scheduler;
+using Quartz;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -52,6 +57,26 @@ builder.Services.AddCors(options =>
 
     });
 });
+
+//Hangfire Service
+//builder.Services.AddHangfire(configuration => configuration
+//.SetDataCompatibilityLevel(CompatibilityLevel.Version_170)
+//.UseSimpleAssemblyNameTypeSerializer()
+//.UseRecommendedSerializerSettings()
+//.UseStorage(new MySqlStorage(builder.Configuration.GetConnectionString("DefaultConnection"), new MySqlStorageOptions
+//{
+//    TransactionIsolationLevel = IsolationLevel.ReadCommitted,
+//    QueuePollInterval = TimeSpan.FromSeconds(15),
+//    JobExpirationCheckInterval = TimeSpan.FromHours(1),
+//    CountersAggregateInterval = TimeSpan.FromMinutes(5),
+//    PrepareSchemaIfNecessary = true,
+//    DashboardJobListLimit = 50000,
+//    TransactionTimeout = TimeSpan.FromMinutes(1),
+//    TablesPrefix = "Hangfire"
+//})));
+
+
+
 
 
 // 配置 MySQL 和 Entity Framework
@@ -137,6 +162,26 @@ builder.Services.AddEndpointsApiExplorer();
 //builder.Services.AddSwaggerGen();
 
 builder.Services.ConfigureBusinessServices(builder.Configuration);
+
+
+// Configure Quartz
+builder.Services.AddQuartz(q =>
+{
+    q.UseMicrosoftDependencyInjectionJobFactory();
+
+    // Define a job and tie it to the ProductQuantityNotifyJob class
+    q.AddJob<ProductQuantityNotifyJob>(opts => opts.WithIdentity("ProductQuantityNotifyJob"));
+
+    // Create a trigger for the job
+    q.AddTrigger(opts => opts
+        .ForJob("ProductQuantityNotifyJob")
+        .WithIdentity("ProductQuantityNotifyTrigger")
+        .WithCronSchedule("0 30 6 * * ?")
+    ); // Schedule to run daily at 5:30 PM
+});
+
+// Add the Quartz Hosted Service
+builder.Services.AddQuartzHostedService(q => q.WaitForJobsToComplete = true);
 
 var app = builder.Build();
 

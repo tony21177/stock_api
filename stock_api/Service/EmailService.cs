@@ -35,7 +35,7 @@ public class EmailService
             client.Connect(_smtpSettings.Server, _smtpSettings.Port, true);
             client.Authenticate(_smtpSettings.User, _smtpSettings.Password);
             var sendResult = client.Send(message);
-            _logger.LogError($"sendResult {sendResult}");
+            _logger.LogInformation($"sendResult {sendResult}");
         }
         catch (Exception ex)
         {

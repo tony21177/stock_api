@@ -5,6 +5,11 @@ using stock_api.Utils;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using ZstdSharp.Unsafe;
+using stock_api.Service.ValueObject;
+using System.Collections.Generic;
+using stock_api.Models;
+using stock_api.Scheduler;
+using Microsoft.IdentityModel.Tokens;
 
 namespace stock_api.Controllers
 {
@@ -16,13 +21,18 @@ namespace stock_api.Controllers
         private readonly MemberService _memberService;
         private readonly CompanyService _companyService;
         private readonly AuthLayerService _authLayerService;
+        private readonly WarehouseProductService _warehouseProductService;
+        private readonly EmailService _emailService;
 
-        public LoginController(AuthHelpers authHelpers, MemberService memberService,CompanyService companyService, AuthLayerService authLayerService)
+
+        public LoginController(AuthHelpers authHelpers, MemberService memberService,CompanyService companyService, AuthLayerService authLayerService, WarehouseProductService warehouseProductService, EmailService emailService)
         {
             _authHelpers = authHelpers;
             _memberService = memberService;
             _companyService = companyService;
             _authLayerService = authLayerService;
+            _warehouseProductService = warehouseProductService;
+            _emailService = emailService;
         }
 
         [HttpPost]
@@ -50,9 +60,20 @@ namespace stock_api.Controllers
             result.Data = new Dictionary<string, string> { { "token", token }, { "displayName", memberAndPermissionSetting.Member.DisplayName },{ "userId", memberAndPermissionSetting.Member.UserId }
             ,{ "compId", memberAndPermissionSetting.Member.CompId } ,{ "compName", memberAndPermissionSetting.CompanyWithUnit.Name },{ "compType", memberAndPermissionSetting.CompanyWithUnit.Type },{ "unitId", memberAndPermissionSetting.CompanyWithUnit.UnitId }
             ,{ "unitName", memberAndPermissionSetting.CompanyWithUnit.UnitName }};
+
+            NotifyNotEnoughProduct(memberAndPermissionSetting.Member.CompId, memberAndPermissionSetting.Member);
             return Ok(result);
+        }
 
-
+        private async Task NotifyNotEnoughProduct(string compId,WarehouseMember receiver)
+        {
+            List<NotifyProductQuantity> notifyProductQuantityList = await _warehouseProductService.FindAllProductQuantityNotifyList(compId);
+            string emailTitle = "庫存品項不足通知";
+            string emailBody = ProductQuantityNotifyJob.GenerateHtmlString(notifyProductQuantityList);
+            if (!receiver.Email.IsNullOrEmpty())
+            {
+                await _emailService.SendAsync(emailTitle, emailBody, receiver.Email);
+            }
         }
 
         MemberAndPermissionSetting? ValidateUser(LoginRequest loginRequest)

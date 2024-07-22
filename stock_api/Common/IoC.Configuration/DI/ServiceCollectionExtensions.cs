@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using stock_api.Auth;
 using stock_api.Common.Settings;
+using stock_api.Scheduler;
 using stock_api.Service;
 using stock_api.Utils;
 using System.Reflection;
@@ -38,6 +39,12 @@ namespace stock_api.Common.IoC.Configuration.DI
 
                 // Configure EmailService
                 services.AddSingleton<EmailService>();
+
+                //services.AddTransient<IJob, ProductQuantityNotifyJob>();
+
+
+                // Register the job with Quartz
+                services.AddTransient<ProductQuantityNotifyJob>();
             }
         }
 
