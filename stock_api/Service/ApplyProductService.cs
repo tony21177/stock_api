@@ -543,19 +543,19 @@ namespace stock_api.Service
             if (answer == CommonConstants.AnswerApplyNewProductFlow.AGREE && nextPurchase == null)
             {
                 string title = $"申請新品項單據:{string.Concat(DateTimeHelper.FormatDateStringForEmail(applyNewProductMain.CreatedAt), applyNewProductMain.ApplyId.AsSpan(0, 5))} 需要您處理";
-                string content = $"<a href={_smtpSettings.Domain}/apply_new_product_flow_detail/{applyNewProductMain.ApplyId}>{applyNewProductMain.ApplyId}</a>";
+                string content = $"<a href={_smtpSettings.Domain}/product_item_verify/{applyNewProductMain.ApplyId}>{applyNewProductMain.ApplyId}</a>";
                 SendMailToOwner(title, content, ownerList);
             }
             if (answer == CommonConstants.AnswerApplyNewProductFlow.AGREE && nextPurchase != null)
             {
                 string title = $"申請新品項單據:{string.Concat(DateTimeHelper.FormatDateStringForEmail(applyNewProductMain.CreatedAt), applyNewProductMain.ApplyId.AsSpan(0, 5))} 需要您審核";
-                string content = $"<a href={_smtpSettings.Domain}/apply_new_product_flow_detail/{applyNewProductMain.ApplyId}>{applyNewProductMain.ApplyId}</a>";
+                string content = $"<a href={_smtpSettings.Domain}/product_item_verify/{applyNewProductMain.ApplyId}>{applyNewProductMain.ApplyId}</a>";
                 SendMailByFlow(nextPurchase, title, content);
             }
             if (answer == CommonConstants.AnswerApplyNewProductFlow.REJECT)
             {
                 string title = $"申請新品項單據:{string.Concat(DateTimeHelper.FormatDateStringForEmail(applyNewProductMain.CreatedAt), applyNewProductMain.ApplyId.AsSpan(0, 5))} 已被拒絕";
-                string content = $"<a href={_smtpSettings.Domain}/apply_new_product_flow_detail/{applyNewProductMain.ApplyId}>{applyNewProductMain.ApplyId}</a>";
+                string content = $"<a href={_smtpSettings.Domain}/product_item_verify/{applyNewProductMain.ApplyId}>{applyNewProductMain.ApplyId}</a>";
                 SendMailByMain(applyNewProductMain, title, content);
             }
             if (answer == CommonConstants.AnswerApplyNewProductFlow.BACK && isOwner != true)
@@ -563,20 +563,20 @@ namespace stock_api.Service
                 if (preFlow != null)
                 {
                     string title = $"申請新品項單據:{string.Concat(DateTimeHelper.FormatDateStringForEmail(applyNewProductMain.CreatedAt), applyNewProductMain.ApplyId.AsSpan(0, 5))} 需要您審核";
-                    string content = $"<a href={_smtpSettings.Domain}/apply_new_product_flow_detail/{applyNewProductMain.ApplyId}>{applyNewProductMain.ApplyId}</a>";
+                    string content = $"<a href={_smtpSettings.Domain}/product_item_verify/{applyNewProductMain.ApplyId}>{applyNewProductMain.ApplyId}</a>";
                     SendMailByFlow(preFlow, title, content);
                 }
                 else
                 {
                     string title = $"申請新品項單據:{string.Concat(DateTimeHelper.FormatDateStringForEmail(applyNewProductMain.CreatedAt), applyNewProductMain.ApplyId.AsSpan(0, 5))} 已被退回";
-                    string content = $"<a href={_smtpSettings.Domain}/apply_new_product_flow_detail/{applyNewProductMain.ApplyId}>{applyNewProductMain.ApplyId}</a>";
+                    string content = $"<a href={_smtpSettings.Domain}/product_item_verify/{applyNewProductMain.ApplyId}>{applyNewProductMain.ApplyId}</a>";
                     SendMailByMain(applyNewProductMain, title, content);
                 }
             }
             if (answer == CommonConstants.AnswerPurchaseFlow.BACK && isOwner == true)
             {
                 string title = $"申請新品項單據:{string.Concat(DateTimeHelper.FormatDateStringForEmail(applyNewProductMain.CreatedAt), applyNewProductMain.ApplyId.AsSpan(0, 5))} 已被退回";
-                string content = $"<a href={_smtpSettings.Domain}/apply_new_product_flow_detail/{applyNewProductMain.ApplyId}>{applyNewProductMain.ApplyId}</a>";
+                string content = $"<a href={_smtpSettings.Domain}/product_item_verify/{applyNewProductMain.ApplyId}>{applyNewProductMain.ApplyId}</a>";
                 SendMailByFlow(currentFlow, title, content);
             }
         }
