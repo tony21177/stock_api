@@ -188,7 +188,44 @@ namespace stock_api.Controllers
             {
                 return BadRequest(CommonResponse<dynamic>.BuildValidationFailedResponse(validationResult));
             }
-            var applyNewProductFlow = _applyProductService.GetFlowsByFlowId(request.FlowId);
+            ApplyNewProductFlow? applyNewProductFlow = null;
+
+            if(memberAndPermissionSetting.CompanyWithUnit.Type == CommonConstants.CompanyType.OWNER)
+            {
+                if (request.ApplyId == null)
+                {
+                    return BadRequest(new CommonResponse<dynamic>
+                    {
+                        Result = false,
+                        Message = "applyId為必須"
+                    });
+                }
+                var flows = _applyProductService.GetFlowsByApplyIds(request.ApplyId);
+                if (flows.Count == 0)
+                {
+                    return BadRequest(new CommonResponse<dynamic>
+                    {
+                        Result = false,
+                        Message = "該單據沒有審核流程"
+                    });
+                }
+                var lastFlow  = flows.OrderByDescending(f=>f.Sequence).FirstOrDefault();
+                applyNewProductFlow = lastFlow;
+            }
+            else
+            {
+                if (request.FlowId == null)
+                {
+                    return BadRequest(new CommonResponse<dynamic>
+                    {
+                        Result = false,
+                        Message = "flowId為必須"
+                    });
+                }
+                applyNewProductFlow = _applyProductService.GetFlowByFlowId(request.FlowId);
+            }
+
+
 
             if (applyNewProductFlow == null)
             {

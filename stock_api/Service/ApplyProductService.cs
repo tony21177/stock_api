@@ -220,7 +220,13 @@ namespace stock_api.Service
 
         }
 
-        public ApplyNewProductFlow? GetFlowsByFlowId(string flowId)
+        public List<ApplyNewProductFlow> GetFlowsByApplyIds(string applyId)
+        {
+            return _dbContext.ApplyNewProductFlows.Where(f => f.ApplyId== applyId).ToList();
+
+        }
+
+        public ApplyNewProductFlow? GetFlowByFlowId(string flowId)
         {
             return _dbContext.ApplyNewProductFlows.Where(f => f.FlowId == flowId).FirstOrDefault();
 
