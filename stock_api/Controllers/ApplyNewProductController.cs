@@ -149,8 +149,21 @@ namespace stock_api.Controllers
             ListApplyNewProductMainRequest request = new() { CurrentStatus = CommonConstants.PurchaseFlowAnswer.AGREE };
 
             var (data, total) = _applyProductService.ListApplyNewProductMain(request,false);
-            
-            
+            var allCompIds = data.Select(x => x.CompId).Distinct().ToList();   
+            var allApplyUserIds = data.Select(x=>x.UserId).Distinct().ToList();
+
+            var allCompWithUnitList = _companyService.GetCompanyWithUnitByCompanyIds(allCompIds);
+            var allApplyUsers = _memberService.GetMembersByUserIdList(allApplyUserIds);
+
+            data.ForEach(e =>
+            {
+                var matchedCompWithUnit = allCompWithUnitList.Where(c => c.CompId == e.CompId).FirstOrDefault();
+                var matchedUser = allApplyUsers.Where(u => u.UserId == e.UserId).FirstOrDefault();
+                e.ApplyUserName = matchedUser?.DisplayName;
+                e.ApplyCompName = matchedCompWithUnit?.Name;
+                e.ApplyCompName = matchedCompWithUnit?.UnitName;
+            });
+
 
             var response = new CommonResponse<dynamic>
             {

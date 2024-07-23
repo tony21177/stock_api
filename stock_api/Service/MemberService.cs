@@ -28,6 +28,11 @@ namespace stock_api.Service
             return _dbContext.WarehouseMembers.Where(member => userIdList.Contains(member.UserId) && member.CompId == compId).ToList();
         }
 
+        public List<WarehouseMember> GetMembersByUserIdList(List<string> userIdList)
+        {
+            return _dbContext.WarehouseMembers.Where(member => userIdList.Contains(member.UserId) ).ToList();
+        }
+
         public List<WarehouseMember> GetActiveMembersByUserIds(List<string> userIdList, string compId)
         {
             if (userIdList == null || userIdList.Count == 0)

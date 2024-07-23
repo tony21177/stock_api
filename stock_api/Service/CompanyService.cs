@@ -66,10 +66,12 @@ namespace stock_api.Service
         {
             return _dbContext.Companies.Where(cp => cp.CompId == compId).FirstOrDefault();
         }
+
         public List<Company> GetCompanyByCompIds(List<string> compIds)
         {
             return _dbContext.Companies.Where(cp => compIds.Contains(cp.CompId)).ToList();
         }
+
 
         public CompanyWithUnitVo? GetCompanyWithUnitByCompanyId(string compId)
         {
@@ -94,6 +96,28 @@ namespace stock_api.Service
                 return result[0];
             }
             return null;
+        }
+
+        public List<CompanyWithUnitVo> GetCompanyWithUnitByCompanyIds(List<string> compIds)
+        {
+            var query = from c in _dbContext.Companies
+                        join cu in _dbContext.CompanyUnits on c.CompId equals cu.CompId
+                        where compIds.Contains(c.CompId)
+                        select new CompanyWithUnitVo
+                        {
+                            CompId = c.CompId,
+                            Name = c.Name,
+                            IsActive = c.IsActive,
+                            Type = c.Type,
+                            CreatedAt = c.CreatedAt,
+                            UpdatedAt = c.UpdatedAt,
+                            UnitId = cu.UnitId,
+                            UnitName = cu.UnitName
+                        };
+
+            var result = query.ToList();
+            
+            return result;
         }
 
         public List<CompanyWithUnitVo> GetCompanyWithUnitListByCompanyIdList(List<string> compIdList)
