@@ -207,7 +207,7 @@ namespace stock_api.Service
 
             applyNewProductMainWithFlowList.ForEach(main =>
             {
-                var matchedFlows = allRelatedFlows.Where(f => f.ApplyId == main.ApplyId).OrderByDescending(f => f.Sequence).ToList();
+                var matchedFlows = allRelatedFlows.Where(f => f.ApplyId == main.ApplyId).OrderBy(f => f.Sequence).ToList();
                 main.Flows = matchedFlows;
             });
 
