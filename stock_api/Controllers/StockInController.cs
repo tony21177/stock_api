@@ -701,6 +701,22 @@ namespace stock_api.Controllers
                 Message = errorMsg,
             });
         }
+
+        [HttpGet("remind/expired")]
+        [Authorize]
+        public IActionResult GetRemindExpiredList()
+        {
+            var memberAndPermissionSetting = _authHelpers.GetMemberAndPermissionSetting(User);
+            var compId = memberAndPermissionSetting.CompanyWithUnit.CompId;
+            DateOnly today = DateOnly.FromDateTime(DateTime.Now);
+            var nearExpiredProductVoList = _stockInService.GetNearExpiredProductList(compId, today);
+            
+            return Ok(new CommonResponse<dynamic>
+            {
+                Result = true,
+                Data = nearExpiredProductVoList,
+            });
+        }
     }
 
     public class SupplierAccepItemsVo

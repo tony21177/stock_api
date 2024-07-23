@@ -562,5 +562,23 @@ namespace stock_api.Service
                 return (false, ex.Message);
             }
         }
+
+        public List<NearExpiredProductVo> GetNearExpiredProductList(string compId,DateOnly compareDate)
+        {
+            var activeProducts = _dbContext.WarehouseProducts.Where(p => p.CompId == compId && p.IsActive == true).ToList();
+            var productIds = activeProducts.Select(p=>p.ProductId).ToList();
+            var allUnAllOutInStockItemList = _dbContext.InStockItemRecords.Where(i => productIds.Contains(i.ProductId) && i.OutStockStatus != CommonConstants.OutStockStatus.ALL).ToList();
+            var nearExpireProductVoList = _mapper.Map<List<NearExpiredProductVo>>(activeProducts);
+            
+            foreach (var product in nearExpireProductVoList)
+            {
+                var matchedAllUnAllOutInStockItemList = allUnAllOutInStockItemList.Where(i => i.ProductId == product.ProductId).ToList();
+                if (product.PreDeadline == null) continue;
+                var nearExpiredInStockItemList = matchedAllUnAllOutInStockItemList.Where(i => i.ExpirationDate != null && i.ExpirationDate.Value.AddDays(-product.PreDeadline.Value) <= compareDate).OrderBy(i=>i.ExpirationDate).ToList();
+                product.InStockItemList = nearExpiredInStockItemList;
+            }
+
+            return nearExpireProductVoList.Where(p=>p.InStockItemList.Count>0).ToList();
+        }
     }
 }
