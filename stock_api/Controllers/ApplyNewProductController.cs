@@ -161,7 +161,7 @@ namespace stock_api.Controllers
                 var matchedUser = allApplyUsers.Where(u => u.UserId == e.UserId).FirstOrDefault();
                 e.ApplyUserName = matchedUser?.DisplayName;
                 e.ApplyCompName = matchedCompWithUnit?.Name;
-                e.ApplyCompName = matchedCompWithUnit?.UnitName;
+                e.ApplyCompUnitName = matchedCompWithUnit?.UnitName;
             });
 
 
