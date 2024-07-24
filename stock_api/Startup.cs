@@ -171,13 +171,19 @@ builder.Services.AddQuartz(q =>
 
     // Define a job and tie it to the ProductQuantityNotifyJob class
     q.AddJob<ProductQuantityNotifyJob>(opts => opts.WithIdentity("ProductQuantityNotifyJob"));
+    q.AddJob<NearExpiredQuantityNotifyJob>(opts => opts.WithIdentity("NearExpiredQuantityNotifyJob"));
 
     // Create a trigger for the job
     q.AddTrigger(opts => opts
         .ForJob("ProductQuantityNotifyJob")
         .WithIdentity("ProductQuantityNotifyTrigger")
         .WithCronSchedule("0 30 6 * * ?")
-    ); // Schedule to run daily at 5:30 PM
+    );
+    q.AddTrigger(opts => opts
+        .ForJob("NearExpiredQuantityNotifyJob")
+        .WithIdentity("NearExpiredQuantityNotifyTrigger")
+        .WithCronSchedule("00 35 6 * * ?")
+    );
 });
 
 // Add the Quartz Hosted Service

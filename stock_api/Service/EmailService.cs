@@ -1,10 +1,7 @@
 ﻿using MailKit.Net.Smtp;
 using MimeKit;
-using Microsoft.Extensions.Options;
 using stock_api.Common.Settings;
-using System.Threading.Tasks;
-using stock_api.Service;
-using System.Text;
+
 
 public class EmailService
 {
@@ -18,7 +15,7 @@ public class EmailService
 
     public async Task SendAsync(string title, string content, string email)
     {
-        var message = new MimeMessage();
+       var message = new MimeMessage();
         message.From.Add(new MailboxAddress( "庫存系統", _smtpSettings.User));
         message.To.Add(new MailboxAddress("庫存系統成員", email));
         message.Subject = title;
@@ -34,8 +31,8 @@ public class EmailService
         {
             client.Connect(_smtpSettings.Server, _smtpSettings.Port, true);
             client.Authenticate(_smtpSettings.User, _smtpSettings.Password);
-            var sendResult = client.Send(message);
-            _logger.LogInformation($"sendResult {sendResult}");
+            await client.SendAsync(message);
+            //_logger.LogInformation($"sendResult {sendResult}");
         }
         catch (Exception ex)
         {

@@ -48,7 +48,7 @@ namespace stock_api.Scheduler
             var stringBuilder = new StringBuilder();
 
             stringBuilder.AppendLine("<h2>以下品項庫存不足(庫存量<最大安庫量-正在處理中訂單量)</h2>");
-            stringBuilder.AppendLine("<table>");
+            stringBuilder.AppendLine("<table border='1'>");
             stringBuilder.AppendLine("<tr><th>品項名稱</th><th>品項編碼</th><th>庫存量</th><th>最大安庫量</th><th>最小安庫量</th><th>處理中訂單量</th></tr>");
 
             foreach (var item in notifyProductQuantityList)

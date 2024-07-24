@@ -31,7 +31,7 @@ namespace stock_api.Service
             _purchaseService = purchaseService;
         }
 
-        public List<WarehouseProduct> GetAllProducts()
+        public List<WarehouseProduct> GetAllActiveProducts()
         {
             return _dbContext.WarehouseProducts.Where(p => p.IsActive==true).ToList();
         }
@@ -802,7 +802,7 @@ namespace stock_api.Service
 
         public async Task<List<NotifyProductQuantity>> FindAllProductQuantityNotifyList()
         {
-            var allProducts = GetAllProducts();
+            var allProducts = GetAllActiveProducts();
             var allProductIdList = allProducts.Select(x => x.ProductId).ToList();
             List<NotifyProductQuantity> notifyProductQuantityList = new();
             var allUnDonePurchaseSubItemList = _purchaseService.GetUndonePurchaseSubItems(allProductIdList);
