@@ -123,6 +123,11 @@ namespace stock_api.Service
             IQueryable<SupplierTraceLog> query = _dbContext.SupplierTraceLogs;
             query = query.Where(h => h.CompId == request.CompId);
 
+            if (request.SupplierId != null)
+            {
+                query = query.Where(h => h.SupplierId == request.SupplierId);
+            }
+
             if (request.StartDate != null)
             {
                 query = query.Where(h => h.AbnormalDate!=null&&h.AbnormalDate >= DateTimeHelper.ParseDateString(request.StartDate).Value);
