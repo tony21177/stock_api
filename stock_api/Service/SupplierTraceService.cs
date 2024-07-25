@@ -116,5 +116,53 @@ namespace stock_api.Service
             return (query.ToList(), totalPages);
 
         }
+
+
+        public (List<SupplierTraceLog>, int) ReportListSupplierTraceLog(ReportListSupplierTraceLogRequest request)
+        {
+            IQueryable<SupplierTraceLog> query = _dbContext.SupplierTraceLogs;
+            query = query.Where(h => h.CompId == request.CompId);
+
+            if (request.StartDate != null)
+            {
+                query = query.Where(h => h.AbnormalDate!=null&&h.AbnormalDate >= DateTimeHelper.ParseDateString(request.StartDate).Value);
+            }
+            if (request.EndDate != null)
+            {
+                DateTime endDateTime = DateTimeHelper.ParseDateString(request.EndDate).Value.AddDays(1);
+                query = query.Where(h => h.AbnormalDate != null && h.AbnormalDate < endDateTime);
+            }
+
+
+            if (request.PaginationCondition.OrderByField == null) request.PaginationCondition.OrderByField = "AbnormalDate";
+            if (request.PaginationCondition.IsDescOrderBy)
+            {
+                var orderByField = StringUtils.CapitalizeFirstLetter(request.PaginationCondition.OrderByField);
+                query = orderByField switch
+                {
+                    "AbnormalDate" => query.OrderByDescending(h => h.AbnormalDate),
+                    "CreatedAt" => query.OrderByDescending(h => h.CreatedAt),
+                    "UpdatedAt" => query.OrderByDescending(h => h.UpdatedAt),
+                    _ => query.OrderByDescending(h => h.UpdatedAt),
+                };
+            }
+            else
+            {
+                var orderByField = StringUtils.CapitalizeFirstLetter(request.PaginationCondition.OrderByField);
+                query = orderByField switch
+                {
+                    "AbnormalDate" => query.OrderByDescending(h => h.AbnormalDate),
+                    "CreatedAt" => query.OrderByDescending(h => h.CreatedAt),
+                    "UpdatedAt" => query.OrderByDescending(h => h.UpdatedAt),
+                    _ => query.OrderBy(h => h.UpdatedAt),
+                };
+            }
+            int totalItems = query.Count();
+            int totalPages = (int)Math.Ceiling((double)totalItems / request.PaginationCondition.PageSize);
+
+            query = query.Skip((request.PaginationCondition.Page - 1) * request.PaginationCondition.PageSize).Take(request.PaginationCondition.PageSize);
+            return (query.ToList(), totalPages);
+
+        }
     }
 }

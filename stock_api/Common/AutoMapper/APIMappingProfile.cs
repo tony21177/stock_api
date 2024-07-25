@@ -135,6 +135,9 @@ namespace stock_api.Common.AutoMapper
                     src.AbnormalDate != null ? DateTimeHelper.ParseDateString(src.AbnormalDate) : (DateTime?)null));
             CreateMap<SupplierTraceLog, SupplierTraceLog>()
             .ForAllMembers(opt => opt.Condition((src, dest, srcMember) => srcMember != null));
+            CreateMap<SupplierTraceLog, SupplierTraceLogWithInStock>()
+            .ForAllMembers(opt => opt.Condition((src, dest, srcMember) => srcMember != null));
+
 
         }
         

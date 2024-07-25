@@ -8,6 +8,7 @@ using stock_api.Controllers.Request;
 using stock_api.Controllers.Validator;
 using stock_api.Models;
 using stock_api.Service;
+using stock_api.Service.ValueObject;
 using stock_api.Utils;
 using System.Runtime.CompilerServices;
 
@@ -22,11 +23,13 @@ namespace stock_api.Controllers
         private readonly SupplierService _supplierService;
         private readonly SupplierTraceService _supplierTraceService;
         private readonly WarehouseProductService _warehouseProductService;
+        private readonly StockInService _stockInService;
         private readonly IValidator<ManualCreateSupplierTraceLogRequest> _manualCreateSupplierTraceLogValidator;
         private readonly IValidator<ManualUpdateSupplierTraceLogRequest> _manualUpdateSupplierTraceLogValidator;
         private readonly IValidator<ListSupplierTraceLogRequest> _listSupplierTraceLogValidator;
+        private readonly IValidator<ReportListSupplierTraceLogRequest> _reportListSupplierTraceLogValidator;
 
-        public SupplierTraceController(IMapper mapper, AuthHelpers authHelpers, SupplierService supplierService, SupplierTraceService supplierTraceService,WarehouseProductService warehouseProductService)
+        public SupplierTraceController(IMapper mapper, AuthHelpers authHelpers, SupplierService supplierService, SupplierTraceService supplierTraceService,WarehouseProductService warehouseProductService,StockInService stockInService)
         {
             _mapper = mapper;
             _authHelpers = authHelpers;
@@ -36,6 +39,8 @@ namespace stock_api.Controllers
             _manualCreateSupplierTraceLogValidator = new ManualCreateTraceLogValidator(supplierService);
             _manualUpdateSupplierTraceLogValidator = new ManualUpdateTraceLogValidator(supplierService);
             _listSupplierTraceLogValidator = new ListSupplierTraceLogValidator(supplierService);
+            _reportListSupplierTraceLogValidator = new ReportListSupplierTraceLogValidator(supplierService);
+            _stockInService = stockInService;
         }
 
         [HttpPost("manualCreate")]
@@ -192,6 +197,52 @@ namespace stock_api.Controllers
             {
                 Result = true,
                 Data = data,
+                TotalPages = totalPages
+            });
+        }
+
+        [HttpPost("report/list")]
+        [Authorize]
+        public IActionResult ReportList(ReportListSupplierTraceLogRequest request)
+        {
+            var memberAndPermissionSetting = _authHelpers.GetMemberAndPermissionSetting(User);
+            var compId = memberAndPermissionSetting.CompanyWithUnit.CompId;
+            request.CompId = compId;
+
+            var validationResult = _listSupplierTraceLogValidator.Validate(request);
+
+            if (!validationResult.IsValid)
+            {
+                return BadRequest(CommonResponse<dynamic>.BuildValidationFailedResponse(validationResult));
+            }
+
+
+
+            var (supplierTraceLogList, totalPages) = _supplierTraceService.ReportListSupplierTraceLog(request);
+            List < SupplierTraceLogWithInStock > supplierTraceLogWithInStockList= _mapper.Map<List<SupplierTraceLogWithInStock>>(supplierTraceLogList);
+
+
+            List<string> inStockIdList = supplierTraceLogList.Where(l=>l.SourceType==CommonConstants.SourceType.IN_STOCK&&l.SourceId!=null).Select(l=>l.SourceId).Distinct().ToList();
+            if (inStockIdList != null && inStockIdList.Count > 0)
+            {
+                var inStockItems = _stockInService.GetInStockRecordsByInStockIdList(inStockIdList);
+                foreach (var log in supplierTraceLogWithInStockList)
+                {
+                    if (log.SourceType == CommonConstants.SourceType.IN_STOCK && log.SourceId != null)
+                    {
+                        var matchedInStockItems = inStockItems.Where(i=>i.InStockId==log.SourceId).OrderBy(i=>i.CreatedAt).ToList();
+                        log.InStockItems = matchedInStockItems;
+                    }
+                }
+
+            }
+
+
+
+            return Ok(new CommonResponse<List<SupplierTraceLogWithInStock>>
+            {
+                Result = true,
+                Data = supplierTraceLogWithInStockList,
                 TotalPages = totalPages
             });
         }

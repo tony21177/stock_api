@@ -256,7 +256,10 @@ namespace stock_api.Service
                         SavingTemperature = updateAcceptItem.SavingTemperature,
                         IsNeedQc = product.IsNeedAcceptProcess,
                         QcType = product.QcType,
-                        QcTestStatus = CommonConstants.QcTestStatus.NONE
+                        QcTestStatus = CommonConstants.QcTestStatus.NONE,
+                        PackagingStatus = updateAcceptItem.PackagingStatus,
+                        Comment = updateAcceptItem.Comment,
+                        QcComment = updateAcceptItem.QcComment,
                     };
                     if (inStockItemRecord.IsNeedQc == true)
                     {
@@ -468,6 +471,11 @@ namespace stock_api.Service
         public List<InStockItemRecord> GetInStockRecordsHistoryByLotNumberBatch(string lotNumberBatch, string compId)
         {
             return _dbContext.InStockItemRecords.Where(record => record.CompId == compId && record.LotNumberBatch == lotNumberBatch).ToList();
+        }
+
+        public List<InStockItemRecord> GetInStockRecordsByInStockIdList(List<string> inStockIdList)
+        {
+            return _dbContext.InStockItemRecords.Where(record => inStockIdList.Contains(record.InStockId)).ToList();
         }
 
         //public List<InStockItemRecord> GetProductInStockRecordsHistoryNotAllOutFIFO(string productCode, string compId)

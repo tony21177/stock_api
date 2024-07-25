@@ -179,7 +179,7 @@ public partial class StockDbContext : DbContext
             entity.Property(e => e.CreatedAt).HasDefaultValueSql("CURRENT_TIMESTAMP");
             entity.Property(e => e.CurrentStatus)
                 .HasDefaultValueSql("'APPLY'")
-                .HasComment("目前狀態\\\\nAPPLY : 申請中\\\\nAGREE : 同意\\\\nREJECT : 拒絕\\\\nCLOSE : 結案");
+                .HasComment("目前狀態\\\\\\\\nAPPLY : 申請中\\\\\\\\nAGREE : 同意\\\\\\\\nREJECT : 拒絕\\\\\\\\nCLOSE : 結案\\\\\\\\DONE:申請完成");
             entity.Property(e => e.ProductGroupId).HasComment("品項組別");
             entity.Property(e => e.ProductGroupName).HasComment("品項組別名");
             entity.Property(e => e.UpdatedAt)
@@ -284,6 +284,7 @@ public partial class StockDbContext : DbContext
             entity.Property(e => e.AdjustItemId).HasComment("若此筆入庫是由盤盈而來才有值");
             entity.Property(e => e.AfterQuantity).HasComment("入庫後數量");
             entity.Property(e => e.BarCodeNumber).HasComment("用來產生條碼的數字，PadLeft : 7個0\nExample : 0000001");
+            entity.Property(e => e.Comment).HasComment("初驗驗收填寫相關原因");
             entity.Property(e => e.CompId).HasComment("所屬公司ID");
             entity.Property(e => e.CreatedAt).HasDefaultValueSql("CURRENT_TIMESTAMP");
             entity.Property(e => e.ExpirationDate).HasComment("保存期限");
@@ -297,9 +298,11 @@ public partial class StockDbContext : DbContext
             entity.Property(e => e.OutStockStatus)
                 .HasDefaultValueSql("'NONE'")
                 .HasComment("出庫的狀態\\\\nNONE:都還沒出,PART:出部分:ALL:出完全部");
+            entity.Property(e => e.PackagingStatus).HasComment("外觀包裝\\nNORMAL : 完成\\nBREAK : 破損");
             entity.Property(e => e.ProductId).HasComment("品項PK");
             entity.Property(e => e.ProductName).HasComment("品項名稱");
             entity.Property(e => e.ProductSpec).HasComment("品項規格");
+            entity.Property(e => e.QcComment).HasComment("二次驗收填寫相關原因");
             entity.Property(e => e.QcTestStatus)
                 .HasDefaultValueSql("'NONE'")
                 .HasComment("NONE,FAIL,PASS");

@@ -12,6 +12,7 @@ namespace stock_api.Models;
 /// 每一筆要更新庫存紀錄（增加）的操作，都需要寫入一筆記錄在 InStockRecord，包含採購驗收、調撥、盤點（盤盈）、退庫，類型寫在 Type 欄位。
 /// </summary>
 [Table("in_stock_item_record")]
+[Index("CompId", "QcTestStatus", Name = "qc_undone_index")]
 [Index("LotNumberBatch", Name = "unique_lotnumberbatch", IsUnique = true)]
 public partial class InStockItemRecord
 {
@@ -160,4 +161,26 @@ public partial class InStockItemRecord
 
     [StringLength(100)]
     public string? ReturnOutStockId { get; set; }
+
+    [Column("in_stock_item_recordcol")]
+    [StringLength(45)]
+    public string? InStockItemRecordcol { get; set; }
+
+    /// <summary>
+    /// 初驗驗收填寫相關原因
+    /// </summary>
+    [StringLength(500)]
+    public string? Comment { get; set; }
+
+    /// <summary>
+    /// 二次驗收填寫相關原因
+    /// </summary>
+    [StringLength(500)]
+    public string? QcComment { get; set; }
+
+    /// <summary>
+    /// 外觀包裝\nNORMAL : 完成\nBREAK : 破損
+    /// </summary>
+    [StringLength(45)]
+    public string? PackagingStatus { get; set; }
 }

@@ -37,7 +37,7 @@ public partial class ApplyNewProductMain
     public string CompId { get; set; } = null!;
 
     /// <summary>
-    /// 目前狀態\\nAPPLY : 申請中\\nAGREE : 同意\\nREJECT : 拒絕\\nCLOSE : 結案
+    /// 目前狀態\\\\nAPPLY : 申請中\\\\nAGREE : 同意\\\\nREJECT : 拒絕\\\\nCLOSE : 結案\\\\DONE:申請完成
     /// </summary>
     [StringLength(45)]
     public string CurrentStatus { get; set; } = null!;
