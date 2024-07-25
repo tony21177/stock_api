@@ -109,6 +109,18 @@ namespace stock_api.Controllers
                 // 表示要出的批號不是最早的那批 IsAbnormal!=true(非user確認過的)
                 if ((requestLot.LotNumberBatch != oldestLot.LotNumberBatch) && request.IsAbnormal != true)
                 {
+                    var IsNeedQc2 = requestLot.IsNeedQc == true && requestLot.QcTestStatus == CommonConstants.QcTestStatus.NONE;
+                    NeedQc? needQc2 = null;
+                    if (IsNeedQc2)
+                    {
+                        needQc2 = new NeedQc()
+                        {
+                            LotNumber = requestLot.LotNumber,
+                            LotNumberBatch = requestLot.LotNumberBatch,
+                            QcType = requestLot.QcType
+                        };
+                    }
+
                     return BadRequest(new CommonResponse<Dictionary<string, dynamic>>
                     {
                         Result = false,
@@ -118,6 +130,7 @@ namespace stock_api.Controllers
                             ["isFIFO"] = false,
                             ["oldest"] = oldestLot,
                             ["requestLotNumberBatch"] = requestLot.LotNumberBatch,
+                            ["needQc"] = needQc2
                         }
                     });
                 }
@@ -245,19 +258,18 @@ namespace stock_api.Controllers
                 else
                 {
                     notifyProductQuantityList.Add(notifyProductQuantity);
-                    var IsNeedQc = requestLot.IsNeedQc == true && requestLot.QcTestStatus == CommonConstants.QcTestStatus.NONE;
-                    NeedQc? needQc = null;
-                    if (IsNeedQc)
+                }
+                var IsNeedQc = requestLot.IsNeedQc == true && requestLot.QcTestStatus == CommonConstants.QcTestStatus.NONE;
+                NeedQc? needQc = null;
+                if (IsNeedQc)
+                {
+                    needQc = new NeedQc()
                     {
-                        needQc = new NeedQc()
-                        {
-                            LotNumber = requestLot.LotNumber,
-                            LotNumberBatch = requestLot.LotNumberBatch,
-                            QcType = requestLot.QcType
-                        };
-                        needQcList.Add(needQc);
-                    }
-
+                        LotNumber = requestLot.LotNumber,
+                        LotNumberBatch = requestLot.LotNumberBatch,
+                        QcType = requestLot.QcType
+                    };
+                    needQcList.Add(needQc);
                 }
             }
             if (notifyProductQuantityList.Count > 0)
