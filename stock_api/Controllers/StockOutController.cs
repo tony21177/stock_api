@@ -14,6 +14,7 @@ using MySqlX.XDevAPI.Common;
 using MySqlX.XDevAPI.CRUD;
 using Org.BouncyCastle.Asn1.Ocsp;
 using System.Collections.Generic;
+using stock_api.Controllers.Dto;
 
 namespace stock_api.Controllers
 {
@@ -143,22 +144,22 @@ namespace stock_api.Controllers
             var (result,errorMsg, notifyProductQuantity) = _stockOutService.OutStock(request.Type,request, requestLot, product, memberAndPermissionSetting.Member,compId);
             CalculateForQuantityToNotity(new List<NotifyProductQuantity> { notifyProductQuantity});
             var IsNeedQc = requestLot.IsNeedQc == true && requestLot.QcTestStatus == CommonConstants.QcTestStatus.NONE;
-            Dictionary<string,dynamic>? data = null;
+            NeedQc? needQc = null;
             if (IsNeedQc)
             {
-                data = new Dictionary<string, dynamic>
+                needQc = new NeedQc()
                 {
-                    { "lotNumber", requestLot.LotNumber },
-                    { "lotNumberBatch", requestLot.LotNumberBatch },
-                    { "qcType", requestLot.QcType }
+                    LotNumber = requestLot.LotNumber,
+                    LotNumberBatch = requestLot.LotNumberBatch,
+                    QcType = requestLot.QcType
                 };
             }
 
-            return Ok(new CommonResponse<dynamic>
+            return Ok(new CommonResponse<NeedQc>
             {
                 Result = result,
                 Message = errorMsg,
-                Data = data
+                Data = needQc
             });
         }
 
@@ -219,6 +220,7 @@ namespace stock_api.Controllers
 
             List<string> failedOutLotNumberBatchList = new();
             List<NotifyProductQuantity> notifyProductQuantityList = new();
+            List<NeedQc> needQcList = new();
             foreach (var outItem in outableOutBoundItems)
             {
                 var product = lotNumberBatchAndProductMap[outItem.LotNumberBatch];
@@ -240,6 +242,19 @@ namespace stock_api.Controllers
                 else
                 {
                     notifyProductQuantityList.Add(notifyProductQuantity);
+                    var IsNeedQc = requestLot.IsNeedQc == true && requestLot.QcTestStatus == CommonConstants.QcTestStatus.NONE;
+                    NeedQc? needQc = null;
+                    if (IsNeedQc)
+                    {
+                        needQc = new NeedQc()
+                        {
+                            LotNumber = requestLot.LotNumber,
+                            LotNumberBatch = requestLot.LotNumberBatch,
+                            QcType = requestLot.QcType
+                        };
+                        needQcList.Add(needQc);
+                    }
+
                 }
             }
             if (notifyProductQuantityList.Count > 0)
@@ -253,7 +268,8 @@ namespace stock_api.Controllers
                 Data = new Dictionary<string, dynamic>
                 {
                     ["failedLotNumberBatchList"] = failedOutLotNumberBatchList,
-                    ["notOldestLotList"] = notOldestLotList
+                    ["notOldestLotList"] = notOldestLotList,
+                    ["needQcList"] = needQcList
                 }
             });
         }
