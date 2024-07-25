@@ -159,7 +159,10 @@ namespace stock_api.Controllers
             {
                 Result = result,
                 Message = errorMsg,
-                Data = needQc
+                Data = new Dictionary<string, object>
+                {
+                    ["needQc"]=needQc
+                }
             });
         }
 
