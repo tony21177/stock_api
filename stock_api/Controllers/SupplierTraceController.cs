@@ -209,7 +209,7 @@ namespace stock_api.Controllers
             var compId = memberAndPermissionSetting.CompanyWithUnit.CompId;
             request.CompId = compId;
 
-            var validationResult = _listSupplierTraceLogValidator.Validate(request);
+            var validationResult = _reportListSupplierTraceLogValidator.Validate(request);
 
             if (!validationResult.IsValid)
             {
