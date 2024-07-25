@@ -70,7 +70,7 @@ namespace stock_api.Controllers
             }
 
             var supplier = _supplierService.GetSupplierById(request.SupplierId);
-            
+            newSupplierTraceLog.SourceId = request.SourceId;
             newSupplierTraceLog.SupplierName = supplier.Name;
             newSupplierTraceLog.UserId = memberAndPermissionSetting.Member.UserId;
             newSupplierTraceLog.UserName = memberAndPermissionSetting.Member.DisplayName;
