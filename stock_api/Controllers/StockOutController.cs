@@ -155,11 +155,11 @@ namespace stock_api.Controllers
                 };
             }
 
-            return Ok(new CommonResponse<NeedQc>
+            return Ok(new CommonResponse<dynamic>
             {
                 Result = result,
                 Message = errorMsg,
-                Data = new Dictionary<string, object>
+                Data = new Dictionary<string, NeedQc>
                 {
                     ["needQc"]=needQc
                 }
