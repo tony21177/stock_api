@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using Microsoft.EntityFrameworkCore;
 using Org.BouncyCastle.Asn1.Ocsp;
+using stock_api.Common.Constant;
 using stock_api.Common.Utils;
 using stock_api.Controllers.Request;
 using stock_api.Models;
@@ -168,6 +169,11 @@ namespace stock_api.Service
             query = query.Skip((request.PaginationCondition.Page - 1) * request.PaginationCondition.PageSize).Take(request.PaginationCondition.PageSize);
             return (query.ToList(), totalPages);
 
+        }
+
+        public List<SupplierTraceLog> GetInStockAbnormalList(List<string> acceptIdList)
+        {
+            return _dbContext.SupplierTraceLogs.Where(l=>l.SourceType==CommonConstants.SourceType.IN_STOCK&&l.SourceId!=null&&acceptIdList.Contains(l.SourceId)).ToList();
         }
     }
 }

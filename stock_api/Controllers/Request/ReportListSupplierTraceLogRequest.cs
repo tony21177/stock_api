@@ -7,6 +7,6 @@
         public string? EndDate { get; set;}
         public string? CompId { get; set; }
          
-
+        public bool? IsAbnormal { get; set; }
     }
 }

@@ -201,7 +201,7 @@ namespace stock_api.Controllers
             });
         }
 
-        [HttpPost("report/list")]
+        [HttpPost("report/abnormal/list")]
         [Authorize]
         public IActionResult ReportList(ReportListSupplierTraceLogRequest request)
         {
@@ -248,6 +248,66 @@ namespace stock_api.Controllers
             {
                 Result = true,
                 Data = supplierTraceLogWithInStockList,
+                TotalPages = totalPages
+            });
+        }
+
+        [HttpPost("report/inStockListWithAbnormal")]
+        [Authorize]
+        public IActionResult InStockReportListWithAbnormal(ReportListSupplierTraceLogRequest request)
+        {
+            var memberAndPermissionSetting = _authHelpers.GetMemberAndPermissionSetting(User);
+            var compId = memberAndPermissionSetting.CompanyWithUnit.CompId;
+            request.CompId = compId;
+
+            var validationResult = _reportListSupplierTraceLogValidator.Validate(request);
+
+            if (!validationResult.IsValid)
+            {
+                return BadRequest(CommonResponse<dynamic>.BuildValidationFailedResponse(validationResult));
+            }
+            ListStockInRecordsRequest listRequest = new ListStockInRecordsRequest { 
+                CompId = request.CompId,
+                SupplierId = request.SupplierId,
+                StartDate =request.StartDate,
+                EndDate =request.EndDate,
+                PaginationCondition = request.PaginationCondition,
+            };
+            var (inStockItemList, totalPages) = _stockInService.ListStockInRecords(listRequest);
+            List<InStockItemListWithAbnormal> inStockItemListWithAbnormal = _mapper.Map<List<InStockItemListWithAbnormal>>(inStockItemList);
+
+            List<string> itemIdList = inStockItemList.Select(i=>i.ItemId).Distinct().ToList();
+            var acceptanceItems = _stockInService.GetAcceptanceItemsByItemIdList(itemIdList);
+            List<string> acceptIdList = acceptanceItems.Select(a=>a.AcceptId).ToList();
+            List<SupplierTraceLog> supplierTraceLogs = _supplierTraceService.GetInStockAbnormalList(acceptIdList);
+
+            foreach (var inStockItemWithAbnormal in inStockItemListWithAbnormal)
+            {
+                if(inStockItemWithAbnormal.InStockId == "a1a7b3e4-3e11-4d49-8a9c-ac5dedeea24f")
+                {
+                    var matchedAcceptItem2 = acceptanceItems.Where(a => a.ItemId == inStockItemWithAbnormal.ItemId).FirstOrDefault();
+                    var matchedSupplierTraceLot2 = supplierTraceLogs.Where(s => s.SourceType == CommonConstants.SourceType.IN_STOCK && s.SourceId != null && s.SourceId == matchedAcceptItem2.AcceptId).FirstOrDefault();
+                    inStockItemWithAbnormal.SupplierTraceLog = matchedSupplierTraceLot2;
+                    continue;
+                }
+                var matchedAcceptItem = acceptanceItems.Where(a => a.ItemId == inStockItemWithAbnormal.ItemId).FirstOrDefault();
+                var matchedSupplierTraceLot = supplierTraceLogs.Where(s => s.SourceType == CommonConstants.SourceType.IN_STOCK && s.SourceId != null && s.SourceId == matchedAcceptItem.AcceptId).FirstOrDefault();
+                inStockItemWithAbnormal.SupplierTraceLog = matchedSupplierTraceLot;
+            }
+
+            if (request.IsAbnormal == true)
+            {
+                inStockItemListWithAbnormal = inStockItemListWithAbnormal.Where(i=>i.SupplierTraceLog!=null).ToList();
+            }
+            if (request.IsAbnormal == false)
+            {
+                inStockItemListWithAbnormal = inStockItemListWithAbnormal.Where(i => i.SupplierTraceLog == null).ToList();
+            }
+
+            return Ok(new CommonResponse<List<InStockItemListWithAbnormal>>
+            {
+                Result = true,
+                Data = inStockItemListWithAbnormal,
                 TotalPages = totalPages
             });
         }

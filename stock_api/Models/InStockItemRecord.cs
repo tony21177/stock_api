@@ -183,4 +183,10 @@ public partial class InStockItemRecord
     /// </summary>
     [StringLength(45)]
     public string? PackagingStatus { get; set; }
+
+    [Column("SupplierID")]
+    public int? SupplierId { get; set; }
+
+    [StringLength(200)]
+    public string? SupplierName { get; set; }
 }

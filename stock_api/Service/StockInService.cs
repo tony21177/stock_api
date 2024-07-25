@@ -404,6 +404,19 @@ namespace stock_api.Service
             {
                 query = query.Where(h => h.ProductCode == request.ProductCode);
             }
+            if (request.StartDate != null)
+            {
+                query = query.Where(h =>  h.CreatedAt >= DateTimeHelper.ParseDateString(request.StartDate).Value);
+            }
+            if (request.EndDate != null)
+            {
+                DateTime endDateTime = DateTimeHelper.ParseDateString(request.EndDate).Value.AddDays(1);
+                query = query.Where(h => h.CreatedAt < endDateTime);
+            }
+            if (request.SupplierId != null)
+            {
+                query = query.Where(h => h.SupplierId == request.SupplierId);
+            }
 
             query = query.Where(h => h.CompId == request.CompId);
 
@@ -485,6 +498,11 @@ namespace stock_api.Service
         public List<AcceptanceItem> GetAcceptanceItemsByInIdList(List<string> idList)
         {
             return _dbContext.AcceptanceItems.Where(record => idList.Contains(record.AcceptId)).ToList();
+        }
+
+        public List<AcceptanceItem> GetAcceptanceItemsByItemIdList(List<string> itemIdList)
+        {
+            return _dbContext.AcceptanceItems.Where(record => itemIdList.Contains(record.ItemId)).ToList();
         }
 
         //public List<InStockItemRecord> GetProductInStockRecordsHistoryNotAllOutFIFO(string productCode, string compId)

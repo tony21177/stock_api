@@ -121,6 +121,8 @@ namespace stock_api.Common.AutoMapper
             .ForAllMembers(opt => opt.Condition((src, dest, srcMember) => srcMember != null));
             CreateMap<InStockItemRecord, InStockRecordForPrint>()
             .ForAllMembers(opt => opt.Condition((src, dest, srcMember) => srcMember != null));
+            CreateMap<InStockItemRecord, InStockItemListWithAbnormal>()
+            .ForAllMembers(opt => opt.Condition((src, dest, srcMember) => srcMember != null));
 
             // OutStockRecord
             CreateMap<OutStockRecord, OutStockRecordVo>()
