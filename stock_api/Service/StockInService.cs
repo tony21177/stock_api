@@ -477,6 +477,15 @@ namespace stock_api.Service
         {
             return _dbContext.InStockItemRecords.Where(record => inStockIdList.Contains(record.InStockId)).ToList();
         }
+        public List<InStockItemRecord> GetInStockRecordsByItemIdList(List<string> itemIdList)
+        {
+            return _dbContext.InStockItemRecords.Where(record => record.ItemId!=null&&itemIdList.Contains(record.ItemId)).ToList();
+        }
+
+        public List<AcceptanceItem> GetAcceptanceItemsByInIdList(List<string> idList)
+        {
+            return _dbContext.AcceptanceItems.Where(record => idList.Contains(record.AcceptId)).ToList();
+        }
 
         //public List<InStockItemRecord> GetProductInStockRecordsHistoryNotAllOutFIFO(string productCode, string compId)
         //{

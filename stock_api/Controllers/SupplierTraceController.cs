@@ -225,19 +225,24 @@ namespace stock_api.Controllers
             List<string> inStockIdList = supplierTraceLogList.Where(l=>l.SourceType==CommonConstants.SourceType.IN_STOCK&&l.SourceId!=null).Select(l=>l.SourceId).Distinct().ToList();
             if (inStockIdList != null && inStockIdList.Count > 0)
             {
-                var inStockItems = _stockInService.GetInStockRecordsByInStockIdList(inStockIdList);
+                var acceptanceItems = _stockInService.GetAcceptanceItemsByInIdList(inStockIdList);
+                var distinctItemIdLIst = acceptanceItems.Select(i=>i.ItemId).Distinct().ToList();
+                var inStockedItems = _stockInService.GetInStockRecordsByItemIdList(distinctItemIdLIst).OrderBy(i=>i.CreatedAt).ToList();
+
                 foreach (var log in supplierTraceLogWithInStockList)
                 {
                     if (log.SourceType == CommonConstants.SourceType.IN_STOCK && log.SourceId != null)
                     {
-                        var matchedInStockItems = inStockItems.Where(i=>i.InStockId==log.SourceId).OrderBy(i=>i.CreatedAt).ToList();
-                        log.InStockItems = matchedInStockItems;
+                        var matchedAcceptanceItem = acceptanceItems.Where(i=>i.AcceptId==log.SourceId).FirstOrDefault();
+                        if (matchedAcceptanceItem!=null)
+                        {
+                            var matchedInStockItemList = inStockedItems.Where(i=>i.ItemId==matchedAcceptanceItem.ItemId).ToList();
+                            log.InStockItems = matchedInStockItemList;
+                        }
                     }
                 }
 
             }
-
-
 
             return Ok(new CommonResponse<List<SupplierTraceLogWithInStock>>
             {
