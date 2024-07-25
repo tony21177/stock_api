@@ -142,11 +142,23 @@ namespace stock_api.Controllers
 
             var (result,errorMsg, notifyProductQuantity) = _stockOutService.OutStock(request.Type,request, requestLot, product, memberAndPermissionSetting.Member,compId);
             CalculateForQuantityToNotity(new List<NotifyProductQuantity> { notifyProductQuantity});
+            var IsNeedQc = requestLot.IsNeedQc == true && requestLot.QcTestStatus == CommonConstants.QcTestStatus.NONE;
+            Dictionary<string,dynamic>? data = null;
+            if (IsNeedQc)
+            {
+                data = new Dictionary<string, dynamic>
+                {
+                    { "lotNumber", requestLot.LotNumber },
+                    { "lotNumberBatch", requestLot.LotNumberBatch },
+                    { "qcType", requestLot.QcType }
+                };
+            }
 
             return Ok(new CommonResponse<dynamic>
             {
                 Result = result,
-                Message = errorMsg
+                Message = errorMsg,
+                Data = data
             });
         }
 
