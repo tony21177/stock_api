@@ -828,7 +828,7 @@ namespace stock_api.Controllers
             outBoundItems.ForEach(item =>
             {
                 var requestLot = lotNumberBatchRequestLotMap[item.LotNumberBatch];
-                var IsNeedQc = requestLot.IsNeedQc == true && requestLot.QcTestStatus == CommonConstants.QcTestStatus.NONE &&requestLot.QcType!=CommonConstants.QcTypeConstants.NONE;
+                var IsNeedQc = requestLot.IsNeedQc == true && requestLot.QcTestStatus == CommonConstants.QcTestStatus.NONE &&requestLot.QcType!=CommonConstants.QcTypeConstants.NONE&&item.IsSkipQc!=true;
                 if (IsNeedQc)
                 {
                     var needQc = new NeedQc()
