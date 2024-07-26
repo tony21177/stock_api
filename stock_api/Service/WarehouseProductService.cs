@@ -200,7 +200,7 @@ namespace stock_api.Service
         public List<NotEnoughQuantityProduct> ListNotEnoughProducts(ListNotEnoughProductsRequest request)
         {
             var allOngoingPurchaseItems = _dbContext.PurchaseSubItems.Where(s => s.ReceiveStatus != CommonConstants.PurchaseSubItemReceiveStatus.CLOSE &&
-            s.ReceiveStatus != CommonConstants.PurchaseSubItemReceiveStatus.DONE && s.CompId == request.CompId).ToList();
+            s.ReceiveStatus != CommonConstants.PurchaseSubItemReceiveStatus.DONE && s.CompId == request.CompId && s.OwnerProcess!=CommonConstants.PurchaseMainOwnerProcessStatus.NOT_AGREE).ToList();
 
             IQueryable<WarehouseProduct> query = _dbContext.WarehouseProducts;
             if (request.GroupId != null)
