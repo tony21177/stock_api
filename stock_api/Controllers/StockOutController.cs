@@ -109,7 +109,7 @@ namespace stock_api.Controllers
                 // 表示要出的批號不是最早的那批 IsAbnormal!=true(非user確認過的)
                 if ((requestLot.LotNumberBatch != oldestLot.LotNumberBatch) && request.IsAbnormal != true)
                 {
-                    var IsNeedQc2 = requestLot.IsNeedQc == true && requestLot.QcTestStatus == CommonConstants.QcTestStatus.NONE;
+                    var IsNeedQc2 = requestLot.IsNeedQc == true && requestLot.QcTestStatus == CommonConstants.QcTestStatus.NONE && requestLot.QcType != CommonConstants.QcTypeConstants.NONE;
                     NeedQc? needQc2 = null;
                     if (IsNeedQc2)
                     {
@@ -154,9 +154,7 @@ namespace stock_api.Controllers
                 });
             }
 
-            var (result,errorMsg, notifyProductQuantity) = _stockOutService.OutStock(request.Type,request, requestLot, product, memberAndPermissionSetting.Member,compId);
-            CalculateForQuantityToNotity(new List<NotifyProductQuantity> { notifyProductQuantity});
-            var IsNeedQc = requestLot.IsNeedQc == true && requestLot.QcTestStatus == CommonConstants.QcTestStatus.NONE;
+            var IsNeedQc = requestLot.IsNeedQc == true && requestLot.QcTestStatus == CommonConstants.QcTestStatus.NONE && requestLot.QcType != CommonConstants.QcTypeConstants.NONE;
             NeedQc? needQc = null;
             if (IsNeedQc)
             {
@@ -166,8 +164,25 @@ namespace stock_api.Controllers
                     LotNumberBatch = requestLot.LotNumberBatch,
                     QcType = requestLot.QcType
                 };
+                if (request.IsSkipQc == false)
+                {
+                    return BadRequest(new CommonResponse<Dictionary<string, dynamic>>
+                    {
+                        Result = false,
+                        Message = "請確認是否要跳過品質確效出庫",
+                        Data = new Dictionary<string, dynamic>
+                        {
+                            ["needQc"] = needQc
+                        }
+                    });
+                }
             }
 
+
+            var (result,errorMsg, notifyProductQuantity) = _stockOutService.OutStock(request.Type,request, requestLot, product, memberAndPermissionSetting.Member,compId);
+            
+
+            CalculateForQuantityToNotity(new List<NotifyProductQuantity> { notifyProductQuantity });
             return Ok(new CommonResponse<dynamic>
             {
                 Result = result,
@@ -220,6 +235,9 @@ namespace stock_api.Controllers
             (List<Dictionary<string, dynamic>> notOldestLotList, Dictionary<string, InStockItemRecord> lotNumberBatchRequestLotMap) =
                 FindNotOldestLotList(request.OutboundItems, lotNumberBatchAndProductMap, lotNumberBatchAndProductCodeInStockExFIFORecordsMap);
 
+            List<NeedQc> needQcListForOutboundItems = FindNeedQcList(request.OutboundItems, lotNumberBatchAndProductMap, lotNumberBatchRequestLotMap);
+
+
             //if (notOldestLotList.Count > 0)
             //{
             //    return BadRequest(new CommonResponse<List<Dictionary<string, dynamic>>>
@@ -230,7 +248,8 @@ namespace stock_api.Controllers
             //    });
             //}
             List<string?> unOutableLotNumberBatchList = notOldestLotList.Select(lot => lot.GetValueOrDefault("requestLotNumberBatch") as string).ToList();
-            var outableOutBoundItems = request.OutboundItems.Where(i => !unOutableLotNumberBatchList.Contains(i.LotNumberBatch));
+            List<string>? needConfirmedQcLotNumberBatchList = needQcListForOutboundItems.Where(qc=> !string.IsNullOrEmpty(qc.LotNumberBatch)).Select(qc =>  qc.LotNumberBatch).ToList();
+            var outableOutBoundItems = request.OutboundItems.Where(i => !unOutableLotNumberBatchList.Contains(i.LotNumberBatch)&&!needConfirmedQcLotNumberBatchList.Contains(i.LotNumberBatch));
 
 
 
@@ -259,7 +278,7 @@ namespace stock_api.Controllers
                 {
                     notifyProductQuantityList.Add(notifyProductQuantity);
                 }
-                var IsNeedQc = requestLot.IsNeedQc == true && requestLot.QcTestStatus == CommonConstants.QcTestStatus.NONE;
+                var IsNeedQc = requestLot.IsNeedQc == true && requestLot.QcTestStatus == CommonConstants.QcTestStatus.NONE && requestLot.QcType!=CommonConstants.QcTypeConstants.NONE;
                 NeedQc? needQc = null;
                 if (IsNeedQc)
                 {
@@ -800,6 +819,28 @@ namespace stock_api.Controllers
                 }
             }
             return (notFoundLotNumberBatchList, lotNumberBatchAndProductMap, productCodeList);
+        }
+
+
+        private List<NeedQc> FindNeedQcList(List<OutboundRequest> outBoundItems, Dictionary<string, WarehouseProduct> lotNumberBatchAndProductMap, Dictionary<string, InStockItemRecord> lotNumberBatchRequestLotMap)
+        {
+            List<NeedQc> needQcList = new();
+            outBoundItems.ForEach(item =>
+            {
+                var requestLot = lotNumberBatchRequestLotMap[item.LotNumberBatch];
+                var IsNeedQc = requestLot.IsNeedQc == true && requestLot.QcTestStatus == CommonConstants.QcTestStatus.NONE &&requestLot.QcType!=CommonConstants.QcTypeConstants.NONE;
+                if (IsNeedQc)
+                {
+                    var needQc = new NeedQc()
+                    {
+                        LotNumber = requestLot.LotNumber,
+                        LotNumberBatch = requestLot.LotNumberBatch,
+                        QcType = requestLot.QcType
+                    };
+                    needQcList.Add(needQc);
+                }
+            });
+            return needQcList;
         }
 
         private (List<Dictionary<string, dynamic>>, Dictionary<string, InStockItemRecord>) FindNotOldestLotList(List<OutboundRequest> outBoundItems, Dictionary<string, WarehouseProduct> lotNumberBatchAndProductMap, Dictionary<string, List<InStockItemRecord>> lotNumberBatchAndproductCodeInStockExFIFORecords)

@@ -18,5 +18,6 @@
         public bool IsAbnormal { get; set; } = false;
         public string? AbnormalReason { get; set; }
         public string? Type { get; set; } = null!;
+        public bool IsSkipQc { get; set; } = false; 
     }
 }
