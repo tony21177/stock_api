@@ -142,4 +142,7 @@ public partial class OutStockRecord
     /// 是否已退庫
     /// </summary>
     public bool? IsReturned { get; set; }
+
+    [StringLength(500)]
+    public string? SkipQcCommnet { get; set; }
 }

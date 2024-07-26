@@ -89,7 +89,8 @@ namespace stock_api.Service
                     AfterQuantity = (product.InStockQuantity ?? 0) - request.ApplyQuantity,
                     ItemId = inStockItem.ItemId,
                     BarCodeNumber = inStockItem.BarCodeNumber,
-                    ExpirationDate = inStockItem.ExpirationDate
+                    ExpirationDate = inStockItem.ExpirationDate,
+                    SkipQcCommnet = request.IsSkipQc?request.SkipQcComment:""
                 };
                
 
