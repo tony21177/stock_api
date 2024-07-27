@@ -266,19 +266,19 @@ namespace stock_api.Service
                         if (inStockItemRecord.QcType == CommonConstants.QcTypeConstants.LOT_NUMBER)
                         {
                             var lastInStockedRecord = _dbContext.InStockItemRecords.Where(i => i.LotNumber == inStockItemRecord.LotNumber).OrderByDescending(i => i.CreatedAt).FirstOrDefault();
-                            if (lastInStockedRecord != null && (lastInStockedRecord.QcTestStatus == CommonConstants.QcTestStatus.PASS))
+                            if (lastInStockedRecord != null && (lastInStockedRecord.QcTestStatus == CommonConstants.QcTestStatus.DONE))
                             {
                                 // 上一批同批號的已經檢驗pass,表示此批號已經QC過了,不需再QC
-                                inStockItemRecord.QcTestStatus = CommonConstants.QcTestStatus.PASS;
+                                inStockItemRecord.QcTestStatus = CommonConstants.QcTestStatus.DONE;
                             }
                         }
                         if (inStockItemRecord.QcType == CommonConstants.QcTypeConstants.LOT_NUMBER_BATCH)
                         {
                             var lastInStockedRecord = _dbContext.InStockItemRecords.Where(i => i.LotNumberBatch == inStockItemRecord.LotNumberBatch).OrderByDescending(i => i.CreatedAt).FirstOrDefault();
-                            if (lastInStockedRecord != null && (lastInStockedRecord.QcTestStatus == CommonConstants.QcTestStatus.PASS))
+                            if (lastInStockedRecord != null && (lastInStockedRecord.QcTestStatus == CommonConstants.QcTestStatus.DONE))
                             {
                                 // 上一批同批次的已經檢驗pass,表示此批號已經QC過了,不需再QC
-                                inStockItemRecord.QcTestStatus = CommonConstants.QcTestStatus.PASS;
+                                inStockItemRecord.QcTestStatus = CommonConstants.QcTestStatus.DONE;
                             }
                         }
 

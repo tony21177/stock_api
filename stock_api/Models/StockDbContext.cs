@@ -311,7 +311,7 @@ public partial class StockDbContext : DbContext
             entity.Property(e => e.QcComment).HasComment("二次驗收填寫相關原因");
             entity.Property(e => e.QcTestStatus)
                 .HasDefaultValueSql("'NONE'")
-                .HasComment("NONE,FAIL,PASS");
+                .HasComment("NONE,DONE");
             entity.Property(e => e.QcType)
                 .HasDefaultValueSql("'NONE'")
                 .HasComment("NONE,LOT_NUMBER,LOT_NUMBER_BATCH");
@@ -720,7 +720,11 @@ public partial class StockDbContext : DbContext
         {
             entity.HasKey(e => e.DetailId).HasName("PRIMARY");
 
+            entity.Property(e => e.CreatedAt).HasDefaultValueSql("CURRENT_TIMESTAMP");
             entity.Property(e => e.NewLotResult).HasComment("新批號結果");
+            entity.Property(e => e.UpdatedAt)
+                .ValueGeneratedOnAddOrUpdate()
+                .HasDefaultValueSql("CURRENT_TIMESTAMP");
         });
 
         modelBuilder.Entity<QcValidationMain>(entity =>
@@ -728,8 +732,12 @@ public partial class StockDbContext : DbContext
             entity.HasKey(e => e.MainId).HasName("PRIMARY");
 
             entity.Property(e => e.Comment).HasComment("備註說明");
+            entity.Property(e => e.CreatedAt).HasDefaultValueSql("CURRENT_TIMESTAMP");
             entity.Property(e => e.InStockTime).HasComment("對應的入庫時間");
             entity.Property(e => e.QcType).HasComment("LOT_NUMBER或LOT_NUMBER_BATCH");
+            entity.Property(e => e.UpdatedAt)
+                .ValueGeneratedOnAddOrUpdate()
+                .HasDefaultValueSql("CURRENT_TIMESTAMP");
             entity.Property(e => e.ValidationMethod).HasComment("檢驗屬性");
             entity.Property(e => e.ValidationType).HasComment("驗收類型");
         });

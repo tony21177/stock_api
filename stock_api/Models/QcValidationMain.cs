@@ -83,4 +83,10 @@ public partial class QcValidationMain
     /// </summary>
     [StringLength(45)]
     public string QcType { get; set; } = null!;
+
+    [Column(TypeName = "timestamp")]
+    public DateTime? CreatedAt { get; set; }
+
+    [Column(TypeName = "timestamp")]
+    public DateTime? UpdatedAt { get; set; }
 }

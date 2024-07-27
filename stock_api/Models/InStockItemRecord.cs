@@ -148,7 +148,7 @@ public partial class InStockItemRecord
     public bool? IsNeedQc { get; set; }
 
     /// <summary>
-    /// NONE,FAIL,PASS
+    /// NONE,DONE
     /// </summary>
     [StringLength(45)]
     public string? QcTestStatus { get; set; }

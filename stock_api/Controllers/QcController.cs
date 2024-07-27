@@ -24,6 +24,7 @@ namespace stock_api.Controllers
         private readonly PurchaseService _purchaseService;
         private readonly QcService _qcService;
         private readonly IValidator<CreateQcRequest> _createQcValidator;
+        private readonly IValidator<ListMainWithDetailRequest> _listQcMainWithDetailValidator;
 
         public QcController(IMapper mapper, AuthHelpers authHelpers, StockInService stockInService, StockOutService stockOutService, WarehouseProductService warehouseProductService, QcService qcService, PurchaseService purchaseService)
         {
@@ -35,6 +36,7 @@ namespace stock_api.Controllers
             _qcService = qcService;
             _purchaseService = purchaseService;
             _createQcValidator = new CreateQcValidator();
+            _listQcMainWithDetailValidator = new ListQcMainWithDetailValidator();
         }
 
         [HttpGet("list")]
@@ -156,6 +158,41 @@ namespace stock_api.Controllers
             {
                 Result = result,
                 Message = erroMsg
+            };
+            return Ok(response);
+        }
+
+
+        [HttpPost("mainWithDetail/list")]
+        [Authorize]
+        public IActionResult ListMainWithDetail(ListMainWithDetailRequest request)
+        {
+            var memberAndPermissionSetting = _authHelpers.GetMemberAndPermissionSetting(User);
+            var compId = memberAndPermissionSetting.CompanyWithUnit.CompId;
+            request.CompId = compId;
+
+            var validationResult = _listQcMainWithDetailValidator.Validate(request);
+
+            if (!validationResult.IsValid)
+            {
+                return BadRequest(CommonResponse<dynamic>.BuildValidationFailedResponse(validationResult));
+            }
+            var (qcMainList,totalPages) = _qcService.ListQcMain(request);
+            var details = _qcService.GetQcDetailsByMainIdList(qcMainList.Select(m => m.MainId).ToList());
+
+            var qcMainWithDetailList = _mapper.Map<List<QcMainWithDetail>>(qcMainList);
+            qcMainWithDetailList.ForEach(m =>
+            {
+                var matchedDetailList = details.Where(d=>d.MainId==m.MainId).ToList();
+                m.DetailList = matchedDetailList;
+            });
+
+            
+            var response = new CommonResponse<List<QcMainWithDetail>>
+            {
+                Result = true,
+                Data = qcMainWithDetailList,
+                TotalPages = totalPages
             };
             return Ok(response);
         }

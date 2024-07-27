@@ -33,4 +33,10 @@ public partial class QcValidationDetail
 
     [StringLength(300)]
     public string? ValidationResult { get; set; }
+
+    [Column(TypeName = "timestamp")]
+    public DateTime? CreatedAt { get; set; }
+
+    [Column(TypeName = "timestamp")]
+    public DateTime? UpdatedAt { get; set; }
 }

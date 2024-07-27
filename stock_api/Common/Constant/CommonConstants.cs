@@ -344,12 +344,11 @@ namespace stock_api.Common.Constant
         public static class QcTestStatus
         {
             public const string NONE = "NONE";
-            public const string FAIL = "FAIL";
-            public const string PASS = "PASS";
+            public const string DONE = "DONE";
 
             public static List<string> GetAllValues()
             {
-                return new List<string> { NONE, FAIL, PASS };
+                return new List<string> { NONE, DONE };
             }
         }
 
