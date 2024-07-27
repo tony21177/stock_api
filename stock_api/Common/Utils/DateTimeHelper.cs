@@ -78,7 +78,7 @@ namespace stock_api.Common.Utils
         {
             if (dateTime.HasValue)
             {
-                return dateTime.Value.ToString("formatterString", CultureInfo.InvariantCulture);
+                return dateTime.Value.ToString(formatterString, CultureInfo.InvariantCulture);
             }
             return null;
         }
