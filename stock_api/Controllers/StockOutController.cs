@@ -278,18 +278,6 @@ namespace stock_api.Controllers
                 {
                     notifyProductQuantityList.Add(notifyProductQuantity);
                 }
-                var IsNeedQc = requestLot.IsNeedQc == true && requestLot.QcTestStatus == CommonConstants.QcTestStatus.NONE && requestLot.QcType!=CommonConstants.QcTypeConstants.NONE;
-                NeedQc? needQc = null;
-                if (IsNeedQc)
-                {
-                    needQc = new NeedQc()
-                    {
-                        LotNumber = requestLot.LotNumber,
-                        LotNumberBatch = requestLot.LotNumberBatch,
-                        QcType = requestLot.QcType
-                    };
-                    needQcList.Add(needQc);
-                }
             }
             if (notifyProductQuantityList.Count > 0)
             {
@@ -298,12 +286,12 @@ namespace stock_api.Controllers
 
             return Ok(new CommonResponse<dynamic>
             {
-                Result = (failedOutLotNumberBatchList.Count == 0&& notOldestLotList.Count==0),
+                Result = (failedOutLotNumberBatchList.Count == 0&& notOldestLotList.Count==0&&needQcListForOutboundItems.Count==0),
                 Data = new Dictionary<string, dynamic>
                 {
                     ["failedLotNumberBatchList"] = failedOutLotNumberBatchList,
                     ["notOldestLotList"] = notOldestLotList,
-                    ["needQcList"] = needQcList
+                    ["needQcList"] = needQcListForOutboundItems
                 }
             });
         }

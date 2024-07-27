@@ -1,4 +1,5 @@
 ﻿using FluentValidation;
+using stock_api.Common.Constant;
 using stock_api.Controllers.Request;
 using stock_api.Service;
 
@@ -17,6 +18,11 @@ namespace stock_api.Controllers.Validator
             RuleFor(x => x.GroupIds)
                     .Must((request, groupIds, context) => BeValidGroupList(groupIds, context))
                     .WithMessage("以下 groupId 為無效的 group: {InvalidGroupIds}");
+            RuleFor(request => request.QcType)
+                 .Cascade(CascadeMode.Stop) // Stop on first failure
+                 .Must(type => CommonConstants.QcTypeConstants.GetAllValues().Contains(type))
+                 .When(request => request.QcType != null )
+                     .WithMessage($"qcType必須為{string.Join(",", CommonConstants.QcTypeConstants.GetAllValues())}");
 
 
         }

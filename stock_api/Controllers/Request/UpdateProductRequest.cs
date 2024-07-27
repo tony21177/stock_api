@@ -26,5 +26,6 @@ namespace stock_api.Controllers.Request
         public int? OpenDeadline { get; set; }
         public string? Unit { get; set; }
 
+        public string? QcType { get; set; }
     }
 }

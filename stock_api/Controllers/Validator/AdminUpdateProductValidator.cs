@@ -1,4 +1,5 @@
 ﻿using FluentValidation;
+using stock_api.Common.Constant;
 using stock_api.Common.Utils;
 using stock_api.Controllers.Request;
 using stock_api.Service;
@@ -35,6 +36,11 @@ namespace stock_api.Controllers.Validator
             RuleFor(x => x.OriginalDeadline)
                 .Must((request, originalDeadline, context) => BeValidDate(originalDeadline, context))
                     .WithMessage("無效的日期");
+            RuleFor(request => request.QcType)
+                 .Cascade(CascadeMode.Stop) // Stop on first failure
+                 .Must(type => CommonConstants.QcTypeConstants.GetAllValues().Contains(type))
+                 .When(request => request.QcType != null)
+                     .WithMessage($"qcType必須為{string.Join(",", CommonConstants.QcTypeConstants.GetAllValues())}");
         }
 
 

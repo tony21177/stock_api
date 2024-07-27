@@ -24,6 +24,7 @@
         public string? Weight { get; set; }
         public int? AllowReceiveDateRange { get; set; }
         public string? Delievery { get; set; }
+        public string? QcType { get;set; }
 
     }
 }
