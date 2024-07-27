@@ -74,6 +74,14 @@ namespace stock_api.Common.Utils
             }
             return null;
         }
+        public static string? CustomFormatDateString(DateTime? dateTime,string formatterString)
+        {
+            if (dateTime.HasValue)
+            {
+                return dateTime.Value.ToString("formatterString", CultureInfo.InvariantCulture);
+            }
+            return null;
+        }
 
         public static string? FormatDateString(DateTime? dateTime,string dateTimeFormatString)
         {

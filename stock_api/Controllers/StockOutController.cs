@@ -15,6 +15,7 @@ using MySqlX.XDevAPI.CRUD;
 using Org.BouncyCastle.Asn1.Ocsp;
 using System.Collections.Generic;
 using stock_api.Controllers.Dto;
+using stock_api.Common.Utils;
 
 namespace stock_api.Controllers
 {
@@ -117,7 +118,12 @@ namespace stock_api.Controllers
                         {
                             LotNumber = requestLot.LotNumber,
                             LotNumberBatch = requestLot.LotNumberBatch,
-                            QcType = requestLot.QcType
+                            QcType = requestLot.QcType,
+                            ProductId = requestLot.ProductId,   
+                            ProductName = requestLot.ProductName,
+                            InStockDate = DateTimeHelper.CustomFormatDateString(requestLot.CreatedAt, "yyyy/MM/dd"),
+                            InStockUserId = requestLot.UserId,
+                            InStockUserName = requestLot.UserName,
                         };
                     }
 
@@ -162,7 +168,12 @@ namespace stock_api.Controllers
                 {
                     LotNumber = requestLot.LotNumber,
                     LotNumberBatch = requestLot.LotNumberBatch,
-                    QcType = requestLot.QcType
+                    QcType = requestLot.QcType,
+                    ProductId = requestLot.ProductId,
+                    ProductName = requestLot.ProductName,
+                    InStockDate = DateTimeHelper.CustomFormatDateString(requestLot.CreatedAt, "yyyy/MM/dd"),
+                    InStockUserId = requestLot.UserId,
+                    InStockUserName = requestLot.UserName,
                 };
                 if (request.IsSkipQc == false)
                 {
@@ -823,7 +834,12 @@ namespace stock_api.Controllers
                     {
                         LotNumber = requestLot.LotNumber,
                         LotNumberBatch = requestLot.LotNumberBatch,
-                        QcType = requestLot.QcType
+                        QcType = requestLot.QcType,
+                        ProductId = requestLot.ProductId,
+                        ProductName = requestLot.ProductName,
+                        InStockDate = DateTimeHelper.CustomFormatDateString(requestLot.CreatedAt, "yyyy/MM/dd"),
+                        InStockUserId = requestLot.UserId,
+                        InStockUserName = requestLot.UserName,
                     };
                     needQcList.Add(needQc);
                 }
