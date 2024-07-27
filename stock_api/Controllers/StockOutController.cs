@@ -114,16 +114,19 @@ namespace stock_api.Controllers
                     NeedQc? needQc2 = null;
                     if (IsNeedQc2)
                     {
+                        var purchaseMainId = _stockInService.GetPurchaseMainIdByInStockId(requestLot);
+
                         needQc2 = new NeedQc()
                         {
+                            PurchaseMainID = purchaseMainId,
                             LotNumber = requestLot.LotNumber,
                             LotNumberBatch = requestLot.LotNumberBatch,
                             QcType = requestLot.QcType,
-                            ProductId = requestLot.ProductId,   
+                            ProductID = requestLot.ProductId,   
                             ProductName = requestLot.ProductName,
-                            InStockDate = DateTimeHelper.CustomFormatDateString(requestLot.CreatedAt, "yyyy/MM/dd"),
-                            InStockUserId = requestLot.UserId,
-                            InStockUserName = requestLot.UserName,
+                            ApplyDate = DateTimeHelper.CustomFormatDateString(requestLot.CreatedAt, "yyyy/MM/dd"),
+                            AcceptUserId = requestLot.UserId,
+                            AcceptUserName = requestLot.UserName,
                         };
                     }
 
@@ -164,16 +167,18 @@ namespace stock_api.Controllers
             NeedQc? needQc = null;
             if (IsNeedQc)
             {
+                var purchaseMainId = _stockInService.GetPurchaseMainIdByInStockId(requestLot);
                 needQc = new NeedQc()
                 {
+                    PurchaseMainID = purchaseMainId,
                     LotNumber = requestLot.LotNumber,
                     LotNumberBatch = requestLot.LotNumberBatch,
                     QcType = requestLot.QcType,
-                    ProductId = requestLot.ProductId,
+                    ProductID = requestLot.ProductId,
                     ProductName = requestLot.ProductName,
-                    InStockDate = DateTimeHelper.CustomFormatDateString(requestLot.CreatedAt, "yyyy/MM/dd"),
-                    InStockUserId = requestLot.UserId,
-                    InStockUserName = requestLot.UserName,
+                    ApplyDate = DateTimeHelper.CustomFormatDateString(requestLot.CreatedAt, "yyyy/MM/dd"),
+                    AcceptUserId = requestLot.UserId,
+                    AcceptUserName = requestLot.UserName,
                 };
                 if (request.IsSkipQc == false)
                 {
@@ -830,16 +835,18 @@ namespace stock_api.Controllers
                 var IsNeedQc = requestLot.IsNeedQc == true && requestLot.QcTestStatus == CommonConstants.QcTestStatus.NONE &&requestLot.QcType!=CommonConstants.QcTypeConstants.NONE&&item.IsSkipQc!=true;
                 if (IsNeedQc)
                 {
+                    var purchaseMainId = _stockInService.GetPurchaseMainIdByInStockId(requestLot);
                     var needQc = new NeedQc()
                     {
+                        PurchaseMainID = purchaseMainId,
                         LotNumber = requestLot.LotNumber,
                         LotNumberBatch = requestLot.LotNumberBatch,
                         QcType = requestLot.QcType,
-                        ProductId = requestLot.ProductId,
+                        ProductID = requestLot.ProductId,
                         ProductName = requestLot.ProductName,
-                        InStockDate = DateTimeHelper.CustomFormatDateString(requestLot.CreatedAt, "yyyy/MM/dd"),
-                        InStockUserId = requestLot.UserId,
-                        InStockUserName = requestLot.UserName,
+                        ApplyDate = DateTimeHelper.CustomFormatDateString(requestLot.CreatedAt, "yyyy/MM/dd"),
+                        AcceptUserId = requestLot.UserId,
+                        AcceptUserName = requestLot.UserName,
                     };
                     needQcList.Add(needQc);
                 }

@@ -615,5 +615,11 @@ namespace stock_api.Service
 
             return nearExpireProductVoList.Where(p=>p.InStockItemList.Count>0).ToList();
         }
+
+        public string GetPurchaseMainIdByInStockId(InStockItemRecord inStockItemRecord)
+        {
+            var purchaseSubItem = _dbContext.PurchaseSubItems.Where(s=>s.ItemId==inStockItemRecord.ItemId).FirstOrDefault();
+            return purchaseSubItem.PurchaseMainId;
+        }
     }
 }
