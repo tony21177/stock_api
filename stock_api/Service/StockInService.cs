@@ -616,10 +616,11 @@ namespace stock_api.Service
             return nearExpireProductVoList.Where(p=>p.InStockItemList.Count>0).ToList();
         }
 
-        public string GetPurchaseMainIdByInStockId(InStockItemRecord inStockItemRecord)
+        public PurchaseMainSheet GetPurchaseMainByInStockId(InStockItemRecord inStockItemRecord)
         {
             var purchaseSubItem = _dbContext.PurchaseSubItems.Where(s=>s.ItemId==inStockItemRecord.ItemId).FirstOrDefault();
-            return purchaseSubItem.PurchaseMainId;
+            var main = _dbContext.PurchaseMainSheets.Where(m=>m.PurchaseMainId==purchaseSubItem.PurchaseMainId).FirstOrDefault();
+            return main;
         }
     }
 }
