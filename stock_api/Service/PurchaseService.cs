@@ -799,6 +799,11 @@ namespace stock_api.Service
             }
         }
 
+        public List<PurchaseDetailView> GetPurchaseDetailListByItemIdList(List<string> itemIdList)
+        {
+            return _dbContext.PurchaseDetailViews.Where(v => itemIdList.Contains(v.ItemId)).ToList();  
+        }
+
         private void SendMailToOwner(String title, String content,List<WarehouseMember> ownerList)
         {
             

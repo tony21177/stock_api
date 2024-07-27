@@ -275,6 +275,11 @@ namespace stock_api.Service
                 {
                     updateProduct.IsNeedAcceptProcess = existingProduct.IsNeedAcceptProcess;
                 }
+                else if(request.IsNeedAcceptProcess==false)
+                {
+                    _dbContext.InStockItemRecords.Where(i=>i.ProductId==existingProduct.ProductId)
+                        .ExecuteUpdate(i => i.SetProperty(x => x.IsNeedQc, false));
+                }
                 updateProduct.AllowReceiveDateRange = existingProduct.AllowReceiveDateRange;
                 updateProduct.TestCount = existingProduct.TestCount;
                 updateProduct.UnitConversion = existingProduct.UnitConversion;
@@ -358,6 +363,11 @@ namespace stock_api.Service
                 if (request.IsNeedAcceptProcess == null)
                 {
                     updateProduct.IsNeedAcceptProcess = existingProduct.IsNeedAcceptProcess;
+
+                }else if (request.IsNeedAcceptProcess==false)
+                {
+                    _dbContext.InStockItemRecords.Where(i => i.ProductId == existingProduct.ProductId)
+                        .ExecuteUpdate(i => i.SetProperty(x => x.IsNeedQc, false));
                 }
                 if (request.AllowReceiveDateRange == null)
                 {

@@ -53,6 +53,8 @@ public partial class StockDbContext : DbContext
 
     public virtual DbSet<PurchaseAcceptanceItemsView> PurchaseAcceptanceItemsViews { get; set; }
 
+    public virtual DbSet<PurchaseDetailView> PurchaseDetailViews { get; set; }
+
     public virtual DbSet<PurchaseFlow> PurchaseFlows { get; set; }
 
     public virtual DbSet<PurchaseFlowLog> PurchaseFlowLogs { get; set; }
@@ -484,6 +486,58 @@ public partial class StockDbContext : DbContext
                 .ValueGeneratedOnAddOrUpdate()
                 .HasDefaultValueSql("CURRENT_TIMESTAMP");
             entity.Property(e => e.UserId).HasComment("此採購單據的建立者");
+        });
+
+        modelBuilder.Entity<PurchaseDetailView>(entity =>
+        {
+            entity.ToView("purchase_detail_view");
+
+            entity.Property(e => e.ApplyDate)
+                .HasDefaultValueSql("CURRENT_TIMESTAMP")
+                .HasComment("申請日期");
+            entity.Property(e => e.ArrangeSupplierId).HasComment("這部分是由得標廠商（金萬林），在收到這張單子的品項後，可以指派該品項的供應商，再進行拆單");
+            entity.Property(e => e.ArrangeSupplierName).HasComment("這部分是由得標廠商（金萬林），在收到這張單子的品項後，可以指派該品項的供應商，再進行拆單");
+            entity.Property(e => e.Comment).HasComment("品項備註內容");
+            entity.Property(e => e.CompId).HasComment("所屬公司ID");
+            entity.Property(e => e.CreatedAt).HasDefaultValueSql("CURRENT_TIMESTAMP");
+            entity.Property(e => e.CurrentInStockQuantity).HasComment("採購單項目在建立當下的庫存數量");
+            entity.Property(e => e.CurrentStatus).HasComment("目前狀態\nAPPLY : 申請中\nAGREE : 同意\nREJECT : 拒絕\nCLOSE : 結案");
+            entity.Property(e => e.DemandDate).HasComment("需求日期");
+            entity.Property(e => e.GroupIds).HasComment("品項可以設定組別ID\\n在醫院端可以依照組別拆單顯示");
+            entity.Property(e => e.InStockQuantity).HasDefaultValueSql("'0'");
+            entity.Property(e => e.OwnerProcess)
+                .HasDefaultValueSql("'NONE'")
+                .HasComment("NONE,NOT_AGREE,PART_AGREE,AGREE");
+            entity.Property(e => e.ProductCategory).HasComment("品項的 ProductCategory, 用來醫院拆單用");
+            entity.Property(e => e.ProductId).HasComment("品項的PK，\n參考 Product Table");
+            entity.Property(e => e.ProductName).HasComment("品項名稱");
+            entity.Property(e => e.ProductSpec).HasComment("品項規格");
+            entity.Property(e => e.Quantity).HasComment("數量");
+            entity.Property(e => e.ReceiveQuantity).HasComment("已收到的數量");
+            entity.Property(e => e.ReceiveStatus)
+                .HasDefaultValueSql("'NONE'")
+                .HasComment("送單到金萬林後，目前狀態\\\\nNONE : 系統處理中\\\\nDELIVERED : 得標廠商處理中\\\\nIN_ACCEPTANCE_CHECK :單位 驗收中\\\\nPART_ACCEPT : 部分驗收入庫\\\\nALL_ACCEPT : 全部驗收入庫");
+            entity.Property(e => e.Remarks).HasComment("備註內容");
+            entity.Property(e => e.SplitPrcoess)
+                .HasDefaultValueSql("'NONE'")
+                .HasComment("NONE(所有sub_item都尚未經過OWNER拆單),PART(部分sub_item經過OWNER拆單),DONE(所有sub_item經過OWNER拆單)");
+            entity.Property(e => e.SubCreatedAt).HasDefaultValueSql("CURRENT_TIMESTAMP");
+            entity.Property(e => e.SubOwnerProcess).HasDefaultValueSql("'NONE'");
+            entity.Property(e => e.SubReceiveStatus).HasComment("送單到金萬林後，目前狀態\\\\\\\\nNONE : 尚未收到結果\\\\\\\\nPART : 部分驗收入庫\\\\\\\\nDONE : 全部驗收入庫\\\\\\\\nCLOSE:金萬林不同意拆單後的採購項目\\n");
+            entity.Property(e => e.SubSplitProcess)
+                .HasDefaultValueSql("'NONE'")
+                .HasComment("NONE(表示OWNER尚未拆單過), DONE(表示OWNER已經拆單過)\n");
+            entity.Property(e => e.SubUpdatedAt)
+                .ValueGeneratedOnAddOrUpdate()
+                .HasDefaultValueSql("CURRENT_TIMESTAMP");
+            entity.Property(e => e.Type).HasComment("採購單類型\nGENERAL : 一般訂單\nURGENT : 緊急訂單");
+            entity.Property(e => e.UpdatedAt)
+                .ValueGeneratedOnAddOrUpdate()
+                .HasDefaultValueSql("CURRENT_TIMESTAMP");
+            entity.Property(e => e.UserId).HasComment("此採購單據的建立者");
+            entity.Property(e => e.WithCompId).HasComment("Owner從拆單建立就會帶這個參數,表示從WithCompId的採購單拆單出來的");
+            entity.Property(e => e.WithItemId).HasComment("Owner從拆單建立就會帶這個參數,對應對WithCompId的purchase_sub_item.ItemId");
+            entity.Property(e => e.WithPurchaseMainId).HasComment("Owner從拆單建立就會帶這個參數,對應對WithCompId的採購單purchase_main_sheet.PurchaseMainId");
         });
 
         modelBuilder.Entity<PurchaseFlow>(entity =>

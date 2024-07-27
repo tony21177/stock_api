@@ -152,6 +152,10 @@
          "ObjectType": 3
       },
       {
+         "Name": "purchase_detail_view",
+         "ObjectType": 3
+      },
+      {
          "Name": "purchase_item_list_view",
          "ObjectType": 3
       }
