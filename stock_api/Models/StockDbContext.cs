@@ -67,6 +67,10 @@ public partial class StockDbContext : DbContext
 
     public virtual DbSet<PurchaseSubItem> PurchaseSubItems { get; set; }
 
+    public virtual DbSet<QcValidationDetail> QcValidationDetails { get; set; }
+
+    public virtual DbSet<QcValidationMain> QcValidationMains { get; set; }
+
     public virtual DbSet<Supplier> Suppliers { get; set; }
 
     public virtual DbSet<SupplierTraceLog> SupplierTraceLogs { get; set; }
@@ -710,6 +714,24 @@ public partial class StockDbContext : DbContext
             entity.Property(e => e.WithCompId).HasComment("Owner從拆單建立就會帶這個參數,表示從WithCompId的採購單拆單出來的");
             entity.Property(e => e.WithItemId).HasComment("Owner從拆單建立就會帶這個參數,對應對WithCompId的purchase_sub_item.ItemId");
             entity.Property(e => e.WithPurchaseMainId).HasComment("Owner從拆單建立就會帶這個參數,對應對WithCompId的採購單purchase_main_sheet.PurchaseMainId");
+        });
+
+        modelBuilder.Entity<QcValidationDetail>(entity =>
+        {
+            entity.HasKey(e => e.DetailId).HasName("PRIMARY");
+
+            entity.Property(e => e.NewLotResult).HasComment("新批號結果");
+        });
+
+        modelBuilder.Entity<QcValidationMain>(entity =>
+        {
+            entity.HasKey(e => e.MainId).HasName("PRIMARY");
+
+            entity.Property(e => e.Comment).HasComment("備註說明");
+            entity.Property(e => e.InStockTime).HasComment("對應的入庫時間");
+            entity.Property(e => e.QcType).HasComment("LOT_NUMBER或LOT_NUMBER_BATCH");
+            entity.Property(e => e.ValidationMethod).HasComment("檢驗屬性");
+            entity.Property(e => e.ValidationType).HasComment("驗收類型");
         });
 
         modelBuilder.Entity<Supplier>(entity =>

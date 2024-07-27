@@ -73,6 +73,8 @@ namespace stock_api.Service
         public void InactivePurchaseFlowSetting(String flowId,bool isActive)
         {
             _dbContext.PurchaseFlowSettings.Where(f => f.FlowId == flowId).ExecuteUpdate(f => f.SetProperty(f => f.IsActive, false));
+            _dbContext.SaveChanges();
+            return;
         }
 
 

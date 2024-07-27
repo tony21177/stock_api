@@ -9,8 +9,6 @@ using System.Text.Json;
 using Serilog;
 using Microsoft.AspNetCore.Hosting;
 using Serilog.Enrichers.CallerInfo;
-using Hangfire;
-using Hangfire.MySql;
 using System.Transactions;
 using stock_api.Scheduler;
 using Quartz;

@@ -96,6 +96,14 @@
          "ObjectType": 0
       },
       {
+         "Name": "qc_validation_detail",
+         "ObjectType": 0
+      },
+      {
+         "Name": "qc_validation_main",
+         "ObjectType": 0
+      },
+      {
          "Name": "supplier",
          "ObjectType": 0
       },
