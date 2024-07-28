@@ -131,10 +131,10 @@ namespace stock_api.Controllers
                         };
                     }
                     var warehouseProduct = _warehouseProductService.GetProductByProductId(requestLot.ProductId);
-                    List<string> printStickerLotBatchList = new();
+                    List<string> printStickerLotBatchListForBadRequest = new();
                     if (warehouseProduct.IsPrintSticker == true)
                     {
-                        printStickerLotBatchList.Add(requestLot.LotNumberBatch);
+                        printStickerLotBatchListForBadRequest.Add(requestLot.LotNumberBatch);
                     }
 
                     return BadRequest(new CommonResponse<Dictionary<string, dynamic>>
@@ -147,7 +147,7 @@ namespace stock_api.Controllers
                             ["oldest"] = oldestLot,
                             ["requestLotNumberBatch"] = requestLot.LotNumberBatch,
                             ["needQc"] = needQc2,
-                            ["printStickerLotBatchList"] = printStickerLotBatchList,
+                            ["printStickerLotBatchList"] = printStickerLotBatchListForBadRequest,
                         }
                     });
                 }
