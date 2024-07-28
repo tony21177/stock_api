@@ -2,6 +2,7 @@
 using FluentValidation;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
 using stock_api.Common;
 using stock_api.Controllers.Request;
 using stock_api.Controllers.Validator;
@@ -165,15 +166,15 @@ namespace stock_api.Controllers
 
         [HttpPost("mainWithDetail/list")]
         [Authorize]
-        public IActionResult ListMainWithDetail(ListMainWithDetailRequest? request)
+        public IActionResult ListMainWithDetail([FromBody(EmptyBodyBehavior = EmptyBodyBehavior.Allow)] ListMainWithDetailRequest? request)
         {
             var memberAndPermissionSetting = _authHelpers.GetMemberAndPermissionSetting(User);
             var compId = memberAndPermissionSetting.CompanyWithUnit.CompId;
-            request.CompId = compId;
             if (request == null)
             {
                 request = new ListMainWithDetailRequest();
             }
+            request.CompId = compId;
 
             var validationResult = _listQcMainWithDetailValidator.Validate(request);
 

@@ -151,7 +151,7 @@ builder.Services.AddAuthorization().AddSingleton<IAuthorizationMiddlewareResultH
 builder.Services.ConfigureMappings();
 
 
-builder.Services.AddControllers().AddJsonOptions(options =>
+builder.Services.AddControllers(options => { options.AllowEmptyInputInBodyModelBinding = true; }).AddJsonOptions(options =>
 {
     options.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
 }); ;
