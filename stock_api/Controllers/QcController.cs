@@ -170,6 +170,10 @@ namespace stock_api.Controllers
             var memberAndPermissionSetting = _authHelpers.GetMemberAndPermissionSetting(User);
             var compId = memberAndPermissionSetting.CompanyWithUnit.CompId;
             request.CompId = compId;
+            if (request == null)
+            {
+                request = new ListMainWithDetailRequest();
+            }
 
             var validationResult = _listQcMainWithDetailValidator.Validate(request);
 
