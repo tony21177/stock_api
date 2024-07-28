@@ -512,103 +512,106 @@ namespace stock_api.Service
             WarehouseMember verifyMember = verifierMemberAndPermission.Member;
             var verifyCompId = verifierMemberAndPermission.CompanyWithUnit.CompId;
             List<WarehouseMember> ownerList = new();
-            using var scope = new TransactionScope();
-            try
+            using (var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled))
             {
-                // 更新Flow
-                currentFlow.Reason = reason;
-                if (answer!= CommonConstants.PurchaseApplyStatus.BACK)
+                try
                 {
-                    currentFlow.VerifyCompId = verifyCompId;
-                    currentFlow.VerifyUserId = verifyMember.UserId;
-                    currentFlow.VerifyUserName = verifyMember.DisplayName;
-                }
-                
-                currentFlow.Answer = answer;
-                currentFlow.SubmitAt = DateTime.Now;
-
-                // 更新主單狀態
-                if (answer == CommonConstants.AnswerPurchaseFlow.AGREE && nextPurchase == null)
-                {
-                    currentFlow.Status = answer;
-                    // 已完成所有flow 更新主單狀態
-                    purchaseMain.CurrentStatus = CommonConstants.PurchaseApplyStatus.AGREE;
-                    List<AcceptanceItem> acceptanceItems = new();
-                    foreach (var item in purchaseSubItems)
+                    // 更新Flow
+                    currentFlow.Reason = reason;
+                    if (answer != CommonConstants.PurchaseApplyStatus.BACK)
                     {
-                        var acceptanceItem = new AcceptanceItem()
+                        currentFlow.VerifyCompId = verifyCompId;
+                        currentFlow.VerifyUserId = verifyMember.UserId;
+                        currentFlow.VerifyUserName = verifyMember.DisplayName;
+                    }
+
+                    currentFlow.Answer = answer;
+                    currentFlow.SubmitAt = DateTime.Now;
+
+                    // 更新主單狀態
+                    if (answer == CommonConstants.AnswerPurchaseFlow.AGREE && nextPurchase == null)
+                    {
+                        currentFlow.Status = answer;
+                        // 已完成所有flow 更新主單狀態
+                        purchaseMain.CurrentStatus = CommonConstants.PurchaseApplyStatus.AGREE;
+                        List<AcceptanceItem> acceptanceItems = new();
+                        foreach (var item in purchaseSubItems)
                         {
-                            AcceptId = Guid.NewGuid().ToString(),
-                            CompId = item.CompId,
-                            ItemId = item.ItemId,
-                            OrderQuantity = item.Quantity??0,
-                            ProductId = item.ProductId,
-                            ProductCode = item.ProductCode,
-                            ProductName = item.ProductName,
-                            ProductSpec = item.ProductSpec,
-                            UdiserialCode = item.UdiserialCode,
-                            PurchaseMainId = purchaseMain.PurchaseMainId,
-                            ArrangeSupplierId = item.ArrangeSupplierId,
-                            ArrangeSupplierName = item.ArrangeSupplierName,
-                        };
-                        acceptanceItems.Add(acceptanceItem);
-                    }
-                    _dbContext.AcceptanceItems.AddRange(acceptanceItems);
-                    
+                            var acceptanceItem = new AcceptanceItem()
+                            {
+                                AcceptId = Guid.NewGuid().ToString(),
+                                CompId = item.CompId,
+                                ItemId = item.ItemId,
+                                OrderQuantity = item.Quantity ?? 0,
+                                ProductId = item.ProductId,
+                                ProductCode = item.ProductCode,
+                                ProductName = item.ProductName,
+                                ProductSpec = item.ProductSpec,
+                                UdiserialCode = item.UdiserialCode,
+                                PurchaseMainId = purchaseMain.PurchaseMainId,
+                                ArrangeSupplierId = item.ArrangeSupplierId,
+                                ArrangeSupplierName = item.ArrangeSupplierName,
+                            };
+                            acceptanceItems.Add(acceptanceItem);
+                        }
+                        _dbContext.AcceptanceItems.AddRange(acceptanceItems);
 
-                }
-                if (answer == CommonConstants.AnswerPurchaseFlow.REJECT)
-                {
-                    currentFlow.Status = answer;
-                    purchaseMain.CurrentStatus = CommonConstants.PurchaseApplyStatus.REJECT;
-                }
-                if (answer == CommonConstants.AnswerPurchaseFlow.BACK&&isOwner!=true)
-                {
-                    currentFlow.Status = answer;
 
-                    currentFlow.Answer = "";
-                    if (preFlow != null)
-                    {
-                        preFlow.Status = "";
-                        preFlow.Answer = "";
                     }
-                    else
+                    if (answer == CommonConstants.AnswerPurchaseFlow.REJECT)
                     {
+                        currentFlow.Status = answer;
                         purchaseMain.CurrentStatus = CommonConstants.PurchaseApplyStatus.REJECT;
-
                     }
-                }
-                if (answer == CommonConstants.AnswerPurchaseFlow.BACK && isOwner == true)
-                {
-                    currentFlow.Status = "";
-                    currentFlow.Answer = "";
-                    purchaseMain.CurrentStatus = CommonConstants.PurchaseApplyStatus.BACK;
-                }
+                    if (answer == CommonConstants.AnswerPurchaseFlow.BACK && isOwner != true)
+                    {
+                        currentFlow.Status = answer;
+
+                        currentFlow.Answer = "";
+                        if (preFlow != null)
+                        {
+                            preFlow.Status = "";
+                            preFlow.Answer = "";
+                        }
+                        else
+                        {
+                            purchaseMain.CurrentStatus = CommonConstants.PurchaseApplyStatus.REJECT;
+
+                        }
+                    }
+                    if (answer == CommonConstants.AnswerPurchaseFlow.BACK && isOwner == true)
+                    {
+                        currentFlow.Status = "";
+                        currentFlow.Answer = "";
+                        purchaseMain.CurrentStatus = CommonConstants.PurchaseApplyStatus.BACK;
+                    }
 
 
-                // 新增log
-                var newFlowLog = new PurchaseFlowLog()
+                    // 新增log
+                    var newFlowLog = new PurchaseFlowLog()
+                    {
+                        LogId = Guid.NewGuid().ToString(),
+                        CompId = currentFlow.CompId,
+                        PurchaseMainId = currentFlow.PurchaseMainId,
+                        UserId = verifyMember.UserId,
+                        UserName = verifyMember.DisplayName,
+                        Sequence = currentFlow.Sequence,
+                        Action = answer,
+                        Remarks = reason
+                    };
+                    ownerList = _memberService.GetOwnerMembers();
+                    _dbContext.PurchaseFlowLogs.Add(newFlowLog);
+                    _dbContext.SaveChanges();
+                    scope.Complete();
+
+                }
+                catch (Exception ex)
                 {
-                    LogId = Guid.NewGuid().ToString(),
-                    CompId = currentFlow.CompId,
-                    PurchaseMainId = currentFlow.PurchaseMainId,
-                    UserId = verifyMember.UserId,
-                    UserName = verifyMember.DisplayName,
-                    Sequence = currentFlow.Sequence,
-                    Action = answer,
-                    Remarks = reason
-                };
-                ownerList = _memberService.GetOwnerMembers();
-                _dbContext.PurchaseFlowLogs.Add(newFlowLog);
-                _dbContext.SaveChanges();
-                scope.Complete();
-                
+                    _logger.LogError("事務失敗[AnswerFlow]：{msg}", ex);
+                    return false;
+                }
             }
-            catch (Exception ex)
-            {
-                _logger.LogError("事務失敗[AnswerFlow]：{msg}", ex);
-                return false;
-            }
+            
 
             if (answer == CommonConstants.AnswerPurchaseFlow.AGREE && nextPurchase == null)
             {
@@ -795,43 +798,55 @@ namespace stock_api.Service
 
         private async Task SendMailByFlowSetting(PurchaseFlowSettingVo purchaseFlowSettingVo, String title, String content)
         {
-            var receiver = _memberService.GetMembersByUserId(purchaseFlowSettingVo.UserId);
-            if (receiver != null)
+            using (var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled))
             {
-
-                if (!string.IsNullOrEmpty(receiver.Email))
+                var receiver = _memberService.GetMembersByUserId(purchaseFlowSettingVo.UserId);
+                if (receiver != null)
                 {
-                    await _emailService.SendAsync(title, content, receiver.Email);
-                    _logger.LogInformation("[寄信]標題:{title},收件者:{email}", title, receiver.Email);
+
+                    if (!string.IsNullOrEmpty(receiver.Email))
+                    {
+                        await _emailService.SendAsync(title, content, receiver.Email);
+                        _logger.LogInformation("[寄信]標題:{title},收件者:{email}", title, receiver.Email);
+                    }
                 }
+                scope.Complete();
             }
         }
 
         private async Task SendMailByFlow(PurchaseFlow flow, String title, String content)
         {
-            var receiver = _memberService.GetMembersByUserId(flow.VerifyUserId);
-            if (receiver != null)
+            using (var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled))
             {
-
-                if (!string.IsNullOrEmpty(receiver.Email))
+                var receiver = _memberService.GetMembersByUserId(flow.VerifyUserId);
+                if (receiver != null)
                 {
-                    await _emailService.SendAsync(title, content, receiver.Email);
-                    _logger.LogInformation("[寄信]標題:{title},收件者:{email}", title, receiver.Email);
+
+                    if (!string.IsNullOrEmpty(receiver.Email))
+                    {
+                        await _emailService.SendAsync(title, content, receiver.Email);
+                        _logger.LogInformation("[寄信]標題:{title},收件者:{email}", title, receiver.Email);
+                    }
                 }
+                scope.Complete();
             }
         }
 
         private async Task SendMailByPurchaseMain(PurchaseMainSheet main, String title, String content)
         {
-            var receiver = _memberService.GetMembersByUserId(main.UserId);
-            if (receiver != null)
+            using (var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled))
             {
-
-                if (!string.IsNullOrEmpty(receiver.Email))
+                var receiver = _memberService.GetMembersByUserId(main.UserId);
+                if (receiver != null)
                 {
-                    await _emailService.SendAsync(title, content, receiver.Email);
-                    _logger.LogInformation("[寄信]標題:{title},收件者:{email}", title, receiver.Email);
+
+                    if (!string.IsNullOrEmpty(receiver.Email))
+                    {
+                        await _emailService.SendAsync(title, content, receiver.Email);
+                        _logger.LogInformation("[寄信]標題:{title},收件者:{email}", title, receiver.Email);
+                    }
                 }
+                scope.Complete();
             }
         }
 
