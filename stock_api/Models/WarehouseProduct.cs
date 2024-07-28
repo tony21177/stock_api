@@ -295,4 +295,6 @@ public partial class WarehouseProduct
 
     [StringLength(45)]
     public string? CompName { get; set; }
+
+    public bool? IsPrintSticker { get; set; }
 }

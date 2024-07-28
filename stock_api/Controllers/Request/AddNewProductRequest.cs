@@ -194,6 +194,7 @@ namespace stock_api.Controllers.Request
         public string? SavingFunction { get; set; }
 
         public double? SavingTemperature { get; set; }
+        public bool? IsPrintSticker { get; set; }
 
     }
 }

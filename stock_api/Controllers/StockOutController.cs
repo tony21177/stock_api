@@ -130,6 +130,12 @@ namespace stock_api.Controllers
                             AcceptUserName = requestLot.UserName,
                         };
                     }
+                    var warehouseProduct = _warehouseProductService.GetProductByProductId(requestLot.ProductId);
+                    List<string> printStickerLotBatchList = new();
+                    if (warehouseProduct.IsPrintSticker == true)
+                    {
+                        printStickerLotBatchList.Add(requestLot.LotNumberBatch);
+                    }
 
                     return BadRequest(new CommonResponse<Dictionary<string, dynamic>>
                     {
@@ -140,7 +146,8 @@ namespace stock_api.Controllers
                             ["isFIFO"] = false,
                             ["oldest"] = oldestLot,
                             ["requestLotNumberBatch"] = requestLot.LotNumberBatch,
-                            ["needQc"] = needQc2
+                            ["needQc"] = needQc2,
+                            ["printStickerLotBatchList"] = printStickerLotBatchList,
                         }
                     });
                 }
@@ -163,7 +170,11 @@ namespace stock_api.Controllers
                     Message = "出庫數量超過入庫數量"
                 });
             }
-
+            List<string> printStickerLotBatchList = new();
+            if (product.IsPrintSticker == true)
+            {
+                printStickerLotBatchList.Add(requestLot.LotNumberBatch);
+            }
             var IsNeedQc = requestLot.IsNeedQc == true && requestLot.QcTestStatus == CommonConstants.QcTestStatus.NONE && requestLot.QcType != CommonConstants.QcTypeConstants.NONE;
             NeedQc? needQc = null;
             if (IsNeedQc)
@@ -190,7 +201,8 @@ namespace stock_api.Controllers
                         Message = "請確認是否要跳過品質確效出庫",
                         Data = new Dictionary<string, dynamic>
                         {
-                            ["needQc"] = needQc
+                            ["needQc"] = needQc,
+                            ["printStickerLotBatchList"] = printStickerLotBatchList,
                         }
                     });
                 }
@@ -205,9 +217,10 @@ namespace stock_api.Controllers
             {
                 Result = result,
                 Message = errorMsg,
-                Data = new Dictionary<string, NeedQc>
+                Data = new Dictionary<string, dynamic>
                 {
-                    ["needQc"]=needQc
+                    ["needQc"]=needQc,
+                    ["printStickerLotBatchList"] = printStickerLotBatchList
                 }
             });
         }
@@ -254,6 +267,7 @@ namespace stock_api.Controllers
                 FindNotOldestLotList(request.OutboundItems, lotNumberBatchAndProductMap, lotNumberBatchAndProductCodeInStockExFIFORecordsMap);
 
             List<NeedQc> needQcListForOutboundItems = FindNeedQcList(request.OutboundItems, lotNumberBatchAndProductMap, lotNumberBatchRequestLotMap);
+            List<string> printStickerLotNumberBatchList = GetPrintStickerLotNumberBatchList(request.OutboundItems, lotNumberBatchAndProductMap);
 
 
             //if (notOldestLotList.Count > 0)
@@ -309,7 +323,8 @@ namespace stock_api.Controllers
                 {
                     ["failedLotNumberBatchList"] = failedOutLotNumberBatchList,
                     ["notOldestLotList"] = notOldestLotList,
-                    ["needQcList"] = needQcListForOutboundItems
+                    ["needQcList"] = needQcListForOutboundItems,
+                    ["printStickerLotBatchList"] = printStickerLotNumberBatchList
                 }
             });
         }
@@ -855,6 +870,21 @@ namespace stock_api.Controllers
                 }
             });
             return needQcList;
+        }
+
+        private List<string> GetPrintStickerLotNumberBatchList(List<OutboundRequest> outBoundItems, Dictionary<string, WarehouseProduct> lotNumberBatchAndProductMap)
+        {
+            List<string> printStickerLotNumberBatchList = new();
+            outBoundItems.ForEach(item =>
+            {
+                var lotNumberBatch = item.LotNumberBatch;
+                var product = lotNumberBatchAndProductMap[lotNumberBatch];
+                if (product.IsPrintSticker == true)
+                {
+                    printStickerLotNumberBatchList.Add(lotNumberBatch);
+                }
+            });
+            return printStickerLotNumberBatchList;
         }
 
         private (List<Dictionary<string, dynamic>>, Dictionary<string, InStockItemRecord>) FindNotOldestLotList(List<OutboundRequest> outBoundItems, Dictionary<string, WarehouseProduct> lotNumberBatchAndProductMap, Dictionary<string, List<InStockItemRecord>> lotNumberBatchAndproductCodeInStockExFIFORecords)

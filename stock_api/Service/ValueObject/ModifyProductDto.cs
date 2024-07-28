@@ -6,15 +6,16 @@
         public int? DeadlineRule { get; set; }
         public string? DeliverRemarks { get; set; }
         public string? GroupNames {  get; set; }
-        public string? Manager { get; set; } = null!;
+        public string? Manager { get; set; } 
         public int? MaxSafeQuantity { get; set; }
-        public string? OpenedSealName { get; set; } = null!;
+        public string? OpenedSealName { get; set; }
         public int? PreOrderDays { get; set; }
-        public string? ProductCategory { get; set; } = null!;
+        public string? ProductCategory { get; set; } 
         public string? ProductRemarks { get; set; }
-        public string? Unit { get; set; } = null!;
+        public string? Unit { get; set; } 
         public string? ProductMachine { get; set; }
         public bool? IsNeedAcceptProcess { get; set; }
-        public string? StockLocation { get; set; } = null!;
+        public string? StockLocation { get; set; } 
+        public bool? IsPrintSticker { get; set; }
     }
 }

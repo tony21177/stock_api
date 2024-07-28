@@ -288,6 +288,10 @@ namespace stock_api.Service
                 {
                     updateProduct.OpenDeadline = existingProduct.OpenDeadline;
                 }
+                if (request.IsPrintSticker == null)
+                {
+                    updateProduct.IsPrintSticker = existingProduct.IsPrintSticker;
+                }
 
                 updateProduct.CompId = existingProduct.CompId;
                 _mapper.Map(updateProduct, existingProduct);
@@ -384,6 +388,10 @@ namespace stock_api.Service
                 if (request.IsActive == null)
                 {
                     updateProduct.IsActive = existingProduct.IsActive;
+                }
+                if (request.IsPrintSticker == null)
+                {
+                    updateProduct.IsPrintSticker = existingProduct.IsPrintSticker;
                 }
                 updateProduct.CompId = existingProduct.CompId;
                 _mapper.Map(updateProduct, existingProduct);
@@ -557,6 +565,8 @@ namespace stock_api.Service
 
                     if (!string.IsNullOrWhiteSpace(modifyProductDto.StockLocation))
                         updateProducts.ForEach(p => p.StockLocation = modifyProductDto.StockLocation);
+                    if (modifyProductDto.IsPrintSticker.HasValue)
+                        updateProducts.ForEach(p => p.IsPrintSticker = modifyProductDto.IsPrintSticker);
 
                 }
                 _dbContext.SaveChanges();
@@ -711,7 +721,8 @@ namespace stock_api.Service
 
                     if (!string.IsNullOrWhiteSpace(modifyProductDto.StockLocation))
                         updateProducts.ForEach(p => p.StockLocation = modifyProductDto.StockLocation);
-
+                    if (modifyProductDto.IsPrintSticker.HasValue)
+                        updateProducts.ForEach(p => p.IsPrintSticker = modifyProductDto.IsPrintSticker);
                 }
 
                 _dbContext.SaveChanges();
@@ -800,6 +811,7 @@ namespace stock_api.Service
                     if (request.UnitConversion != null) newProduct.UnitConversion = request.UnitConversion;
                     if (request.TestCount != null) newProduct.TestCount = request.TestCount;
                     if (request.IsActive != null) newProduct.IsActive = request.IsActive;
+                    if (request.IsPrintSticker != null) newProduct.IsPrintSticker = request.IsPrintSticker;
                     _dbContext.WarehouseProducts.Add(newProduct);
                 }
                 _dbContext.SaveChanges();

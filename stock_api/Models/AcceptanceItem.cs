@@ -13,6 +13,7 @@ namespace stock_api.Models;
 /// </summary>
 [Table("acceptance_item")]
 [Index("LotNumberBatchSeq", Name = "LotNumberBatchSeq_UNIQUE", IsUnique = true)]
+[Index("PurchaseMainId", Name = "mainId_index")]
 public partial class AcceptanceItem
 {
     [Key]

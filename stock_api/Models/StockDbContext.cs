@@ -948,6 +948,7 @@ public partial class StockDbContext : DbContext
             entity.Property(e => e.IsNeedAcceptProcess)
                 .HasDefaultValueSql("'0'")
                 .HasComment("該品項出庫時，是否需要經過二次驗收");
+            entity.Property(e => e.IsPrintSticker).HasDefaultValueSql("'1'");
             entity.Property(e => e.LastAbleDate).HasComment("最後可使用日期");
             entity.Property(e => e.LastOutStockDate).HasComment("最後出庫日期");
             entity.Property(e => e.LotNumber).HasComment("批號");
