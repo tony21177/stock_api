@@ -7,7 +7,7 @@ namespace stock_api.Controllers.Request
         public string? CompId { get; set; }
         public string? MainId { get; set; }
         public string? PurchaseMainId { get; set; }
-        public string InStockId { get; set; } = null!;
+        public string? InStockId { get; set; } = null!;
         public string? QcStartDate { get; set; }
         public string? QcEndDate { get; set;}
         public string? LotNumber { get; set; }
