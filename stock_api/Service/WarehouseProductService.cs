@@ -381,7 +381,10 @@ namespace stock_api.Service
                 {
                     updateProduct.TestCount = existingProduct.TestCount;
                 }
-                updateProduct.IsActive = existingProduct.IsActive;
+                if (request.IsActive == null)
+                {
+                    updateProduct.IsActive = existingProduct.IsActive;
+                }
                 updateProduct.CompId = existingProduct.CompId;
                 _mapper.Map(updateProduct, existingProduct);
                 var groupIds = request.GroupIds;

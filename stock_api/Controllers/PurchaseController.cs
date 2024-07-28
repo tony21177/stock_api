@@ -28,6 +28,7 @@ namespace stock_api.Controllers
         private readonly IMapper _mapper;
         private readonly AuthHelpers _authHelpers;
         private readonly PurchaseFlowSettingService _purchaseFlowSettingService;
+        private readonly ApplyProductFlowSettingService _applyProductFlowSettingService;
         private readonly MemberService _memberService;
         private readonly CompanyService _companyService;
         private readonly PurchaseService _purchaseService;
@@ -40,7 +41,8 @@ namespace stock_api.Controllers
         private readonly IValidator<UpdateOwnerProcessRequest> _updateOwnerProcessRequestValidator;
 
 
-        public PurchaseController(IMapper mapper, AuthHelpers authHelpers, PurchaseFlowSettingService purchaseFlowSettingService, MemberService memberService, CompanyService companyService,SupplierService supplierService, PurchaseService purchaseService, WarehouseProductService warehouseProductService, GroupService groupService)
+        public PurchaseController(IMapper mapper, AuthHelpers authHelpers, PurchaseFlowSettingService purchaseFlowSettingService, MemberService memberService, CompanyService companyService
+            ,SupplierService supplierService, PurchaseService purchaseService, WarehouseProductService warehouseProductService, GroupService groupService, ApplyProductFlowSettingService applyProductFlowSettingService)
         {
             _mapper = mapper;
             _authHelpers = authHelpers;
@@ -51,10 +53,11 @@ namespace stock_api.Controllers
             _warehouseProductService = warehouseProductService;
             _groupService = groupService;
             _supplierService = supplierService;
-            _createPurchaseValidator = new CreatePurchaseValidator(warehouseProductService, groupService,purchaseService);
+            _createPurchaseValidator = new CreatePurchaseValidator(warehouseProductService, groupService, purchaseService);
             _listPurchaseRequestValidator = new ListPurchaseValidator(warehouseProductService, groupService);
             _answerFlowRequestValidator = new AnswerFlowValidator();
             _updateOwnerProcessRequestValidator = new UpdateOwnerProcessValidator();
+            _applyProductFlowSettingService = applyProductFlowSettingService;
         }
 
         [HttpPost("create")]
@@ -77,13 +80,41 @@ namespace stock_api.Controllers
                 return BadRequest(CommonResponse<dynamic>.BuildValidationFailedResponse(validationResult));
             }
 
+            //品項組別
+            bool isItemMultiGroup = false;
+            List<string> itemGroupIdList = new();
+            createRequest.PurchaseSubItems.ForEach(i =>
+            {
+                if (i.GroupIds != null)
+                {
+                    itemGroupIdList.AddRange(i.GroupIds);
+                }
+            });
+            itemGroupIdList = itemGroupIdList.Distinct().ToList();
+            if(itemGroupIdList.Count>1) isItemMultiGroup= true;
+
+            List<ApplyProductFlowSettingVo> applyProductFlowSettingListForGroupReview = new();
+            // 沒有跨組別走組別審核流程
+            if (isItemMultiGroup == false&& itemGroupIdList.Count==1)
+            {
+                applyProductFlowSettingListForGroupReview = _applyProductFlowSettingService.GetApplyProductFlowSettingVoListByGroupId(itemGroupIdList[0]);
+                if (applyProductFlowSettingListForGroupReview.Count == 0)
+                {
+                    return BadRequest(new CommonResponse<dynamic>
+                    {
+                        Result = false,
+                        Message = "尚未建立組別審核流程關卡"
+                    });
+                }
+            }
+
             List<PurchaseFlowSettingVo> purchaseFlowSettingList = _purchaseFlowSettingService.GetAllPurchaseFlowSettingsByCompId(createRequest.CompId).Where(s => s.IsActive == true).ToList();
             if (purchaseFlowSettingList.Count == 0)
             {
                 return BadRequest(new CommonResponse<dynamic>
                 {
                     Result = false,
-                    Message = "尚未建立採購審核流程關卡"
+                    Message = "尚未建立跨組別審核流程關卡"
                 });
             }
 

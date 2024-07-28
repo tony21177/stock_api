@@ -55,6 +55,31 @@ namespace stock_api.Service
             return result.FirstOrDefault();
         }
 
+        public List<ApplyProductFlowSettingVo> GetApplyProductFlowSettingVoListByGroupId(string groupId)
+        {
+            var result = from pfs in _dbContext.ApplyProductFlowSettings
+                         join member in _dbContext.WarehouseMembers
+                         on pfs.ReviewUserId equals member.UserId
+                         join g in _dbContext.WarehouseGroups
+                         on pfs.ReviewGroupId equals g.GroupId
+                         where pfs.ReviewGroupId == groupId
+                         select new ApplyProductFlowSettingVo
+                         {
+                             SettingId = pfs.SettingId,
+                             CompId = pfs.CompId,
+                             FlowName = pfs.FlowName,
+                             Sequence = pfs.Sequence,
+                             ReviewUserId = pfs.ReviewUserId,
+                             ReviewUserName = member.DisplayName,
+                             ReviewGroupId = pfs.ReviewGroupId,
+                             ReviewGroupName = g.GroupName,
+                             CreatedAt = pfs.CreatedAt,
+                             UpdatedAt = pfs.UpdatedAt,
+                         };
+
+            return result.ToList();
+        }
+
         public ApplyProductFlowSetting? GetApplyProductFlowSettingBySettingId(string settingId)
         {
             return _dbContext.ApplyProductFlowSettings.Where(s => s.SettingId == settingId).FirstOrDefault();

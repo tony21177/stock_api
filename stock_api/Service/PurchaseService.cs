@@ -83,7 +83,8 @@ namespace stock_api.Service
             return _dbContext.PurchaseFlowLogs.Where(l => purchaseMainIdList.Contains(l.PurchaseMainId)).ToList();
         }
 
-        public bool CreatePurchase(PurchaseMainSheet newPurchasePurchaseMainSheet, List<PurchaseSubItem> newPurchaseSubItemList, List<PurchaseFlowSettingVo> purchaseFlowSettingList,bool isOwnerCreate)
+        public bool CreatePurchase(PurchaseMainSheet newPurchasePurchaseMainSheet, List<PurchaseSubItem> newPurchaseSubItemList,
+            List<PurchaseFlowSettingVo> purchaseFlowSettingList, List<ApplyProductFlowSettingVo> applyProductFlowSettingListForGroupReview,bool isItemMultiGroup, bool isOwnerCreate)
         {
             using (var scope = new TransactionScope())
             {
@@ -120,23 +121,47 @@ namespace stock_api.Service
 
                     List<PurchaseFlow> purchaseFlows = new();
                     DateTime submitedAt = DateTime.Now;
-                    foreach (var item in purchaseFlowSettingList)
+                    if (isItemMultiGroup == true)
                     {
-                        var purchaseFlow = new PurchaseFlow()
+                        foreach (var item in purchaseFlowSettingList)
                         {
-                            FlowId = Guid.NewGuid().ToString(),
-                            CompId = newPurchasePurchaseMainSheet.CompId,
-                            PurchaseMainId = purchaseMainId,
-                            Status = CommonConstants.PurchaseFlowStatus.WAIT,
-                            VerifyCompId = newPurchasePurchaseMainSheet.CompId,
-                            VerifyUserId = item.UserId,
-                            VerifyUserName = item.UserDisplayName,
-                            Answer = CommonConstants.PurchaseFlowAnswer.EMPTY,
-                            Sequence = item.Sequence,
-                            SubmitAt = submitedAt,
-                        };
-                        purchaseFlows.Add(purchaseFlow);
+                            var purchaseFlow = new PurchaseFlow()
+                            {
+                                FlowId = Guid.NewGuid().ToString(),
+                                CompId = newPurchasePurchaseMainSheet.CompId,
+                                PurchaseMainId = purchaseMainId,
+                                Status = CommonConstants.PurchaseFlowStatus.WAIT,
+                                VerifyCompId = newPurchasePurchaseMainSheet.CompId,
+                                VerifyUserId = item.UserId,
+                                VerifyUserName = item.UserDisplayName,
+                                Answer = CommonConstants.PurchaseFlowAnswer.EMPTY,
+                                Sequence = item.Sequence,
+                                SubmitAt = submitedAt,
+                            };
+                            purchaseFlows.Add(purchaseFlow);
+                        }
                     }
+                    if (isItemMultiGroup == false)
+                    {
+                        foreach (var item in applyProductFlowSettingListForGroupReview)
+                        {
+                            var purchaseFlow = new PurchaseFlow()
+                            {
+                                FlowId = Guid.NewGuid().ToString(),
+                                CompId = newPurchasePurchaseMainSheet.CompId,
+                                PurchaseMainId = purchaseMainId,
+                                Status = CommonConstants.PurchaseFlowStatus.WAIT,
+                                VerifyCompId = newPurchasePurchaseMainSheet.CompId,
+                                VerifyUserId = item.ReviewUserId,
+                                VerifyUserName = item.ReviewUserName,
+                                Answer = CommonConstants.PurchaseFlowAnswer.EMPTY,
+                                Sequence = item.Sequence,
+                                SubmitAt = submitedAt,
+                            };
+                            purchaseFlows.Add(purchaseFlow);
+                        }
+                    }
+                    
                     _dbContext.PurchaseFlows.AddRange(purchaseFlows);
 
                     Dictionary<string,List<PurchaseSubItem>> mainIdAndPurchaseSubItmeListMapForWith = new ();
@@ -194,8 +219,10 @@ namespace stock_api.Service
                         }
                     }
 
-                    var flowSettingVo = purchaseFlowSettingList.OrderBy(setting=>setting.Sequence).FirstOrDefault();
-                    if (flowSettingVo!=null)
+
+
+                    var purchaseFlow = purchaseFlows.OrderBy(setting=>setting.Sequence).FirstOrDefault();
+                    if (purchaseFlow != null)
                     {
                         DateTime now = DateTime.Now;
                         string title = $"採購單:{string.Concat(DateTimeHelper.FormatDateStringForEmail(now), newPurchasePurchaseMainSheet.PurchaseMainId.AsSpan(0, 5))} 需要您審核";
@@ -205,7 +232,7 @@ namespace stock_api.Service
                             title = "!!!!急件" + title;
                             content = $"<h2 style='color: red;'>急件請盡速處理</h2>" + content;
                         }
-                        SendMailByFlowSetting(flowSettingVo,title,content);
+                        SendMailByFlow(purchaseFlow, title,content);
                     }
                     _dbContext.SaveChanges();
                     scope.Complete();
