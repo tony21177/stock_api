@@ -351,7 +351,7 @@ namespace stock_api.Controllers
                     ["needQcList"] = needQcListForOutboundItems,
                     ["printStickerLotBatchList"] = printStickerLotNumberBatchList,
                     ["isNewLotNumberList"]= isNewLotNumberList,
-                    ["isNewLotNumberBatchList"] = isNewLotNumberList
+                    ["isNewLotNumberBatchList"] = isNewLotNumberBatchList
                 }
             });
         }
