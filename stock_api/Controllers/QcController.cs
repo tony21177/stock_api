@@ -165,7 +165,7 @@ namespace stock_api.Controllers
 
         [HttpPost("mainWithDetail/list")]
         [Authorize]
-        public IActionResult ListMainWithDetail(ListMainWithDetailRequest request)
+        public IActionResult ListMainWithDetail(ListMainWithDetailRequest? request)
         {
             var memberAndPermissionSetting = _authHelpers.GetMemberAndPermissionSetting(User);
             var compId = memberAndPermissionSetting.CompanyWithUnit.CompId;
