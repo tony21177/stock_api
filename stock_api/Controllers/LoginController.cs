@@ -23,9 +23,9 @@ namespace stock_api.Controllers
         private readonly AuthLayerService _authLayerService;
         private readonly WarehouseProductService _warehouseProductService;
         private readonly EmailService _emailService;
+        private readonly ILogger<LoginController> _logger;
 
-
-        public LoginController(AuthHelpers authHelpers, MemberService memberService,CompanyService companyService, AuthLayerService authLayerService, WarehouseProductService warehouseProductService, EmailService emailService)
+        public LoginController(AuthHelpers authHelpers, MemberService memberService,CompanyService companyService, AuthLayerService authLayerService, WarehouseProductService warehouseProductService, EmailService emailService, ILogger<LoginController> logger)
         {
             _authHelpers = authHelpers;
             _memberService = memberService;
@@ -33,6 +33,7 @@ namespace stock_api.Controllers
             _authLayerService = authLayerService;
             _warehouseProductService = warehouseProductService;
             _emailService = emailService;
+            _logger = logger;
         }
 
         [HttpPost]
@@ -73,6 +74,7 @@ namespace stock_api.Controllers
             if (!receiver.Email.IsNullOrEmpty())
             {
                 await _emailService.SendAsync(emailTitle, emailBody, receiver.Email);
+                _logger.LogInformation("[寄信]標題:{title},收件者:{email}", emailTitle, receiver.Email);
             }
         }
 

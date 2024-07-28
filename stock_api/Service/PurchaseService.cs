@@ -125,7 +125,7 @@ namespace stock_api.Service
                     {
                         foreach (var item in purchaseFlowSettingList)
                         {
-                            var purchaseFlow = new PurchaseFlow()
+                            var purchaseFlowForMultiGroup = new PurchaseFlow()
                             {
                                 FlowId = Guid.NewGuid().ToString(),
                                 CompId = newPurchasePurchaseMainSheet.CompId,
@@ -138,14 +138,14 @@ namespace stock_api.Service
                                 Sequence = item.Sequence,
                                 SubmitAt = submitedAt,
                             };
-                            purchaseFlows.Add(purchaseFlow);
+                            purchaseFlows.Add(purchaseFlowForMultiGroup);
                         }
                     }
                     if (isItemMultiGroup == false)
                     {
                         foreach (var item in applyProductFlowSettingListForGroupReview)
                         {
-                            var purchaseFlow = new PurchaseFlow()
+                            var purchaseFlowForSingleGroup = new PurchaseFlow()
                             {
                                 FlowId = Guid.NewGuid().ToString(),
                                 CompId = newPurchasePurchaseMainSheet.CompId,
@@ -158,7 +158,7 @@ namespace stock_api.Service
                                 Sequence = item.Sequence,
                                 SubmitAt = submitedAt,
                             };
-                            purchaseFlows.Add(purchaseFlow);
+                            purchaseFlows.Add(purchaseFlowForSingleGroup);
                         }
                     }
                     
@@ -800,7 +800,10 @@ namespace stock_api.Service
             {
 
                 if (!string.IsNullOrEmpty(receiver.Email))
+                {
                     await _emailService.SendAsync(title, content, receiver.Email);
+                    _logger.LogInformation("[寄信]標題:{title},收件者:{email}", title, receiver.Email);
+                }
             }
         }
 
@@ -811,7 +814,10 @@ namespace stock_api.Service
             {
 
                 if (!string.IsNullOrEmpty(receiver.Email))
+                {
                     await _emailService.SendAsync(title, content, receiver.Email);
+                    _logger.LogInformation("[寄信]標題:{title},收件者:{email}", title, receiver.Email);
+                }
             }
         }
 
@@ -822,7 +828,10 @@ namespace stock_api.Service
             {
 
                 if (!string.IsNullOrEmpty(receiver.Email))
+                {
                     await _emailService.SendAsync(title, content, receiver.Email);
+                    _logger.LogInformation("[寄信]標題:{title},收件者:{email}", title, receiver.Email);
+                }
             }
         }
 
@@ -839,6 +848,7 @@ namespace stock_api.Service
                 if (!string.IsNullOrEmpty(r.Email))
                 {
                     await _emailService.SendAsync(title, content, r.Email);
+                    _logger.LogInformation("[寄信]標題:{title},收件者:{email}", title, r.Email);
                 }
             });
 

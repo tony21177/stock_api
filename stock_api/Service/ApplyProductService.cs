@@ -500,7 +500,11 @@ namespace stock_api.Service
             {
 
                 if (!string.IsNullOrEmpty(receiver.Email))
+                {
                     await _emailService.SendAsync(title, content, receiver.Email);
+                    _logger.LogInformation("[寄信]標題:{title},收件者:{email}", title, receiver.Email);
+                }
+                    
             }
         }
 
@@ -511,7 +515,11 @@ namespace stock_api.Service
             {
 
                 if (!string.IsNullOrEmpty(receiver.Email))
+                {
                     await _emailService.SendAsync(title, content, receiver.Email);
+                    _logger.LogInformation("[寄信]標題:{title},收件者:{email}", title, receiver.Email);
+                }
+                    
             }
         }
 
@@ -522,7 +530,11 @@ namespace stock_api.Service
             {
 
                 if (!string.IsNullOrEmpty(receiver.Email))
+                {
                     await _emailService.SendAsync(title, content, receiver.Email);
+                    _logger.LogInformation("[寄信]標題:{title},收件者:{email}", title, receiver.Email);
+                }
+                    
             }
         }
 
@@ -533,6 +545,7 @@ namespace stock_api.Service
                 if (!string.IsNullOrEmpty(r.Email))
                 {
                     await _emailService.SendAsync(title, content, r.Email);
+                    _logger.LogInformation("[寄信]標題:{title},收件者:{email}", title, r.Email);
                 }
             });
 
