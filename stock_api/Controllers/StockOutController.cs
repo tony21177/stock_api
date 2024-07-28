@@ -132,9 +132,19 @@ namespace stock_api.Controllers
                     }
                     var warehouseProduct = _warehouseProductService.GetProductByProductId(requestLot.ProductId);
                     List<string> printStickerLotBatchListForBadRequest = new();
+                    List<string> isNewLotNumberListForBadRequest = new();
+                    List<string> isNewLotNumberBatchListForBadRequest = new();
                     if (warehouseProduct.IsPrintSticker == true)
                     {
                         printStickerLotBatchListForBadRequest.Add(requestLot.LotNumberBatch);
+                    }
+                    if(requestLot.LotNumber!= warehouseProduct.LotNumber)
+                    {
+                        isNewLotNumberListForBadRequest.Add(requestLot.LotNumber);
+                    }
+                    if (requestLot.LotNumberBatch != warehouseProduct.LotNumberBatch)
+                    {
+                        isNewLotNumberBatchListForBadRequest.Add(requestLot.LotNumberBatch);
                     }
 
                     return BadRequest(new CommonResponse<Dictionary<string, dynamic>>
@@ -148,6 +158,8 @@ namespace stock_api.Controllers
                             ["requestLotNumberBatch"] = requestLot.LotNumberBatch,
                             ["needQc"] = needQc2,
                             ["printStickerLotBatchList"] = printStickerLotBatchListForBadRequest,
+                            ["isNewLotNumberList"] = isNewLotNumberListForBadRequest,
+                            ["isNewLotNumberBatchList"] = isNewLotNumberBatchListForBadRequest
                         }
                     });
                 }
@@ -171,9 +183,19 @@ namespace stock_api.Controllers
                 });
             }
             List<string> printStickerLotBatchList = new();
+            List<string> isNewLotNumberList = new();
+            List<string> isNewLotNumberBatchList = new();
             if (product.IsPrintSticker == true)
             {
                 printStickerLotBatchList.Add(requestLot.LotNumberBatch);
+            }
+            if (requestLot.LotNumber != product.LotNumber)
+            {
+                isNewLotNumberList.Add(requestLot.LotNumber);
+            }
+            if (requestLot.LotNumberBatch != product.LotNumberBatch)
+            {
+                isNewLotNumberBatchList.Add(requestLot.LotNumberBatch);
             }
             var IsNeedQc = requestLot.IsNeedQc == true && requestLot.QcTestStatus == CommonConstants.QcTestStatus.NONE && requestLot.QcType != CommonConstants.QcTypeConstants.NONE;
             NeedQc? needQc = null;
@@ -203,6 +225,8 @@ namespace stock_api.Controllers
                         {
                             ["needQc"] = needQc,
                             ["printStickerLotBatchList"] = printStickerLotBatchList,
+                            ["isNewLotNumberList"] = isNewLotNumberList,
+                            ["isNewLotNumberBatchList"] = isNewLotNumberBatchList
                         }
                     });
                 }
@@ -268,6 +292,7 @@ namespace stock_api.Controllers
 
             List<NeedQc> needQcListForOutboundItems = FindNeedQcList(request.OutboundItems, lotNumberBatchAndProductMap, lotNumberBatchRequestLotMap);
             List<string> printStickerLotNumberBatchList = GetPrintStickerLotNumberBatchList(request.OutboundItems, lotNumberBatchAndProductMap);
+            var (isNewLotNumberList, isNewLotNumberBatchList) = GetNewLotList(request.OutboundItems, lotNumberBatchAndProductMap, lotNumberBatchRequestLotMap);
 
 
             //if (notOldestLotList.Count > 0)
@@ -324,7 +349,9 @@ namespace stock_api.Controllers
                     ["failedLotNumberBatchList"] = failedOutLotNumberBatchList,
                     ["notOldestLotList"] = notOldestLotList,
                     ["needQcList"] = needQcListForOutboundItems,
-                    ["printStickerLotBatchList"] = printStickerLotNumberBatchList
+                    ["printStickerLotBatchList"] = printStickerLotNumberBatchList,
+                    ["isNewLotNumberList"]= isNewLotNumberList,
+                    ["isNewLotNumberBatchList"] = isNewLotNumberList
                 }
             });
         }
@@ -885,6 +912,28 @@ namespace stock_api.Controllers
                 }
             });
             return printStickerLotNumberBatchList;
+        }
+
+        private (List<string>,List<string>) GetNewLotList(List<OutboundRequest> outBoundItems, Dictionary<string, WarehouseProduct> lotNumberBatchAndProductMap, Dictionary<string, InStockItemRecord> lotNumberBatchRequestLotMap)
+        {
+            List<string> printStickerLotNumberBatchList = new();
+            List<string> isNewLotNumberList = new();
+            List<string> isNewLotNumberBatchList = new();
+            outBoundItems.ForEach(item =>
+            {
+                var requestLot = lotNumberBatchRequestLotMap[item.LotNumberBatch];
+                var product = lotNumberBatchAndProductMap[item.LotNumberBatch];
+
+                if (requestLot.LotNumber != product.LotNumber)
+                {
+                    isNewLotNumberList.Add(requestLot.LotNumber);
+                }
+                if (requestLot.LotNumberBatch != product.LotNumberBatch)
+                {
+                    isNewLotNumberBatchList.Add(requestLot.LotNumberBatch);
+                }
+            });
+            return (isNewLotNumberList,isNewLotNumberBatchList);
         }
 
         private (List<Dictionary<string, dynamic>>, Dictionary<string, InStockItemRecord>) FindNotOldestLotList(List<OutboundRequest> outBoundItems, Dictionary<string, WarehouseProduct> lotNumberBatchAndProductMap, Dictionary<string, List<InStockItemRecord>> lotNumberBatchAndproductCodeInStockExFIFORecords)
