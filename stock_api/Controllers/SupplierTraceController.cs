@@ -193,10 +193,27 @@ namespace stock_api.Controllers
            
 
             var (data,totalPages) = _supplierTraceService.ListSupplierTraceLog(request);
+            List<SupplierTraceLogVo> supplierTraceLogVoList = _mapper.Map<List<SupplierTraceLogVo>>(data);
+            List<string> acceptIdList = supplierTraceLogVoList.Where(l=>l.SourceType==CommonConstants.SourceType.IN_STOCK&&l.SourceId!=null).Select(l=>l.SourceId).ToList();
+            List<AcceptanceItem> acceptanceItemList = _stockInService.GetAcceptanceItemListByAcceptIdList(acceptIdList);
+            foreach (var log in supplierTraceLogVoList)
+            {
+                if (log.SourceType == CommonConstants.SourceType.IN_STOCK && log.SourceId != null)
+                {
+                    var matchedAcceptItem  = acceptanceItemList.Where(a=>a.AcceptId==log.SourceId).FirstOrDefault();
+                    if (matchedAcceptItem != null)
+                    {
+                        log.PurchaseMainId = matchedAcceptItem.PurchaseMainId;
+                    }
+                }
+            }
+
+
+
             return Ok(new CommonResponse<dynamic>
             {
                 Result = true,
-                Data = data,
+                Data = supplierTraceLogVoList,
                 TotalPages = totalPages
             });
         }

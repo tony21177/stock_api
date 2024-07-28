@@ -632,5 +632,10 @@ namespace stock_api.Service
             var main = _dbContext.PurchaseMainSheets.Where(m=>m.PurchaseMainId==purchaseSubItem.PurchaseMainId).FirstOrDefault();
             return main;
         }
+
+        public List<AcceptanceItem> GetAcceptanceItemListByAcceptIdList(List<string> acceptIdList)
+        {
+            return _dbContext.AcceptanceItems.Where(a => acceptIdList.Contains(a.AcceptId)).ToList();   
+        }
     }
 }

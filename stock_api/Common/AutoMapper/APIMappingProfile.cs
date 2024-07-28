@@ -139,6 +139,8 @@ namespace stock_api.Common.AutoMapper
             .ForAllMembers(opt => opt.Condition((src, dest, srcMember) => srcMember != null));
             CreateMap<SupplierTraceLog, SupplierTraceLogWithInStock>()
             .ForAllMembers(opt => opt.Condition((src, dest, srcMember) => srcMember != null));
+            CreateMap<SupplierTraceLog, SupplierTraceLogVo>()
+            .ForAllMembers(opt => opt.Condition((src, dest, srcMember) => srcMember != null));
 
             // Qc
             CreateMap<CreateQcRequest, QcValidationMain>()
