@@ -226,6 +226,8 @@ namespace stock_api.Controllers
                             ["needQc"] = needQc,
                             ["printStickerLotBatchList"] = printStickerLotBatchList,
                             ["isNewLotNumberList"] = isNewLotNumberList,
+                            ["isNewLotNumberBatchList"] = isNewLotNumberBatchList,
+                            ["isNewLotNumberList"] = isNewLotNumberList,
                             ["isNewLotNumberBatchList"] = isNewLotNumberBatchList
                         }
                     });
@@ -244,7 +246,9 @@ namespace stock_api.Controllers
                 Data = new Dictionary<string, dynamic>
                 {
                     ["needQc"]=needQc,
-                    ["printStickerLotBatchList"] = printStickerLotBatchList
+                    ["printStickerLotBatchList"] = printStickerLotBatchList,
+                    ["isNewLotNumberList"] = isNewLotNumberList,
+                    ["isNewLotNumberBatchList"] = isNewLotNumberBatchList
                 }
             });
         }
