@@ -3,6 +3,7 @@ using FluentValidation;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
+using Serilog;
 using stock_api.Common;
 using stock_api.Controllers.Request;
 using stock_api.Controllers.Validator;
@@ -48,8 +49,12 @@ namespace stock_api.Controllers
             var compId = memberAndPermissionSetting.CompanyWithUnit.CompId;
 
             List<UnDoneQcLot> unDoneQcList = _qcService.ListUnDoneQcLotList(compId);
-            var distinctLotNumberBatchList = unDoneQcList.Select(e => e.LotNumberBatch).ToList();
+            List<string> distinctLotNumberBatchList = unDoneQcList.Where(e=>e.LotNumberBatch!=null).Select(e => e.LotNumberBatch).Distinct().ToList();
+            List<string> distincLotNumberList = unDoneQcList.Where(e => e.LotNumber != null).Select(e => e.LotNumber).Distinct().ToList();
             List<InStockItemRecord> inStockItems = _stockInService.GetInStockRecordByLotNumberBatchList(distinctLotNumberBatchList, compId);
+            List<OutStockRecord> outStockRecordsByLotNumber = _stockOutService.GetOutStockRecordsByLotNumberList(distincLotNumberList);
+            List<OutStockRecord> outStockRecordsByLotNumberBatch = _stockOutService.GetOutStockRecordsByLotNumberBatchList(distinctLotNumberBatchList);
+
             Dictionary<string, string> lotNumberBatchAndItemIdMap = new Dictionary<string, string>();
             inStockItems.ForEach(i =>
             {
@@ -62,6 +67,8 @@ namespace stock_api.Controllers
             {
                 itemIdAndPurchaseDetailMap.Add(d.ItemId, d);
             });
+
+
 
             unDoneQcList.ForEach(lot =>
             {
@@ -83,6 +90,14 @@ namespace stock_api.Controllers
                 lot.AcceptUserId = matchedInStock.UserId;
                 lot.AcceptUserName = matchedInStock.UserName;
                 lot.ProductSpec = matchedPurchaseDetail.ProductSpec;
+                if (outStockRecordsByLotNumber.Where(i => i.LotNumber == lot.LotNumber).FirstOrDefault() != null)
+                {
+                    lot.IsLotNumberOutStock = true;
+                }
+                if (outStockRecordsByLotNumberBatch.Where(i => i.LotNumberBatch == lot.LotNumberBatch).FirstOrDefault() != null)
+                {
+                    lot.IsLotNumberBatchOutStock = true;
+                }
             });
 
 
@@ -183,6 +198,12 @@ namespace stock_api.Controllers
                 return BadRequest(CommonResponse<dynamic>.BuildValidationFailedResponse(validationResult));
             }
             var (qcMainList,totalPages) = _qcService.ListQcMain(request);
+            List<String> distinctLotNumberList = qcMainList.Where(qc=>qc.LotNumber!=null).Select(qc=>qc.LotNumber).Distinct().ToList();
+            List<String> distinctLotNumberBatchList = qcMainList.Where(qc => qc.LotNumberBatch != null).Select(qc => qc.LotNumberBatch).Distinct().ToList();
+            List<OutStockRecord> outStockRecordsByLotNumber = _stockOutService.GetOutStockRecordsByLotNumberList(distinctLotNumberList);
+            List<OutStockRecord> outStockRecordsByLotNumberBatch = _stockOutService.GetOutStockRecordsByLotNumberBatchList(distinctLotNumberBatchList);
+
+
             var details = _qcService.GetQcDetailsByMainIdList(qcMainList.Select(m => m.MainId).ToList());
 
             var qcMainWithDetailList = _mapper.Map<List<QcMainWithDetail>>(qcMainList);
@@ -190,6 +211,15 @@ namespace stock_api.Controllers
             {
                 var matchedDetailList = details.Where(d=>d.MainId==m.MainId).ToList();
                 m.DetailList = matchedDetailList;
+                if (outStockRecordsByLotNumber.Where(i => i.LotNumber == m.LotNumber).FirstOrDefault() != null)
+                {
+                    m.IsLotNumberOutStock = true;
+                }
+                if (outStockRecordsByLotNumberBatch.Where(i => i.LotNumberBatch == m.LotNumberBatch).FirstOrDefault() != null)
+                {
+                    m.IsLotNumberBatchOutStock = true;
+                }
+
             });
 
             

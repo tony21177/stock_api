@@ -364,5 +364,14 @@ namespace stock_api.Service
         {
             return _dbContext.OutStockRecords.Where(r => r.OutStockId == outStockId).FirstOrDefault();
         }
+
+        public List<OutStockRecord> GetOutStockRecordsByLotNumberList(List<string> lotNumberList)
+        {
+            return _dbContext.OutStockRecords.Where(r=>r.LotNumber!=null&&lotNumberList.Contains(r.LotNumber)).ToList();
+        }
+        public List<OutStockRecord> GetOutStockRecordsByLotNumberBatchList(List<string> lotNumberBatchList)
+        {
+            return _dbContext.OutStockRecords.Where(r => r.LotNumberBatch != null && lotNumberBatchList.Contains(r.LotNumberBatch)).ToList();
+        }
     }
 }

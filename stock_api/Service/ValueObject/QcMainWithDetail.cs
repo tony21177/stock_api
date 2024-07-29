@@ -36,6 +36,9 @@ namespace stock_api.Service.ValueObject
         public DateTime? CreatedAt { get; set; }
         public DateTime? UpdatedAt { get; set; }
         public List<QcValidationDetail> DetailList { get; set; } = new();
+        public bool IsLotNumberOutStock {  get; set; }
+        public bool IsLotNumberBatchOutStock { get; set; }
+
     }
 
 

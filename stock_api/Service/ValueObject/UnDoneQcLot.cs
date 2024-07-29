@@ -17,5 +17,7 @@
         public string AcceptUserId { get; set; }
 
         public string ProductSpec { get; set; } = null!;
+        public bool IsLotNumberOutStock { get; set; } 
+        public bool IsLotNumberBatchOutStock { get; set; } 
     }
 }
