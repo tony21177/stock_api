@@ -623,6 +623,9 @@ namespace stock_api.Service
                     content = $"<h2 style='color: red;'>急件請盡速處理</h2>" + content;
                 }
                 SendMailToOwner(title, content,ownerList);
+                title = $"採購單:{string.Concat(DateTimeHelper.FormatDateStringForEmail(purchaseMain.ApplyDate), purchaseMain.PurchaseMainId.AsSpan(0, 5))} 審核流程已跑完";
+                content = $"<a href={_smtpSettings.Domain}/purchase_flow_detail/{purchaseMain.PurchaseMainId}>{purchaseMain.PurchaseMainId}</a>";
+                SendMailByPurchaseMain(purchaseMain, title,content);
             }
             if (answer == CommonConstants.AnswerPurchaseFlow.AGREE && nextPurchase != null)
             {
@@ -855,7 +858,7 @@ namespace stock_api.Service
             return _dbContext.PurchaseDetailViews.Where(v => itemIdList.Contains(v.ItemId)).ToList();  
         }
 
-        private void SendMailToOwner(String title, String content,List<WarehouseMember> ownerList)
+        private async Task SendMailToOwner(String title, String content,List<WarehouseMember> ownerList)
         {
             
             ownerList.ForEach(async r =>
