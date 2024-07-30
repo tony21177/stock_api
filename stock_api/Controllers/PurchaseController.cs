@@ -686,5 +686,36 @@ namespace stock_api.Controllers
             };
             return Ok(response);
         }
+
+        [HttpPost("owner/updateOwnerComment")]
+        [Authorize]
+        public IActionResult UpdateOwnerComment(UpdateOwnerCommentRequest request)
+        {
+            var memberAndPermissionSetting = _authHelpers.GetMemberAndPermissionSetting(User);
+            var compId = memberAndPermissionSetting.CompanyWithUnit.CompId;
+            if (memberAndPermissionSetting.CompanyWithUnit.Type != CommonConstants.CompanyType.OWNER)
+            {
+                return BadRequest(CommonResponse<dynamic>.BuildNotAuthorizeResponse());
+            }
+
+            PurchaseMainSheet purchaseMainSheet = _purchaseService.GetPurchaseMainByMainId(request.PurchaseMainId);
+            if (purchaseMainSheet == null)
+            {
+                return BadRequest(new CommonResponse<dynamic>
+                {
+                    Result = false,
+                    Message = "採購單不存在"
+                });
+            }
+           
+
+            _purchaseService.UpdatePurchaseOwnerComment(purchaseMainSheet, request);
+
+            var response = new CommonResponse<dynamic>
+            {
+                Result = true,
+            };
+            return Ok(response);
+        }
     } 
 }

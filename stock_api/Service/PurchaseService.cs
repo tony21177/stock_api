@@ -480,6 +480,12 @@ namespace stock_api.Service
             }
         }
 
+        public void UpdatePurchaseOwnerComment(PurchaseMainSheet main,  UpdateOwnerCommentRequest request)
+        {
+            main.OwnerComment = request.OwnerComment;
+            _dbContext.SaveChanges();
+        }
+
         public void PurchaseFlowRead(PurchaseFlow flow)
         {
             flow.ReadAt = DateTime.Now;
