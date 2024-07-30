@@ -264,7 +264,10 @@ namespace stock_api.Service
                 updateProduct.InStockQuantity = existingProduct.InStockQuantity;
                 updateProduct.MaxSafeQuantity = existingProduct.MaxSafeQuantity;
                 updateProduct.OpenDeadline = existingProduct.OpenDeadline;
-                updateProduct.PreDeadline = existingProduct.PreDeadline;
+                if (request.PreDeadline == null)
+                {
+                    updateProduct.PreDeadline = existingProduct.PreDeadline;
+                }
                 if (request.PreOrderDays == null)
                 {
                     updateProduct.PreOrderDays = existingProduct.PreOrderDays;
