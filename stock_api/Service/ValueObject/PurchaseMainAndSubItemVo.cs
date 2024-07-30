@@ -21,6 +21,7 @@ namespace stock_api.Service.ValueObject
         public bool IsActive { get; set; }
         public string?  SplitProcess { get; set; }
         public string? OwnerProcess { get; set; }
+        public string? OwnerComment { get; set; }
         public List<PurchaseSubItemVo> Items {get;set;}
         public List<PurchaseFlow>? flows { get;set;}
         public List<PurchaseFlowLog>? flowLogs { get;set;}
