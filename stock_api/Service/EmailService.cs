@@ -69,7 +69,7 @@ public class EmailService
 
     public Dictionary<string, List<EmailNotify>> GetNormalPurchaseListToSend()
     {
-        List<EmailNotify> waitingToNotifyListForPurchase = _dbContext.EmailNotifies.Where(e=>e.Type==CommonConstants.EmailNotifyType.PURCHASE&&e.IsSend==false).ToList();
+        List<EmailNotify> waitingToNotifyListForPurchase = _dbContext.EmailNotifies.Where(e=>e.Type==CommonConstants.EmailNotifyType.PURCHASE&&e.IsDone==false).ToList();
         Dictionary<string, List<EmailNotify>> emailNotifyDictionary = waitingToNotifyListForPurchase
             .Where(e => !string.IsNullOrEmpty(e.Email))
             .GroupBy(e => e.Email)
