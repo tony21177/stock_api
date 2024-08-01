@@ -906,6 +906,7 @@ public partial class StockDbContext : DbContext
             entity.Property(e => e.DisplayName).HasComment("顯示名稱");
             entity.Property(e => e.GroupIds).HasComment("屬於數個組別");
             entity.Property(e => e.IsActive).HasDefaultValueSql("'1'");
+            entity.Property(e => e.IsAdmin).HasDefaultValueSql("'0'");
             entity.Property(e => e.Password).HasComment("登入密碼");
             entity.Property(e => e.PhotoUrl).HasComment("大頭貼");
             entity.Property(e => e.UpdatedAt)

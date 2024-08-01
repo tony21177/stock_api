@@ -69,4 +69,6 @@ public partial class WarehouseMember
 
     [Column(TypeName = "timestamp")]
     public DateTime? UpdatedAt { get; set; }
+
+    public bool? IsAdmin { get; set; }
 }
