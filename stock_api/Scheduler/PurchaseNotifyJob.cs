@@ -28,10 +28,14 @@ namespace stock_api.Scheduler
                 var notifyList = keyPair.Value??new List<EmailNotify>();
                 if (notifyList.Count > 0)
                 {
-                    string emailTitle = notifyList[0].Title;
-                    List<string> emailContentList = notifyList.Select(x => x.Content).ToList();   
-                    string emailContent = string.Join("<br/>", emailContentList);
-                    _emailService.SendAsync(email, emailContent, email);
+                    List<string> purchaseNumberList = notifyList.Select(n=>n.PurchaseNumber).ToList();
+                    string emailTitle = notifyList[0].Title+":"+string.Join(",", purchaseNumberList);
+                    string emailContent = "";
+                    notifyList.ForEach(n =>
+                    {
+                        emailContent = emailContent + n.PurchaseNumber + "<br/>" + n.Content+ "<br/><br/>";
+                    });
+                    _emailService.SendAsync(emailTitle, emailContent, email);
                 }
             }
         }

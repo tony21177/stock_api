@@ -30,4 +30,7 @@ public partial class EmailNotify
 
     [StringLength(100)]
     public string? Type { get; set; }
+
+    [StringLength(100)]
+    public string? PurchaseNumber { get; set; }
 }

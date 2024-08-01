@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using Microsoft.EntityFrameworkCore;
+using MySqlX.XDevAPI.Relational;
 using stock_api.Common.Constant;
 using stock_api.Common.Settings;
 using stock_api.Common.Utils;
@@ -235,6 +236,8 @@ namespace stock_api.Service
                         }
                         else
                         {
+                            title = "以下採購單需要審核";
+                            var purchaseNumber = string.Concat(DateTimeHelper.FormatDateStringForEmail(now), newPurchasePurchaseMainSheet.PurchaseMainId.AsSpan(0, 5));
                             var receiver = _memberService.GetMembersByUserId(purchaseFlow.VerifyUserId);
                             EmailNotify emailNotify = new EmailNotify()
                             {
@@ -242,6 +245,7 @@ namespace stock_api.Service
                                 Content = content,
                                 UserId = purchaseFlow.VerifyUserId,
                                 Email = receiver.Email,
+                                PurchaseNumber = purchaseNumber,
                                 Type = CommonConstants.EmailNotifyType.PURCHASE
                             };
                             _emailService.AddEmailNotify(emailNotify);
@@ -660,6 +664,8 @@ namespace stock_api.Service
                 {
                     using (var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled))
                     {
+                        title = "以下採購單需要審核";
+                        var purchaseNumber = string.Concat(DateTimeHelper.FormatDateStringForEmail(purchaseMain.ApplyDate), purchaseMain.PurchaseMainId.AsSpan(0, 5));
                         var receiver = _memberService.GetMembersByUserId(nextPurchase.VerifyUserId);
                         EmailNotify emailNotify = new EmailNotify()
                         {
@@ -667,6 +673,7 @@ namespace stock_api.Service
                             Content = content,
                             UserId = receiver.UserId,
                             Email = receiver.Email,
+                            PurchaseNumber = purchaseNumber,
                             Type = CommonConstants.EmailNotifyType.PURCHASE
                         };
                         _emailService.AddEmailNotify(emailNotify);
@@ -689,6 +696,8 @@ namespace stock_api.Service
                 {
                     using (var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled))
                     {
+                        title = "以下採購單被拒絕";
+                        var purchaseNumber = string.Concat(DateTimeHelper.FormatDateStringForEmail(purchaseMain.ApplyDate), purchaseMain.PurchaseMainId.AsSpan(0, 5));
                         var receiver = _memberService.GetMembersByUserId(purchaseMain.UserId);
                         EmailNotify emailNotify = new EmailNotify()
                         {
@@ -696,6 +705,7 @@ namespace stock_api.Service
                             Content = content,
                             UserId = receiver.UserId,
                             Email = receiver.Email,
+                            PurchaseNumber = purchaseNumber,
                             Type = CommonConstants.EmailNotifyType.PURCHASE
                         };
                         _emailService.AddEmailNotify(emailNotify);
@@ -718,6 +728,8 @@ namespace stock_api.Service
                     {
                         using (var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled))
                         {
+                            title = "以下採購單需要審核";
+                            var purchaseNumber = string.Concat(DateTimeHelper.FormatDateStringForEmail(purchaseMain.ApplyDate), purchaseMain.PurchaseMainId.AsSpan(0, 5));
                             var receiver = _memberService.GetMembersByUserId(preFlow.VerifyUserId);
                             EmailNotify emailNotify = new EmailNotify()
                             {
@@ -725,6 +737,7 @@ namespace stock_api.Service
                                 Content = content,
                                 UserId = receiver.UserId,
                                 Email = receiver.Email,
+                                PurchaseNumber = purchaseNumber,
                                 Type = CommonConstants.EmailNotifyType.PURCHASE
                             };
                             _emailService.AddEmailNotify(emailNotify);
@@ -745,6 +758,8 @@ namespace stock_api.Service
                     {
                         using (var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled))
                         {
+                            title = "以下採購已被退回";
+                            var purchaseNumber = string.Concat(DateTimeHelper.FormatDateStringForEmail(purchaseMain.ApplyDate), purchaseMain.PurchaseMainId.AsSpan(0, 5));
                             var receiver = _memberService.GetMembersByUserId(purchaseMain.UserId);
                             EmailNotify emailNotify = new EmailNotify()
                             {
@@ -752,6 +767,7 @@ namespace stock_api.Service
                                 Content = content,
                                 UserId = receiver.UserId,
                                 Email = receiver.Email,
+                                PurchaseNumber = purchaseNumber,
                                 Type = CommonConstants.EmailNotifyType.PURCHASE
                             };
                             _emailService.AddEmailNotify(emailNotify);
@@ -773,6 +789,8 @@ namespace stock_api.Service
                 {
                     using (var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled))
                     {
+                        title = "以下採購已被退回";
+                        var purchaseNumber = string.Concat(DateTimeHelper.FormatDateStringForEmail(purchaseMain.ApplyDate), purchaseMain.PurchaseMainId.AsSpan(0, 5));
                         var receiver = _memberService.GetMembersByUserId(currentFlow.VerifyUserId);
                         EmailNotify emailNotify = new EmailNotify()
                         {
@@ -780,6 +798,7 @@ namespace stock_api.Service
                             Content = content,
                             UserId = receiver.UserId,
                             Email = receiver.Email,
+                            PurchaseNumber = purchaseNumber,
                             Type = CommonConstants.EmailNotifyType.PURCHASE
                         };
                         _emailService.AddEmailNotify(emailNotify);
