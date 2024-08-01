@@ -231,8 +231,22 @@ namespace stock_api.Service
                         {
                             title = "!!!!急件" + title;
                             content = $"<h2 style='color: red;'>急件請盡速處理</h2>" + content;
+                            SendMailByFlow(purchaseFlow, title, content);
                         }
-                        SendMailByFlow(purchaseFlow, title,content);
+                        else
+                        {
+                            var receiver = _memberService.GetMembersByUserId(purchaseFlow.VerifyUserId);
+                            EmailNotify emailNotify = new EmailNotify()
+                            {
+                                Title = title,
+                                Content = content,
+                                UserId = purchaseFlow.VerifyUserId,
+                                Email = receiver.Email,
+                                Type = CommonConstants.EmailNotifyType.PURCHASE
+                            };
+                            _emailService.AddEmailNotify(emailNotify);
+                        }
+                        
                     }
                     _dbContext.SaveChanges();
                     scope.Complete();
@@ -244,10 +258,7 @@ namespace stock_api.Service
                     return false;
                 }
             }
-
         }
-
-        
 
         public List<PurchaseMainAndSubItemVo> ListPurchase(ListPurchaseRequest listPurchaseRequest)
         {
@@ -629,9 +640,11 @@ namespace stock_api.Service
                     content = $"<h2 style='color: red;'>急件請盡速處理</h2>" + content;
                 }
                 SendMailToOwner(title, content,ownerList);
-                title = $"採購單:{string.Concat(DateTimeHelper.FormatDateStringForEmail(purchaseMain.ApplyDate), purchaseMain.PurchaseMainId.AsSpan(0, 5))} 審核流程已跑完";
-                content = $"<a href={_smtpSettings.Domain}/purchase_flow_detail/{purchaseMain.PurchaseMainId}>{purchaseMain.PurchaseMainId}</a>";
-                SendMailByPurchaseMain(purchaseMain, title,content);
+
+                // 不需通知流程跑完
+                //title = $"採購單:{string.Concat(DateTimeHelper.FormatDateStringForEmail(purchaseMain.ApplyDate), purchaseMain.PurchaseMainId.AsSpan(0, 5))} 審核流程已跑完";
+                //content = $"<a href={_smtpSettings.Domain}/purchase_flow_detail/{purchaseMain.PurchaseMainId}>{purchaseMain.PurchaseMainId}</a>";
+                //SendMailByPurchaseMain(purchaseMain, title,content);
             }
             if (answer == CommonConstants.AnswerPurchaseFlow.AGREE && nextPurchase != null)
             {
@@ -641,8 +654,25 @@ namespace stock_api.Service
                 {
                     title = "!!!!急件" + title;
                     content = $"<h2 style='color: red;'>急件請盡速處理</h2>" + content;
+                    SendMailByFlow(nextPurchase, title, content);
                 }
-                SendMailByFlow(nextPurchase, title, content);
+                else
+                {
+                    using (var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled))
+                    {
+                        var receiver = _memberService.GetMembersByUserId(nextPurchase.VerifyUserId);
+                        EmailNotify emailNotify = new EmailNotify()
+                        {
+                            Title = title,
+                            Content = content,
+                            UserId = receiver.UserId,
+                            Email = receiver.Email,
+                            Type = CommonConstants.EmailNotifyType.PURCHASE
+                        };
+                        _emailService.AddEmailNotify(emailNotify);
+                    }
+
+                }
             }
             if (answer == CommonConstants.AnswerPurchaseFlow.REJECT)
             {
@@ -652,8 +682,25 @@ namespace stock_api.Service
                 {
                     title = "!!!!急件" + title;
                     content = $"<h2 style='color: red;'>急件已被退件</h2>" + content;
+                    SendMailByPurchaseMain(purchaseMain, title, content);
+
                 }
-                SendMailByPurchaseMain(purchaseMain, title, content);
+                else
+                {
+                    using (var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled))
+                    {
+                        var receiver = _memberService.GetMembersByUserId(purchaseMain.UserId);
+                        EmailNotify emailNotify = new EmailNotify()
+                        {
+                            Title = title,
+                            Content = content,
+                            UserId = receiver.UserId,
+                            Email = receiver.Email,
+                            Type = CommonConstants.EmailNotifyType.PURCHASE
+                        };
+                        _emailService.AddEmailNotify(emailNotify);
+                    }
+                }
             }
             if (answer == CommonConstants.AnswerPurchaseFlow.BACK && isOwner != true)
             {
@@ -665,8 +712,24 @@ namespace stock_api.Service
                     {
                         title = "!!!!急件" + title;
                         content = $"<h2 style='color: red;'>急件請盡速處理</h2>" + content;
+                        SendMailByFlow(preFlow, title, content);
                     }
-                    SendMailByFlow(preFlow, title, content);
+                    else
+                    {
+                        using (var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled))
+                        {
+                            var receiver = _memberService.GetMembersByUserId(preFlow.VerifyUserId);
+                            EmailNotify emailNotify = new EmailNotify()
+                            {
+                                Title = title,
+                                Content = content,
+                                UserId = receiver.UserId,
+                                Email = receiver.Email,
+                                Type = CommonConstants.EmailNotifyType.PURCHASE
+                            };
+                            _emailService.AddEmailNotify(emailNotify);
+                        }
+                    }
                 }
                 else
                 {
@@ -676,8 +739,24 @@ namespace stock_api.Service
                     {
                         title = "!!!!急件" + title;
                         content = $"<h2 style='color: red;'>急件已被退回</h2>" + content;
+                        SendMailByPurchaseMain(purchaseMain, title, content);
                     }
-                    SendMailByPurchaseMain(purchaseMain, title, content);
+                    else
+                    {
+                        using (var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled))
+                        {
+                            var receiver = _memberService.GetMembersByUserId(purchaseMain.UserId);
+                            EmailNotify emailNotify = new EmailNotify()
+                            {
+                                Title = title,
+                                Content = content,
+                                UserId = receiver.UserId,
+                                Email = receiver.Email,
+                                Type = CommonConstants.EmailNotifyType.PURCHASE
+                            };
+                            _emailService.AddEmailNotify(emailNotify);
+                        }
+                    }
                 }
             }
             if (answer == CommonConstants.AnswerPurchaseFlow.BACK && isOwner == true)
@@ -688,8 +767,25 @@ namespace stock_api.Service
                 {
                     title = "!!!!急件" + title;
                     content = $"<h2 style='color: red;'>急件已被退回</h2>" + content;
+                    SendMailByFlow(currentFlow, title, content);
                 }
-                SendMailByFlow(currentFlow, title, content);
+                else
+                {
+                    using (var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled))
+                    {
+                        var receiver = _memberService.GetMembersByUserId(currentFlow.VerifyUserId);
+                        EmailNotify emailNotify = new EmailNotify()
+                        {
+                            Title = title,
+                            Content = content,
+                            UserId = receiver.UserId,
+                            Email = receiver.Email,
+                            Type = CommonConstants.EmailNotifyType.PURCHASE
+                        };
+                        _emailService.AddEmailNotify(emailNotify);
+                    }
+                }
+                
             }
 
             return true;

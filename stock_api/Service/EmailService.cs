@@ -1,16 +1,21 @@
 ﻿using MailKit.Net.Smtp;
+using Microsoft.EntityFrameworkCore;
 using MimeKit;
+using stock_api.Common.Constant;
 using stock_api.Common.Settings;
+using stock_api.Models;
 
 
 public class EmailService
 {
+    private readonly StockDbContext _dbContext;
     private readonly SmtpSettings _smtpSettings;
     private readonly ILogger<EmailService> _logger;
-    public EmailService(SmtpSettings smtpSettings, ILogger<EmailService> logger)
+    public EmailService(SmtpSettings smtpSettings, ILogger<EmailService> logger,StockDbContext stockDbContext)
     {
         _smtpSettings = smtpSettings;
         _logger = logger;
+        _dbContext = stockDbContext;
     }
 
     public async Task SendAsync(string title, string content, string email)
@@ -43,5 +48,28 @@ public class EmailService
         {
             await client.DisconnectAsync(true);
         }
+    }
+
+    public void AddEmailNotify(EmailNotify newEmailNotify)
+    {
+        _dbContext.EmailNotifies.Add(newEmailNotify);
+        _dbContext.SaveChanges();
+    }
+
+    public void UpdateEmailNotifyIsSendByIdList(List<int> idList)
+    {
+        _dbContext.EmailNotifies.Where(n => idList.Contains(n.Id)).ExecuteUpdate(n => n.SetProperty(n => n.IsSend, true));
+        _dbContext.SaveChanges();
+        return;
+    }
+
+    public Dictionary<string, List<EmailNotify>> GetNormalPurchaseListToSend()
+    {
+        List<EmailNotify> waitingToNotifyListForPurchase = _dbContext.EmailNotifies.Where(e=>e.Type==CommonConstants.EmailNotifyType.PURCHASE&&e.IsSend==false).ToList();
+        Dictionary<string, List<EmailNotify>> emailNotifyDictionary = waitingToNotifyListForPurchase
+            .Where(e => !string.IsNullOrEmpty(e.Email))
+            .GroupBy(e => e.Email)
+            .ToDictionary(g => g.Key, g => g.ToList());
+        return emailNotifyDictionary;
     }
 }

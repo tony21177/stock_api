@@ -29,6 +29,8 @@ public partial class StockDbContext : DbContext
 
     public virtual DbSet<CompanyUnit> CompanyUnits { get; set; }
 
+    public virtual DbSet<EmailNotify> EmailNotifies { get; set; }
+
     public virtual DbSet<FileDetailInfo> FileDetailInfos { get; set; }
 
     public virtual DbSet<InStockItemRecord> InStockItemRecords { get; set; }
@@ -265,6 +267,13 @@ public partial class StockDbContext : DbContext
             entity.Property(e => e.UpdatedAt)
                 .ValueGeneratedOnAddOrUpdate()
                 .HasDefaultValueSql("CURRENT_TIMESTAMP");
+        });
+
+        modelBuilder.Entity<EmailNotify>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("PRIMARY");
+
+            entity.Property(e => e.IsSend).HasDefaultValueSql("'0'");
         });
 
         modelBuilder.Entity<FileDetailInfo>(entity =>

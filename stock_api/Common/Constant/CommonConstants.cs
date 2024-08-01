@@ -7,6 +7,16 @@ namespace stock_api.Common.Constant
 {
     public class CommonConstants
     {
+        public static class EmailNotifyType
+        {
+            public const string PURCHASE = "PURCHASE";
+
+            public static List<string> GetAllValues()
+            {
+                return new List<string> { PURCHASE };
+            }
+        }
+
         public static class CompanyType
         {
             public const string OWNER = "OWNER";
