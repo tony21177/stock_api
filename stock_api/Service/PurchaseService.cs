@@ -621,6 +621,9 @@ namespace stock_api.Service
                         Remarks = reason
                     };
                     ownerList = _memberService.GetOwnerMembers();
+                    var purchaseNumber = string.Concat(DateTimeHelper.FormatDateStringForEmail(purchaseMain.ApplyDate), purchaseMain.PurchaseMainId.AsSpan(0, 5));
+                    _emailService.UpdateEmailNotifyIsDoneByIdPurchaseNumber(purchaseNumber);
+
                     _dbContext.PurchaseFlowLogs.Add(newFlowLog);
                     _dbContext.SaveChanges();
                     scope.Complete();
@@ -677,6 +680,8 @@ namespace stock_api.Service
                             Type = CommonConstants.EmailNotifyType.PURCHASE
                         };
                         _emailService.AddEmailNotify(emailNotify);
+                        _dbContext.SaveChanges();
+                        scope.Complete();
                     }
 
                 }
@@ -709,6 +714,8 @@ namespace stock_api.Service
                             Type = CommonConstants.EmailNotifyType.PURCHASE
                         };
                         _emailService.AddEmailNotify(emailNotify);
+                        _dbContext.SaveChanges();
+                        scope.Complete();
                     }
                 }
             }
@@ -741,6 +748,8 @@ namespace stock_api.Service
                                 Type = CommonConstants.EmailNotifyType.PURCHASE
                             };
                             _emailService.AddEmailNotify(emailNotify);
+                            _dbContext.SaveChanges();
+                            scope.Complete();
                         }
                     }
                 }
@@ -771,6 +780,8 @@ namespace stock_api.Service
                                 Type = CommonConstants.EmailNotifyType.PURCHASE
                             };
                             _emailService.AddEmailNotify(emailNotify);
+                            _dbContext.SaveChanges();
+                            scope.Complete();
                         }
                     }
                 }
@@ -802,6 +813,8 @@ namespace stock_api.Service
                             Type = CommonConstants.EmailNotifyType.PURCHASE
                         };
                         _emailService.AddEmailNotify(emailNotify);
+                        _dbContext.SaveChanges();
+                        scope.Complete();
                     }
                 }
                 

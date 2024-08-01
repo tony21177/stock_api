@@ -26,7 +26,7 @@ public partial class EmailNotify
     [StringLength(200)]
     public string? Email { get; set; }
 
-    public bool? IsSend { get; set; }
+    public bool? IsDone { get; set; }
 
     [StringLength(100)]
     public string? Type { get; set; }

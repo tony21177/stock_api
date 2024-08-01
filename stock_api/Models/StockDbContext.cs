@@ -273,7 +273,7 @@ public partial class StockDbContext : DbContext
         {
             entity.HasKey(e => e.Id).HasName("PRIMARY");
 
-            entity.Property(e => e.IsSend).HasDefaultValueSql("'0'");
+            entity.Property(e => e.IsDone).HasDefaultValueSql("'0'");
         });
 
         modelBuilder.Entity<FileDetailInfo>(entity =>

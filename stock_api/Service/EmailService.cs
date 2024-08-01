@@ -53,13 +53,17 @@ public class EmailService
     public void AddEmailNotify(EmailNotify newEmailNotify)
     {
         _dbContext.EmailNotifies.Add(newEmailNotify);
-        _dbContext.SaveChanges();
     }
 
-    public void UpdateEmailNotifyIsSendByIdList(List<int> idList)
+    public void UpdateEmailNotifyIsDoneByIdList(List<int> idList)
     {
-        _dbContext.EmailNotifies.Where(n => idList.Contains(n.Id)).ExecuteUpdate(n => n.SetProperty(n => n.IsSend, true));
-        _dbContext.SaveChanges();
+        _dbContext.EmailNotifies.Where(n => idList.Contains(n.Id)).ExecuteUpdate(n => n.SetProperty(n => n.IsDone, true));
+        return;
+    }
+
+    public void UpdateEmailNotifyIsDoneByIdPurchaseNumber(string purchaseNumber)
+    {
+        _dbContext.EmailNotifies.Where(n => n.PurchaseNumber==purchaseNumber).ExecuteUpdate(n => n.SetProperty(n => n.IsDone, true));
         return;
     }
 
