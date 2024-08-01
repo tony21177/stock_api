@@ -186,7 +186,7 @@ builder.Services.AddQuartz(q =>
     q.AddTrigger(opts => opts
         .ForJob("PurchaseNotifyJob")
         .WithIdentity("PurchaseNotifyTrigger")
-        .WithCronSchedule("00 19 22 * * ?")
+        .WithCronSchedule("00 30 6 * * ?")
     );
 });
 
