@@ -870,16 +870,20 @@ namespace stock_api.Service
             try
             {
                 var beforeSubItemsJsonString = JsonSerializer.Serialize(purchaseSubItemList);
-                request.UpdateSubItemList.ForEach(subItem =>
-                {
-                    var matchedUpdateItem = purchaseSubItemList.Where(i=>i.ItemId==subItem.ItemId).FirstOrDefault();
-                    if (matchedUpdateItem != null)
-                    {
-                        matchedUpdateItem.Quantity = subItem.Quantity;
-                    }
-                });
                 _dbContext.PurchaseSubItems.Where(subItem => request.DeleteSubItemIdList.Contains(subItem.ItemId)).ExecuteDelete();
                 _dbContext.AcceptanceItems.Where(acceptItem => request.DeleteSubItemIdList.Contains(acceptItem.ItemId)).ExecuteDelete();
+                request.UpdateSubItemList.ForEach(subItem =>
+                {
+                    var updateSubItemId = subItem.ItemId;
+                    if (!request.DeleteSubItemIdList.Contains(updateSubItemId))
+                    {
+                        var matchedUpdateItem = purchaseSubItemList.Where(i => i.ItemId == subItem.ItemId).FirstOrDefault();
+                        if (matchedUpdateItem != null)
+                        {
+                            matchedUpdateItem.Quantity = subItem.Quantity;
+                        }
+                    }
+                });
 
                 var modifiedSubItems = _dbContext.PurchaseSubItems.Where(i => i.PurchaseMainId == purchaseMainSheet.PurchaseMainId).ToList();
                 var afterSubItemsJsonString = JsonSerializer.Serialize(modifiedSubItems);
