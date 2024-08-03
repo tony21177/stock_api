@@ -688,36 +688,36 @@ namespace stock_api.Service
             }
             if (answer == CommonConstants.AnswerPurchaseFlow.REJECT)
             {
-                string title = $"採購單:{string.Concat(DateTimeHelper.FormatDateStringForEmail(purchaseMain.ApplyDate), purchaseMain.PurchaseMainId.AsSpan(0, 5))} 已被拒絕";
-                string content = $"<a href={_smtpSettings.Domain}/purchase_flow_detail/{purchaseMain.PurchaseMainId}>{purchaseMain.PurchaseMainId}</a>";
-                if (purchaseMain.Type == CommonConstants.PurchaseType.URGENT)
-                {
-                    title = "!!!!急件" + title;
-                    content = $"<h2 style='color: red;'>急件已被退件</h2>" + content;
-                    SendMailByPurchaseMain(purchaseMain, title, content);
+                //string title = $"採購單:{string.Concat(DateTimeHelper.FormatDateStringForEmail(purchaseMain.ApplyDate), purchaseMain.PurchaseMainId.AsSpan(0, 5))} 已被拒絕";
+                //string content = $"<a href={_smtpSettings.Domain}/purchase_flow_detail/{purchaseMain.PurchaseMainId}>{purchaseMain.PurchaseMainId}</a>";
+                //if (purchaseMain.Type == CommonConstants.PurchaseType.URGENT)
+                //{
+                //    title = "!!!!急件" + title;
+                //    content = $"<h2 style='color: red;'>急件已被退件</h2>" + content;
+                //    SendMailByPurchaseMain(purchaseMain, title, content);
 
-                }
-                else
-                {
-                    using (var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled))
-                    {
-                        title = "以下採購單被拒絕";
-                        var purchaseNumber = string.Concat(DateTimeHelper.FormatDateStringForEmail(purchaseMain.ApplyDate), purchaseMain.PurchaseMainId.AsSpan(0, 5));
-                        var receiver = _memberService.GetMembersByUserId(purchaseMain.UserId);
-                        EmailNotify emailNotify = new EmailNotify()
-                        {
-                            Title = title,
-                            Content = content,
-                            UserId = receiver.UserId,
-                            Email = receiver.Email,
-                            PurchaseNumber = purchaseNumber,
-                            Type = CommonConstants.EmailNotifyType.PURCHASE
-                        };
-                        _emailService.AddEmailNotify(emailNotify);
-                        _dbContext.SaveChanges();
-                        scope.Complete();
-                    }
-                }
+                //}
+                //else
+                //{
+                //    using (var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled))
+                //    {
+                //        title = "以下採購單被拒絕";
+                //        var purchaseNumber = string.Concat(DateTimeHelper.FormatDateStringForEmail(purchaseMain.ApplyDate), purchaseMain.PurchaseMainId.AsSpan(0, 5));
+                //        var receiver = _memberService.GetMembersByUserId(purchaseMain.UserId);
+                //        EmailNotify emailNotify = new EmailNotify()
+                //        {
+                //            Title = title,
+                //            Content = content,
+                //            UserId = receiver.UserId,
+                //            Email = receiver.Email,
+                //            PurchaseNumber = purchaseNumber,
+                //            Type = CommonConstants.EmailNotifyType.PURCHASE
+                //        };
+                //        _emailService.AddEmailNotify(emailNotify);
+                //        _dbContext.SaveChanges();
+                //        scope.Complete();
+                //    }
+                //}
             }
             if (answer == CommonConstants.AnswerPurchaseFlow.BACK && isOwner != true)
             {
@@ -755,68 +755,68 @@ namespace stock_api.Service
                 }
                 else
                 {
-                    string title = $"採購單:{string.Concat(DateTimeHelper.FormatDateStringForEmail(purchaseMain.ApplyDate), purchaseMain.PurchaseMainId.AsSpan(0, 5))} 已被退回";
-                    string content = $"<a href={_smtpSettings.Domain}/purchase_flow_detail/{purchaseMain.PurchaseMainId}>{purchaseMain.PurchaseMainId}</a>";
-                    if (purchaseMain.Type == CommonConstants.PurchaseType.URGENT)
-                    {
-                        title = "!!!!急件" + title;
-                        content = $"<h2 style='color: red;'>急件已被退回</h2>" + content;
-                        SendMailByPurchaseMain(purchaseMain, title, content);
-                    }
-                    else
-                    {
-                        using (var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled))
-                        {
-                            title = "以下採購已被退回";
-                            var purchaseNumber = string.Concat(DateTimeHelper.FormatDateStringForEmail(purchaseMain.ApplyDate), purchaseMain.PurchaseMainId.AsSpan(0, 5));
-                            var receiver = _memberService.GetMembersByUserId(purchaseMain.UserId);
-                            EmailNotify emailNotify = new EmailNotify()
-                            {
-                                Title = title,
-                                Content = content,
-                                UserId = receiver.UserId,
-                                Email = receiver.Email,
-                                PurchaseNumber = purchaseNumber,
-                                Type = CommonConstants.EmailNotifyType.PURCHASE
-                            };
-                            _emailService.AddEmailNotify(emailNotify);
-                            _dbContext.SaveChanges();
-                            scope.Complete();
-                        }
-                    }
+                    //string title = $"採購單:{string.Concat(DateTimeHelper.FormatDateStringForEmail(purchaseMain.ApplyDate), purchaseMain.PurchaseMainId.AsSpan(0, 5))} 已被退回";
+                    //string content = $"<a href={_smtpSettings.Domain}/purchase_flow_detail/{purchaseMain.PurchaseMainId}>{purchaseMain.PurchaseMainId}</a>";
+                    //if (purchaseMain.Type == CommonConstants.PurchaseType.URGENT)
+                    //{
+                    //    title = "!!!!急件" + title;
+                    //    content = $"<h2 style='color: red;'>急件已被退回</h2>" + content;
+                    //    SendMailByPurchaseMain(purchaseMain, title, content);
+                    //}
+                    //else
+                    //{
+                    //    using (var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled))
+                    //    {
+                    //        title = "以下採購已被退回";
+                    //        var purchaseNumber = string.Concat(DateTimeHelper.FormatDateStringForEmail(purchaseMain.ApplyDate), purchaseMain.PurchaseMainId.AsSpan(0, 5));
+                    //        var receiver = _memberService.GetMembersByUserId(purchaseMain.UserId);
+                    //        EmailNotify emailNotify = new EmailNotify()
+                    //        {
+                    //            Title = title,
+                    //            Content = content,
+                    //            UserId = receiver.UserId,
+                    //            Email = receiver.Email,
+                    //            PurchaseNumber = purchaseNumber,
+                    //            Type = CommonConstants.EmailNotifyType.PURCHASE
+                    //        };
+                    //        _emailService.AddEmailNotify(emailNotify);
+                    //        _dbContext.SaveChanges();
+                    //        scope.Complete();
+                    //    }
+                    //}
                 }
             }
             if (answer == CommonConstants.AnswerPurchaseFlow.BACK && isOwner == true)
             {
-                string title = $"採購單:{string.Concat(DateTimeHelper.FormatDateStringForEmail(purchaseMain.ApplyDate), purchaseMain.PurchaseMainId.AsSpan(0, 5))} 已被退回";
-                string content = $"<a href={_smtpSettings.Domain}/purchase_flow_detail/{purchaseMain.PurchaseMainId}>{purchaseMain.PurchaseMainId}</a>";
-                if (purchaseMain.Type == CommonConstants.PurchaseType.URGENT)
-                {
-                    title = "!!!!急件" + title;
-                    content = $"<h2 style='color: red;'>急件已被退回</h2>" + content;
-                    SendMailByFlow(currentFlow, title, content);
-                }
-                else
-                {
-                    using (var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled))
-                    {
-                        title = "以下採購已被退回";
-                        var purchaseNumber = string.Concat(DateTimeHelper.FormatDateStringForEmail(purchaseMain.ApplyDate), purchaseMain.PurchaseMainId.AsSpan(0, 5));
-                        var receiver = _memberService.GetMembersByUserId(currentFlow.VerifyUserId);
-                        EmailNotify emailNotify = new EmailNotify()
-                        {
-                            Title = title,
-                            Content = content,
-                            UserId = receiver.UserId,
-                            Email = receiver.Email,
-                            PurchaseNumber = purchaseNumber,
-                            Type = CommonConstants.EmailNotifyType.PURCHASE
-                        };
-                        _emailService.AddEmailNotify(emailNotify);
-                        _dbContext.SaveChanges();
-                        scope.Complete();
-                    }
-                }
+                //string title = $"採購單:{string.Concat(DateTimeHelper.FormatDateStringForEmail(purchaseMain.ApplyDate), purchaseMain.PurchaseMainId.AsSpan(0, 5))} 已被退回";
+                //string content = $"<a href={_smtpSettings.Domain}/purchase_flow_detail/{purchaseMain.PurchaseMainId}>{purchaseMain.PurchaseMainId}</a>";
+                //if (purchaseMain.Type == CommonConstants.PurchaseType.URGENT)
+                //{
+                //    title = "!!!!急件" + title;
+                //    content = $"<h2 style='color: red;'>急件已被退回</h2>" + content;
+                //    SendMailByFlow(currentFlow, title, content);
+                //}
+                //else
+                //{
+                //    using (var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled))
+                //    {
+                //        title = "以下採購已被退回";
+                //        var purchaseNumber = string.Concat(DateTimeHelper.FormatDateStringForEmail(purchaseMain.ApplyDate), purchaseMain.PurchaseMainId.AsSpan(0, 5));
+                //        var receiver = _memberService.GetMembersByUserId(currentFlow.VerifyUserId);
+                //        EmailNotify emailNotify = new EmailNotify()
+                //        {
+                //            Title = title,
+                //            Content = content,
+                //            UserId = receiver.UserId,
+                //            Email = receiver.Email,
+                //            PurchaseNumber = purchaseNumber,
+                //            Type = CommonConstants.EmailNotifyType.PURCHASE
+                //        };
+                //        _emailService.AddEmailNotify(emailNotify);
+                //        _dbContext.SaveChanges();
+                //        scope.Complete();
+                //    }
+                //}
                 
             }
 
