@@ -519,7 +519,34 @@ namespace stock_api.Controllers
             });
         }
 
-            [HttpGet("flows/my")]
+        [HttpPost("flow/ownerUpdateOrDeleteItem")]
+        [Authorize]
+        public IActionResult UpdateOrDeleteSubItemWhenFlow(UpdateOrDeleteSubItemInFlowRequest request)
+        {
+            var memberAndPermissionSetting = _authHelpers.GetMemberAndPermissionSetting(User);
+            var verifier = memberAndPermissionSetting.Member;
+            var compId = memberAndPermissionSetting.CompanyWithUnit.CompId;
+
+            PurchaseMainSheet? purchaseMainSheet = _purchaseService.GetPurchaseMainByMainId(request.PurchaseMainId);
+            List<PurchaseSubItem> existingSubItemList = _purchaseService.GetPurchaseSubItemsByMainId(request.PurchaseMainId);
+            if (purchaseMainSheet==null|| purchaseMainSheet.IsActive==false||existingSubItemList.Count == 0)
+            {
+                return BadRequest(new CommonResponse<dynamic>
+                {
+                    Result = false,
+                    Message = "該採購單未存在"
+                });
+            }
+
+            var result = _purchaseService.OwnerUpdateOrDeleteSubItems(request,purchaseMainSheet,existingSubItemList);
+
+            return Ok(new CommonResponse<dynamic>
+            {
+                Result = result,
+            });
+        }
+
+        [HttpGet("flows/my")]
         [Authorize]
         public IActionResult GetFlowsSignedByMy()
         {

@@ -773,6 +773,35 @@ namespace stock_api.Service
             }
         }
 
+        // 得標廠商修改採購項目子項
+        public bool OwnerUpdateOrDeleteSubItems(UpdateOrDeleteSubItemInFlowRequest request,PurchaseMainSheet purchaseMainSheet,List<PurchaseSubItem> purchaseSubItemList)
+        {
+            using var scope = new TransactionScope();
+            try
+            {
+                var beforeSubItemsJsonString = JsonSerializer.Serialize(purchaseSubItemList);
+                request.UpdateSubItemList.ForEach(subItem =>
+                {
+                    var matchedUpdateItem = purchaseSubItemList.Where(i=>i.ItemId==subItem.ItemId).FirstOrDefault();
+                    if (matchedUpdateItem != null)
+                    {
+                        matchedUpdateItem.Quantity = subItem.Quantity;
+                    }
+                });
+                _dbContext.PurchaseSubItems.Where(subItem => request.DeleteSubItemIdList.Contains(subItem.ItemId)).ExecuteDelete();
+                _dbContext.AcceptanceItems.Where(acceptItem => request.DeleteSubItemIdList.Contains(acceptItem.ItemId)).ExecuteDelete();
+
+                _dbContext.SaveChanges();
+                scope.Complete();
+                return true;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError("事務失敗[UpdateOrDeleteSubItems]：{msg}", ex);
+                return false;
+            }
+        }
+
         public List<PurchaseSubItem> GetUndonePurchaseSubItems(string compId,string productId)
         {
             return _dbContext.PurchaseSubItems.Where(s=>s.ReceiveStatus!=CommonConstants.PurchaseSubItemReceiveStatus.DONE&& s.ReceiveStatus != CommonConstants.PurchaseSubItemReceiveStatus.CLOSE
