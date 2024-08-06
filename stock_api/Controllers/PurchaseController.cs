@@ -521,7 +521,7 @@ namespace stock_api.Controllers
 
         [HttpPost("flow/ownerUpdateOrDeleteItem")]
         [Authorize]
-        public IActionResult UpdateOrDeleteSubItemWhenFlow(UpdateOrDeleteSubItemInFlowRequest request)
+        public IActionResult OwnerUpdateOrDeleteSubItemWhenFlow(UpdateOrDeleteSubItemInFlowRequest request)
         {
             var memberAndPermissionSetting = _authHelpers.GetMemberAndPermissionSetting(User);
             var verifier = memberAndPermissionSetting.Member;
