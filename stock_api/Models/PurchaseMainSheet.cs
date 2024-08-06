@@ -96,4 +96,7 @@ public partial class PurchaseMainSheet
     /// </summary>
     [StringLength(45)]
     public string? OwnerProcess { get; set; }
+
+    [StringLength(300)]
+    public string? OwnerComment { get; set; }
 }

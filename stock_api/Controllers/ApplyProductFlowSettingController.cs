@@ -100,15 +100,15 @@ namespace stock_api.Controllers
                 bool seqExisted = false;
                 if (updateRequest.ReviewGroupId != null && updateRequest.Sequence != null)
                 {
-                    seqExisted = _applyProductFlowSettingService.IsSequenceExistForGroupId(updateRequest.Sequence.Value, updateRequest.ReviewGroupId, compId);
+                    seqExisted = _applyProductFlowSettingService.IsSequenceExistForGroupIdAndExcludeSettingId(updateRequest.SettingId,updateRequest.Sequence.Value, updateRequest.ReviewGroupId, compId);
                 }
                 if(updateRequest.ReviewGroupId != null && updateRequest.Sequence == null)
                 {
-                    seqExisted = _applyProductFlowSettingService.IsSequenceExistForGroupId(existingApplyProductFlowSetting.Sequence, updateRequest.ReviewGroupId, compId);
+                    seqExisted = _applyProductFlowSettingService.IsSequenceExistForGroupIdAndExcludeSettingId(updateRequest.SettingId, existingApplyProductFlowSetting.Sequence, updateRequest.ReviewGroupId, compId);
                 }
                 if (updateRequest.ReviewGroupId == null && updateRequest.Sequence != null)
                 {
-                    seqExisted = _applyProductFlowSettingService.IsSequenceExistForGroupId(updateRequest.Sequence.Value, existingApplyProductFlowSetting.ReviewGroupId, compId);
+                    seqExisted = _applyProductFlowSettingService.IsSequenceExistForGroupIdAndExcludeSettingId(updateRequest.SettingId, updateRequest.Sequence.Value, existingApplyProductFlowSetting.ReviewGroupId, compId);
                 }
                 if (seqExisted)
                 {

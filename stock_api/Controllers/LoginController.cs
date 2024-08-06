@@ -62,7 +62,7 @@ namespace stock_api.Controllers
             ,{ "compId", memberAndPermissionSetting.Member.CompId } ,{ "compName", memberAndPermissionSetting.CompanyWithUnit.Name },{ "compType", memberAndPermissionSetting.CompanyWithUnit.Type },{ "unitId", memberAndPermissionSetting.CompanyWithUnit.UnitId }
             ,{ "unitName", memberAndPermissionSetting.CompanyWithUnit.UnitName }};
 
-            NotifyNotEnoughProduct(memberAndPermissionSetting.Member.CompId, memberAndPermissionSetting.Member);
+            //NotifyNotEnoughProduct(memberAndPermissionSetting.Member.CompId, memberAndPermissionSetting.Member);
             return Ok(result);
         }
 

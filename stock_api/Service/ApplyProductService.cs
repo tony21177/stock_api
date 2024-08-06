@@ -565,12 +565,12 @@ namespace stock_api.Service
                 string content = $"<a href={_smtpSettings.Domain}/product_item_verify/{applyNewProductMain.ApplyId}>{applyNewProductMain.ApplyId}</a>";
                 SendMailByFlow(nextPurchase, title, content);
             }
-            if (answer == CommonConstants.AnswerApplyNewProductFlow.REJECT)
-            {
-                string title = $"申請新品項單據:{string.Concat(DateTimeHelper.FormatDateStringForEmail(applyNewProductMain.CreatedAt), applyNewProductMain.ApplyId.AsSpan(0, 5))} 已被拒絕";
-                string content = $"<a href={_smtpSettings.Domain}/product_item_verify/{applyNewProductMain.ApplyId}>{applyNewProductMain.ApplyId}</a>";
-                SendMailByMain(applyNewProductMain, title, content);
-            }
+            //if (answer == CommonConstants.AnswerApplyNewProductFlow.REJECT)
+            //{
+            //    string title = $"申請新品項單據:{string.Concat(DateTimeHelper.FormatDateStringForEmail(applyNewProductMain.CreatedAt), applyNewProductMain.ApplyId.AsSpan(0, 5))} 已被拒絕";
+            //    string content = $"<a href={_smtpSettings.Domain}/product_item_verify/{applyNewProductMain.ApplyId}>{applyNewProductMain.ApplyId}</a>";
+            //    SendMailByMain(applyNewProductMain, title, content);
+            //}
             if (answer == CommonConstants.AnswerApplyNewProductFlow.BACK && isOwner != true)
             {
                 if (preFlow != null)
@@ -581,17 +581,17 @@ namespace stock_api.Service
                 }
                 else
                 {
-                    string title = $"申請新品項單據:{string.Concat(DateTimeHelper.FormatDateStringForEmail(applyNewProductMain.CreatedAt), applyNewProductMain.ApplyId.AsSpan(0, 5))} 已被退回";
-                    string content = $"<a href={_smtpSettings.Domain}/product_item_verify/{applyNewProductMain.ApplyId}>{applyNewProductMain.ApplyId}</a>";
-                    SendMailByMain(applyNewProductMain, title, content);
+                    //string title = $"申請新品項單據:{string.Concat(DateTimeHelper.FormatDateStringForEmail(applyNewProductMain.CreatedAt), applyNewProductMain.ApplyId.AsSpan(0, 5))} 已被退回";
+                    //string content = $"<a href={_smtpSettings.Domain}/product_item_verify/{applyNewProductMain.ApplyId}>{applyNewProductMain.ApplyId}</a>";
+                    //SendMailByMain(applyNewProductMain, title, content);
                 }
             }
-            if (answer == CommonConstants.AnswerPurchaseFlow.BACK && isOwner == true)
-            {
-                string title = $"申請新品項單據:{string.Concat(DateTimeHelper.FormatDateStringForEmail(applyNewProductMain.CreatedAt), applyNewProductMain.ApplyId.AsSpan(0, 5))} 已被退回";
-                string content = $"<a href={_smtpSettings.Domain}/product_item_verify/{applyNewProductMain.ApplyId}>{applyNewProductMain.ApplyId}</a>";
-                SendMailByFlow(currentFlow, title, content);
-            }
+            //if (answer == CommonConstants.AnswerPurchaseFlow.BACK && isOwner == true)
+            //{
+            //    string title = $"申請新品項單據:{string.Concat(DateTimeHelper.FormatDateStringForEmail(applyNewProductMain.CreatedAt), applyNewProductMain.ApplyId.AsSpan(0, 5))} 已被退回";
+            //    string content = $"<a href={_smtpSettings.Domain}/product_item_verify/{applyNewProductMain.ApplyId}>{applyNewProductMain.ApplyId}</a>";
+            //    SendMailByFlow(currentFlow, title, content);
+            //}
         }
 
         public void UpdateApplyNewProductToDone(ApplyNewProductMain main)

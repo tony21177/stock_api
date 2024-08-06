@@ -79,6 +79,11 @@ namespace stock_api.Service
             return _dbContext.WarehouseMembers.Where(member=>member.CompId==compId).ToList();
         }
 
+        public List<WarehouseMember> GetAdministratorsOfComp(string compId)
+        {
+            return _dbContext.WarehouseMembers.Where(member => member.CompId == compId&&member.IsAdmin==true).ToList();
+        }
+
         public List<MemberWithCompanyUnitVo> GetAllMembersForOwner()
         {
             var result = from member in _dbContext.WarehouseMembers

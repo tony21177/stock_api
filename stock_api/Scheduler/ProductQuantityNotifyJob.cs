@@ -37,7 +37,7 @@ namespace stock_api.Scheduler
                 var notifyProductList = keyPair.Value??new List<NotifyProductQuantity>();
                 string emailTitle = "庫存品項不足通知";
                 string emailBody = GenerateHtmlString(notifyProductList);
-                List<WarehouseMember> receiverList = _memberService.GetAllMembersOfComp(compId).Where(m => m.IsActive == true).ToList();
+                List<WarehouseMember> receiverList = _memberService.GetAdministratorsOfComp(compId).Where(m => m.IsActive == true).ToList();
                 List<string> effectiveEmailList = receiverList.Where(r => !string.IsNullOrEmpty(r.Email)).Select(r => r.Email).ToList();
                 effectiveEmailList.ForEach(effectiveEmail => _emailService.SendAsync(emailTitle, emailBody, effectiveEmail));
             }

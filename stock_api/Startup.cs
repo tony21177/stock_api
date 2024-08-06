@@ -170,6 +170,7 @@ builder.Services.AddQuartz(q =>
     // Define a job and tie it to the ProductQuantityNotifyJob class
     q.AddJob<ProductQuantityNotifyJob>(opts => opts.WithIdentity("ProductQuantityNotifyJob"));
     q.AddJob<NearExpiredQuantityNotifyJob>(opts => opts.WithIdentity("NearExpiredQuantityNotifyJob"));
+    q.AddJob<PurchaseNotifyJob>(opts => opts.WithIdentity("PurchaseNotifyJob"));
 
     // Create a trigger for the job
     q.AddTrigger(opts => opts
@@ -180,7 +181,12 @@ builder.Services.AddQuartz(q =>
     q.AddTrigger(opts => opts
         .ForJob("NearExpiredQuantityNotifyJob")
         .WithIdentity("NearExpiredQuantityNotifyTrigger")
-        .WithCronSchedule("00 35 6 * * ?")
+        .WithCronSchedule("00 30 6 * * ?")
+    );
+    q.AddTrigger(opts => opts
+        .ForJob("PurchaseNotifyJob")
+        .WithIdentity("PurchaseNotifyTrigger")
+        .WithCronSchedule("00 30 6 * * ?")
     );
 });
 

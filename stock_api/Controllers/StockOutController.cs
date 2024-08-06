@@ -238,7 +238,7 @@ namespace stock_api.Controllers
             var (result,errorMsg, notifyProductQuantity) = _stockOutService.OutStock(request.Type,request, requestLot, product, memberAndPermissionSetting.Member,compId);
             
 
-            CalculateForQuantityToNotity(new List<NotifyProductQuantity> { notifyProductQuantity });
+            //CalculateForQuantityToNotity(new List<NotifyProductQuantity> { notifyProductQuantity });
             return Ok(new CommonResponse<dynamic>
             {
                 Result = result,
@@ -342,7 +342,7 @@ namespace stock_api.Controllers
             }
             if (notifyProductQuantityList.Count > 0)
             {
-                CalculateForQuantityToNotity(notifyProductQuantityList);
+                //CalculateForQuantityToNotity(notifyProductQuantityList);
             }
 
             return Ok(new CommonResponse<dynamic>
@@ -451,7 +451,7 @@ namespace stock_api.Controllers
             }
 
             var (result,_, notifyProductQuantity) = _stockOutService.OwnerOutStock(request.Type,request, requestLot, product, memberAndPermissionSetting.Member, toCompAcceptanceItem, compId);
-            CalculateForQuantityToNotity(new List<NotifyProductQuantity> { notifyProductQuantity });
+            //CalculateForQuantityToNotity(new List<NotifyProductQuantity> { notifyProductQuantity });
             
             return Ok(new CommonResponse<dynamic>
             {
@@ -556,7 +556,7 @@ namespace stock_api.Controllers
                 }
                 if (notifyProductQuantityList.Count > 0)
                 {
-                    CalculateForQuantityToNotity(notifyProductQuantityList);
+                    //CalculateForQuantityToNotity(notifyProductQuantityList);
                 }
             }
             return Ok(new CommonResponse<dynamic>

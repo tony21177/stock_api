@@ -39,7 +39,7 @@ namespace stock_api.Common.IoC.Configuration.DI
                 services.AddScoped<IAuthorizationMiddlewareResultHandler, CustomAuthorizationMiddlewareResultHandler>();
 
                 // Configure EmailService
-                services.AddSingleton<EmailService>();
+                services.AddScoped<EmailService>();
 
                 //services.AddTransient<IJob, ProductQuantityNotifyJob>();
 

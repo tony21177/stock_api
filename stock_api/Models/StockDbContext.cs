@@ -29,6 +29,8 @@ public partial class StockDbContext : DbContext
 
     public virtual DbSet<CompanyUnit> CompanyUnits { get; set; }
 
+    public virtual DbSet<EmailNotify> EmailNotifies { get; set; }
+
     public virtual DbSet<FileDetailInfo> FileDetailInfos { get; set; }
 
     public virtual DbSet<InStockItemRecord> InStockItemRecords { get; set; }
@@ -265,6 +267,13 @@ public partial class StockDbContext : DbContext
             entity.Property(e => e.UpdatedAt)
                 .ValueGeneratedOnAddOrUpdate()
                 .HasDefaultValueSql("CURRENT_TIMESTAMP");
+        });
+
+        modelBuilder.Entity<EmailNotify>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("PRIMARY");
+
+            entity.Property(e => e.IsDone).HasDefaultValueSql("'0'");
         });
 
         modelBuilder.Entity<FileDetailInfo>(entity =>
@@ -906,6 +915,7 @@ public partial class StockDbContext : DbContext
             entity.Property(e => e.DisplayName).HasComment("顯示名稱");
             entity.Property(e => e.GroupIds).HasComment("屬於數個組別");
             entity.Property(e => e.IsActive).HasDefaultValueSql("'1'");
+            entity.Property(e => e.IsAdmin).HasDefaultValueSql("'0'");
             entity.Property(e => e.Password).HasComment("登入密碼");
             entity.Property(e => e.PhotoUrl).HasComment("大頭貼");
             entity.Property(e => e.UpdatedAt)
