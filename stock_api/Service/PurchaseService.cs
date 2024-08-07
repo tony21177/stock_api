@@ -704,18 +704,7 @@ namespace stock_api.Service
                 //        title = "以下採購單被拒絕";
                 //        var purchaseNumber = string.Concat(DateTimeHelper.FormatDateStringForEmail(purchaseMain.ApplyDate), purchaseMain.PurchaseMainId.AsSpan(0, 5));
                 //        var receiver = _memberService.GetMembersByUserId(purchaseMain.UserId);
-                //        EmailNotify emailNotify = new EmailNotify()
-                //        {
-                //            Title = title,
-                //            Content = content,
-                //            UserId = receiver.UserId,
-                //            Email = receiver.Email,
-                //            PurchaseNumber = purchaseNumber,
-                //            Type = CommonConstants.EmailNotifyType.PURCHASE
-                //        };
-                //        _emailService.AddEmailNotify(emailNotify);
-                //        _dbContext.SaveChanges();
-                //        scope.Complete();
+                //        SendMailByPurchaseMain(purchaseMain, title, content);
                 //    }
                 //}
             }
