@@ -456,10 +456,22 @@ namespace stock_api.Controllers
             }
 
             var (data, pages) = _stockInService.ListStockInRecords(request);
+            var stockInRecordVoList = _mapper.Map<List<InStockItemRecordVo>>(data);
+            var productIds = stockInRecordVoList.Select(i => i.ProductId).ToList();
+            var products = _warehouseProductService.GetProductsByProductIds(productIds);
+            stockInRecordVoList.ForEach(vo =>
+            {
+                var product = products.Where(p => p.ProductId == vo.ProductId).FirstOrDefault();
+                vo.GroupIds = product.GroupIds;
+                vo.GroupNames = product.GroupNames;
+            });
+
+
+
             return Ok(new CommonResponse<dynamic>
             {
                 Result = true,
-                Data = data,
+                Data = stockInRecordVoList,
                 TotalPages = pages
             });
         }
