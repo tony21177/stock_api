@@ -870,7 +870,9 @@ namespace stock_api.Service
                         if (matchedUpdateItem != null)
                         {
                             matchedUpdateItem.Quantity = subItem.Quantity;
+                            _dbContext.AcceptanceItems.Where(acceptItem => acceptItem.ItemId == matchedUpdateItem.ItemId).ExecuteUpdate(a => a.SetProperty(a => a.OrderQuantity, subItem.Quantity));
                         }
+                        
                     }
                 });
 
@@ -913,6 +915,7 @@ namespace stock_api.Service
                     if (matchedUpdateItem != null)
                     {
                         matchedUpdateItem.Quantity = subItem.Quantity;
+                        _dbContext.AcceptanceItems.Where(acceptItem => acceptItem.ItemId == matchedUpdateItem.ItemId).ExecuteUpdate(a => a.SetProperty(a => a.OrderQuantity, subItem.Quantity));
                     }
                 });
                 _dbContext.PurchaseSubItems.Where(subItem => request.DeleteSubItemIdList.Contains(subItem.ItemId)).ExecuteDelete();
