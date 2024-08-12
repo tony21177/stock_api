@@ -329,6 +329,8 @@ namespace stock_api.Service
             }
 
             List<PurchaseMainAndSubItemVo> purchaseMainAndSubItemVoList = new List<PurchaseMainAndSubItemVo> { };
+            var flows = GetAllFlowsByCompId(listPurchaseRequest.CompId).OrderBy(f => f.Sequence);
+
             foreach (var kvp in mainSheetIdMap)
             {
                 List<PurchaseSubItemVo> Items = new List<PurchaseSubItemVo>();
@@ -361,7 +363,6 @@ namespace stock_api.Service
                 });
 
                 var differentMainSheetId = purchaseMainAndSubItemVoList.Select(m => m.PurchaseMainId).Distinct().ToList();
-                var flows = GetFlowsByPurchaseMainIds(differentMainSheetId).OrderBy(f => f.Sequence);
                 foreach (var item in purchaseMainAndSubItemVoList)
                 {
                     var matchedFlows = flows.Where(f => f.PurchaseMainId == item.PurchaseMainId).ToList();
@@ -394,7 +395,6 @@ namespace stock_api.Service
             if (listPurchaseRequest.IsNeedFlow == true)
             {
                 var differentMainSheetId = purchaseMainAndSubItemVoList.Select(m => m.PurchaseMainId).Distinct().ToList();
-                var flows = GetFlowsByPurchaseMainIds(differentMainSheetId).OrderBy(f => f.Sequence);
                 foreach (var item in purchaseMainAndSubItemVoList)
                 {
                     var matchedFlows = flows.Where(f => f.PurchaseMainId == item.PurchaseMainId).ToList();
@@ -425,6 +425,15 @@ namespace stock_api.Service
         {
             return _dbContext.PurchaseFlows.Where(f => purchaseMainIdList.Contains(f.PurchaseMainId)).ToList();
 
+        }
+        public List<PurchaseFlow> GetAllFlowsByCompId(string compId)
+        {
+            if (compId != null)
+            {
+                return _dbContext.PurchaseFlows.Where(f => f.CompId == compId).ToList();
+
+            }
+            return _dbContext.PurchaseFlows.ToList();
         }
 
         public PurchaseFlow? GetFlowsByPurchaseMainId(string purchaseMainId)
