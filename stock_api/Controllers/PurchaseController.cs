@@ -206,7 +206,7 @@ namespace stock_api.Controllers
             .Select(item => item.ProductId)
             .Distinct()
             .ToList();
-            var products = _warehouseProductService.GetProductsByProductIdsAndCompId(distinctProductIdList, request.CompId);
+            var products = _warehouseProductService.GetProductsByCompId( request.CompId);
 
             foreach (var vo in data)
             {
