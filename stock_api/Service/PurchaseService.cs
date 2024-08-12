@@ -266,6 +266,7 @@ namespace stock_api.Service
 
         public List<PurchaseMainAndSubItemVo> ListPurchase(ListPurchaseRequest listPurchaseRequest)
         {
+            _logger.LogInformation("[ListPurchase]---1---{time}", DateTime.UtcNow);
             IQueryable<PurchaseItemListView> query = _dbContext.PurchaseItemListViews;
             if (listPurchaseRequest.CompId != null)
             {
@@ -313,6 +314,7 @@ namespace stock_api.Service
             }
 
             var result = query.ToList();
+            _logger.LogInformation("[ListPurchase]---2---{time}", DateTime.UtcNow);
             Dictionary<string, List<PurchaseItemListView>> mainSheetIdMap = new Dictionary<string, List<PurchaseItemListView>>();
 
             foreach (var item in result)
@@ -327,10 +329,10 @@ namespace stock_api.Service
                     voList.Add(item);
                 }
             }
-
+            _logger.LogInformation("[ListPurchase]---3---{time}", DateTime.UtcNow);
             List<PurchaseMainAndSubItemVo> purchaseMainAndSubItemVoList = new List<PurchaseMainAndSubItemVo> { };
             var flows = GetAllFlowsByCompId(listPurchaseRequest.CompId).OrderBy(f => f.Sequence);
-
+            _logger.LogInformation("[ListPurchase]---4---{time}", DateTime.UtcNow);
             foreach (var kvp in mainSheetIdMap)
             {
                 List<PurchaseSubItemVo> Items = new List<PurchaseSubItemVo>();
@@ -391,7 +393,7 @@ namespace stock_api.Service
                 };
                 purchaseMainAndSubItemVoList.Add(vo);
             }
-
+            _logger.LogInformation("[ListPurchase]---5---{time}", DateTime.UtcNow);
             if (listPurchaseRequest.IsNeedFlow == true)
             {
                 var differentMainSheetId = purchaseMainAndSubItemVoList.Select(m => m.PurchaseMainId).Distinct().ToList();
@@ -401,6 +403,7 @@ namespace stock_api.Service
                     item.flows = matchedFlows;
                 }
             }
+            _logger.LogInformation("[ListPurchase]---6---{time}", DateTime.UtcNow);
             if (!string.IsNullOrEmpty(listPurchaseRequest.Keywords))
             {
                 string keyWords = listPurchaseRequest.Keywords;
@@ -416,7 +419,7 @@ namespace stock_api.Service
                     return false;
                 });
             }
-
+            _logger.LogInformation("[ListPurchase]---7---{time}", DateTime.UtcNow);
 
             return purchaseMainAndSubItemVoList;
         }
