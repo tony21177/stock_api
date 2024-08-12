@@ -39,10 +39,11 @@ namespace stock_api.Controllers
         private readonly IValidator<ListPurchaseRequest> _listPurchaseRequestValidator;
         private readonly IValidator<AnswerFlowRequest> _answerFlowRequestValidator;
         private readonly IValidator<UpdateOwnerProcessRequest> _updateOwnerProcessRequestValidator;
+        private readonly ILogger<PurchaseController> _logger;
 
 
         public PurchaseController(IMapper mapper, AuthHelpers authHelpers, PurchaseFlowSettingService purchaseFlowSettingService, MemberService memberService, CompanyService companyService
-            ,SupplierService supplierService, PurchaseService purchaseService, WarehouseProductService warehouseProductService, GroupService groupService, ApplyProductFlowSettingService applyProductFlowSettingService)
+            ,SupplierService supplierService, PurchaseService purchaseService, WarehouseProductService warehouseProductService, GroupService groupService, ApplyProductFlowSettingService applyProductFlowSettingService, ILogger<PurchaseController> logger)
         {
             _mapper = mapper;
             _authHelpers = authHelpers;
@@ -58,6 +59,7 @@ namespace stock_api.Controllers
             _answerFlowRequestValidator = new AnswerFlowValidator();
             _updateOwnerProcessRequestValidator = new UpdateOwnerProcessValidator();
             _applyProductFlowSettingService = applyProductFlowSettingService;
+            _logger = logger;
         }
 
         [HttpPost("create")]
@@ -206,8 +208,9 @@ namespace stock_api.Controllers
             .Select(item => item.ProductId)
             .Distinct()
             .ToList();
+            _logger.LogInformation("[ListPurchase]---9---{time}", DateTime.Now);
             var products = _warehouseProductService.GetProductsByCompId( request.CompId);
-
+            _logger.LogInformation("[ListPurchase]---10---{time}", DateTime.Now);
             foreach (var vo in data)
             {
                 foreach (var item in vo.Items)
@@ -229,7 +232,7 @@ namespace stock_api.Controllers
                 }
             }
             data = data.OrderByDescending(item => item.ApplyDate).ToList();
-
+            _logger.LogInformation("[ListPurchase]---11---{time}", DateTime.Now);
             //
             int totalPages = 0;
             var orderByField = request.PaginationCondition.OrderByField;
@@ -268,7 +271,7 @@ namespace stock_api.Controllers
                 totalPages = (int)Math.Ceiling((double)totalItems / request.PaginationCondition.PageSize);
                 data = data.Skip((request.PaginationCondition.Page - 1) * request.PaginationCondition.PageSize).Take(request.PaginationCondition.PageSize).ToList();
             }
-
+            _logger.LogInformation("[ListPurchase]---12---{time}", DateTime.Now);
             var response = new CommonResponse<List<PurchaseMainAndSubItemVo>>
             {
                 Result = true,

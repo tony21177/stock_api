@@ -266,7 +266,7 @@ namespace stock_api.Service
 
         public List<PurchaseMainAndSubItemVo> ListPurchase(ListPurchaseRequest listPurchaseRequest)
         {
-            _logger.LogInformation("[ListPurchase]---1---{time}", DateTime.UtcNow);
+            _logger.LogInformation("[ListPurchase]---1---{time}", DateTime.Now);
             IQueryable<PurchaseItemListView> query = _dbContext.PurchaseItemListViews;
             if (listPurchaseRequest.CompId != null)
             {
@@ -314,7 +314,7 @@ namespace stock_api.Service
             }
 
             var result = query.ToList();
-            _logger.LogInformation("[ListPurchase]---2---{time}", DateTime.UtcNow);
+            _logger.LogInformation("[ListPurchase]---2---{time}", DateTime.Now);
             Dictionary<string, List<PurchaseItemListView>> mainSheetIdMap = new Dictionary<string, List<PurchaseItemListView>>();
 
             foreach (var item in result)
@@ -329,48 +329,45 @@ namespace stock_api.Service
                     voList.Add(item);
                 }
             }
-            _logger.LogInformation("[ListPurchase]---3---{time}", DateTime.UtcNow);
+            _logger.LogInformation("[ListPurchase]---3---{time}", DateTime.Now);
             List<PurchaseMainAndSubItemVo> purchaseMainAndSubItemVoList = new List<PurchaseMainAndSubItemVo> { };
             var flows = GetAllFlowsByCompId(listPurchaseRequest.CompId).OrderBy(f => f.Sequence);
-            _logger.LogInformation("[ListPurchase]---4---{time}", DateTime.UtcNow);
+            _logger.LogInformation("[ListPurchase]---4---{time}", DateTime.Now);
+            _logger.LogInformation("mainSheetIdMap count:{count}", mainSheetIdMap.Count);
+
+            List<PurchaseSubItemVo> allPurchaseSubItemVoList = new List<PurchaseSubItemVo>();
+            foreach (var purchaseItemListView in result)
+            {
+                var subItem = new PurchaseSubItemVo()
+                {
+                    ItemId = purchaseItemListView.ItemId,
+                    Comment = purchaseItemListView.Comment,
+                    CompId = purchaseItemListView.CompId,
+                    ProductCategory = purchaseItemListView.ProductCategory,
+                    ProductName = purchaseItemListView.ProductName,
+                    ProductId = purchaseItemListView.ProductId,
+                    ProductSpec = purchaseItemListView.ProductSpec,
+                    PurchaseMainId = purchaseItemListView.PurchaseMainId,
+                    Quantity = purchaseItemListView.Quantity,
+                    ReceiveQuantity = purchaseItemListView.ReceiveQuantity,
+                    ReceiveStatus = purchaseItemListView.ItemReceiveStatus,
+                    GroupIds = purchaseItemListView.GroupIds.Split(',').ToList(),
+                    GroupNames = purchaseItemListView.ItemGroupNames.Split(",").ToList(),
+                    ArrangeSupplierId = purchaseItemListView.ArrangeSupplierId,
+                    ArrangeSupplierName = purchaseItemListView.ArrangeSupplierName,
+                    CurrentInStockQuantity = purchaseItemListView.CurrentInStockQuantity,
+                    CreatedAt = purchaseItemListView.CreatedAt.Value,
+                    UpdatedAt = purchaseItemListView.UpdatedAt.Value,
+                    SplitProcess = purchaseItemListView.SubSplitProcess,
+                    OwnerProcess = purchaseItemListView.SubOwnerProcess
+                };
+                allPurchaseSubItemVoList.Add(subItem);
+            }
+            _logger.LogInformation("[ListPurchase]---5---{time}", DateTime.Now);
+
             foreach (var kvp in mainSheetIdMap)
             {
-                List<PurchaseSubItemVo> Items = new List<PurchaseSubItemVo>();
-                kvp.Value.ForEach(vo =>
-                {
-                    var subItem = new PurchaseSubItemVo()
-                    {
-                        ItemId = vo.ItemId,
-                        Comment = vo.Comment,
-                        CompId = vo.CompId,
-                        ProductCategory = vo.ProductCategory,
-                        ProductName = vo.ProductName,
-                        ProductId = vo.ProductId,
-                        ProductSpec = vo.ProductSpec,
-                        PurchaseMainId = vo.PurchaseMainId,
-                        Quantity = vo.Quantity,
-                        ReceiveQuantity = vo.ReceiveQuantity,
-                        ReceiveStatus = vo.ItemReceiveStatus,
-                        GroupIds = vo.GroupIds.Split(',').ToList(),
-                        GroupNames = vo.ItemGroupNames.Split(",").ToList(),
-                        ArrangeSupplierId = vo.ArrangeSupplierId,
-                        ArrangeSupplierName = vo.ArrangeSupplierName,
-                        CurrentInStockQuantity = vo.CurrentInStockQuantity,
-                        CreatedAt = vo.CreatedAt.Value,
-                        UpdatedAt = vo.UpdatedAt.Value,
-                        SplitProcess = vo.SubSplitProcess,
-                        OwnerProcess = vo.SubOwnerProcess
-                    };
-                    Items.Add(subItem);
-                });
-
-                var differentMainSheetId = purchaseMainAndSubItemVoList.Select(m => m.PurchaseMainId).Distinct().ToList();
-                foreach (var item in purchaseMainAndSubItemVoList)
-                {
-                    var matchedFlows = flows.Where(f => f.PurchaseMainId == item.PurchaseMainId).ToList();
-                    item.flows = matchedFlows;
-                }
-
+                List<PurchaseSubItemVo> matchedSubItemVoList = allPurchaseSubItemVoList.Where(vo => vo.PurchaseMainId == kvp.Key).ToList();
 
                 var vo = new PurchaseMainAndSubItemVo
                 {
@@ -389,11 +386,11 @@ namespace stock_api.Service
                     IsActive = kvp.Value[0].IsActive,
                     SplitProcess = kvp.Value[0].MainSplitPrcoess,
                     OwnerProcess = kvp.Value[0].OwnerProcess,   
-                    Items = Items,
+                    Items = matchedSubItemVoList,
                 };
                 purchaseMainAndSubItemVoList.Add(vo);
             }
-            _logger.LogInformation("[ListPurchase]---5---{time}", DateTime.UtcNow);
+            _logger.LogInformation("[ListPurchase]---6---{time}", DateTime.Now);
             if (listPurchaseRequest.IsNeedFlow == true)
             {
                 var differentMainSheetId = purchaseMainAndSubItemVoList.Select(m => m.PurchaseMainId).Distinct().ToList();
@@ -403,7 +400,7 @@ namespace stock_api.Service
                     item.flows = matchedFlows;
                 }
             }
-            _logger.LogInformation("[ListPurchase]---6---{time}", DateTime.UtcNow);
+            _logger.LogInformation("[ListPurchase]---7---{time}", DateTime.Now);
             if (!string.IsNullOrEmpty(listPurchaseRequest.Keywords))
             {
                 string keyWords = listPurchaseRequest.Keywords;
@@ -419,7 +416,7 @@ namespace stock_api.Service
                     return false;
                 });
             }
-            _logger.LogInformation("[ListPurchase]---7---{time}", DateTime.UtcNow);
+            _logger.LogInformation("[ListPurchase]---8---{time}", DateTime.Now);
 
             return purchaseMainAndSubItemVoList;
         }
