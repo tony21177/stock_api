@@ -13,7 +13,7 @@ if exist "%DESTINATION_PATH%\appsettings.json" (
 
 :: 將appsettings_KimForest.json重命名為appsettings.json
 if exist "%DESTINATION_PATH%\appsettings_KimForest.json" (
-    copy "%DESTINATION_PATH%\appsettings_KimForest.json" "appsettings.json"
+    copy "%DESTINATION_PATH%\appsettings_KimForest.json" "%DESTINATION_PATH%\appsettings.json"
     echo copied appsettings_KimForest.json to appsettings.json
 ) else (
     echo appsettings_KimForest.json not exist
