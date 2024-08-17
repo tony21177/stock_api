@@ -21,5 +21,8 @@ namespace stock_api.Controllers.Dto
         public List<string> GroupIds {  get; set; }
 
         public List<WarehouseGroup> Groups { get; set; }
+
+        public List<string> Agents { get; set; }= new List<string>();
+        public List<string> AgentNames { get; set; } = new List<string>();
     }
 }

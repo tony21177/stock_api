@@ -172,7 +172,7 @@
          "ObjectType": 3
       }
    ],
-   "UiHint": "stock",
+   "UiHint": "local_mysql",
    "UncountableWords": null,
    "UseBoolPropertiesWithoutDefaultSql": false,
    "UseDatabaseNames": false,

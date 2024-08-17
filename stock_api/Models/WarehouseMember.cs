@@ -71,4 +71,16 @@ public partial class WarehouseMember
     public DateTime? UpdatedAt { get; set; }
 
     public bool? IsAdmin { get; set; }
+
+    /// <summary>
+    /// 代理人userId,以逗號為分隔
+    /// </summary>
+    [StringLength(2000)]
+    public string? Agents { get; set; }
+
+    /// <summary>
+    /// 代理人userName,以逗號為分隔
+    /// </summary>
+    [StringLength(2000)]
+    public string? AgentNames { get; set; }
 }

@@ -142,6 +142,13 @@ namespace stock_api.Service
         {
             var updateMember = _mapper.Map<WarehouseMember>(request);
             _mapper.Map(updateMember, toBeUpdateMember);
+            if (request.Agents != null && request.Agents.Count > 0)
+            {
+                var agentMemberList = GetActiveMembersByUserIds(request.Agents, request.CompId);
+                var agentNames = string.Join(",", agentMemberList.Select(m => m.DisplayName).ToList());
+                toBeUpdateMember.AgentNames = agentNames;
+            }
+
 
             // 將變更保存到資料庫
             _dbContext.SaveChanges();

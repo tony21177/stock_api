@@ -92,4 +92,5 @@ public partial class PurchaseFlow
 
     [Column(TypeName = "timestamp")]
     public DateTime UpdatedAt { get; set; }
+
 }

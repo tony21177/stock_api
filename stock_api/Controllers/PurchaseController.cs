@@ -356,7 +356,7 @@ namespace stock_api.Controllers
             }
 
             List<PurchaseSubItem> purchaseSubItems = _purchaseService.GetPurchaseSubItemsByMainId(purchaseMainId);
-            List<PurchaseFlow> purchaseFlows = _purchaseService.GetPurchaseFlowsByMainId(purchaseMainId).OrderBy(f => f.Sequence).ToList();
+            List<PurchaseFlowWithAgentsVo> purchaseFlowWithAgents = _purchaseService.GetPurchaseFlowWithAgentsByMainId(purchaseMainId).OrderBy(f => f.Sequence).ToList();
             List<PurchaseFlowLog> purchaseFlowLogs = _purchaseService.GetPurchaseFlowLogsByMainId(purchaseMainId).OrderBy(fl => fl.UpdatedAt).ToList();
             var distinctWithCompId = purchaseSubItems.Where(i=>i.WithCompId!=null).Select(i=>i.WithCompId).Distinct().ToList();
             List<CompanyWithUnitVo> companyWithUnitVoList = _companyService.GetCompanyWithUnitListByCompanyIdList(distinctWithCompId);
@@ -393,10 +393,10 @@ namespace stock_api.Controllers
 
             });
             purchaseAndSubItemVo.Items = purchaseSubItemVoList;
-            purchaseAndSubItemVo.flows = purchaseFlows;
+            purchaseAndSubItemVo.flows = purchaseFlowWithAgents;
             purchaseAndSubItemVo.flowLogs = purchaseFlowLogs;
 
-            purchaseFlows.ForEach(f =>
+            purchaseFlowWithAgents.ForEach(f =>
             {
                 if (f.VerifyUserId == memberAndPermissionSetting.Member.UserId)
                 {
@@ -431,7 +431,7 @@ namespace stock_api.Controllers
             if(purchaseFlow!=null && memberAndPermissionSetting.CompanyWithUnit.Type == CommonConstants.CompanyType.OWNER&&request.Answer==CommonConstants.AnswerPurchaseFlow.BACK)
             {
                 // 金萬林退回
-                var backResult = _purchaseService.AnswerFlow(purchaseFlow, memberAndPermissionSetting, request.Answer, request.Reason,true);
+                var backResult = _purchaseService.AnswerFlow(purchaseFlow, memberAndPermissionSetting, request.Answer, request.Reason,true,false);
                 var backResponse = new CommonResponse<dynamic>
                 {
                     Result = backResult,
@@ -445,9 +445,20 @@ namespace stock_api.Controllers
             {
                 return BadRequest(CommonResponse<dynamic>.BuildNotAuthorizeResponse());
             }
+            bool isVerifiedByAgent = false;
             if (purchaseFlow != null && purchaseFlow.VerifyUserId != verifier.UserId)
             {
-                return BadRequest(CommonResponse<dynamic>.BuildNotAuthorizeResponse());
+                // 檢查是否為代理人
+                var flowVerifier = _memberService.GetMemberByUserId(purchaseFlow.VerifyUserId);
+                if (flowVerifier.Agents.Contains(verifier.UserId))
+                {
+                    isVerifiedByAgent = true;
+                }
+                else
+                {
+                    return BadRequest(CommonResponse<dynamic>.BuildNotAuthorizeResponse());
+
+                }
             }
             if (purchaseFlow != null && !purchaseFlow.Answer.IsNullOrEmpty())
             {
@@ -475,7 +486,7 @@ namespace stock_api.Controllers
                 });
             }
 
-            var result = _purchaseService.AnswerFlow(purchaseFlow, memberAndPermissionSetting, request.Answer, request.Reason,false);
+            var result = _purchaseService.AnswerFlow(purchaseFlow, memberAndPermissionSetting, request.Answer, request.Reason,false,isVerifiedByAgent);
 
 
             var response = new CommonResponse<dynamic>
@@ -563,7 +574,7 @@ namespace stock_api.Controllers
             var distinctMainIdList = purchaseFlowsSignedByMe.Select(f => f.PurchaseMainId).Distinct().ToList();
             var purchaseMainList = _purchaseService.GetPurchaseMainsByMainIdList(distinctMainIdList).OrderByDescending(m => m.UpdatedAt).ToList();
             var purchaseSubItems = _purchaseService.GetPurchaseSubItemsByMainIdList(distinctMainIdList);
-            var purchaseFlows = _purchaseService.GetPurchaseFlowsByMainIdList(distinctMainIdList);
+            var purchaseFlows = _purchaseService.GetPurchaseFlowWithAgentsByMainIdList(distinctMainIdList);
             var purchaseFlowLogs = _purchaseService.GetPurchaseFlowLogsByMainIdList(distinctMainIdList);
 
             var distinctProductIdList = purchaseSubItems.Select(s => s.ProductId).Distinct().ToList();

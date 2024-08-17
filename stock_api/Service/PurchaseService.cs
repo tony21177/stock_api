@@ -1,5 +1,7 @@
 ﻿using AutoMapper;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata.Internal;
+using Microsoft.IdentityModel.Tokens;
 using MySqlX.XDevAPI.Relational;
 using stock_api.Common.Constant;
 using stock_api.Common.Settings;
@@ -8,6 +10,7 @@ using stock_api.Controllers.Request;
 using stock_api.Models;
 using stock_api.Service.ValueObject;
 using stock_api.Utils;
+using System.Drawing;
 using System.Text.Json;
 using System.Transactions;
 
@@ -69,6 +72,85 @@ namespace stock_api.Service
         {
             return _dbContext.PurchaseFlows.Where(f => f.PurchaseMainId == purchaseMainId).ToList();
         }
+
+        public List<PurchaseFlowWithAgentsVo> GetPurchaseFlowWithAgentsByMainId(string purchaseMainId)
+        {
+            var result = from p in _dbContext.PurchaseFlows
+                         join m in _dbContext.WarehouseMembers on p.VerifyUserId equals m.UserId
+                         where p.PurchaseMainId == purchaseMainId
+                         select new PurchaseFlowWithAgentsVo
+                         {
+                             FlowId = p.FlowId,
+                             CompId = p.CompId,
+                             PurchaseMainId =  p.PurchaseMainId,
+                             Reason = p.Reason,
+                             Status = p.Status,
+                             VerifyCompId = p.VerifyCompId,
+                             VerifyUserId = p.VerifyUserId,
+                             VerifyUserName = p.VerifyUserName,
+                             Answer = p.Answer,
+                             Sequence = p.Sequence,
+                             ReadAt = p.ReadAt,
+                             SubmitAt = p.SubmitAt,
+                             CreatedAt = p.CreatedAt,
+                             UpdatedAt = p.UpdatedAt,
+                             Agents = m.Agents,
+                             AgentNames = m.AgentNames,
+                         };
+
+            var list = result.ToList();
+            list.ForEach(flow =>
+            {
+                if (!flow.Agents.IsNullOrEmpty())
+                {
+                    flow.VerifyAgentIds = flow.Agents.Split(",", StringSplitOptions.None).ToList();
+                    flow.VerifyAgentNames = flow.AgentNames.Split(",", StringSplitOptions.None).ToList();
+                }
+
+
+            });
+            return list;
+        }
+
+        public List<PurchaseFlowWithAgentsVo> GetPurchaseFlowWithAgentsByMainIdList(List<string> purchaseMainIdList)
+        {
+            var result = from p in _dbContext.PurchaseFlows
+                         join m in _dbContext.WarehouseMembers on p.VerifyUserId equals m.UserId
+                         where purchaseMainIdList.Contains( p.PurchaseMainId)
+                         select new PurchaseFlowWithAgentsVo
+                         {
+                             FlowId = p.FlowId,
+                             CompId = p.CompId,
+                             PurchaseMainId = p.PurchaseMainId,
+                             Reason = p.Reason,
+                             Status = p.Status,
+                             VerifyCompId = p.VerifyCompId,
+                             VerifyUserId = p.VerifyUserId,
+                             VerifyUserName = p.VerifyUserName,
+                             Answer = p.Answer,
+                             Sequence = p.Sequence,
+                             ReadAt = p.ReadAt,
+                             SubmitAt = p.SubmitAt,
+                             CreatedAt = p.CreatedAt,
+                             UpdatedAt = p.UpdatedAt,
+                             Agents = m.Agents,
+                             AgentNames = m.AgentNames,
+                         };
+
+            var list = result.ToList();
+            list.ForEach(flow =>
+            {
+                if (!flow.Agents.IsNullOrEmpty())
+                {
+                    flow.VerifyAgentIds = flow.Agents.Split(",", StringSplitOptions.None).ToList();
+                    flow.VerifyAgentNames = flow.AgentNames.Split(",", StringSplitOptions.None).ToList();
+                }
+
+
+            });
+            return list;
+        }
+
         public List<PurchaseFlow> GetPurchaseFlowsByMainIdList(List<string> purchaseMainIdList)
         {
             return _dbContext.PurchaseFlows.Where(f => purchaseMainIdList.Contains(f.PurchaseMainId)).ToList();
@@ -397,7 +479,7 @@ namespace stock_api.Service
                 foreach (var item in purchaseMainAndSubItemVoList)
                 {
                     var matchedFlows = flows.Where(f => f.PurchaseMainId == item.PurchaseMainId).ToList();
-                    item.flows = matchedFlows;
+                    item.flows = _mapper.Map<List<PurchaseFlowWithAgentsVo>>(matchedFlows);
                 }
             }
             _logger.LogInformation("[ListPurchase]---7---{time}", DateTime.Now);
@@ -521,13 +603,13 @@ namespace stock_api.Service
             return _dbContext.PurchaseFlows.Where(f=>f.Sequence<nowFlow.Sequence&&f.CompId==nowFlow.CompId&&f.PurchaseMainId==nowFlow.PurchaseMainId).OrderBy(f=>f.Sequence).ToList();
         }
 
-        public bool AnswerFlow(PurchaseFlow flow, MemberAndPermissionSetting verifierMemberAndPermission, string answer, string? reason,bool? isOwner)
+        public bool AnswerFlow(PurchaseFlow flow, MemberAndPermissionSetting verifierMemberAndPermission, string answer, string? reason,bool? isOwner,bool isVerifiedByAgent)
         {
             string purchaseMainId = flow.PurchaseMainId;
             PurchaseMainSheet purchaseMain = GetPurchaseMainByMainId(purchaseMainId);
             List<PurchaseSubItem> purchaseSubItems = GetPurchaseSubItemsByMainId(purchaseMainId);
             var (preFlow, nextFlow) = FindPreviousAndNextFlow(flow);
-            return AnswerFlowInTransactionScope(preFlow, nextFlow, flow, purchaseMain, purchaseSubItems, verifierMemberAndPermission, answer, reason,isOwner);
+            return AnswerFlowInTransactionScope(preFlow, nextFlow, flow, purchaseMain, purchaseSubItems, verifierMemberAndPermission, answer, reason,isOwner, isVerifiedByAgent);
         }
 
         public (PurchaseFlow?, PurchaseFlow?) FindPreviousAndNextFlow(PurchaseFlow flow)
@@ -537,10 +619,11 @@ namespace stock_api.Service
             return (purchaseFlows.FirstOrDefault(f => f.Sequence < flow.Sequence), purchaseFlows.FirstOrDefault(f => f.Sequence > flow.Sequence));
         }
 
-        private bool AnswerFlowInTransactionScope(PurchaseFlow? preFlow, PurchaseFlow? nextPurchase, PurchaseFlow currentFlow, PurchaseMainSheet purchaseMain,List<PurchaseSubItem> purchaseSubItems, MemberAndPermissionSetting verifierMemberAndPermission, string answer, string? reason,bool? isOwner)
+        private bool AnswerFlowInTransactionScope(PurchaseFlow? preFlow, PurchaseFlow? nextPurchase, PurchaseFlow currentFlow, PurchaseMainSheet purchaseMain,List<PurchaseSubItem> purchaseSubItems, MemberAndPermissionSetting verifierMemberAndPermission, string answer, string? reason,bool? isOwner, bool isVerifiedByAgent)
         {
             WarehouseMember verifyMember = verifierMemberAndPermission.Member;
             var verifyCompId = verifierMemberAndPermission.CompanyWithUnit.CompId;
+            var originVerifierName = currentFlow.VerifyUserName;
             List<WarehouseMember> ownerList = new();
             using (var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled))
             {
@@ -550,9 +633,18 @@ namespace stock_api.Service
                     currentFlow.Reason = reason;
                     if (answer != CommonConstants.PurchaseApplyStatus.BACK)
                     {
+                        
                         currentFlow.VerifyCompId = verifyCompId;
                         currentFlow.VerifyUserId = verifyMember.UserId;
-                        currentFlow.VerifyUserName = verifyMember.DisplayName;
+                        if (isVerifiedByAgent == true)
+                        {
+                            currentFlow.VerifyUserName = verifyMember.DisplayName+"(代"+ originVerifierName + ")";
+                        }
+                        else
+                        {
+                            currentFlow.VerifyUserName = verifyMember.DisplayName;
+                        }
+                        
                     }
 
                     currentFlow.Answer = answer;
@@ -624,11 +716,13 @@ namespace stock_api.Service
                         CompId = currentFlow.CompId,
                         PurchaseMainId = currentFlow.PurchaseMainId,
                         UserId = verifyMember.UserId,
-                        UserName = verifyMember.DisplayName,
+                        UserName = isVerifiedByAgent==false?verifyMember.DisplayName: verifyMember.DisplayName + "(代" + originVerifierName + ")",
                         Sequence = currentFlow.Sequence,
                         Action = answer,
                         Remarks = reason
                     };
+                    
+
                     ownerList = _memberService.GetOwnerMembers();
                     var purchaseNumber = string.Concat(DateTimeHelper.FormatDateStringForEmail(purchaseMain.ApplyDate), purchaseMain.PurchaseMainId.AsSpan(0, 5));
                     _emailService.UpdateEmailNotifyIsDoneByIdPurchaseNumber(purchaseNumber);

@@ -25,11 +25,17 @@ namespace stock_api.Controllers.Validator
                 RuleFor(x => x.CompId).NotEmpty().WithMessage("compId為必須");
                 RuleFor(x=>x.Email).NotEmpty().WithMessage("email為必須")
                     .EmailAddress().WithMessage("無效的email格式");
+                RuleFor(x => x.Agents)
+                    .Must((request, agents, context) => BeValidUserList(agents, context))
+                    .WithMessage("以下 agents 為無效的 user: {InvalidAgents}");
             }
             if (action == ActionTypeEnum.Update)
             {
                 RuleFor(x => x.UserId).NotEmpty().WithMessage("userId為必須");
                 RuleFor(x => x.Email).EmailAddress().WithMessage("無效的email格式").When(email=>email!=null);
+                RuleFor(x => x.Agents)
+                   .Must((request, agents, context) => BeValidUserList(agents, context))
+                   .WithMessage("以下 agents 為無效的 user: {InvalidAgents}");
             }
             _authLayerService = authLayerService;
             _memberService = memberService;
@@ -77,6 +83,26 @@ namespace stock_api.Controllers.Validator
             {
                 var errorMessage = $"{string.Join(",", notExistGroupIds)}";
                 context.MessageFormatter.AppendArgument("InvalidGroupIds", errorMessage);
+                return false;
+            }
+            return true;
+        }
+
+        private bool BeValidUserList(List<string> agents, ValidationContext<CreateOrUpdateMemberRequest> context)
+        {
+            if (agents == null || agents.Count == 0)
+            {
+                return true; 
+            }
+            var members = _memberService.GetMembersByUserIdList(agents);
+            var activeMembers = members.Where(m=>m.IsActive==true).ToList();
+
+            var notExistAgentIds = agents.Except(activeMembers.Select(m => m.UserId)).ToList();
+
+            if (notExistAgentIds.Any())
+            {
+                var errorMessage = $"{string.Join(",", notExistAgentIds)}";
+                context.MessageFormatter.AppendArgument("InvalidAgents", errorMessage);
                 return false;
             }
             return true;

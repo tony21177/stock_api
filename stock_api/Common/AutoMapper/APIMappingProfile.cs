@@ -19,11 +19,16 @@ namespace stock_api.Common.AutoMapper
                 .ForAllMembers(opt => opt.Condition((src, dest, srcMember) => srcMember != null));
             CreateMap<CreateOrUpdateMemberRequest, WarehouseMember>()
             .ForMember(dest => dest.GroupIds, opt => opt.MapFrom(src => string.Join(",", src.GroupIds)))
+            .ForMember(dest => dest.Agents, opt => opt.MapFrom(src => string.Join(",", src.Agents)))
             .ForMember(dest => dest.PhotoUrl, opt => opt.MapFrom(src => src.PhotoUrls))
             .ForAllMembers(opt => opt.Condition((src, dest, srcMember) => srcMember != null));
             CreateMap<WarehouseMember, MemberDto>()
             .ForMember(dest => dest.GroupIds, opt => opt.MapFrom(src =>
                 src.GroupIds != null ? src.GroupIds.Split(",", StringSplitOptions.RemoveEmptyEntries).ToList() : null))
+            .ForMember(dest => dest.Agents, opt => opt.MapFrom(src =>
+                src.Agents != null ? src.Agents.Split(",", StringSplitOptions.RemoveEmptyEntries).ToList() : null))
+            .ForMember(dest => dest.AgentNames, opt => opt.MapFrom(src =>
+                src.AgentNames != null ? src.AgentNames.Split(",", StringSplitOptions.RemoveEmptyEntries).ToList() : null))
             .ForAllMembers(opt => opt.Condition((src, dest, srcMember) => srcMember != null));
             CreateMap<WarehouseMember, WarehouseMember>()
                 .ForAllMembers(opt => opt.Condition((src, dest, srcMember) => srcMember != null));
@@ -84,6 +89,10 @@ namespace stock_api.Common.AutoMapper
             .ForMember(dest => dest.GroupNames, opt => opt.MapFrom(src =>
                 src.GroupNames != null ? src.GroupNames.Split(",", StringSplitOptions.RemoveEmptyEntries).ToList() : null));
             CreateMap<PurchaseSubItem, UnDonePurchaseSubItem>()
+                .ForAllMembers(opt => opt.Condition((src, dest, srcMember) => srcMember != null));
+
+            //purchaseFlow
+            CreateMap<PurchaseFlowWithAgentsVo, PurchaseFlow>()
                 .ForAllMembers(opt => opt.Condition((src, dest, srcMember) => srcMember != null));
 
 

@@ -907,6 +907,8 @@ public partial class StockDbContext : DbContext
             entity.ToTable("warehouse_member", tb => tb.HasComment("主要是用來設定系統人員登入的相關資料。"));
 
             entity.Property(e => e.Account).HasDefaultValueSql("'登入帳號'");
+            entity.Property(e => e.AgentNames).HasComment("代理人userName,以逗號為分隔");
+            entity.Property(e => e.Agents).HasComment("代理人userId,以逗號為分隔");
             entity.Property(e => e.AuthValue)
                 .HasDefaultValueSql("'5'")
                 .HasComment("權限值");

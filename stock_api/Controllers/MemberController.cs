@@ -134,6 +134,12 @@ namespace stock_api.Controllers
             }
             var newMember = _mapper.Map<WarehouseMember>(createMemberRequset);
             newMember.UserId = Guid.NewGuid().ToString();
+            if (createMemberRequset.Agents != null && createMemberRequset.Agents.Count > 0)
+            {
+                var agentMemberList = _memberService.GetActiveMembersByUserIds(createMemberRequset.Agents,createMemberRequset.CompId);
+                var agentNames = string.Join(",", agentMemberList.Select(m => m.DisplayName).ToList());
+                newMember.AgentNames = agentNames;
+            }
 
             newMember = _memberService.CreateMember(newMember!);
             var newMemberDto = _mapper.Map<MemberDto>(newMember);
@@ -175,7 +181,7 @@ namespace stock_api.Controllers
 
             
 
-            
+
             _memberService.UpdateMember(updateMemberRequset, existingMember);
             var response = new CommonResponse<dynamic>
             {
