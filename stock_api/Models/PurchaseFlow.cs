@@ -12,6 +12,7 @@ namespace stock_api.Models;
 /// 品項的採購單據流程審核紀錄
 /// </summary>
 [Table("purchase_flow")]
+[Index("VerifyUserId", Name = "verify_user_idx")]
 public partial class PurchaseFlow
 {
     [Key]
@@ -92,5 +93,4 @@ public partial class PurchaseFlow
 
     [Column(TypeName = "timestamp")]
     public DateTime UpdatedAt { get; set; }
-
 }
