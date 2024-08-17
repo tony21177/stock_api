@@ -92,7 +92,7 @@ namespace stock_api.Common.AutoMapper
                 .ForAllMembers(opt => opt.Condition((src, dest, srcMember) => srcMember != null));
 
             //purchaseFlow
-            CreateMap<PurchaseFlowWithAgentsVo, PurchaseFlow>()
+            CreateMap<PurchaseFlow, PurchaseFlowWithAgentsVo>()
                 .ForAllMembers(opt => opt.Condition((src, dest, srcMember) => srcMember != null));
 
 
