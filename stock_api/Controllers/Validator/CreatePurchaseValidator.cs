@@ -20,9 +20,9 @@ namespace stock_api.Controllers.Validator
             _purchaseService = purchaseService;
 
             ClassLevelCascadeMode = CascadeMode.Stop;
-            RuleFor(x => x.GroupIds)
-                .Must((request, groupIds, context) => BeValidGroupList(groupIds, context))
-                .WithMessage("以下 groupId 為無效的 group: {InvalidGroupIds}");
+            //RuleFor(x => x.GroupIds)
+            //    .Must((request, groupIds, context) => BeValidGroupList(groupIds, context))
+            //    .WithMessage("以下 groupId 為無效的 group: {InvalidGroupIds}");
             
             RuleFor(x => x.DemandDate).Must((request, date, context) => BeValidDate(date, context))
                 .WithMessage("無效格式日期");
