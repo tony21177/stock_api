@@ -33,7 +33,7 @@ namespace stock_api.Controllers
         private readonly SupplierService _supplierService;
         private readonly ManufacturerService _manufacturerService;
         private readonly IMapper _mapper;
-        private readonly ILogger<AuthlayerController> _logger;
+        private readonly ILogger<WarehouseProductController> _logger;
         private readonly AuthHelpers _authHelpers;
         private readonly IValidator<WarehouseProductSearchRequest> _searchProductRequestValidator;
         private readonly IValidator<UpdateProductRequest> _updateProductValidator;
@@ -45,7 +45,7 @@ namespace stock_api.Controllers
         private readonly StockOutService _stockOutService;
 
         public WarehouseProductController(AuthLayerService authLayerService, WarehouseProductService warehouseProductService, CompanyService companyService, GroupService groupService, SupplierService supplierService,
-            ManufacturerService manufacturerService, IMapper mapper, ILogger<AuthlayerController> logger, AuthHelpers authHelpers, FileUploadService fileUploadService, StockInService stockInService, PurchaseService purchaseService
+            ManufacturerService manufacturerService, IMapper mapper, ILogger<WarehouseProductController> logger, AuthHelpers authHelpers, FileUploadService fileUploadService, StockInService stockInService, PurchaseService purchaseService
             ,StockOutService stockOutService)
         {
             _authLayerService = authLayerService;

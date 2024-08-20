@@ -903,5 +903,10 @@ namespace stock_api.Service
             }).ToList();
             return notifyProductQuantityList;
         }
+
+        public List<WarehouseProduct> GetProductsByGroupId(string groupId)
+        {
+            return _dbContext.WarehouseProducts.Where(p=>p.GroupIds!=null &&p.GroupIds.Contains(groupId)).ToList();
+        }
     }
 }
