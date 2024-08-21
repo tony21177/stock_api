@@ -206,6 +206,13 @@ namespace stock_api.Service
         {
             var allOngoingPurchaseItems = _dbContext.PurchaseSubItems.Where(s => s.ReceiveStatus != CommonConstants.PurchaseSubItemReceiveStatus.CLOSE &&
             s.ReceiveStatus != CommonConstants.PurchaseSubItemReceiveStatus.DONE && s.CompId == request.CompId && s.OwnerProcess!=CommonConstants.PurchaseMainOwnerProcessStatus.NOT_AGREE).ToList();
+            var allPurchaseMainIdList = allOngoingPurchaseItems.Select(p => p.PurchaseMainId).ToList();
+            var allPurchaseMain = _purchaseService.GetPurchaseMainsByMainIdList(allPurchaseMainIdList);
+            var allEffectivePurchaseMain = _purchaseService.GetPurchaseMainsByMainIdList(allPurchaseMainIdList)
+                .Where(m => m.CurrentStatus != CommonConstants.PurchaseCurrentStatus.REJECT && m.CurrentStatus != CommonConstants.PurchaseCurrentStatus.CLOSE)
+                .ToList();
+            var allEffectivePurchaseMainId = allEffectivePurchaseMain.Select(m => m.PurchaseMainId).ToList();
+            allOngoingPurchaseItems = allOngoingPurchaseItems.Where(s=>allEffectivePurchaseMainId.Contains(s.PurchaseMainId)).ToList(); 
 
             IQueryable<WarehouseProduct> query = _dbContext.WarehouseProducts;
             if (request.GroupId != null)
@@ -226,10 +233,11 @@ namespace stock_api.Service
             query = query.Where(h => h.SafeQuantity.HasValue && h.InStockQuantity <= h.SafeQuantity);
 
             var products = query.ToList();
-           var matchedProducts = _mapper.Map<List<NotEnoughQuantityProduct>>(products);
+            var matchedProducts = _mapper.Map<List<NotEnoughQuantityProduct>>(products);
+
             var notEnoughProducts = matchedProducts.FindAll(p =>
             {
-                var matchedSubItems = allOngoingPurchaseItems.Where(i => i.ProductId == p.ProductId).ToList();
+                var matchedSubItems = allOngoingPurchaseItems.Where(i => i.ProductId == p.ProductId).ToList();                
                 var ongoingOrderQuantities = matchedSubItems.Select(i => i.Quantity).Sum();
 
                 if (p.MaxSafeQuantity - p.InStockQuantity - ongoingOrderQuantities >= 0)

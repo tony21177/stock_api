@@ -1049,9 +1049,14 @@ namespace stock_api.Service
 
         public float GetInProcessingOrderQuantity(string productId)
         {
+            var allEffectivePurchaseMain = _dbContext.PurchaseMainSheets.Where(m=>m.CurrentStatus!=CommonConstants.PurchaseCurrentStatus.CLOSE&&
+            m.CurrentStatus!= CommonConstants.PurchaseCurrentStatus.REJECT).ToList();
+            var allEffectivePurchaseMainId = allEffectivePurchaseMain.Select(m => m.PurchaseMainId).ToList();
+
             var unDoneProcessingSubItem = _dbContext.PurchaseSubItems.Where(s => s.ReceiveStatus != CommonConstants.PurchaseSubItemReceiveStatus.DONE
             && s.ReceiveStatus != CommonConstants.PurchaseSubItemReceiveStatus.CLOSE
-            && s.ProductId == productId&&s.OwnerProcess != CommonConstants.PurchaseMainOwnerProcessStatus.NOT_AGREE).ToList();
+            && s.ProductId == productId&&s.OwnerProcess != CommonConstants.PurchaseMainOwnerProcessStatus.NOT_AGREE
+            && allEffectivePurchaseMainId.Contains(s.PurchaseMainId)).ToList();
             return unDoneProcessingSubItem.Select(s => s.Quantity ?? 0.0f).DefaultIfEmpty(0.0f).Sum();
         }
 
