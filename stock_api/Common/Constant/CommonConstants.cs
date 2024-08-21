@@ -120,6 +120,18 @@ namespace stock_api.Common.Constant
             }
         }
 
+        public static class PurchaseCurrentStatus
+        {
+            public const string APPLY = "APPLY";
+            public const string AGREE = "AGREE";
+            public const string REJECT = "REJECT";
+            public const string CLOSE = "CLOSE";
+            public static List<string> GetAllValues()
+            {
+                return new List<string> { APPLY, AGREE, REJECT, CLOSE };
+            }
+        }
+
         public static class ApplyNewProductFlowAnswer
         {
             public const string AGREE = "AGREE";

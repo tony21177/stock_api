@@ -114,10 +114,16 @@ namespace stock_api.Controllers
 
             var allProductIsList = warehouseProductVoList.Select(p => p.ProductId).ToList();
             var allSubItems = _purchaseService.GetNotDonePurchaseSubItemByProductIdList(allProductIsList);
+            var allPurchaseMainIdList = allSubItems.Select(p => p.PurchaseMainId).ToList();
+            var allPurchaseMain = _purchaseService.GetPurchaseMainsByMainIdList(allPurchaseMainIdList);
+            var allEffectivePurchaseMain = _purchaseService.GetPurchaseMainsByMainIdList(allPurchaseMainIdList)
+                .Where(m => m.CurrentStatus != CommonConstants.PurchaseCurrentStatus.REJECT && m.CurrentStatus != CommonConstants.PurchaseCurrentStatus.CLOSE)
+                .ToList();
+            var allEffectivePurchaseMainId = allEffectivePurchaseMain.Select(m => m.PurchaseMainId).ToList();
 
             warehouseProductVoList.ForEach(p =>
             {
-                var matchedOngoingSubItems = allSubItems.Where(s => s.ProductId == p.ProductId).ToList();
+                var matchedOngoingSubItems = allSubItems.Where(s => s.ProductId == p.ProductId&& allEffectivePurchaseMainId.Contains(s.PurchaseMainId)).ToList();
                 var inProcessingOrderQuantity = matchedOngoingSubItems
                     .Select(s => (s.Quantity - (s.InStockQuantity ?? 0.0f)))
                     .Sum();
@@ -215,10 +221,16 @@ namespace stock_api.Controllers
 
             var allProductIsList = warehouseProductVoList.Select(p => p.ProductId).ToList();
             var allSubItems = _purchaseService.GetNotDonePurchaseSubItemByProductIdList(allProductIsList);
+            var allPurchaseMainIdList = allSubItems.Select(p => p.PurchaseMainId).ToList();
+            var allPurchaseMain = _purchaseService.GetPurchaseMainsByMainIdList(allPurchaseMainIdList);
+            var allEffectivePurchaseMain = _purchaseService.GetPurchaseMainsByMainIdList(allPurchaseMainIdList)
+                .Where(m => m.CurrentStatus != CommonConstants.PurchaseCurrentStatus.REJECT && m.CurrentStatus != CommonConstants.PurchaseCurrentStatus.CLOSE)
+                .ToList();
+            var allEffectivePurchaseMainId = allEffectivePurchaseMain.Select(m => m.PurchaseMainId).ToList();
 
             warehouseProductVoList.ForEach(p =>
             {
-                var matchedOngoingSubItems = allSubItems.Where(s => s.ProductId == p.ProductId);
+                var matchedOngoingSubItems = allSubItems.Where(s => s.ProductId == p.ProductId&& allEffectivePurchaseMainId.Contains(s.PurchaseMainId)).ToList();
                 var inProcessingOrderQuantity = matchedOngoingSubItems.Select(s => s.Quantity - s.InStockQuantity).DefaultIfEmpty(0).Sum();
                 var needOrderedQuantity = p.MaxSafeQuantity ?? 0 - p.InStockQuantity ?? 0 - inProcessingOrderQuantity;
                 p.InProcessingOrderQuantity = inProcessingOrderQuantity ?? 0;
