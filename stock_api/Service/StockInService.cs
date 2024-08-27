@@ -608,7 +608,7 @@ namespace stock_api.Service
             }
         }
 
-        public List<NearExpiredProductVo> GetNearExpiredProductList(string compId,DateOnly compareDate)
+        public List<NearExpiredProductVo> GetNearExpiredProductList(string compId,DateOnly compareDate,int? preDeadline)
         {
             var activeProducts = _dbContext.WarehouseProducts.Where(p => p.CompId == compId && p.IsActive == true).ToList();
             var productIds = activeProducts.Select(p=>p.ProductId).ToList();
@@ -619,8 +619,16 @@ namespace stock_api.Service
             {
                 var matchedAllUnAllOutInStockItemList = allUnAllOutInStockItemList.Where(i => i.ProductId == product.ProductId).ToList();
                 if (product.PreDeadline == null) continue;
-                var nearExpiredInStockItemList = matchedAllUnAllOutInStockItemList.Where(i => i.ExpirationDate != null && i.ExpirationDate.Value.AddDays(-product.PreDeadline.Value) <= compareDate).OrderBy(i=>i.ExpirationDate).ToList();
-                product.InStockItemList = nearExpiredInStockItemList;
+                if (preDeadline != null)
+                {
+                    var nearExpiredInStockItemList = matchedAllUnAllOutInStockItemList.Where(i => i.ExpirationDate != null && i.ExpirationDate.Value.AddDays(-preDeadline.Value) <= compareDate).OrderBy(i => i.ExpirationDate).ToList();
+                    product.InStockItemList = nearExpiredInStockItemList;
+                }
+                else
+                {
+                    var nearExpiredInStockItemList = matchedAllUnAllOutInStockItemList.Where(i => i.ExpirationDate != null && i.ExpirationDate.Value.AddDays(-product.PreDeadline.Value) <= compareDate).OrderBy(i => i.ExpirationDate).ToList();
+                    product.InStockItemList = nearExpiredInStockItemList;
+                }
             }
 
             return nearExpireProductVoList.Where(p=>p.InStockItemList.Count>0).ToList();

@@ -716,14 +716,14 @@ namespace stock_api.Controllers
             });
         }
 
-        [HttpGet("remind/expired")]
+        [HttpPost("remind/expired")]
         [Authorize]
-        public IActionResult GetRemindExpiredList()
+        public IActionResult GetRemindExpiredList(GetRemindExpiredListRequest request)
         {
             var memberAndPermissionSetting = _authHelpers.GetMemberAndPermissionSetting(User);
             var compId = memberAndPermissionSetting.CompanyWithUnit.CompId;
             DateOnly today = DateOnly.FromDateTime(DateTime.Now);
-            var nearExpiredProductVoList = _stockInService.GetNearExpiredProductList(compId, today);
+            var nearExpiredProductVoList = _stockInService.GetNearExpiredProductList(compId, today, request.PreDeadline);
             
             return Ok(new CommonResponse<dynamic>
             {
