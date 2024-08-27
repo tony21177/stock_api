@@ -448,8 +448,10 @@ namespace stock_api.Controllers
             {
                 return BadRequest(CommonResponse<dynamic>.BuildValidationFailedResponse(validationResult));
             }
-
-            request.CompId = compId;
+            if (request.CompId == null)
+            {
+                request.CompId = compId;
+            }
             if (request.PaginationCondition.OrderByField == null)
             {
                 request.PaginationCondition.OrderByField = "UpdatedAt";
