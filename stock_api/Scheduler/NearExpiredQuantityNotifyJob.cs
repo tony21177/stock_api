@@ -31,7 +31,7 @@ namespace stock_api.Scheduler
             var distinctCompIdList = allActiveProduct.Select(p=>p.CompId).Distinct().ToList();
             distinctCompIdList.ForEach(compId =>
             {
-                List<NearExpiredProductVo> nearExpiredProductVoList =  _stockInService.GetNearExpiredProductList(compId, today);
+                List<NearExpiredProductVo> nearExpiredProductVoList =  _stockInService.GetNearExpiredProductList(compId, today,null);
                 if (nearExpiredProductVoList.Count > 0)
                 {
                     string emailTitle = "以下已入庫的品項即將過期,請盡快使用";
