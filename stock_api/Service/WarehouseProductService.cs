@@ -916,5 +916,68 @@ namespace stock_api.Service
         {
             return _dbContext.WarehouseProducts.Where(p=>p.GroupIds!=null &&p.GroupIds.Contains(groupId)).ToList();
         }
+
+
+        public void UpdateProductToComp(string toCompId,WarehouseProduct warehouseProductInFromComp,bool isActive)
+        {
+            var existingProductInToComp = _dbContext.WarehouseProducts.Where(p=>p.ProductCode==warehouseProductInFromComp.ProductCode&&
+            p.CompId == toCompId).FirstOrDefault();
+            if (existingProductInToComp != null&&existingProductInToComp.IsActive!=isActive)
+            {
+                existingProductInToComp.IsActive = isActive;
+                _dbContext.SaveChanges();
+                return;
+            }
+            var toComp = _dbContext.Companies.Where(c=>c.CompId== toCompId).FirstOrDefault();
+
+            WarehouseProduct newWarehouseProduct = new WarehouseProduct()
+            {
+                CompId = toCompId,
+                ManufacturerId = warehouseProductInFromComp?.ManufacturerId,
+                ManufacturerName = warehouseProductInFromComp?.ManufacturerName,
+                DeadlineRule = warehouseProductInFromComp?.DeadlineRule,
+                InStockQuantity = 0,
+                MaxSafeQuantity = warehouseProductInFromComp?.MaxSafeQuantity,
+                OpenedSealName = warehouseProductInFromComp?.OpenedSealName,
+                OriginalDeadline = warehouseProductInFromComp?.OriginalDeadline,
+                PackageWay = warehouseProductInFromComp?.PackageWay,
+                PreDeadline = warehouseProductInFromComp?.PreDeadline,
+                PreOrderDays = warehouseProductInFromComp?.PreOrderDays,
+                ProductCategory = warehouseProductInFromComp?.ProductCategory,
+                ProductCode = warehouseProductInFromComp.ProductCode,
+                ProductId = Guid.NewGuid().ToString(),
+                ProductModel = warehouseProductInFromComp?.ProductModel,
+                ProductName = warehouseProductInFromComp?.ProductName,
+                ProductRemarks = warehouseProductInFromComp?.ProductRemarks,
+                ProductSpec = warehouseProductInFromComp?.ProductSpec,
+                SafeQuantity = warehouseProductInFromComp?.SafeQuantity,
+                UdibatchCode = warehouseProductInFromComp?.UdibatchCode,
+                UdicreateCode = warehouseProductInFromComp?.UdicreateCode,
+                UdiserialCode = warehouseProductInFromComp?.UdiserialCode,
+                UdiverifyDateCode = warehouseProductInFromComp?.UdiverifyDateCode,
+                Unit = warehouseProductInFromComp?.Unit,
+                Weight = warehouseProductInFromComp?.Weight,
+                ProductMachine = warehouseProductInFromComp?.ProductMachine,
+                DefaultSupplierId = warehouseProductInFromComp?.DefaultSupplierId,
+                DefaultSupplierName = warehouseProductInFromComp?.DefaultSupplierName,
+                IsNeedAcceptProcess = warehouseProductInFromComp?.IsNeedAcceptProcess,
+                QcType = warehouseProductInFromComp?.QcType,
+                AllowReceiveDateRange = warehouseProductInFromComp?.AllowReceiveDateRange,
+                UnitConversion = warehouseProductInFromComp?.UnitConversion,
+                TestCount = warehouseProductInFromComp?.TestCount,
+                IsActive = isActive,
+                Delievery = warehouseProductInFromComp?.Delievery,
+                SupplierUnitConvertsion = warehouseProductInFromComp?.SupplierUnitConvertsion,
+                SupplierUnit = warehouseProductInFromComp?.SupplierUnit,
+                DeliverFunction = warehouseProductInFromComp?.DeliverFunction,
+                DeliverTemperature = warehouseProductInFromComp?.DeliverTemperature,
+                SavingFunction = warehouseProductInFromComp?.SavingFunction,
+                SavingTemperature = warehouseProductInFromComp?.SavingTemperature,
+                CompName = toComp?.Name,
+                IsPrintSticker = warehouseProductInFromComp?.IsPrintSticker,
+            };
+            _dbContext.WarehouseProducts.Add(newWarehouseProduct);
+            return;
+        }
     }
 }

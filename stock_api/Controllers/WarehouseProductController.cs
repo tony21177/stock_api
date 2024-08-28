@@ -39,6 +39,7 @@ namespace stock_api.Controllers
         private readonly IValidator<UpdateProductRequest> _updateProductValidator;
         private readonly IValidator<AdminUpdateProductRequest> _adminUpdateProductValidator;
         private readonly IValidator<AddNewProductRequest> _addNewProductRequestValidator;
+        private readonly IValidator<UpdateProductToCompRequest> _updateProductToCompRequestValidator;
         private readonly FileUploadService _fileUploadService;
         private readonly StockInService _stockInService;
         private readonly PurchaseService _purchaseService;
@@ -61,6 +62,7 @@ namespace stock_api.Controllers
             _updateProductValidator = new UpdateProductValidator(supplierService, groupService);
             _adminUpdateProductValidator = new AdminUpdateProductValidator(supplierService, groupService, manufacturerService);
             _addNewProductRequestValidator = new AddNewProductValidator(supplierService, manufacturerService, companyService);
+            _updateProductToCompRequestValidator = new UpdateProductToCompValidator(companyService, warehouseProductService);
             _fileUploadService = fileUploadService;
             _stockInService = stockInService;
             _purchaseService = purchaseService;
@@ -765,6 +767,31 @@ namespace stock_api.Controllers
                 Data = unDonePurchaseSubItems
             });
 
+        }
+
+        [HttpPost("owner/updateProductToComp")]
+        [Authorize]
+        public IActionResult UpdateProductToComp(UpdateProductToCompRequest request)
+        {
+            var memberAndPermissionSetting = _authHelpers.GetMemberAndPermissionSetting(User);
+            var compId = memberAndPermissionSetting.CompanyWithUnit.CompId;
+            if (request.FromCompId == null)
+            {
+                request.FromCompId = compId;
+            }
+            var validationResult = _updateProductToCompRequestValidator.Validate(request);
+
+            if (!validationResult.IsValid)
+            {
+                return BadRequest(CommonResponse<dynamic>.BuildValidationFailedResponse(validationResult));
+            }
+            var product = _warehouseProductService.GetProductByProductCodeAndCompId(request.ProductCode,request.FromCompId);
+            _warehouseProductService.UpdateProductToComp(request.ToCompId,product,request.IsActive);
+
+            return Ok(new CommonResponse<dynamic>
+            {
+                Result = true,
+            });
         }
     }
 }
