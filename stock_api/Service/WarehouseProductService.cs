@@ -977,6 +977,7 @@ namespace stock_api.Service
                 IsPrintSticker = warehouseProductInFromComp?.IsPrintSticker,
             };
             _dbContext.WarehouseProducts.Add(newWarehouseProduct);
+            _dbContext.SaveChanges();
             return;
         }
     }
