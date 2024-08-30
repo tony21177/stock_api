@@ -479,6 +479,11 @@ namespace stock_api.Service
                 foreach (var item in purchaseMainAndSubItemVoList)
                 {
                     var matchedFlows = flows.Where(f => f.PurchaseMainId == item.PurchaseMainId).ToList();
+                    var rejectedFlowIndex = matchedFlows.FindIndex(f => f.Status == CommonConstants.PurchaseFlowStatus.REJECT);
+                    if (rejectedFlowIndex >= 0)
+                    {
+                        matchedFlows = matchedFlows.GetRange(0, rejectedFlowIndex + 1);
+                    }
                     item.flows = _mapper.Map<List<PurchaseFlowWithAgentsVo>>(matchedFlows);
                 }
             }
