@@ -357,7 +357,13 @@ namespace stock_api.Controllers
 
             List<PurchaseSubItem> purchaseSubItems = _purchaseService.GetPurchaseSubItemsByMainId(purchaseMainId);
             List<PurchaseFlowWithAgentsVo> purchaseFlowWithAgents = _purchaseService.GetPurchaseFlowWithAgentsByMainId(purchaseMainId).OrderBy(f => f.Sequence).ToList();
+            var rejectedFlowIndex = purchaseFlowWithAgents.FindIndex(f => f.Status == CommonConstants.PurchaseFlowStatus.REJECT);
+            if (rejectedFlowIndex >= 0)
+            {
+                purchaseFlowWithAgents = purchaseFlowWithAgents.GetRange(0, rejectedFlowIndex + 1);
+            }
             List<PurchaseFlowLog> purchaseFlowLogs = _purchaseService.GetPurchaseFlowLogsByMainId(purchaseMainId).OrderBy(fl => fl.UpdatedAt).ToList();
+            
             var distinctWithCompId = purchaseSubItems.Where(i=>i.WithCompId!=null).Select(i=>i.WithCompId).Distinct().ToList();
             List<CompanyWithUnitVo> companyWithUnitVoList = _companyService.GetCompanyWithUnitListByCompanyIdList(distinctWithCompId);
 
