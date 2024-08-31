@@ -579,7 +579,11 @@ namespace stock_api.Controllers
             var memberAndPermissionSetting = _authHelpers.GetMemberAndPermissionSetting(User);
             var compId = memberAndPermissionSetting.CompanyWithUnit.CompId;
             var userId = memberAndPermissionSetting.Member.UserId;
-            request.CompId = compId;
+            if (request.CompId == null)
+            {
+                request.CompId = compId;
+            }
+
             var validationResult = _listStockOutRecordsValidator.Validate(request);
 
             if (!validationResult.IsValid)
