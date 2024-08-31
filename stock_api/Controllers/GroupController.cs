@@ -98,10 +98,13 @@ namespace stock_api.Controllers
             var memberAndPermissionSetting = _authHelpers.GetMemberAndPermissionSetting(User);
             var loginUserCompId = memberAndPermissionSetting.CompanyWithUnit.CompId;
             var companyWithUnitVo = _companyService.GetCompanyWithUnitByCompanyId(request.CompId);
-            if (loginUserCompId != companyWithUnitVo.CompId && memberAndPermissionSetting.CompanyWithUnit.Type != CommonConstants.CompanyType.OWNER)
-            {
-                return BadRequest(CommonResponse<dynamic>.BuildNotAuthorizeResponse());
-            }
+            //if(companyWithUnitVo == null){
+            //    return BadRequest(CommonResponse<dynamic>.BuildNotAuthorizeResponse());
+            //}
+            //if (loginUserCompId != companyWithUnitVo.CompId && memberAndPermissionSetting.CompanyWithUnit.Type != CommonConstants.CompanyType.OWNER)
+            //{
+            //    return BadRequest(CommonResponse<dynamic>.BuildNotAuthorizeResponse());
+            //}
             var data = _groupService.GetGroupsByCompId(request.CompId);
             var sortedData = data.OrderByDescending(_e => _e.CreatedAt).ToList();
 
