@@ -141,7 +141,31 @@ namespace stock_api.Service
         public void UpdateMember(CreateOrUpdateMemberRequest request,WarehouseMember toBeUpdateMember)
         {
             var updateMember = _mapper.Map<WarehouseMember>(request);
+            var originalAccount = toBeUpdateMember.Account;
+            var originalAuthValue = toBeUpdateMember.AuthValue;
+            var originalDisplayName = toBeUpdateMember.DisplayName;
+            var originalPassword = toBeUpdateMember.Password;
+
+
             _mapper.Map(updateMember, toBeUpdateMember);
+            if (request.Account == null)
+            {
+                toBeUpdateMember.Account = originalAccount;
+            }
+            if (request.AuthValue == null)
+            {
+                toBeUpdateMember.AuthValue = originalAuthValue;
+            }
+            if (request.DisplayName == null)
+            {
+                toBeUpdateMember.DisplayName = originalDisplayName;
+            }
+            if (request.Password == null)
+            {
+                toBeUpdateMember.Password = originalPassword;
+            }
+
+
             if (request.Agents != null && request.Agents.Count > 0)
             {
                 var agentMemberList = GetActiveMembersByUserIds(request.Agents, request.CompId);

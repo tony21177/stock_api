@@ -14,7 +14,7 @@ namespace stock_api.Controllers.Request
         public string? Email { get; set; }
         public List<string>? GroupIds { get; set; } 
         public string? CompId { get; set; }
-        public bool IsActive { get; set; }
+        public bool? IsActive { get; set; }
 
         public List<string>? Agents { get; set; }
     }

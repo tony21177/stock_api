@@ -591,7 +591,6 @@ namespace stock_api.Controllers
                 return BadRequest(CommonResponse<dynamic>.BuildValidationFailedResponse(validationResult));
             }
 
-            request.CompId = compId;
             var (data, totalPages) = _stockOutService.ListStockOutRecords(request);
             var distinctProductIds = data.Select(x => x.ProductId).Distinct().ToList();
             var products = _warehouseProductService.GetProductsByProductIdsAndCompId(distinctProductIds, compId);
