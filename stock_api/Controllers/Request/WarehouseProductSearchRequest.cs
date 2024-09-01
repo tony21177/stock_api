@@ -11,5 +11,6 @@
         public string? GroupId { get; set;}
         public int? DefaultSupplierId { get; set; }
         public string? Keywords { get; set;}
+        public int? IsActive { get; set; }
     }
 }

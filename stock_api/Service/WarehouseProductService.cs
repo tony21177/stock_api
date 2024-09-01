@@ -115,6 +115,11 @@ namespace stock_api.Service
             {
                 query = query.Where(h => h.DefaultSupplierId != null && h.DefaultSupplierId == searchRequest.DefaultSupplierId);
             }
+            // Gary 新增 IsActive 條件
+            if (searchRequest.IsActive != null)
+            {
+                query = query.Where(h => h.IsActive != null && h.IsActive == searchRequest.IsActive);
+            }
 
             query = query.Where(h => h.CompId == searchRequest.CompId);
 
