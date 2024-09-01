@@ -19,11 +19,11 @@ namespace stock_api.Controllers.Validator
 
 
             
-            RuleFor(x => x.ToCompId).NotEmpty()
-                    .WithMessage("compIds不可為空");
-            RuleFor(x => x.ToCompId)
-                    .Must((request,toCompId, context) => BeValidToCompId(toCompId, context))
-                    .WithMessage("該組織不存在或已停用");
+            RuleFor(x => x.ToCompIds).NotEmpty()
+                    .WithMessage("toCompIds不可為空");
+            RuleFor(x => x.ToCompIds)
+                    .Must((request,toCompIds, context) => BeValidToCompIds(toCompIds, context))
+                    .WithMessage("以下 compId 為無效的comp: {InvalidComps}");
             RuleFor(x => x.FromCompId)
                     .Must((request, fromCompId, context) => BeValidFromCompId(fromCompId, context))
                     .WithMessage("fromCompId不存在或是非得標廠商");
@@ -46,16 +46,22 @@ namespace stock_api.Controllers.Validator
             return true;
         }
 
-        private bool BeValidToCompId(string toCompId, ValidationContext<UpdateProductToCompRequest> context)
+        private bool BeValidToCompIds(List<string> toCompIds, ValidationContext<UpdateProductToCompRequest> context)
         {
 
-            var toComp = _companyService.GetCompanyWithUnitByCompanyId(toCompId);
-           
+            var toComps = _companyService.GetCompanyWithUnitByCompanyIds(toCompIds);
 
-            if (toComp==null||toComp.IsActive==false)
+
+            var notExistCompIds = toComps.Select(c=>c.CompId).Except(toCompIds).ToList();
+
+            if (notExistCompIds.Any())
             {
+                var errorMessage = $"{string.Join(",", notExistCompIds)}";
+                context.MessageFormatter.AppendArgument("InvalidComps", errorMessage);
                 return false;
             }
+
+            
             return true;
         }
 

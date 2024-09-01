@@ -156,13 +156,20 @@ namespace stock_api.Controllers
             var productsLastMonthUsage = _stockOutService.GetLastMonthUsages(allProductIdListForUsage);
             var productsLastYearUsage = _stockOutService.GetLastYearUsages(allProductIdListForUsage);
 
+            var allProducts = _warehouseProductService.GetAllProducts();
+
             warehouseProductVoList.ForEach(p =>
             {
                 var matchedLastMonthUsage = productsLastMonthUsage.Where(u => u.ProductId == p.ProductId).FirstOrDefault();
                 if (matchedLastMonthUsage != null) p.LastMonthUsageQuantity = matchedLastMonthUsage?.Quantity;
                 var matchedLastYearUsage = productsLastYearUsage.Where(u => u.ProductId == p.ProductId).FirstOrDefault();
                 if (matchedLastYearUsage != null) p.LastYearUsageQuantity = matchedLastYearUsage?.Quantity;
+
+                var matchedProductOfSameCodeList = allProducts.Where(product=> product.ProductCode==p.ProductCode).ToList();
+                var distinctCompIds = matchedProductOfSameCodeList.Select(product => product.CompId).Distinct().ToList();
+                p.ExistCompIds = distinctCompIds;
             });
+
 
             var response = new CommonResponse<List<WarehouseProductVo>>()
             {
@@ -786,7 +793,7 @@ namespace stock_api.Controllers
                 return BadRequest(CommonResponse<dynamic>.BuildValidationFailedResponse(validationResult));
             }
             var product = _warehouseProductService.GetProductByProductCodeAndCompId(request.ProductCode,request.FromCompId);
-            _warehouseProductService.UpdateProductToComp(request.ToCompId,product,request.IsActive);
+            _warehouseProductService.UpdateProductToCompIds(request.ToCompIds,product,request.IsActive);
 
             return Ok(new CommonResponse<dynamic>
             {
