@@ -938,7 +938,7 @@ namespace stock_api.Service
                 {
                     existingProductInToComp.IsActive = isActive;
                     _dbContext.SaveChanges();
-                    return;
+                    continue;
                 }
                 var toComp = _dbContext.Companies.Where(c => c.CompId == toCompId).FirstOrDefault();
 
