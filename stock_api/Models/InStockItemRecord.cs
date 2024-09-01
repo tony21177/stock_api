@@ -12,6 +12,8 @@ namespace stock_api.Models;
 /// 每一筆要更新庫存紀錄（增加）的操作，都需要寫入一筆記錄在 InStockRecord，包含採購驗收、調撥、盤點（盤盈）、退庫，類型寫在 Type 欄位。
 /// </summary>
 [Table("in_stock_item_record")]
+[Index("CreatedAt", Name = "createdAt_idx")]
+[Index("ProductId", Name = "productId_ids")]
 [Index("CompId", "QcTestStatus", Name = "qc_undone_index")]
 [Index("LotNumberBatch", Name = "unique_lotnumberbatch", IsUnique = true)]
 public partial class InStockItemRecord

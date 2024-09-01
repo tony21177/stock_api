@@ -65,4 +65,13 @@ public partial class SupplierTraceLog
 
     [StringLength(200)]
     public string? ProductName { get; set; }
+
+    [StringLength(100)]
+    public string? PurchaseMainId { get; set; }
+
+    [StringLength(100)]
+    public string? LotNumber { get; set; }
+
+    [StringLength(100)]
+    public string? LotNumberBatch { get; set; }
 }

@@ -934,7 +934,7 @@ namespace stock_api.Service
             {
                 var existingProductInToComp = _dbContext.WarehouseProducts.Where(p => p.ProductCode == warehouseProductInFromComp.ProductCode &&
             p.CompId == toCompId).FirstOrDefault();
-                if (existingProductInToComp != null && existingProductInToComp.IsActive != isActive)
+                if (existingProductInToComp != null )
                 {
                     existingProductInToComp.IsActive = isActive;
                     _dbContext.SaveChanges();

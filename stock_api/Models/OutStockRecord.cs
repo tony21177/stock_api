@@ -12,9 +12,11 @@ namespace stock_api.Models;
 /// 每一筆要更新庫存紀錄（增加）的操作，都需要寫入一筆記錄在 InStockRecord，包含採購驗收、調撥、盤點（盤盈）、退庫，類型寫在 Type 欄位。
 /// </summary>
 [Table("out_stock_record")]
+[Index("CreatedAt", Name = "createdAt_idx")]
 [Index("LotNumber", Name = "idx_lot_number")]
 [Index("LotNumberBatch", Name = "idx_lot_number_batch")]
 [Index("CreatedAt", "Type", "ProductId", Name = "idx_out_stock_record_createdAt_type_productId")]
+[Index("ProductId", Name = "product_idx")]
 public partial class OutStockRecord
 {
     [Key]
