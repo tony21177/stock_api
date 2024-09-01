@@ -165,7 +165,7 @@ namespace stock_api.Controllers
                 var matchedLastYearUsage = productsLastYearUsage.Where(u => u.ProductId == p.ProductId).FirstOrDefault();
                 if (matchedLastYearUsage != null) p.LastYearUsageQuantity = matchedLastYearUsage?.Quantity;
 
-                var matchedProductOfSameCodeList = allProducts.Where(product=> product.ProductCode==p.ProductCode).ToList();
+                var matchedProductOfSameCodeList = allProducts.Where(product=> product.ProductCode==p.ProductCode&&product.IsActive==true).ToList();
                 var distinctCompIds = matchedProductOfSameCodeList.Select(product => product.CompId).Distinct().ToList();
                 p.ExistCompIds = distinctCompIds;
             });
