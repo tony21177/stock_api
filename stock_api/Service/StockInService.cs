@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using Org.BouncyCastle.Asn1.Ocsp;
 using Serilog;
 using stock_api.Common.Constant;
 using stock_api.Common.Utils;
@@ -105,7 +106,7 @@ namespace stock_api.Service
 
 
 
-        public (bool, string?, Qc?) UpdateAccepItem(PurchaseMainSheet purchaseMain, PurchaseSubItem purchaseSubItem, AcceptanceItem existingAcceptanceItem, UpdateAcceptItemRequest updateAcceptItem, WarehouseProduct product, string compId, WarehouseMember acceptMember, bool isInStocked)
+        public (bool, string?, Qc?) UpdateAcceptItem(PurchaseMainSheet purchaseMain, PurchaseSubItem purchaseSubItem, AcceptanceItem existingAcceptanceItem, UpdateAcceptItemRequest updateAcceptItem, WarehouseProduct product, string compId, WarehouseMember acceptMember,bool isDirectOutStock)
         {
             using var scope = new TransactionScope();
             try
@@ -207,6 +208,33 @@ namespace stock_api.Service
 
                 if (updateAcceptItem.AcceptQuantity != null)
                 {
+                    if (isDirectOutStock)
+                    {
+                        var outStockId = Guid.NewGuid().ToString();
+                        var outStockRecord = new OutStockRecord()
+                        {
+                            OutStockId = outStockId,
+                            //AbnormalReason = request.AbnormalReason,
+                            ApplyQuantity = updateAcceptItem.AcceptQuantity.Value,
+                            LotNumber = updateAcceptItem.LotNumber,
+                            LotNumberBatch = lotNumberBatch,
+                            CompId = compId,
+                            ExpirationDate = DateOnly.FromDateTime(DateTimeHelper.ParseDateString(updateAcceptItem.ExpirationDate).Value),
+                            IsAbnormal = false,
+                            ProductId = product.ProductId,
+                            ProductCode = product.ProductCode,
+                            ProductName = product.ProductName,
+                            ProductSpec = product.ProductSpec,
+                            Type = CommonConstants.StockInType.PURCHASE,
+                            UserId = acceptMember.UserId,
+                            UserName = acceptMember.DisplayName,
+                            OriginalQuantity = product.InStockQuantity.Value,
+                            AfterQuantity = product.InStockQuantity.Value,
+                            ItemId = existingAcceptanceItem.ItemId,
+                            BarCodeNumber = existingAcceptanceItem.LotNumberBatch,
+                        };
+                    }
+
                     var tempInStockItemRecord = new TempInStockItemRecord()
                     {
                         InStockId = Guid.NewGuid().ToString(),
@@ -261,6 +289,13 @@ namespace stock_api.Service
                         Comment = updateAcceptItem.Comment,
                         QcComment = updateAcceptItem.QcComment,
                     };
+                    if (isDirectOutStock)
+                    {
+                        inStockItemRecord.OutStockStatus = CommonConstants.OutStockStatus.ALL;
+                        inStockItemRecord.OutStockQuantity = updateAcceptItem.AcceptQuantity.Value;
+                    }
+
+
                     if (inStockItemRecord.IsNeedQc == true)
                     {
                         if (inStockItemRecord.QcType == CommonConstants.QcTypeConstants.LOT_NUMBER)
@@ -297,7 +332,11 @@ namespace stock_api.Service
 
 
                     //更新庫存品項
-                    product.InStockQuantity = inStockItemRecord.AfterQuantity;
+                    if (isDirectOutStock == false) //入庫直接出庫等於庫存數量不變
+                    {
+                        product.InStockQuantity = inStockItemRecord.AfterQuantity;
+                    }
+
                     // 應該是出庫時才去更新
                     //product.LotNumber = updateAcceptItem.LotNumber;
                     //product.LotNumberBatch = existingAcceptanceItem.LotNumberBatch;

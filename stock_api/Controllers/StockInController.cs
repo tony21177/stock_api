@@ -325,6 +325,11 @@ namespace stock_api.Controllers
             var compId = memberAndPermissionSetting.CompanyWithUnit.CompId;
             var userId = memberAndPermissionSetting.Member.UserId;
             request.AcceptUserId = userId;
+            var isDirectOutStock = false;
+            if (memberAndPermissionSetting.CompanyWithUnit.Type == CommonConstants.CompanyType.ORGANIZATION_NOSTOCK)
+            {
+                isDirectOutStock = true;
+            }
 
             var validationResult = _updateAcceptItemRequestValidator.Validate(request);
 
@@ -410,7 +415,7 @@ namespace stock_api.Controllers
             List<InStockItemRecord> existingStockInRecords = _stockInService.GetInStockRecordsHistory(existingAcceptItem.ProductId, compId).OrderByDescending(item => item.CreatedAt).ToList();
             var lastLotNumber = existingStockInRecords.FirstOrDefault()?.LotNumber;
             List<string> newLotNumberIdList = new();
-            var (result, message,qc) = _stockInService.UpdateAccepItem(purchaseMain, purchaseSubItem, existingAcceptItem, request, product, compId, memberAndPermissionSetting.Member, request.IsInStocked);
+            var (result, message,qc) = _stockInService.UpdateAcceptItem(purchaseMain, purchaseSubItem, existingAcceptItem, request, product, compId, memberAndPermissionSetting.Member, isDirectOutStock);
             if (request.LotNumber != lastLotNumber)
             {
                 newLotNumberIdList.Add(request.AcceptId);
@@ -486,7 +491,11 @@ namespace stock_api.Controllers
             var compId = memberAndPermissionSetting.CompanyWithUnit.CompId;
             var userId = memberAndPermissionSetting.Member.UserId;
             request.UpdateAcceptItemList.ForEach(item => item.AcceptUserId = userId);
-
+            var isDirectOutStock = false;
+            if (memberAndPermissionSetting.CompanyWithUnit.Type == CommonConstants.CompanyType.ORGANIZATION_NOSTOCK)
+            {
+                isDirectOutStock = true;
+            }
             var validationResult = _batchUdateAcceptItemRequestValidator.Validate(request);
 
             if (!validationResult.IsValid)
@@ -601,7 +610,7 @@ namespace stock_api.Controllers
                 {
                     newLotNumberIdList.Add(item.AcceptId);
                 }
-                var (result, message,qc) = _stockInService.UpdateAccepItem(matchedPurchaseMain, matchedPurchaseSubItem, matchedExistAcceptItem, item, matchedProduct, compId, memberAndPermissionSetting.Member, item.IsInStocked);
+                var (result, message,qc) = _stockInService.UpdateAcceptItem(matchedPurchaseMain, matchedPurchaseSubItem, matchedExistAcceptItem, item, matchedProduct, compId, memberAndPermissionSetting.Member, isDirectOutStock);
                 if (result != true)
                 {
                     failedIdList.Add(matchedExistAcceptItem.AcceptId);
@@ -610,7 +619,6 @@ namespace stock_api.Controllers
                 {
                     qcList.Add(qc);
                 }
-
             }
 
             // 有效日期短於末效,只有第一次才會批次所以不需要判斷user有沒有確認,因為批次超過允收日期的會打單一驗收

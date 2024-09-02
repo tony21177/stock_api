@@ -21,10 +21,11 @@ namespace stock_api.Common.Constant
         {
             public const string OWNER = "OWNER";
             public const string ORGANIZATION = "ORGANIZATION";
+            public const string ORGANIZATION_NOSTOCK = "ORGANIZATION_NOSTOCK";
 
             public static List<string> GetAllValues()
             {
-                return new List<string> { OWNER, ORGANIZATION };
+                return new List<string> { OWNER, ORGANIZATION, ORGANIZATION_NOSTOCK };
             }
         }
 
