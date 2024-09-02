@@ -250,7 +250,7 @@ namespace stock_api.Service
                 var matchedSubItems = allOngoingPurchaseItems.Where(i => i.ProductId == p.ProductId).ToList();                
                 var ongoingOrderQuantities = matchedSubItems.Select(i => i.Quantity).Sum();
 
-                if (p.MaxSafeQuantity - p.InStockQuantity - ongoingOrderQuantities >= 0)
+                if (p.MaxSafeQuantity>0&&p.MaxSafeQuantity - p.InStockQuantity - ongoingOrderQuantities >= 0)
                 {
                     p.InProcessingOrderQuantity = ongoingOrderQuantities??0.0f;
                     p.NeedOrderedQuantity = p.MaxSafeQuantity??0.0f - p.InStockQuantity ?? 0.0f - ongoingOrderQuantities ?? 0.0f;
