@@ -391,12 +391,13 @@ namespace stock_api.Common.Constant
         public static class SourceType
         {
             public const string IN_STOCK = "IN_STOCK";
+            public const string OUT_STOCK = "OUT_STOCK";
             public const string QA = "QA";
             public const string MANUAL = "MANUAL";
 
             public static List<string> GetAllValues()
             {
-                return new List<string> { IN_STOCK, QA, MANUAL };
+                return new List<string> { IN_STOCK, OUT_STOCK, QA, MANUAL };
             }
         }
 

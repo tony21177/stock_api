@@ -11,5 +11,8 @@
         public string? ProductId { get; set; }
 
         public string? SourceType { get; set; }
+        public string? PurchaseMainId { get; set; }
+        public string? LotNumber { get; set; }
+        public string? LotNumberBatch { get; set; }
     }
 }

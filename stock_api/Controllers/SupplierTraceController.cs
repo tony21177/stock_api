@@ -80,6 +80,9 @@ namespace stock_api.Controllers
             newSupplierTraceLog.UserId = memberAndPermissionSetting.Member.UserId;
             newSupplierTraceLog.UserName = memberAndPermissionSetting.Member.DisplayName;
             newSupplierTraceLog.SourceType = request.SourceType;
+            newSupplierTraceLog.PurchaseMainId = request.PurchaseMainId??null;
+            newSupplierTraceLog.LotNumber = request.LotNumber??null;
+            newSupplierTraceLog.LotNumberBatch = request.LotNumberBatch??null;
             _supplierTraceService.CreateSupplierTrace(newSupplierTraceLog);
             return Ok(new CommonResponse<dynamic>
             {
@@ -138,6 +141,18 @@ namespace stock_api.Controllers
             updateSupplierTraceLog.UserId = memberAndPermissionSetting.Member.UserId;
             updateSupplierTraceLog.UserName = memberAndPermissionSetting.Member.DisplayName;
             updateSupplierTraceLog.CompId = compId;
+            if (request.PurchaseMainId != null)
+            {
+                updateSupplierTraceLog.PurchaseMainId = request.PurchaseMainId;
+            }
+            if (request.LotNumber != null)
+            {
+                updateSupplierTraceLog.LotNumber = request.LotNumber;
+            }
+            if (request.LotNumberBatch != null)
+            {
+                updateSupplierTraceLog.LotNumberBatch = request.LotNumberBatch;
+            }
 
 
             _supplierTraceService.UpdateSupplierTrace(updateSupplierTraceLog, existingLog);

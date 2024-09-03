@@ -683,6 +683,7 @@ namespace stock_api.Controllers
             }
 
             WarehouseProduct? productInfo = _warehouseProductService.GetProductByProductCodeAndCompId(inStockRecord.ProductCode, inStockRecord.CompId);
+            var subItem = _purchaseService.GetPurchaseSubItemByItemId(inStockRecord.ItemId);
             
             if (inStockRecord != null&&productInfo!=null)
             {
@@ -756,7 +757,8 @@ namespace stock_api.Controllers
                 CompName = productInfo.CompName,
                 BatchInStockQuantity = inStockRecord.InStockQuantity,
                 BatchOutStockQuantity = inStockRecord.OutStockQuantity,
-                BatchExpirationDate = inStockRecord.ExpirationDate
+                BatchExpirationDate = inStockRecord.ExpirationDate,
+                PurchaseMainId = subItem?.PurchaseMainId
             };
 
 

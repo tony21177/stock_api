@@ -289,4 +289,5 @@ public partial class WarehouseProductStockOutView
     public float? BatchInStockQuantity { get; set; } // 對應 inStockRecord 的 instockQuantity
     public float? BatchOutStockQuantity { get; set; } // 對應 inStockRecord 的 outstockQuantity
     public DateOnly? BatchExpirationDate { get; set; } // 對應 inStockRecord 的 expirationDate
+    public string? PurchaseMainId { get; set; }
 }
