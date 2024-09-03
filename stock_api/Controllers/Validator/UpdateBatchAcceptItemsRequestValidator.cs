@@ -21,6 +21,9 @@ namespace stock_api.Controllers.Validator
             RuleFor(x => x.ExpirationDate).Must((request, date, context) => BeValidDate(date, context))
                 .WithMessage("無效格式日期");
 
+            RuleFor(x => x.AcceptQuantity).GreaterThan(0)
+                .WithMessage("必須大於0");
+
             RuleFor(item => item.QcStatus)
                 //.NotNull().WithMessage("QcStatus 是必填項目。")
                 .Must(qcStatus => CommonConstants.QcStatus.GetAllValues().Contains(qcStatus))

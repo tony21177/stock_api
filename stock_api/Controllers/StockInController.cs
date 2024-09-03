@@ -346,6 +346,15 @@ namespace stock_api.Controllers
                     Message = "驗收品項不存在"
                 });
             }
+            if (request.AcceptQuantity + existingAcceptItem.AcceptQuantity > existingAcceptItem.OrderQuantity)
+            {
+                return BadRequest(new CommonResponse<dynamic>
+                {
+                    Result = false,
+                    Message = $"不可超過訂購數量,已入數量:{existingAcceptItem.AcceptQuantity},訂購數量:{existingAcceptItem.OrderQuantity}"
+                });
+            }
+
             var purchaseSubItem = _purchaseService.GetPurchaseSubItemByItemId(existingAcceptItem.ItemId);
             if (purchaseSubItem == null)
             {
@@ -521,6 +530,20 @@ namespace stock_api.Controllers
             if (existingAcceptItemList.Any(i => i.CompId != compId))
             {
                 return BadRequest(CommonResponse<dynamic>.BuildNotAuthorizeResponse());
+            }
+
+            foreach(var existingAcceptItem in existingAcceptItemList)
+            {
+                var matchedUpdateAcceptItemRequest = request.UpdateAcceptItemList.Find(a => a.AcceptId == existingAcceptItem.AcceptId);
+
+                if (matchedUpdateAcceptItemRequest != null && matchedUpdateAcceptItemRequest.AcceptQuantity + existingAcceptItem.AcceptQuantity > existingAcceptItem.OrderQuantity)
+                {
+                    return BadRequest(new CommonResponse<dynamic>
+                    {
+                        Result = false,
+                        Message = $"不可超過訂購數量,已入數量:{existingAcceptItem.AcceptQuantity},訂購數量:{existingAcceptItem.OrderQuantity}"
+                    });
+                }
             }
 
             var inStockedAcceptIdList = existingAcceptItemList.Where(i => i.InStockStatus == CommonConstants.PurchaseSubItemReceiveStatus.DONE).Select(i => i.AcceptId).ToList();
