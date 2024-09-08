@@ -283,7 +283,7 @@ namespace stock_api.Service
                             ProductCode = product.ProductCode,
                             ProductName = product.ProductName,
                             ProductSpec = product.ProductSpec,
-                            Type = CommonConstants.StockInType.PURCHASE,
+                            Type = CommonConstants.OutStockType.PURCHASE_OUT,
                             UserId = acceptMember.UserId,
                             UserName = acceptMember.DisplayName,
                             OriginalQuantity = product.InStockQuantity.Value,
