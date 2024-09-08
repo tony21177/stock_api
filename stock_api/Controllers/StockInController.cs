@@ -30,6 +30,8 @@ namespace stock_api.Controllers
         private readonly IValidator<UpdateAcceptItemRequest> _updateAcceptItemRequestValidator;
         private readonly IValidator<UpdateBatchAcceptItemsRequest> _batchUdateAcceptItemRequestValidator;
         private readonly IValidator<ListStockInRecordsRequest> _listStockInRecordsValidator;
+        private readonly IValidator<ReturnRequest> _returnStockValidator;
+        private readonly IValidator<ListReturnRecordsRequest> _listReturnRecordsValidator;
 
         public StockInController(IMapper mapper, AuthHelpers authHelpers, GroupService groupService, StockInService stockInService, WarehouseProductService warehouseProductService, PurchaseService purchaseService, StockOutService stockOutService)
         {
@@ -45,6 +47,8 @@ namespace stock_api.Controllers
             _batchUdateAcceptItemRequestValidator = new UpdateBatchAcceptItemsRequestValidator();
             _listStockInRecordsValidator = new ListStockInRecordsValidator();
             _stockOutService = stockOutService;
+            _returnStockValidator = new ReturnStockValidator();
+            _listReturnRecordsValidator = new ListReturnRecordsValidator();
         }
 
         [HttpPost("purchaseAndAcceptItems/list")]
@@ -719,6 +723,14 @@ namespace stock_api.Controllers
         public IActionResult Return(ReturnRequest request)
         {
             var memberAndPermissionSetting = _authHelpers.GetMemberAndPermissionSetting(User);
+
+            var validationResult = _returnStockValidator.Validate(request);
+
+            if (!validationResult.IsValid)
+            {
+                return BadRequest(CommonResponse<dynamic>.BuildValidationFailedResponse(validationResult));
+            }
+
             var compId = memberAndPermissionSetting.CompanyWithUnit.CompId;
             var outStockRecord = _stockOutService.GetOutStockRecordById(request.OutStockId);
             if (outStockRecord == null)
@@ -729,23 +741,60 @@ namespace stock_api.Controllers
                     Message = "該出庫紀錄不存在"
                 });
             }
-            if (outStockRecord.IsReturned==true)
+
+            if (outStockRecord.ApplyQuantity <= request.ReturnQuantity)
             {
                 return BadRequest(new CommonResponse<dynamic>
                 {
                     Result = false,
-                    Message = "該出庫紀錄已經退庫過"
+                    Message = "退庫數量已超過出庫出數量"
                 });
             }
+
+            //if (outStockRecord.IsReturned==true)
+            //{
+            //    return BadRequest(new CommonResponse<dynamic>
+            //    {
+            //        Result = false,
+            //        Message = "該出庫紀錄已經退庫過"
+            //    });
+            //}
             var product = _warehouseProductService.GetProductByProductId(outStockRecord.ProductId);
 
-            var (result, errorMsg) = _stockInService.Return(outStockRecord, product, memberAndPermissionSetting.Member);
+            var (result, errorMsg) = _stockInService.Return(outStockRecord, product, memberAndPermissionSetting.Member,request.ReturnQuantity);
             return Ok(new CommonResponse<dynamic>
             {
                 Result = result,
                 Message = errorMsg,
             });
         }
+
+        [HttpPost("listReturnRecords")]
+        [Authorize]
+        public IActionResult ListReturnRecords(ListReturnRecordsRequest request)
+        {
+            var memberAndPermissionSetting = _authHelpers.GetMemberAndPermissionSetting(User);
+            var validationResult = _listReturnRecordsValidator.Validate(request);
+
+            if (!validationResult.IsValid)
+            {
+                return BadRequest(CommonResponse<dynamic>.BuildValidationFailedResponse(validationResult));
+            }
+
+            var compId = memberAndPermissionSetting.CompanyWithUnit.CompId;
+            if(request.CompId==null) request.CompId = compId;
+
+
+            var returnStockRecords = _stockInService.ListReturnRecords(request);
+            returnStockRecords = returnStockRecords.OrderByDescending(r=>r.CreatedAt).ToList();
+          
+            return Ok(new CommonResponse<dynamic>
+            {
+                Result = true,
+                Data = returnStockRecords,
+            });
+        }
+
 
         [HttpPost("remind/expired")]
         [Authorize]

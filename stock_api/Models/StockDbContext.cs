@@ -73,6 +73,8 @@ public partial class StockDbContext : DbContext
 
     public virtual DbSet<QcValidationMain> QcValidationMains { get; set; }
 
+    public virtual DbSet<ReturnStockRecord> ReturnStockRecords { get; set; }
+
     public virtual DbSet<Supplier> Suppliers { get; set; }
 
     public virtual DbSet<SupplierTraceLog> SupplierTraceLogs { get; set; }
@@ -749,6 +751,16 @@ public partial class StockDbContext : DbContext
                 .HasDefaultValueSql("CURRENT_TIMESTAMP");
             entity.Property(e => e.ValidationMethod).HasComment("檢驗屬性");
             entity.Property(e => e.ValidationType).HasComment("驗收類型");
+        });
+
+        modelBuilder.Entity<ReturnStockRecord>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("PRIMARY");
+
+            entity.Property(e => e.CreatedAt).HasDefaultValueSql("CURRENT_TIMESTAMP");
+            entity.Property(e => e.UpdatedAt)
+                .ValueGeneratedOnAddOrUpdate()
+                .HasDefaultValueSql("CURRENT_TIMESTAMP");
         });
 
         modelBuilder.Entity<Supplier>(entity =>

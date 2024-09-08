@@ -108,6 +108,10 @@
          "ObjectType": 0
       },
       {
+         "Name": "return_stock_record",
+         "ObjectType": 0
+      },
+      {
          "Name": "supplier",
          "ObjectType": 0
       },

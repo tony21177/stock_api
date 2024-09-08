@@ -611,59 +611,60 @@ namespace stock_api.Service
             return (inStockRecords, outStockRecords);
         }
 
-        public (bool, string?) Return(OutStockRecord outStockRecord, WarehouseProduct product, WarehouseMember user)
+        public (bool, string?) Return(OutStockRecord outStockRecord, WarehouseProduct product, WarehouseMember user, float returnQuantity)
         {
             using var scope = new TransactionScope();
             try
             {
-                var sameLotNumberBatchLastOutStockRecord = _dbContext.OutStockRecords.Where(r => r.LotNumberBatch == outStockRecord.LotNumberBatch&&r.IsReturned==true)
-                    .OrderByDescending(i => i.CreatedAt).FirstOrDefault();
-                InStockItemRecord? lastSameInstock = null; 
-                if (sameLotNumberBatchLastOutStockRecord != null)
+                var inStockRecord = _dbContext.InStockItemRecords.Where(i=>i.LotNumberBatch==outStockRecord.LotNumberBatch).FirstOrDefault();
+
+                var inStockQuantityBefore = inStockRecord.InStockQuantity;
+                var outStockQuantityBefore = outStockRecord.ApplyQuantity;
+
+
+                inStockRecord.InStockQuantity = inStockRecord.InStockQuantity + returnQuantity;
+                inStockRecord.OutStockQuantity = inStockRecord.OutStockQuantity - returnQuantity;
+                if(inStockRecord.OutStockQuantity - inStockRecord.OutStockQuantity > 0)
                 {
-                    var lastOutStockRecordId = sameLotNumberBatchLastOutStockRecord.OutStockId;
-                    lastSameInstock = _dbContext.InStockItemRecords.Where(i=>i.ReturnOutStockId!=null&&i.ReturnOutStockId==lastOutStockRecordId).FirstOrDefault();
+                    inStockRecord.OutStockStatus = CommonConstants.OutStockStatus.PART;
                 }
+                if(inStockRecord.OutStockQuantity == 0)
+                {
+                    inStockRecord.OutStockStatus = CommonConstants.OutStockStatus.NONE;
+                }
+                if(inStockRecord.InStockQuantity - inStockRecord.OutStockQuantity == 0)
+                {
+                    inStockRecord.OutStockStatus = CommonConstants.OutStockStatus.ALL;
+                }
+                inStockRecord.ReturnOutStockId = outStockRecord.OutStockId;
 
-
+                outStockRecord.ApplyQuantity = outStockRecord.ApplyQuantity - returnQuantity;
                 outStockRecord.IsReturned = true;
-                var inStockLotNumberBatch = outStockRecord.LotNumberBatch + "-R1";
-                if (lastSameInstock != null && lastSameInstock.LotNumberBatch.Contains("-R"))
-                {
-                    var lotNumberBatchSplited = lastSameInstock.LotNumberBatch.Split("-R");
-                    var nowSeqString = lotNumberBatchSplited[1];
-                    var nowSeqInt = int.Parse(nowSeqString);
-                    inStockLotNumberBatch = sameLotNumberBatchLastOutStockRecord.LotNumberBatch.Split("-R")[0] + "-R" + (nowSeqInt + 1).ToString();
-                }
-                float afterQuantity = (product.InStockQuantity ?? 0) + outStockRecord.ApplyQuantity;
 
-                var inStockRecord = new InStockItemRecord
+                product.InStockQuantity = product.InStockQuantity + returnQuantity;
+
+                var returnStockRecord = new ReturnStockRecord()
                 {
-                    InStockId = Guid.NewGuid().ToString(),
-                    LotNumberBatch = inStockLotNumberBatch,
+                    InStockId = inStockRecord.InStockId,
+                    OutStockId = outStockRecord.OutStockId,
+                    InStockQuantityBefore = inStockQuantityBefore,
+                    InStockQuantityAfter = inStockRecord.InStockQuantity,
+                    OutStockApplyQuantityBefore = outStockQuantityBefore,
+                    OutStockApplyQuantityAfter = outStockRecord.ApplyQuantity,
+                    LotNumberBatch = outStockRecord.LotNumberBatch,
                     LotNumber = outStockRecord.LotNumber,
-                    CompId = outStockRecord.CompId,
-                    OriginalQuantity = product.InStockQuantity ?? 0.0f,
-                    ExpirationDate = outStockRecord.ExpirationDate,
-                    ItemId = outStockRecord.ItemId,
-                    InStockQuantity = outStockRecord.ApplyQuantity,
-                    ProductId = outStockRecord.ProductId,
-                    ProductCode = outStockRecord.ProductCode,
-                    ProductName = outStockRecord.ProductName,
-                    ProductSpec = outStockRecord.ProductSpec,
-                    Type = CommonConstants.StockInType.RETURN,
-                    BarCodeNumber = outStockRecord.BarCodeNumber,
+                    CompId = outStockRecord.CompId, 
+                    ProductId = product.ProductId,
+                    ProductCode = product.ProductCode,
+                    ProductName = product.ProductName,
                     UserId = user.UserId,
                     UserName = user.DisplayName,
-                    AfterQuantity = afterQuantity,
-                    QcType = product.QcType,
-                    ReturnOutStockId = outStockRecord.OutStockId
                 };
-                _dbContext.InStockItemRecords.Add( inStockRecord );
-                product.InStockQuantity = afterQuantity;
+                _dbContext.ReturnStockRecords.Add(returnStockRecord);
                 _dbContext.SaveChanges();
                 scope.Complete();
                 return (true, null);
+
             }
             catch (Exception ex)
             {
@@ -671,6 +672,104 @@ namespace stock_api.Service
                 return (false, ex.Message);
             }
         }
+
+
+        //public (bool, string?) Return(OutStockRecord outStockRecord, WarehouseProduct product, WarehouseMember user,float returnQuantity)
+        //{
+        //    using var scope = new TransactionScope();
+        //    try
+        //    {
+        //        var sameLotNumberBatchLastOutStockRecord = _dbContext.OutStockRecords.Where(r => r.LotNumberBatch == outStockRecord.LotNumberBatch&&r.IsReturned==true)
+        //            .OrderByDescending(i => i.CreatedAt).FirstOrDefault();
+        //        InStockItemRecord? lastSameInstock = null; 
+        //        if (sameLotNumberBatchLastOutStockRecord != null)
+        //        {
+        //            var lastOutStockRecordId = sameLotNumberBatchLastOutStockRecord.OutStockId;
+        //            lastSameInstock = _dbContext.InStockItemRecords.Where(i=>i.ReturnOutStockId!=null&&i.ReturnOutStockId==lastOutStockRecordId).FirstOrDefault();
+        //        }
+
+
+        //        outStockRecord.IsReturned = true;
+        //        var inStockLotNumberBatch = outStockRecord.LotNumberBatch + "-R1";
+        //        if (lastSameInstock != null && lastSameInstock.LotNumberBatch.Contains("-R"))
+        //        {
+        //            var lotNumberBatchSplited = lastSameInstock.LotNumberBatch.Split("-R");
+        //            var nowSeqString = lotNumberBatchSplited[1];
+        //            var nowSeqInt = int.Parse(nowSeqString);
+        //            inStockLotNumberBatch = sameLotNumberBatchLastOutStockRecord.LotNumberBatch.Split("-R")[0] + "-R" + (nowSeqInt + 1).ToString();
+        //        }
+        //        float afterQuantity = (product.InStockQuantity ?? 0) + outStockRecord.ApplyQuantity;
+
+        //        var inStockRecord = new InStockItemRecord
+        //        {
+        //            InStockId = Guid.NewGuid().ToString(),
+        //            LotNumberBatch = inStockLotNumberBatch,
+        //            LotNumber = outStockRecord.LotNumber,
+        //            CompId = outStockRecord.CompId,
+        //            OriginalQuantity = product.InStockQuantity ?? 0.0f,
+        //            ExpirationDate = outStockRecord.ExpirationDate,
+        //            ItemId = outStockRecord.ItemId,
+        //            InStockQuantity = outStockRecord.ApplyQuantity,
+        //            ProductId = outStockRecord.ProductId,
+        //            ProductCode = outStockRecord.ProductCode,
+        //            ProductName = outStockRecord.ProductName,
+        //            ProductSpec = outStockRecord.ProductSpec,
+        //            Type = CommonConstants.StockInType.RETURN,
+        //            BarCodeNumber = outStockRecord.BarCodeNumber,
+        //            UserId = user.UserId,
+        //            UserName = user.DisplayName,
+        //            AfterQuantity = afterQuantity,
+        //            QcType = product.QcType,
+        //            ReturnOutStockId = outStockRecord.OutStockId
+        //        };
+        //        _dbContext.InStockItemRecords.Add( inStockRecord );
+        //        product.InStockQuantity = afterQuantity;
+        //        _dbContext.SaveChanges();
+        //        scope.Complete();
+        //        return (true, null);
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        _logger.LogError("事務失敗[Return]：{msg}", ex);
+        //        return (false, ex.Message);
+        //    }
+        //}
+
+        public List<ReturnStockRecord> ListReturnRecords(ListReturnRecordsRequest request)
+        {
+            IQueryable<ReturnStockRecord> query = _dbContext.ReturnStockRecords;
+            
+            if (request.StartDate != null)
+            {
+                query = query.Where(h => h.CreatedAt >= DateTimeHelper.ParseDateString(request.StartDate).Value);
+            }
+            if (request.EndDate != null)
+            {
+                DateTime endDateTime = DateTimeHelper.ParseDateString(request.EndDate).Value.AddDays(1);
+                query = query.Where(h => h.CreatedAt < endDateTime);
+            }
+            if (request.ProductId != null)
+            {
+                query = query.Where(h => h.ProductId == request.ProductId);
+            }
+            if (request.LotNumberBatch != null)
+            {
+                query = query.Where(h => h.LotNumberBatch == request.LotNumberBatch);
+            }
+            if (request.LotNumber != null)
+            {
+                query = query.Where(h => h.LotNumber == request.LotNumber);
+            }
+            if (request.OutStockId != null)
+            {
+                query = query.Where(h => h.OutStockId == request.OutStockId);
+            }
+            query = query.Where(h => h.CompId == request.CompId);
+
+            return query.ToList();
+        }
+
+
 
         public List<NearExpiredProductVo> GetNearExpiredProductList(string compId,DateOnly compareDate,int? preDeadline)
         {
