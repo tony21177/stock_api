@@ -90,7 +90,8 @@ namespace stock_api.Service
                     ItemId = inStockItem.ItemId,
                     BarCodeNumber = inStockItem.BarCodeNumber,
                     ExpirationDate = inStockItem.ExpirationDate,
-                    SkipQcCommnet = request.IsSkipQc?request.SkipQcComment:""
+                    SkipQcCommnet = request.IsSkipQc?request.SkipQcComment:"",
+                    Remark = request.Remark,
                 };
                
 

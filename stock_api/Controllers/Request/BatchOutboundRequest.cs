@@ -6,6 +6,7 @@
         public List<OutboundRequest> OutboundItems { get; set; }
         public string Type { get; set; } = null!;
         public string? CompId { get; set; }
+        public string? Remark { get; set; }
 
     }
 
@@ -20,5 +21,6 @@
         public string? Type { get; set; } = null!;
         public bool IsSkipQc { get; set; } = false; 
         public string? SkipQcComment { get; set;}
+        public string? Remark { get; set; }
     }
 }

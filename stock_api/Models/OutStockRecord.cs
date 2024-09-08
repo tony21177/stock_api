@@ -149,4 +149,7 @@ public partial class OutStockRecord
 
     [StringLength(500)]
     public string? SkipQcCommnet { get; set; }
+
+    [StringLength(100)]
+    public string? Remark { get; set; }
 }
