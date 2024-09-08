@@ -208,32 +208,7 @@ namespace stock_api.Service
 
                 if (updateAcceptItem.AcceptQuantity != null)
                 {
-                    if (isDirectOutStock)
-                    {
-                        var outStockId = Guid.NewGuid().ToString();
-                        var outStockRecord = new OutStockRecord()
-                        {
-                            OutStockId = outStockId,
-                            //AbnormalReason = request.AbnormalReason,
-                            ApplyQuantity = updateAcceptItem.AcceptQuantity.Value,
-                            LotNumber = updateAcceptItem.LotNumber,
-                            LotNumberBatch = lotNumberBatch,
-                            CompId = compId,
-                            ExpirationDate = DateOnly.FromDateTime(DateTimeHelper.ParseDateString(updateAcceptItem.ExpirationDate).Value),
-                            IsAbnormal = false,
-                            ProductId = product.ProductId,
-                            ProductCode = product.ProductCode,
-                            ProductName = product.ProductName,
-                            ProductSpec = product.ProductSpec,
-                            Type = CommonConstants.StockInType.PURCHASE,
-                            UserId = acceptMember.UserId,
-                            UserName = acceptMember.DisplayName,
-                            OriginalQuantity = product.InStockQuantity.Value,
-                            AfterQuantity = product.InStockQuantity.Value,
-                            ItemId = existingAcceptanceItem.ItemId,
-                            BarCodeNumber = existingAcceptanceItem.LotNumberBatch,
-                        };
-                    }
+                    
 
                     var tempInStockItemRecord = new TempInStockItemRecord()
                     {
@@ -289,10 +264,48 @@ namespace stock_api.Service
                         Comment = updateAcceptItem.Comment,
                         QcComment = updateAcceptItem.QcComment,
                     };
+
                     if (isDirectOutStock)
                     {
+
+                        var outStockId = Guid.NewGuid().ToString();
+                        var outStockRecord = new OutStockRecord()
+                        {
+                            OutStockId = outStockId,
+                            //AbnormalReason = request.AbnormalReason,
+                            ApplyQuantity = updateAcceptItem.AcceptQuantity.Value,
+                            LotNumber = updateAcceptItem.LotNumber,
+                            LotNumberBatch = lotNumberBatch,
+                            CompId = compId,
+                            ExpirationDate = DateOnly.FromDateTime(DateTimeHelper.ParseDateString(updateAcceptItem.ExpirationDate).Value),
+                            IsAbnormal = false,
+                            ProductId = product.ProductId,
+                            ProductCode = product.ProductCode,
+                            ProductName = product.ProductName,
+                            ProductSpec = product.ProductSpec,
+                            Type = CommonConstants.StockInType.PURCHASE,
+                            UserId = acceptMember.UserId,
+                            UserName = acceptMember.DisplayName,
+                            OriginalQuantity = product.InStockQuantity.Value,
+                            AfterQuantity = product.InStockQuantity.Value,
+                            ItemId = existingAcceptanceItem.ItemId,
+                            BarCodeNumber = existingAcceptanceItem.LotNumberBatch,
+                        };
+                        _dbContext.OutStockRecords.Add(outStockRecord);
+
                         inStockItemRecord.OutStockStatus = CommonConstants.OutStockStatus.ALL;
                         inStockItemRecord.OutStockQuantity = updateAcceptItem.AcceptQuantity.Value;
+                        var outStockRelateToInStock = new OutstockRelatetoInstock()
+                        {
+                            OutStockId = outStockId,
+                            InStockId = inStockItemRecord.InStockId,
+                            LotNumber = inStockItemRecord.LotNumber,
+                            LotNumberBatch = lotNumberBatch,
+                            Quantity = updateAcceptItem.AcceptQuantity.Value,
+                        };
+                        _dbContext.OutstockRelatetoInstocks.Add(outStockRelateToInStock);
+
+
                     }
 
 
@@ -337,14 +350,26 @@ namespace stock_api.Service
                         product.InStockQuantity = inStockItemRecord.AfterQuantity;
                     }
 
-                    // 應該是出庫時才去更新
-                    //product.LotNumber = updateAcceptItem.LotNumber;
-                    //product.LotNumberBatch = existingAcceptanceItem.LotNumberBatch;
+                    //入庫直接出庫
+                    if (isDirectOutStock == true) 
+                    {
+                        product.LotNumber = updateAcceptItem.LotNumber;
+                        product.LotNumberBatch = existingAcceptanceItem.LotNumberBatch;
+                        DateOnly nowDate = DateOnly.FromDateTime(DateTime.Now);
+                        if (product.OpenDeadline != null)
+                        {
+                            product.LastAbleDate = nowDate.AddDays(product.OpenDeadline.Value);
+                        }
+                        product.LastOutStockDate = nowDate;
+                        product.OriginalDeadline = inStockItemRecord.ExpirationDate;
+                    }
                     //
                     product.DeliverFunction = updateAcceptItem.DeliverFunction;
                     product.DeliverTemperature = updateAcceptItem.DeliverTemperature;
                     product.SavingFunction = updateAcceptItem.SavingFunction;
                     product.SavingTemperature = updateAcceptItem.SavingTemperature;
+                    
+
 
                     _dbContext.TempInStockItemRecords.Add(tempInStockItemRecord);
                     _dbContext.InStockItemRecords.Add(inStockItemRecord);
