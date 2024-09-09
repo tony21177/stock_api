@@ -257,6 +257,7 @@ namespace stock_api.Service
                     var needOrderedQuantityUnitFloat = p.NeedOrderedQuantity * p.UnitConversion;
                     var needOrderedQuantityUnit = Math.Ceiling((decimal)needOrderedQuantityUnitFloat.Value * 100) / 100;
                     p.NeedUnorderedQuantityUnit = (float)needOrderedQuantityUnit;
+                    if (p.NeedOrderedQuantity == 0.0) return false;
                     return true;
                 }
                 return false;
