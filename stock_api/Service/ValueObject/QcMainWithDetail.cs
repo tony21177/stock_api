@@ -36,8 +36,19 @@ namespace stock_api.Service.ValueObject
         public DateTime? CreatedAt { get; set; }
         public DateTime? UpdatedAt { get; set; }
         public List<QcValidationDetail> DetailList { get; set; } = new();
+        public List<QcAcceptanceDetail> AcceptanceDetails { get; set; } = new();
         public bool IsLotNumberOutStock {  get; set; }
         public bool IsLotNumberBatchOutStock { get; set; }
+        // 20240910新增
+        public string? ProductModel { get; set; }
+        public string FinalResult { get; set; } = null!;
+        public string NewLotNumberTestResult { get; set; } = null!;
+        public string? NewLotNumberTestDocumentId { get; set; }
+        public string? PreTestBarCode { get; set; }
+        public string? PreTestResult { get; set; }
+        public string? PreTestId { get; set; }
+        public string? Remark { get; set; }
+        public string? TeamLeader { get; set; }
 
     }
 

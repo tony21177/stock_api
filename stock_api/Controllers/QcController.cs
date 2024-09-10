@@ -126,6 +126,7 @@ namespace stock_api.Controllers
             QcValidationMain newQcMain = _mapper.Map<QcValidationMain>(request);
             newQcMain.MainId = Guid.NewGuid().ToString();
             List<QcValidationDetail> newQcDetailList = _mapper.Map<List<QcValidationDetail>>(request.Details);
+            List<QcAcceptanceDetail> newAcceptanceList = _mapper.Map<List<QcAcceptanceDetail>>(request.AcceptanceDetails);
             List<InStockItemRecord> inStockItemRecordList = new List<InStockItemRecord>();
             if (!string.IsNullOrEmpty(request.LotNumber))
             {
@@ -155,6 +156,7 @@ namespace stock_api.Controllers
             
             List<string> itemIdList = inStockItemRecordList.Select(i => i.ItemId).Distinct().ToList();
             List<PurchaseDetailView> purchaseDetailList = _purchaseService.GetPurchaseDetailListByItemIdList(itemIdList);
+            WarehouseProduct product = _warehouseProductService.GetProductByProductId(inStockItemRecordList[0].ProductId);
 
             newQcMain.PurchaseMainId = purchaseDetailList.Count > 0 ? purchaseDetailList[0].PurchaseMainId : null;
             newQcMain.PurchaseSubItemId = purchaseDetailList.Count > 0 ? string.Join(",", purchaseDetailList.Select(e => e.ItemId).ToList()) : null;
@@ -168,8 +170,16 @@ namespace stock_api.Controllers
             newQcMain.ProductSpec = inStockItemRecordList[0].ProductSpec;
             newQcMain.LotNumber = inStockItemRecordList[0].LotNumber;
             newQcMain.LotNumberBatch = inStockItemRecordList[0].LotNumberBatch;
+            newQcMain.ProductModel = product.ProductModel;
+            newQcMain.TestUserId = memberAndPermissionSetting.Member.UserId;
+            newQcMain.TestUserName = memberAndPermissionSetting.Member.DisplayName;
+
+
             newQcDetailList.ForEach(detail => detail.MainId = newQcMain.MainId);
-            var (result,erroMsg) = _qcService.CreateQcValidation(newQcMain, newQcDetailList);
+            newAcceptanceList.ForEach(detail => detail.MainId = newQcMain.MainId);
+
+
+            var (result,erroMsg) = _qcService.CreateQcValidation(newQcMain, newQcDetailList, newAcceptanceList);
             var response = new CommonResponse<List<UnDoneQcLot>>
             {
                 Result = result,
@@ -205,6 +215,7 @@ namespace stock_api.Controllers
 
 
             var details = _qcService.GetQcDetailsByMainIdList(qcMainList.Select(m => m.MainId).ToList());
+            var acceptanceDetails = _qcService.GetQcAcceptanceDetailsByMainIdList(qcMainList.Select(m => m.MainId).ToList());
 
             var qcMainWithDetailList = _mapper.Map<List<QcMainWithDetail>>(qcMainList);
             qcMainWithDetailList.ForEach(m =>
@@ -219,7 +230,8 @@ namespace stock_api.Controllers
                 {
                     m.IsLotNumberBatchOutStock = true;
                 }
-
+                var matchedAcceptanceDetailList = acceptanceDetails.Where(d => d.MainId == m.MainId).ToList();
+                m.AcceptanceDetails = matchedAcceptanceDetailList;
             });
 
             

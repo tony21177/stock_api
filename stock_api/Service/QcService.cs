@@ -54,13 +54,15 @@ namespace stock_api.Service
             return unDoneQcLotList;
         }
 
-        public (bool,string?) CreateQcValidation(QcValidationMain newQcValidationMain,List<QcValidationDetail> newQcValidationDetailList)
+        public (bool,string?) CreateQcValidation(QcValidationMain newQcValidationMain,List<QcValidationDetail> newQcValidationDetailList
+            , List<QcAcceptanceDetail> newQcAcceptanceDetail)
         {
             using var scope = new TransactionScope();
             try
             {
                 _dbContext.QcValidationMains.Add(newQcValidationMain);
                 _dbContext.QcValidationDetails.AddRange(newQcValidationDetailList);
+                _dbContext.QcAcceptanceDetails.AddRange(newQcAcceptanceDetail);
 
                 if (newQcValidationMain.QcType == CommonConstants.QcTypeConstants.LOT_NUMBER)
                 {
@@ -194,5 +196,11 @@ namespace stock_api.Service
         {
             return _dbContext.QcValidationDetails.Where(d => mainIdList.Contains(d.MainId)).ToList();
         }
+
+        public List<QcAcceptanceDetail> GetQcAcceptanceDetailsByMainIdList(List<string> mainIdList)
+        {
+            return _dbContext.QcAcceptanceDetails.Where(d => mainIdList.Contains(d.MainId)).ToList();
+        }
+
     }
 }

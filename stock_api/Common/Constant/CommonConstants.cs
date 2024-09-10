@@ -401,7 +401,40 @@ namespace stock_api.Common.Constant
             }
         }
 
-   
+        public static class QcFinalResult
+        {
+            public const string PASS = "PASS";
+            public const string FAIL = "FAIL";
+
+            public static List<string> GetAllValues()
+            {
+                return new List<string> { PASS, FAIL };
+            }
+        }
+
+        public static class NewLotNumberTestResult
+        {
+            public const string EXECUTED = "EXECUTED";
+            public const string YES = "YES";
+            public const string NO = "NO";
+
+            public static List<string> GetAllValues()
+            {
+                return new List<string> { EXECUTED, YES, NO };
+            }
+        }
+
+        public static class PreTestResult
+        {
+            public const string PASS = "PASS";
+            public const string FAIL = "FAIL";
+            public const string OTHER = "OTHER";
+
+            public static List<string> GetAllValues()
+            {
+                return new List<string> { PASS, FAIL, OTHER };
+            }
+        }
 
     }
 

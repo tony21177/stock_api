@@ -767,7 +767,6 @@ public partial class StockDbContext : DbContext
             entity.Property(e => e.PreTestResult).HasComment("此產品前一次入庫:PASS符合驗收條件,FAIL未符合驗收條件,OTHER已執行對應紀錄編號");
             entity.Property(e => e.ProductModel).HasDefaultValueSql("''");
             entity.Property(e => e.QcType).HasComment("LOT_NUMBER或LOT_NUMBER_BATCH");
-            entity.Property(e => e.Remark).HasComment("備註");
             entity.Property(e => e.TeamLeader).HasComment("組長");
             entity.Property(e => e.UpdatedAt)
                 .ValueGeneratedOnAddOrUpdate()

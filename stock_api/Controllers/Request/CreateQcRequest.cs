@@ -16,8 +16,18 @@ namespace stock_api.Controllers.Request
 
         public string? Comment { get; set; }
         public string? QcType {  get; set; }
+        // 20240910新增
+        public string FinalResult { get; set; } = null!;
+        public string NewLotNumberTestResult { get; set; } = null!;
+        public string? NewLotNumberTestDocumentId { get; set; }
+        public string? PreTestBarCode { get; set; }
+        public string? PreTestResult { get; set; }
+        public string? PreTestId { get; set; }
+        public string? Remark { get; set; }
+        public string? TeamLeader { get; set; }
 
         public List<QcDetail> Details { get; set; } = null!;
+        public List<AcceptanceDetail> AcceptanceDetails { get; set; } = null!;
 
     }
     public class QcDetail
@@ -29,6 +39,16 @@ namespace stock_api.Controllers.Request
         public string? OldLotResult { get; set; }
 
         public string? QuantityDiff { get; set; }
+        public string? ValidationResult { get; set; }
+    }
+
+    public class AcceptanceDetail
+    {
+        public int ItemNumber { get; set; }
+
+        public string? NewLotResult { get; set; }
+
+        public string? AcceptRange { get; set; }
         public string? ValidationResult { get; set; }
     }
 }

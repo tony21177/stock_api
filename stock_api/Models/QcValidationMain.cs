@@ -131,12 +131,6 @@ public partial class QcValidationMain
     [StringLength(100)]
     public string? PreTestId { get; set; }
 
-    /// <summary>
-    /// 備註
-    /// </summary>
-    [StringLength(300)]
-    public string? Remark { get; set; }
-
     [StringLength(100)]
     public string? TestUserId { get; set; }
 
