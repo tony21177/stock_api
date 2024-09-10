@@ -19,5 +19,10 @@
         public string ProductSpec { get; set; } = null!;
         public bool IsLotNumberOutStock { get; set; } 
         public bool IsLotNumberBatchOutStock { get; set; } 
+        // 20240910新增
+        public string? ProductModel { get; set; } 
+        public DateTime? InStockTime { get; set; }
+        public string? InStockUserId {  get; set; }
+        public string? InStockUserName { get; set; }
     }
 }

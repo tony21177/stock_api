@@ -69,6 +69,8 @@ public partial class StockDbContext : DbContext
 
     public virtual DbSet<PurchaseSubItem> PurchaseSubItems { get; set; }
 
+    public virtual DbSet<QcAcceptanceDetail> QcAcceptanceDetails { get; set; }
+
     public virtual DbSet<QcValidationDetail> QcValidationDetails { get; set; }
 
     public virtual DbSet<QcValidationMain> QcValidationMains { get; set; }
@@ -727,6 +729,18 @@ public partial class StockDbContext : DbContext
             entity.Property(e => e.WithPurchaseMainId).HasComment("Owner從拆單建立就會帶這個參數,對應對WithCompId的採購單purchase_main_sheet.PurchaseMainId");
         });
 
+        modelBuilder.Entity<QcAcceptanceDetail>(entity =>
+        {
+            entity.HasKey(e => e.AcceptanceDetailId).HasName("PRIMARY");
+
+            entity.Property(e => e.CreatedAt).HasDefaultValueSql("CURRENT_TIMESTAMP");
+            entity.Property(e => e.NewLotResult).HasComment("新批號結果");
+            entity.Property(e => e.UpdatedAt)
+                .ValueGeneratedOnAddOrUpdate()
+                .HasDefaultValueSql("CURRENT_TIMESTAMP");
+            entity.Property(e => e.ValidationResult).HasComment("PASS,FAIL,ND");
+        });
+
         modelBuilder.Entity<QcValidationDetail>(entity =>
         {
             entity.HasKey(e => e.DetailId).HasName("PRIMARY");
@@ -744,8 +758,17 @@ public partial class StockDbContext : DbContext
 
             entity.Property(e => e.Comment).HasComment("備註說明");
             entity.Property(e => e.CreatedAt).HasDefaultValueSql("CURRENT_TIMESTAMP");
+            entity.Property(e => e.FinalResult).HasComment("結果統整\nPASS(符合驗收條件),FAIL(未符合驗收條件,進行退貨)");
             entity.Property(e => e.InStockTime).HasComment("對應的入庫時間");
+            entity.Property(e => e.NewLotNumberTestDocumentId).HasComment("新批號驗收紀錄對應編號或更換試劑文管登錄編號版次");
+            entity.Property(e => e.NewLotNumberTestResult).HasComment("新批號驗收狀況\nEXECUTED,YES,NO");
+            entity.Property(e => e.PreTestBarCode).HasComment("此產品前一次入庫情況:條碼編號");
+            entity.Property(e => e.PreTestId).HasComment("此產品前一次入庫: 已執行對應紀錄編號");
+            entity.Property(e => e.PreTestResult).HasComment("此產品前一次入庫:PASS符合驗收條件,FAIL未符合驗收條件,OTHER已執行對應紀錄編號");
+            entity.Property(e => e.ProductModel).HasDefaultValueSql("''");
             entity.Property(e => e.QcType).HasComment("LOT_NUMBER或LOT_NUMBER_BATCH");
+            entity.Property(e => e.Remark).HasComment("備註");
+            entity.Property(e => e.TeamLeader).HasComment("組長");
             entity.Property(e => e.UpdatedAt)
                 .ValueGeneratedOnAddOrUpdate()
                 .HasDefaultValueSql("CURRENT_TIMESTAMP");

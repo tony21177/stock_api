@@ -89,4 +89,63 @@ public partial class QcValidationMain
 
     [Column(TypeName = "timestamp")]
     public DateTime? UpdatedAt { get; set; }
+
+    [StringLength(200)]
+    public string? ProductModel { get; set; }
+
+    /// <summary>
+    /// 結果統整
+    /// PASS(符合驗收條件),FAIL(未符合驗收條件,進行退貨)
+    /// </summary>
+    [StringLength(45)]
+    public string? FinalResult { get; set; }
+
+    /// <summary>
+    /// 新批號驗收狀況
+    /// EXECUTED,YES,NO
+    /// </summary>
+    [StringLength(45)]
+    public string? NewLotNumberTestResult { get; set; }
+
+    /// <summary>
+    /// 新批號驗收紀錄對應編號或更換試劑文管登錄編號版次
+    /// </summary>
+    [StringLength(200)]
+    public string? NewLotNumberTestDocumentId { get; set; }
+
+    /// <summary>
+    /// 此產品前一次入庫情況:條碼編號
+    /// </summary>
+    [StringLength(200)]
+    public string? PreTestBarCode { get; set; }
+
+    /// <summary>
+    /// 此產品前一次入庫:PASS符合驗收條件,FAIL未符合驗收條件,OTHER已執行對應紀錄編號
+    /// </summary>
+    [StringLength(100)]
+    public string? PreTestResult { get; set; }
+
+    /// <summary>
+    /// 此產品前一次入庫: 已執行對應紀錄編號
+    /// </summary>
+    [StringLength(100)]
+    public string? PreTestId { get; set; }
+
+    /// <summary>
+    /// 備註
+    /// </summary>
+    [StringLength(300)]
+    public string? Remark { get; set; }
+
+    [StringLength(100)]
+    public string? TestUserId { get; set; }
+
+    [StringLength(100)]
+    public string? TestUserName { get; set; }
+
+    /// <summary>
+    /// 組長
+    /// </summary>
+    [StringLength(100)]
+    public string? TeamLeader { get; set; }
 }

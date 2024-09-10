@@ -43,7 +43,11 @@ namespace stock_api.Service
                     LotNumber = inStockItemRecord.LotNumber,
                     LotNumberBatch = inStockItemRecord.LotNumberBatch,
                     QcType = matchedProduct.QcType,
-                    QcTestStatus = inStockItemRecord.QcTestStatus
+                    QcTestStatus = inStockItemRecord.QcTestStatus,
+                    ProductModel = matchedProduct.ProductModel,
+                    InStockTime = inStockItemRecord.CreatedAt,
+                    InStockUserId = inStockItemRecord.UserId,
+                    InStockUserName = inStockItemRecord.UserName
                 };
                 unDoneQcLotList.Add(unDoneQcLot);
             }
