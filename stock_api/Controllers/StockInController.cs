@@ -742,7 +742,7 @@ namespace stock_api.Controllers
                 });
             }
 
-            if (outStockRecord.ApplyQuantity <= request.ReturnQuantity)
+            if (outStockRecord.ApplyQuantity < request.ReturnQuantity)
             {
                 return BadRequest(new CommonResponse<dynamic>
                 {
