@@ -101,8 +101,7 @@ public partial class QcValidationMain
     public string? FinalResult { get; set; }
 
     /// <summary>
-    /// 新批號驗收狀況
-    /// EXECUTED,YES,NO
+    /// 新批號驗收狀況\nEXECUTED,NO_EXECUTE
     /// </summary>
     [StringLength(45)]
     public string? NewLotNumberTestResult { get; set; }
@@ -114,13 +113,26 @@ public partial class QcValidationMain
     public string? NewLotNumberTestDocumentId { get; set; }
 
     /// <summary>
+    /// 對應記錄編號
+    /// </summary>
+    [StringLength(200)]
+    public string? NewLotNumberTestCode { get; set; }
+
+    /// <summary>
+    /// 更換試劑說明書
+    /// YES(勾選是)、NO(勾選否)
+    /// </summary>
+    [StringLength(45)]
+    public string? ReagentManual { get; set; }
+
+    /// <summary>
     /// 此產品前一次入庫情況:條碼編號
     /// </summary>
     [StringLength(200)]
     public string? PreTestBarCode { get; set; }
 
     /// <summary>
-    /// 此產品前一次入庫:PASS符合驗收條件,FAIL未符合驗收條件,OTHER已執行對應紀錄編號
+    /// 此產品前一次入庫:PASS符合驗收條件,FAIL未符合驗收條件
     /// </summary>
     [StringLength(100)]
     public string? PreTestResult { get; set; }
@@ -142,4 +154,28 @@ public partial class QcValidationMain
     /// </summary>
     [StringLength(100)]
     public string? TeamLeader { get; set; }
+
+    /// <summary>
+    /// 是否進行退貨:YES、NO
+    /// </summary>
+    [StringLength(45)]
+    public string? IsReturnStock { get; set; }
+
+    /// <summary>
+    /// 備註
+    /// </summary>
+    [Column(TypeName = "text")]
+    public string? SummaryRemarks { get; set; }
+
+    /// <summary>
+    /// tester
+    /// </summary>
+    [StringLength(100)]
+    public string? Tester { get; set; }
+
+    /// <summary>
+    /// 測試時間
+    /// </summary>
+    [StringLength(100)]
+    public string? TestingDate { get; set; }
 }

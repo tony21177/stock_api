@@ -20,11 +20,17 @@ namespace stock_api.Controllers.Request
         public string FinalResult { get; set; } = null!;
         public string NewLotNumberTestResult { get; set; } = null!;
         public string? NewLotNumberTestDocumentId { get; set; }
+        public string? NewLotNumberTestCode { get; set; }
+        public string? ReagentManual { get; set; }
         public string? PreTestBarCode { get; set; }
         public string? PreTestResult { get; set; }
         public string? PreTestId { get; set; }
         public string? Remark { get; set; }
         public string? TeamLeader { get; set; }
+        public string? IsReturnStock { get; set; }
+        public string? SummaryRemarks { get; set; }
+        public string? Tester { get; set; }
+        public string? TestingDate { get; set; }
 
         public List<QcDetail> Details { get; set; } = null!;
         public List<AcceptanceDetail> AcceptanceDetails { get; set; } = null!;
