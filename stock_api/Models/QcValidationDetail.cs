@@ -31,6 +31,12 @@ public partial class QcValidationDetail
     [StringLength(300)]
     public string? QuantityDiff { get; set; }
 
+    /// <summary>
+    /// 定量可允許驗收差距
+    /// </summary>
+    [StringLength(300)]
+    public string? AcceptableRange { get; set; }
+
     [StringLength(300)]
     public string? ValidationResult { get; set; }
 

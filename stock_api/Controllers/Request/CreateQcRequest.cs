@@ -45,6 +45,7 @@ namespace stock_api.Controllers.Request
         public string? OldLotResult { get; set; }
 
         public string? QuantityDiff { get; set; }
+        public string? AcceptableRange { get; set; }
         public string? ValidationResult { get; set; }
     }
 

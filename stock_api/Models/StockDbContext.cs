@@ -745,6 +745,7 @@ public partial class StockDbContext : DbContext
         {
             entity.HasKey(e => e.DetailId).HasName("PRIMARY");
 
+            entity.Property(e => e.AcceptableRange).HasComment("定量可允許驗收差距");
             entity.Property(e => e.CreatedAt).HasDefaultValueSql("CURRENT_TIMESTAMP");
             entity.Property(e => e.NewLotResult).HasComment("新批號結果");
             entity.Property(e => e.UpdatedAt)
