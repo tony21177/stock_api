@@ -124,7 +124,10 @@ namespace stock_api.Controllers
                 return BadRequest(CommonResponse<dynamic>.BuildValidationFailedResponse(validationResult));
             }
             QcValidationMain newQcMain = _mapper.Map<QcValidationMain>(request);
-            newQcMain.MainId = Guid.NewGuid().ToString();
+            if (newQcMain.MainId == null)
+            {
+                newQcMain.MainId = Guid.NewGuid().ToString();
+            }
             List<QcValidationDetail> newQcDetailList = _mapper.Map<List<QcValidationDetail>>(request.Details);
             List<QcAcceptanceDetail> newAcceptanceList = _mapper.Map<List<QcAcceptanceDetail>>(request.AcceptanceDetails);
             List<InStockItemRecord> inStockItemRecordList = new List<InStockItemRecord>();

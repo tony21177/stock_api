@@ -5,6 +5,7 @@ namespace stock_api.Controllers.Request
 {
     public class CreateQcRequest
     {
+        public string? MainId { get; set; }
         public string? CompId {  get; set; }
         public string? LotNumber { get; set; }
         public string? LotNumberBatch { get; set; }
