@@ -32,14 +32,7 @@ namespace stock_api.Controllers.Validator
                 .Cascade(CascadeMode.Stop) // Stop on first failure
                 .Must(result => CommonConstants.PreTestResult.GetAllValues().Contains(result)).When(request => !string.IsNullOrEmpty(request.PreTestResult)) 
                     .WithMessage($"preTestResult必須為{string.Join(",", CommonConstants.PreTestResult.GetAllValues())}");
-            RuleFor(request => request.ReagentManual)
-                .Cascade(CascadeMode.Stop) // Stop on first failure
-                .Must(manual => CommonConstants.ReagentManual.GetAllValues().Contains(manual)).When(request => !string.IsNullOrEmpty(request.ReagentManual))
-                .WithMessage($"reagentManual必須為{string.Join(",", CommonConstants.ReagentManual.GetAllValues())}");
-            RuleFor(request => request.IsReturnStock)
-                .Cascade(CascadeMode.Stop) // Stop on first failure
-                .Must(isReturnStock => CommonConstants.IsReturnStock.GetAllValues().Contains(isReturnStock)).When(request => !string.IsNullOrEmpty(request.IsReturnStock))
-                .WithMessage($"isReturnStock必須為{string.Join(",", CommonConstants.IsReturnStock.GetAllValues())}");
+           
         }
     }
 }

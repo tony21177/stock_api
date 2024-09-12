@@ -415,11 +415,12 @@ namespace stock_api.Common.Constant
         public static class NewLotNumberTestResult
         {
             public const string EXECUTED = "EXECUTED";
-            public const string NO_EXECUTE = "NO_EXECUTE";
+            public const string YES = "YES";
+            public const string NO = "NO";
 
             public static List<string> GetAllValues()
             {
-                return new List<string> { EXECUTED, NO_EXECUTE };
+                return new List<string> { EXECUTED, YES, NO };
             }
         }
 
@@ -427,32 +428,11 @@ namespace stock_api.Common.Constant
         {
             public const string PASS = "PASS";
             public const string FAIL = "FAIL";
-
-            public static List<string> GetAllValues()
-            {
-                return new List<string> { PASS, FAIL };
-            }
-        }
-
-        public static class IsReturnStock
-        {
             public const string YES = "YES";
-            public const string NO = "NO";
 
             public static List<string> GetAllValues()
             {
-                return new List<string> { YES, NO };
-            }
-        }
-
-        public static class ReagentManual
-        {
-            public const string YES = "YES";
-            public const string NO = "NO";
-
-            public static List<string> GetAllValues()
-            {
-                return new List<string> { YES, NO };
+                return new List<string> { PASS, FAIL, YES };
             }
         }
 
