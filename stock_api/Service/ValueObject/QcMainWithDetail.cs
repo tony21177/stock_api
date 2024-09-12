@@ -52,6 +52,7 @@ namespace stock_api.Service.ValueObject
         public string? SummaryRemarks { get; set; }
         public string? Tester { get; set; }
         public string? TestingDate { get; set; }
+        public string? ConcentrationComment { get; set; }
 
     }
 
