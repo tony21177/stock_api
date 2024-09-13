@@ -22,8 +22,10 @@ namespace stock_api.Service.ValueObject
         public List<AcceptItem> AcceptItems { get; set; }
         public bool IsContainKeywords(string keywords)
         {
-            return $"{this.CurrentStatus} {this.GroupIds} {this.Remarks} {this.UserId} {this.ReceiveStatus} {this.Type}".Contains(keywords);
-            
+            string formattedDate = ApplyDate.ToString("yyyyMMdd");
+            string purchaseIdPrefix = PurchaseMainId.Substring(0, 5);
+
+            return $"{formattedDate}${purchaseIdPrefix} {this.CurrentStatus} {this.GroupIds} {this.Remarks} {this.UserId} {this.ReceiveStatus} {this.Type}".Contains(keywords);
         }
     }
 
