@@ -25,7 +25,7 @@ namespace stock_api.Service.ValueObject
             string formattedDate = ApplyDate.ToString("yyyyMMdd");
             string purchaseIdPrefix = PurchaseMainId.Substring(0, 5);
 
-            return $"{formattedDate}${purchaseIdPrefix} {this.CurrentStatus} {this.GroupIds} {this.Remarks} {this.UserId} {this.ReceiveStatus} {this.Type}".Contains(keywords);
+            return $"{formattedDate}{purchaseIdPrefix} {this.CurrentStatus} {this.GroupIds} {this.Remarks} {this.UserId} {this.ReceiveStatus} {this.Type}".Contains(keywords);
         }
     }
 
