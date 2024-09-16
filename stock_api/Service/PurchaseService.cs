@@ -488,22 +488,7 @@ namespace stock_api.Service
                 }
             }
             _logger.LogInformation("[ListPurchase]---7---{time}", DateTime.Now);
-            if (!string.IsNullOrEmpty(listPurchaseRequest.Keywords))
-            {
-                string keyWords = listPurchaseRequest.Keywords;
-                purchaseMainAndSubItemVoList = purchaseMainAndSubItemVoList.FindAll(purchaseMainAndSubItemVo =>
-                {
-                    var matchedVo = purchaseMainAndSubItemVo.Items.Find(item => (item.ProductName!=null&& item.ProductName.Contains(keyWords))
-                    || (item.ProductId!=null&& item.ProductId.Contains(listPurchaseRequest.Keywords))
-                    || (item.ProductCode != null && item.ProductCode.Contains(listPurchaseRequest.Keywords))
-                    || (item.ProductModel != null && item.ProductModel.Contains(listPurchaseRequest.Keywords))
-                    || (item.ProductSpec != null && item.ProductSpec.Contains(listPurchaseRequest.Keywords))
-                    || (item.ProductMachine != null && item.ProductMachine.Contains(listPurchaseRequest.Keywords)));
-                    if (matchedVo != null) return true;
-                    return false;
-                });
-            }
-            _logger.LogInformation("[ListPurchase]---8---{time}", DateTime.Now);
+            
 
             return purchaseMainAndSubItemVoList;
         }

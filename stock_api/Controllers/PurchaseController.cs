@@ -202,8 +202,25 @@ namespace stock_api.Controllers
             {
                 return BadRequest(CommonResponse<dynamic>.BuildValidationFailedResponse(validationResult));
             }
-            var data = _purchaseService.ListPurchase(request);
-            var distinctProductIdList = data
+            var listData = _purchaseService.ListPurchase(request);
+            List<PurchaseMainAndSubItemVo> filterKeywordsData = new();
+            if (request.Keywords != null)
+            {
+                foreach(PurchaseMainAndSubItemVo vo in listData)
+                {
+                    if (vo.IsContainKeywords(request.Keywords))
+                    {
+                        filterKeywordsData.Add(vo);
+                    }
+                }
+
+            }
+            else
+            {
+                filterKeywordsData.AddRange(listData);
+            }
+
+            var distinctProductIdList = filterKeywordsData
             .SelectMany(item => item.Items)
             .Select(item => item.ProductId)
             .Distinct()
@@ -211,7 +228,7 @@ namespace stock_api.Controllers
             _logger.LogInformation("[ListPurchase]---9---{time}", DateTime.Now);
             var products = _warehouseProductService.GetProductsByCompId( request.CompId);
             _logger.LogInformation("[ListPurchase]---10---{time}", DateTime.Now);
-            foreach (var vo in data)
+            foreach (var vo in filterKeywordsData)
             {
                 foreach (var item in vo.Items)
                 {
@@ -231,7 +248,7 @@ namespace stock_api.Controllers
                     item.StockLocation = matchedProduct?.StockLocation;
                 }
             }
-            data = data.OrderByDescending(item => item.ApplyDate).ToList();
+            filterKeywordsData = filterKeywordsData.OrderByDescending(item => item.ApplyDate).ToList();
             _logger.LogInformation("[ListPurchase]---11---{time}", DateTime.Now);
             //
             int totalPages = 0;
@@ -244,10 +261,10 @@ namespace stock_api.Controllers
                     switch (orderByField)
                     {
                         case "ApplyDate":
-                            data = data.OrderByDescending(item => item.ApplyDate).ToList();
+                            filterKeywordsData = filterKeywordsData.OrderByDescending(item => item.ApplyDate).ToList();
                             break;
                         case "DemandDate":
-                            data = data.OrderByDescending(item => item.DemandDate).ToList();
+                            filterKeywordsData = filterKeywordsData.OrderByDescending(item => item.DemandDate).ToList();
                             break;
                         default:
                             break;
@@ -258,24 +275,24 @@ namespace stock_api.Controllers
                     switch (orderByField)
                     {
                         case "ApplyDate":
-                            data = data.OrderBy(item => item.ApplyDate).ToList();
+                            filterKeywordsData = filterKeywordsData.OrderBy(item => item.ApplyDate).ToList();
                             break;
                         case "DemandDate":
-                            data = data.OrderBy(item => item.DemandDate).ToList();
+                            filterKeywordsData = filterKeywordsData.OrderBy(item => item.DemandDate).ToList();
                             break;
                         default:
                             break;
                     }
                 }
-                int totalItems = data.Count;
+                int totalItems = filterKeywordsData.Count;
                 totalPages = (int)Math.Ceiling((double)totalItems / request.PaginationCondition.PageSize);
-                data = data.Skip((request.PaginationCondition.Page - 1) * request.PaginationCondition.PageSize).Take(request.PaginationCondition.PageSize).ToList();
+                filterKeywordsData = filterKeywordsData.Skip((request.PaginationCondition.Page - 1) * request.PaginationCondition.PageSize).Take(request.PaginationCondition.PageSize).ToList();
             }
             _logger.LogInformation("[ListPurchase]---12---{time}", DateTime.Now);
             var response = new CommonResponse<List<PurchaseMainAndSubItemVo>>
             {
                 Result = true,
-                Data = data
+                Data = filterKeywordsData
             };
             return Ok(response);
         }
@@ -294,15 +311,31 @@ namespace stock_api.Controllers
             // ListPurchaseRequest request = new() { CurrentStatus = CommonConstants.PurchaseFlowAnswer.AGREE,ReceiveStatus= CommonConstants.PurchaseReceiveStatus.NONE };
             ListPurchaseRequest request = new() { CurrentStatus = CommonConstants.PurchaseFlowAnswer.AGREE };
 
-            var data = _purchaseService.ListPurchase(request);
-            var distinctProductIdList = data
+            var listDate = _purchaseService.ListPurchase(request);
+            List<PurchaseMainAndSubItemVo> filterKeywordsData = new();
+            if (request.Keywords != null)
+            {
+                foreach (PurchaseMainAndSubItemVo vo in listDate)
+                {
+                    if (vo.IsContainKeywords(request.Keywords))
+                    {
+                        filterKeywordsData.Add(vo);
+                    }
+                }
+
+            }
+            else
+            {
+                filterKeywordsData.AddRange(listDate);
+            }
+            var distinctProductIdList = filterKeywordsData
             .SelectMany(item => item.Items)
             .Select(item => item.ProductId)
             .Distinct()
             .ToList();
             var products = _warehouseProductService.GetProductsByProductIds(distinctProductIdList);
 
-            foreach (var vo in data)
+            foreach (var vo in filterKeywordsData)
             {
                 foreach (var item in vo.Items)
                 {
@@ -323,12 +356,12 @@ namespace stock_api.Controllers
                     item.StockLocation = matchedProduct?.StockLocation;
                 }
             }
-            data = data.OrderByDescending(item => item.ApplyDate).ToList();
+            filterKeywordsData = filterKeywordsData.OrderByDescending(item => item.ApplyDate).ToList();
 
             var response = new CommonResponse<dynamic>
             {
                 Result = true,
-                Data = data
+                Data = filterKeywordsData
             };
             return Ok(response);
         }

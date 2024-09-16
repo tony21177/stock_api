@@ -25,5 +25,20 @@ namespace stock_api.Service.ValueObject
         public List<PurchaseSubItemVo> Items {get;set;}
         public List<PurchaseFlowWithAgentsVo>? flows { get;set;}
         public List<PurchaseFlowLog>? flowLogs { get;set;}
+
+        public bool IsContainKeywords(string keywords)
+        {
+            string formattedDate = ApplyDate.ToString("yyyyMMdd");
+            string purchaseIdPrefix = PurchaseMainId.Substring(0, 5);
+            string supplierNames = string.Join(",", Items.Select(i => i.ArrangeSupplierName));
+            string productNames = string.Join(",", Items.Select(i => i.ProductName));
+            string productCodes = string.Join(",", Items.Select(i => i.ProductCode));
+            string productModels = string.Join(",", Items.Select(i => i.ProductModel));
+            string productSpecs = string.Join(",", Items.Select(i => i.ProductSpec));
+            string productMachines = string.Join(",", Items.Select(i => i.ProductMachine));
+            string searchedString = $"{formattedDate}{purchaseIdPrefix} {this.CurrentStatus} {this.Remarks} {this.UserId} {this.ReceiveStatus} {this.Type} {supplierNames} {supplierNames} {productNames} {productCodes} {productModels} {productSpecs} {productMachines}";
+            bool isContainsString = searchedString.Contains(keywords);
+            return isContainsString;
+        }
     }
 }
