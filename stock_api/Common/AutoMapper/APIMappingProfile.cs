@@ -91,6 +91,9 @@ namespace stock_api.Common.AutoMapper
             CreateMap<PurchaseSubItem, UnDonePurchaseSubItem>()
                 .ForAllMembers(opt => opt.Condition((src, dest, srcMember) => srcMember != null));
             CreateMap<PurchaseItemListView, UnDonePurchaseSubItem>()
+                .ForMember(dest => dest.ReceiveStatus, opt => opt.MapFrom(src => src.ItemReceiveStatus))
+                .ForMember(dest => dest.SplitProcess, opt => opt.MapFrom(src => src.SubSplitProcess))
+                .ForMember(dest => dest.OwnerProcess, opt => opt.MapFrom(src => src.SubOwnerProcess))
                 .ForAllMembers(opt => opt.Condition((src, dest, srcMember) => srcMember != null));
 
             //purchaseFlow

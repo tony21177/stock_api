@@ -2,7 +2,7 @@
 
 namespace stock_api.Service.ValueObject
 {
-    public class UnDonePurchaseSubItem:PurchaseItemListView
+    public class UnDonePurchaseSubItem:PurchaseSubItem
     {
         public PurchaseMainSheet PurchaseMain { get; set; } = null!;
         public string? Unit {  get; set; }
