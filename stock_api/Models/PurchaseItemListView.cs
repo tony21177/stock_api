@@ -118,6 +118,9 @@ public partial class PurchaseItemListView
     [StringLength(200)]
     public string ProductName { get; set; } = null!;
 
+    [StringLength(200)]
+    public string? ProductCode { get; set; }
+
     /// <summary>
     /// 品項規格
     /// </summary>
