@@ -1050,10 +1050,11 @@ namespace stock_api.Service
             return unDoneProcessingSubItem.Select(s => s.Quantity ?? 0.0f).DefaultIfEmpty(0.0f).Sum();
         }
 
-        public List<PurchaseSubItem> GetNotDonePurchaseSubItemByProductIdList(List<string> productIdList)
+        public List<PurchaseItemListView> GetNotDonePurchaseSubItemByProductIdList(List<string> productIdList)
         {
-            return _dbContext.PurchaseSubItems.Where(s => s.ReceiveStatus != CommonConstants.PurchaseSubItemReceiveStatus.CLOSE
-            && s.ReceiveStatus != CommonConstants.PurchaseSubItemReceiveStatus.DONE && productIdList.Contains(s.ProductId) && s.OwnerProcess != CommonConstants.PurchaseMainOwnerProcessStatus.NOT_AGREE).ToList();
+            return _dbContext.PurchaseItemListViews.Where(s => s.ReceiveStatus != CommonConstants.PurchaseSubItemReceiveStatus.CLOSE
+            && s.ReceiveStatus != CommonConstants.PurchaseSubItemReceiveStatus.DONE && productIdList.Contains(s.ProductId) && s.OwnerProcess != CommonConstants.PurchaseMainOwnerProcessStatus.NOT_AGREE
+            && s.CurrentStatus != CommonConstants.PurchaseCurrentStatus.REJECT && s.CurrentStatus != CommonConstants.PurchaseCurrentStatus.CLOSE).ToList();
         }
 
         private async Task SendMailByFlowSetting(PurchaseFlowSettingVo purchaseFlowSettingVo, String title, String content)

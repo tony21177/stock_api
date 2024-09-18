@@ -93,6 +93,9 @@ public partial class PurchaseItemListView
     [StringLength(45)]
     public string? OwnerProcess { get; set; }
 
+    [StringLength(300)]
+    public string? OwnerComment { get; set; }
+
     [StringLength(100)]
     public string ItemId { get; set; } = null!;
 
@@ -197,4 +200,6 @@ public partial class PurchaseItemListView
 
     [StringLength(45)]
     public string? SubOwnerProcess { get; set; }
+
+    public float? InStockQuantity { get; set; }
 }

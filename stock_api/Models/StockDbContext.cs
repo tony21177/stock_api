@@ -632,6 +632,7 @@ public partial class StockDbContext : DbContext
             entity.Property(e => e.CurrentStatus).HasComment("目前狀態\nAPPLY : 申請中\nAGREE : 同意\nREJECT : 拒絕\nCLOSE : 結案");
             entity.Property(e => e.DemandDate).HasComment("需求日期");
             entity.Property(e => e.GroupIds).HasComment("設定此單據所屬的組別，參考 Warehouse_Group");
+            entity.Property(e => e.InStockQuantity).HasDefaultValueSql("'0'");
             entity.Property(e => e.ItemGroupIds).HasComment("品項可以設定組別ID\\n在醫院端可以依照組別拆單顯示");
             entity.Property(e => e.ItemReceiveStatus).HasComment("送單到金萬林後，目前狀態\\\\\\\\nNONE : 尚未收到結果\\\\\\\\nPART : 部分驗收入庫\\\\\\\\nDONE : 全部驗收入庫\\\\\\\\nCLOSE:金萬林不同意拆單後的採購項目\\n");
             entity.Property(e => e.MainSplitPrcoess)
