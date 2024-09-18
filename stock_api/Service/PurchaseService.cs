@@ -1043,24 +1043,27 @@ namespace stock_api.Service
         public List<PurchaseItemListView> GetNotDonePurchaseSubItemByProductIdList(List<string> productIdList)
         {
             return _dbContext.PurchaseItemListViews.Where(s => s.ReceiveStatus != CommonConstants.PurchaseSubItemReceiveStatus.CLOSE
-            && s.ReceiveStatus != CommonConstants.PurchaseSubItemReceiveStatus.DONE && productIdList.Contains(s.ProductId) && s.OwnerProcess != CommonConstants.PurchaseMainOwnerProcessStatus.NOT_AGREE
-            && s.CurrentStatus != CommonConstants.PurchaseCurrentStatus.REJECT && s.CurrentStatus != CommonConstants.PurchaseCurrentStatus.CLOSE).ToList();
+            //&& s.ReceiveStatus != CommonConstants.PurchaseSubItemReceiveStatus.DONE 
+            && s.ItemReceiveStatus != CommonConstants.PurchaseSubItemReceiveStatus.DONE
+            && s.OwnerProcess != CommonConstants.PurchaseMainOwnerProcessStatus.NOT_AGREE
+            && s.SubOwnerProcess != CommonConstants.PurchaseMainOwnerProcessStatus.NOT_AGREE
+            && s.CurrentStatus != CommonConstants.PurchaseCurrentStatus.REJECT
+            && s.CurrentStatus != CommonConstants.PurchaseCurrentStatus.CLOSE
+            && productIdList.Contains(s.ProductId)).ToList();
         }
 
         public List<PurchaseItemListView> GetUndonePurchaseSubItems(string compId, string productId)
         {
-            return _dbContext.PurchaseItemListViews.Where(s => s.ReceiveStatus != CommonConstants.PurchaseSubItemReceiveStatus.DONE && s.ReceiveStatus != CommonConstants.PurchaseSubItemReceiveStatus.CLOSE
-            && s.CompId == compId && s.ProductId == productId && s.OwnerProcess != CommonConstants.PurchaseMainOwnerProcessStatus.NOT_AGREE
-            && s.CurrentStatus != CommonConstants.PurchaseCurrentStatus.REJECT && s.CurrentStatus != CommonConstants.PurchaseCurrentStatus.CLOSE).ToList();
+            return _dbContext.PurchaseItemListViews.Where(s => s.ReceiveStatus != CommonConstants.PurchaseSubItemReceiveStatus.CLOSE
+            //&& s.ReceiveStatus != CommonConstants.PurchaseSubItemReceiveStatus.DONE
+            && s.ItemReceiveStatus != CommonConstants.PurchaseSubItemReceiveStatus.DONE
+            && s.OwnerProcess != CommonConstants.PurchaseMainOwnerProcessStatus.NOT_AGREE
+            && s.SubOwnerProcess != CommonConstants.PurchaseMainOwnerProcessStatus.NOT_AGREE
+            && s.CurrentStatus != CommonConstants.PurchaseCurrentStatus.REJECT 
+            && s.CurrentStatus != CommonConstants.PurchaseCurrentStatus.CLOSE
+            && s.CompId == compId
+            && s.ProductId == productId).ToList();
         }
-
-        public List<PurchaseItemListView> GetUndonePurchaseSubItems(List<string> productIdList)
-        {
-            return _dbContext.PurchaseItemListViews.Where(s => s.ReceiveStatus != CommonConstants.PurchaseSubItemReceiveStatus.DONE && s.ReceiveStatus != CommonConstants.PurchaseSubItemReceiveStatus.CLOSE
-            && productIdList.Contains(s.ProductId) && s.OwnerProcess != CommonConstants.PurchaseMainOwnerProcessStatus.NOT_AGREE
-            && s.CurrentStatus != CommonConstants.PurchaseCurrentStatus.REJECT && s.CurrentStatus != CommonConstants.PurchaseCurrentStatus.CLOSE).ToList();
-        }
-
 
         private async Task SendMailByFlowSetting(PurchaseFlowSettingVo purchaseFlowSettingVo, String title, String content)
         {

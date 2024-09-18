@@ -862,7 +862,7 @@ namespace stock_api.Service
             var allProducts = GetAllActiveProducts();
             var allProductIdList = allProducts.Select(x => x.ProductId).ToList();
             List<NotifyProductQuantity> notifyProductQuantityList = new();
-            var allUnDonePurchaseSubItemList = _purchaseService.GetUndonePurchaseSubItems(allProductIdList);
+            var allUnDonePurchaseSubItemList = _purchaseService.GetNotDonePurchaseSubItemByProductIdList(allProductIdList);
             allProducts.ForEach(product =>
             {
                 var matchedUndoneSubItemList = allUnDonePurchaseSubItemList.Where(i => i.ProductId == product.ProductId).ToList();
@@ -898,7 +898,7 @@ namespace stock_api.Service
             var allProducts = GetAllProducts(compId);
             var allProductIdList = allProducts.Select(x => x.ProductId).ToList();
             List<NotifyProductQuantity> notifyProductQuantityList = new();
-            var allUnDonePurchaseSubItemList = _purchaseService.GetUndonePurchaseSubItems(allProductIdList);
+            var allUnDonePurchaseSubItemList = _purchaseService.GetNotDonePurchaseSubItemByProductIdList(allProductIdList);
             allProducts.ForEach(product =>
             {
                 var matchedUndoneSubItemList = allUnDonePurchaseSubItemList.Where(i => i.ProductId == product.ProductId).ToList();

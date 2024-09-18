@@ -1048,7 +1048,7 @@ namespace stock_api.Controllers
         private async Task CalculateForQuantityToNotity(List<NotifyProductQuantity> notifyProductQuantityList)
         {
             var allProductIdList = notifyProductQuantityList.Select(item => item.ProductId).Distinct().ToList();
-            var allUnDonePurchaseSubItemList = _purchaseService.GetUndonePurchaseSubItems(allProductIdList);
+            var allUnDonePurchaseSubItemList = _purchaseService.GetNotDonePurchaseSubItemByProductIdList(allProductIdList);
             foreach (var notifyProductQuantity in notifyProductQuantityList)
             {
                 var matchedSubItemList = allUnDonePurchaseSubItemList.Where(i=>i.ProductId==notifyProductQuantity.ProductId).ToList();
