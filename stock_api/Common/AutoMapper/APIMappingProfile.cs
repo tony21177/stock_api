@@ -90,6 +90,8 @@ namespace stock_api.Common.AutoMapper
                 src.GroupNames != null ? src.GroupNames.Split(",", StringSplitOptions.RemoveEmptyEntries).ToList() : null));
             CreateMap<PurchaseSubItem, UnDonePurchaseSubItem>()
                 .ForAllMembers(opt => opt.Condition((src, dest, srcMember) => srcMember != null));
+            CreateMap<PurchaseItemListView, UnDonePurchaseSubItem>()
+                .ForAllMembers(opt => opt.Condition((src, dest, srcMember) => srcMember != null));
 
             //purchaseFlow
             CreateMap<PurchaseFlow, PurchaseFlowWithAgentsVo>()
