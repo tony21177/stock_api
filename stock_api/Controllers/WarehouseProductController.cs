@@ -756,7 +756,7 @@ namespace stock_api.Controllers
             var memberAndPermissionSetting = _authHelpers.GetMemberAndPermissionSetting(User);
             var compId = memberAndPermissionSetting.CompanyWithUnit.CompId;
             request.CompId ??= compId;
-            List<PurchaseSubItem> purchaseSubItems = _purchaseService.GetUndonePurchaseSubItems(request.CompId, request.ProductId);
+            List<PurchaseItemListView> purchaseSubItems = _purchaseService.GetUndonePurchaseSubItems(request.CompId, request.ProductId);
             List<string> mainIdList = purchaseSubItems.Select(s => s.PurchaseMainId).Distinct().ToList();
             List<PurchaseMainSheet> purchaseMainSheets = _purchaseService.GetPurchaseMainsByMainIdList(mainIdList);
             List<UnDonePurchaseSubItem> unDonePurchaseSubItems = _mapper.Map<List<UnDonePurchaseSubItem>>(purchaseSubItems);
