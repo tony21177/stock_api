@@ -363,11 +363,11 @@ namespace stock_api.Service
                         product.LastOutStockDate = nowDate;
                         product.OriginalDeadline = inStockItemRecord.ExpirationDate;
                     }
-                    //
-                    product.DeliverFunction = updateAcceptItem.DeliverFunction;
-                    product.DeliverTemperature = updateAcceptItem.DeliverTemperature;
-                    product.SavingFunction = updateAcceptItem.SavingFunction;
-                    product.SavingTemperature = updateAcceptItem.SavingTemperature;
+                    // 2024/09/19通常由金萬林設定
+                    //product.DeliverFunction = updateAcceptItem.DeliverFunction;
+                    //product.DeliverTemperature = updateAcceptItem.DeliverTemperature;
+                    //product.SavingFunction = updateAcceptItem.SavingFunction;
+                    //product.SavingTemperature = updateAcceptItem.SavingTemperature;
                     
 
 
