@@ -205,7 +205,7 @@ namespace stock_api.Service
                         // add history
                         PurchaseSubItemHistory newPurchaseSubItemHistory = new PurchaseSubItemHistory
                         {
-                            Action = CommonConstants.PurchaseSubItemHistoryAction.DELETE,
+                            Action = CommonConstants.PurchaseSubItemHistoryAction.ADD,
                             ItemId = item.ItemId,
                             PurchaseMainId = purchaseMainId,
                             PurchaseOrderNo = formattedDate + purchaseIdPrefix,

@@ -544,7 +544,7 @@ namespace stock_api.Controllers
             var verifier = memberAndPermissionSetting.Member;
             var compId = memberAndPermissionSetting.CompanyWithUnit.CompId;
             var currentPurchaseFlow = _purchaseService.GetFlowsByPurchaseMainIds(new List<string> { request.PurchaseMainId})
-                .Where(f=>f.Status==CommonConstants.PurchaseFlowStatus.WAIT).OrderBy(f=>f.Sequence).FirstOrDefault();
+                .Where(f=>f.Status==CommonConstants.PurchaseFlowStatus.WAIT&&f.Reason==null).OrderBy(f=>f.Sequence).FirstOrDefault();
             if (currentPurchaseFlow == null || currentPurchaseFlow.VerifyUserId != verifier.UserId)
             {
                 return BadRequest(new CommonResponse<dynamic>
