@@ -174,7 +174,7 @@ namespace stock_api.Controllers
                 };
                 purchaseSubItemList.Add(newPurchaseSubItem);
             });
-            var result = _purchaseService.CreatePurchase(newPurchaseMain, purchaseSubItemList, purchaseFlowSettingList.Where(s => s.IsActive == true).ToList(), applyProductFlowSettingListForGroupReview,isItemMultiGroup, memberAndPermissionSetting.CompanyWithUnit.Type == CommonConstants.CompanyType.OWNER);
+            var result = _purchaseService.CreatePurchase(newPurchaseMain, purchaseSubItemList, purchaseFlowSettingList.Where(s => s.IsActive == true).ToList(), applyProductFlowSettingListForGroupReview,isItemMultiGroup, memberAndPermissionSetting.CompanyWithUnit.Type == CommonConstants.CompanyType.OWNER, memberAndPermissionSetting.Member);
             var response = new CommonResponse<dynamic>
             {
                 Result = result,
@@ -591,7 +591,7 @@ namespace stock_api.Controllers
                 });
             }
 
-            var result = _purchaseService.OwnerUpdateOrDeleteSubItems(request,purchaseMainSheet,existingSubItemList);
+            var result = _purchaseService.OwnerUpdateOrDeleteSubItems(request,purchaseMainSheet,existingSubItemList,memberAndPermissionSetting.Member);
 
             return Ok(new CommonResponse<dynamic>
             {
