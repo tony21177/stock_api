@@ -5,6 +5,7 @@ using stock_api.Controllers.Dto;
 using stock_api.Service.ValueObject;
 using System.Globalization;
 using stock_api.Common.Utils;
+using System.Text.Json;
 
 namespace stock_api.Common.AutoMapper
 {
@@ -94,6 +95,8 @@ namespace stock_api.Common.AutoMapper
                 .ForMember(dest => dest.ReceiveStatus, opt => opt.MapFrom(src => src.ItemReceiveStatus))
                 .ForMember(dest => dest.SplitProcess, opt => opt.MapFrom(src => src.SubSplitProcess))
                 .ForMember(dest => dest.OwnerProcess, opt => opt.MapFrom(src => src.SubOwnerProcess))
+                .ForAllMembers(opt => opt.Condition((src, dest, srcMember) => srcMember != null));
+            CreateMap<PurchaseSubItemHistory, PurchaseHistoryDto>()
                 .ForAllMembers(opt => opt.Condition((src, dest, srcMember) => srcMember != null));
 
             //purchaseFlow

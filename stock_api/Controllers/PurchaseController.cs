@@ -18,6 +18,7 @@ using stock_api.Utils;
 using System;
 using System.Linq;
 using System.Runtime.InteropServices;
+using System.Text.Json;
 
 namespace stock_api.Controllers
 {
@@ -797,6 +798,34 @@ namespace stock_api.Controllers
                 Result = true,
             };
             return Ok(response);
+        }
+
+        [HttpPost("subItems/history")]
+        [Authorize]
+        public IActionResult GetPurchaseSubItemsHistoryList(GetPurchaseSubItemsHistoryListRequest request)
+        {
+            var memberAndPermissionSetting = _authHelpers.GetMemberAndPermissionSetting(User);
+            var compId = memberAndPermissionSetting.CompanyWithUnit.CompId;
+
+            PurchaseMainSheet? purchaseMainSheet = _purchaseService.GetPurchaseMainByMainId(request.PurchaseMainId);
+           
+
+            var purchaseSubItemHistories = _purchaseService.ListSubItemListHistory(request.PurchaseMainId).OrderByDescending(h=>h.CreatedAt).ToList();
+
+            var purchaseHistoryList = _mapper.Map<List<PurchaseHistoryDto>>(purchaseSubItemHistories);
+            for(var i = 0; i < purchaseHistoryList.Count; i++)
+            {
+                var purchaseHistory = purchaseHistoryList[i];
+                var purchaseSubItemHistory = purchaseSubItemHistories[i];
+                purchaseHistory.ItemBeforeValues = purchaseSubItemHistory.BeforeValues !=null? JsonSerializer.Deserialize<PurchaseSubItem>(purchaseSubItemHistory.BeforeValues):null;
+                purchaseHistory.ItemAfterValues = purchaseSubItemHistory.AfterValues != null?JsonSerializer.Deserialize<PurchaseSubItem>(purchaseSubItemHistory.AfterValues):null;
+            }
+
+            return Ok(new CommonResponse<dynamic>
+            {
+                Result = true,
+                Data = purchaseHistoryList
+            });
         }
     } 
 }

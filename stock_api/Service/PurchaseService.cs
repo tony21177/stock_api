@@ -1231,5 +1231,10 @@ namespace stock_api.Service
             });
 
         }
+
+        public List<PurchaseSubItemHistory> ListSubItemListHistory(string purchaseMainId)
+        {
+            return _dbContext.PurchaseSubItemHistories.Where(h => h.PurchaseMainId == purchaseMainId).ToList();
+        }
     }
 }
