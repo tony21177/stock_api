@@ -41,10 +41,12 @@ namespace stock_api.Controllers
         private readonly IValidator<AnswerFlowRequest> _answerFlowRequestValidator;
         private readonly IValidator<UpdateOwnerProcessRequest> _updateOwnerProcessRequestValidator;
         private readonly ILogger<PurchaseController> _logger;
+        private readonly StockOutService _stockOutService;
 
 
         public PurchaseController(IMapper mapper, AuthHelpers authHelpers, PurchaseFlowSettingService purchaseFlowSettingService, MemberService memberService, CompanyService companyService
-            ,SupplierService supplierService, PurchaseService purchaseService, WarehouseProductService warehouseProductService, GroupService groupService, ApplyProductFlowSettingService applyProductFlowSettingService, ILogger<PurchaseController> logger)
+            ,SupplierService supplierService, PurchaseService purchaseService, WarehouseProductService warehouseProductService,
+            GroupService groupService, ApplyProductFlowSettingService applyProductFlowSettingService, ILogger<PurchaseController> logger, StockOutService stockOutService)
         {
             _mapper = mapper;
             _authHelpers = authHelpers;
@@ -61,6 +63,7 @@ namespace stock_api.Controllers
             _updateOwnerProcessRequestValidator = new UpdateOwnerProcessValidator();
             _applyProductFlowSettingService = applyProductFlowSettingService;
             _logger = logger;
+            _stockOutService = stockOutService;
         }
 
         [HttpPost("create")]
@@ -298,9 +301,9 @@ namespace stock_api.Controllers
             return Ok(response);
         }
 
-        [HttpGet("owner/list")]
+        [HttpPost("owner/list")]
         [Authorize]
-        public IActionResult OwnerListPurchases()
+        public IActionResult OwnerListPurchases(OwnerListPurchasesRequest ownerListPurchasesRequestRequest)
         {
             var memberAndPermissionSetting = _authHelpers.GetMemberAndPermissionSetting(User);
             var compId = memberAndPermissionSetting.CompanyWithUnit.CompId;
@@ -310,7 +313,7 @@ namespace stock_api.Controllers
                 return BadRequest(CommonResponse<dynamic>.BuildNotAuthorizeResponse());
             }
             // ListPurchaseRequest request = new() { CurrentStatus = CommonConstants.PurchaseFlowAnswer.AGREE,ReceiveStatus= CommonConstants.PurchaseReceiveStatus.NONE };
-            ListPurchaseRequest request = new() { CurrentStatus = CommonConstants.PurchaseFlowAnswer.AGREE };
+            ListPurchaseRequest request = new() { CurrentStatus = CommonConstants.PurchaseFlowAnswer.AGREE,Keywords = ownerListPurchasesRequestRequest.Keywords };
 
             var listDate = _purchaseService.ListPurchase(request);
             List<PurchaseMainAndSubItemVo> filterKeywordsData = new();
@@ -336,6 +339,8 @@ namespace stock_api.Controllers
             .ToList();
             var products = _warehouseProductService.GetProductsByProductIds(distinctProductIdList);
 
+            var productsLastMonthUsage = _stockOutService.GetLastMonthUsages();
+
             foreach (var vo in filterKeywordsData)
             {
                 foreach (var item in vo.Items)
@@ -355,6 +360,9 @@ namespace stock_api.Controllers
                     item.SupplierUnit = matchedProduct?.SupplierUnit;
                     item.OpenedSealName = matchedProduct?.OpenedSealName;
                     item.StockLocation = matchedProduct?.StockLocation;
+                    var matchedProductLastMonthUsage = productsLastMonthUsage.Where(p => p.ProductId == item.ProductId).FirstOrDefault();
+                    item.Manager = matchedProduct?.Manager;
+                    item.LastMonthUsageQuantity = matchedProductLastMonthUsage!=null?matchedProductLastMonthUsage.Quantity:0.0;
                 }
             }
             filterKeywordsData = filterKeywordsData.OrderByDescending(item => item.ApplyDate).ToList();

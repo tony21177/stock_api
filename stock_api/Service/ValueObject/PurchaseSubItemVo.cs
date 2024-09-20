@@ -47,6 +47,7 @@ namespace stock_api.Service.ValueObject
         public string? WithItemId { get; set; }
 
         public string? StockLocation { get; set;}
-
+        public string? Manager {  get; set; }
+        public double? LastMonthUsageQuantity { get; set; }
     }
 }

@@ -356,6 +356,11 @@ namespace stock_api.Service
             return _dbContext.LastMonthUsages.ToList();
         }
 
+        public List<LastMonthUsage> GetLastMonthUsages()
+        {
+            return _dbContext.LastMonthUsages.ToList();
+        }
+
         public List<LastYearUsage> GetLastYearUsages(List<string> productIdList)
         {
             return _dbContext.LastYearUsages.ToList();
