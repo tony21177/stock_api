@@ -113,7 +113,7 @@ namespace stock_api.Service.ValueObject
         public PurchaseSubItem PurchaseSubItem { get; set; }
         public bool IsContainKeywords(string keywords)
         {
-            return ($"{this.AcceptId} {this.AcceptUserId} {this.LotNumberBatch} {this.LotNumber} {this.PackagingStatus} {this.ProductId} {this.ProductName} {this.ProductSpec} {this.UdiserialCode}" +
+            return ($"{this.ArrangeSupplierName} {this.AcceptId} {this.AcceptUserId} {this.LotNumberBatch} {this.LotNumber} {this.PackagingStatus} {this.ProductId} {this.ProductName} {this.ProductSpec} {this.UdiserialCode}" +
                 $"{this.QcStatus} {this.Comment}").Contains(keywords);
 
         }
