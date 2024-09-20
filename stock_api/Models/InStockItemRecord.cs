@@ -164,10 +164,6 @@ public partial class InStockItemRecord
     [StringLength(100)]
     public string? ReturnOutStockId { get; set; }
 
-    [Column("in_stock_item_recordcol")]
-    [StringLength(45)]
-    public string? InStockItemRecordcol { get; set; }
-
     /// <summary>
     /// 初驗驗收填寫相關原因
     /// </summary>

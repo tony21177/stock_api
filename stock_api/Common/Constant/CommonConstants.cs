@@ -436,6 +436,18 @@ namespace stock_api.Common.Constant
             }
         }
 
+        public static class PurchaseSubItemHistoryAction
+        {
+            public const string ADD = "ADD";
+            public const string MODIFY = "MODIFY";
+            public const string DELETE = "DELETE";
+
+            public static List<string> GetAllValues()
+            {
+                return new List<string> { ADD, MODIFY, DELETE };
+            }
+        }
+
     }
 
     

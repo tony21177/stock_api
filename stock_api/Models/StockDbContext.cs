@@ -69,6 +69,8 @@ public partial class StockDbContext : DbContext
 
     public virtual DbSet<PurchaseSubItem> PurchaseSubItems { get; set; }
 
+    public virtual DbSet<PurchaseSubItemHistory> PurchaseSubItemHistories { get; set; }
+
     public virtual DbSet<QcAcceptanceDetail> QcAcceptanceDetails { get; set; }
 
     public virtual DbSet<QcValidationDetail> QcValidationDetails { get; set; }
@@ -728,6 +730,19 @@ public partial class StockDbContext : DbContext
             entity.Property(e => e.WithCompId).HasComment("Owner從拆單建立就會帶這個參數,表示從WithCompId的採購單拆單出來的");
             entity.Property(e => e.WithItemId).HasComment("Owner從拆單建立就會帶這個參數,對應對WithCompId的purchase_sub_item.ItemId");
             entity.Property(e => e.WithPurchaseMainId).HasComment("Owner從拆單建立就會帶這個參數,對應對WithCompId的採購單purchase_main_sheet.PurchaseMainId");
+        });
+
+        modelBuilder.Entity<PurchaseSubItemHistory>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("PRIMARY");
+
+            entity.ToTable("purchase_sub_item_history", tb => tb.HasComment("紀錄sub_item被更改或刪除的紀錄"));
+
+            entity.Property(e => e.Action).HasComment("ADD,MODIFY,DELETE");
+            entity.Property(e => e.CreatedAt).HasDefaultValueSql("CURRENT_TIMESTAMP");
+            entity.Property(e => e.UpdatedAt)
+                .ValueGeneratedOnAddOrUpdate()
+                .HasDefaultValueSql("CURRENT_TIMESTAMP");
         });
 
         modelBuilder.Entity<QcAcceptanceDetail>(entity =>

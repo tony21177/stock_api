@@ -11,6 +11,7 @@ using stock_api.Models;
 using stock_api.Service.ValueObject;
 using stock_api.Utils;
 using System.Drawing;
+using System.Linq;
 using System.Text.Json;
 using System.Transactions;
 
@@ -167,7 +168,7 @@ namespace stock_api.Service
         }
 
         public bool CreatePurchase(PurchaseMainSheet newPurchasePurchaseMainSheet, List<PurchaseSubItem> newPurchaseSubItemList,
-            List<PurchaseFlowSettingVo> purchaseFlowSettingList, List<ApplyProductFlowSettingVo> applyProductFlowSettingListForGroupReview,bool isItemMultiGroup, bool isOwnerCreate)
+            List<PurchaseFlowSettingVo> purchaseFlowSettingList, List<ApplyProductFlowSettingVo> applyProductFlowSettingListForGroupReview,bool isItemMultiGroup, bool isOwnerCreate,WarehouseMember createMember)
         {
             using (var scope = new TransactionScope())
             {
@@ -187,6 +188,9 @@ namespace stock_api.Service
                     }
                     _dbContext.PurchaseMainSheets.Add(newPurchasePurchaseMainSheet);
 
+                    List<PurchaseSubItemHistory> purchaseSubItemHistories = new List<PurchaseSubItemHistory>();
+                    string formattedDate = new DateTime().ToString("yyyyMMdd");
+                    string purchaseIdPrefix = purchaseMainId.Substring(0, 5);
 
                     foreach (var item in newPurchaseSubItemList)
                     {
@@ -198,8 +202,21 @@ namespace stock_api.Service
                         {
                             item.SplitProcess = CommonConstants.SplitProcess.DONE;
                         }
+                        // add history
+                        PurchaseSubItemHistory newPurchaseSubItemHistory = new PurchaseSubItemHistory
+                        {
+                            Action = CommonConstants.PurchaseSubItemHistoryAction.DELETE,
+                            ItemId = item.ItemId,
+                            PurchaseMainId = purchaseMainId,
+                            PurchaseOrderNo = formattedDate + purchaseIdPrefix,
+                            UserId = createMember.UserId,
+                            UserName = createMember.DisplayName,
+                            AfterValues = JsonSerializer.Serialize(item),
+                        };
+                        purchaseSubItemHistories.Add(newPurchaseSubItemHistory);
                     }
                     _dbContext.PurchaseSubItems.AddRange(newPurchaseSubItemList);
+                    _dbContext.PurchaseSubItemHistories.AddRange(purchaseSubItemHistories);
 
 
                     List<PurchaseFlow> purchaseFlows = new();
@@ -953,6 +970,25 @@ namespace stock_api.Service
             {
                 var beforeSubItemsJsonString = JsonSerializer.Serialize(purchaseSubItemList);
                 _dbContext.PurchaseSubItems.Where(subItem => request.DeleteSubItemIdList.Contains(subItem.ItemId)).ExecuteDelete();
+                // Delete history
+                var matchedDeletedSubItems = _dbContext.PurchaseSubItems.Where(subItem => request.DeleteSubItemIdList.Contains(subItem.ItemId)).ToList();
+                matchedDeletedSubItems.ForEach(subItem => {
+                    string beforeJsonString = JsonSerializer.Serialize(subItem);
+                    string formattedDate = purchaseMainSheet.ApplyDate.ToString("yyyyMMdd");
+                    string purchaseIdPrefix = purchaseMainSheet.PurchaseMainId.Substring(0, 5);
+                    PurchaseSubItemHistory newPurchaseSubItemHistory = new PurchaseSubItemHistory
+                    {
+                        Action = CommonConstants.PurchaseSubItemHistoryAction.DELETE,
+                        ItemId = subItem.ItemId,
+                        PurchaseMainId = subItem.PurchaseMainId,
+                        PurchaseOrderNo = formattedDate + purchaseIdPrefix,
+                        UserId = user.UserId,
+                        UserName = user.DisplayName,
+                        BeforeValues = beforeJsonString,
+                    };
+                    _dbContext.PurchaseSubItemHistories.Add(newPurchaseSubItemHistory);
+                });
+
                 _dbContext.AcceptanceItems.Where(acceptItem => request.DeleteSubItemIdList.Contains(acceptItem.ItemId)).ExecuteDelete();
                 request.UpdateSubItemList.ForEach(subItem =>
                 {
@@ -962,10 +998,26 @@ namespace stock_api.Service
                         var matchedUpdateItem = purchaseSubItemList.Where(i => i.ItemId == subItem.ItemId).FirstOrDefault();
                         if (matchedUpdateItem != null)
                         {
+                            string beforeJsonString = JsonSerializer.Serialize(matchedUpdateItem);
+                            string formattedDate = purchaseMainSheet.ApplyDate.ToString("yyyyMMdd");
+                            string purchaseIdPrefix = purchaseMainSheet.PurchaseMainId.Substring(0, 5);
                             matchedUpdateItem.Quantity = subItem.Quantity;
+                            string afterJsonString = JsonSerializer.Serialize(matchedUpdateItem);
+
+                            PurchaseSubItemHistory newPurchaseSubItemHistory = new PurchaseSubItemHistory
+                            {
+                                Action = CommonConstants.PurchaseSubItemHistoryAction.MODIFY,
+                                ItemId = matchedUpdateItem.ItemId,
+                                PurchaseMainId = matchedUpdateItem.PurchaseMainId,
+                                PurchaseOrderNo = formattedDate + purchaseIdPrefix,
+                                UserId = user.UserId,
+                                UserName = user.DisplayName,
+                                BeforeValues = beforeJsonString,
+                                AfterValues = afterJsonString
+                            };
                             _dbContext.AcceptanceItems.Where(acceptItem => acceptItem.ItemId == matchedUpdateItem.ItemId).ExecuteUpdate(a => a.SetProperty(a => a.OrderQuantity, subItem.Quantity));
+                            _dbContext.PurchaseSubItemHistories.Add(newPurchaseSubItemHistory);
                         }
-                        
                     }
                 });
 
@@ -996,24 +1048,63 @@ namespace stock_api.Service
         }
 
         // 得標廠商修改採購項目子項
-        public bool OwnerUpdateOrDeleteSubItems(UpdateOrDeleteSubItemInFlowRequest request,PurchaseMainSheet purchaseMainSheet,List<PurchaseSubItem> purchaseSubItemList)
+        public bool OwnerUpdateOrDeleteSubItems(UpdateOrDeleteSubItemInFlowRequest request,PurchaseMainSheet purchaseMainSheet,List<PurchaseSubItem> purchaseSubItemList,WarehouseMember user)
         {
             using var scope = new TransactionScope();
             try
             {
                 var beforeSubItemsJsonString = JsonSerializer.Serialize(purchaseSubItemList);
-                request.UpdateSubItemList.ForEach(subItem =>
-                {
-                    var matchedUpdateItem = purchaseSubItemList.Where(i=>i.ItemId==subItem.ItemId).FirstOrDefault();
-                    if (matchedUpdateItem != null)
-                    {
-                        matchedUpdateItem.Quantity = subItem.Quantity;
-                        _dbContext.AcceptanceItems.Where(acceptItem => acceptItem.ItemId == matchedUpdateItem.ItemId).ExecuteUpdate(a => a.SetProperty(a => a.OrderQuantity, subItem.Quantity));
-                    }
-                });
                 _dbContext.PurchaseSubItems.Where(subItem => request.DeleteSubItemIdList.Contains(subItem.ItemId)).ExecuteDelete();
+                // Delete history
+                var matchedDeletedSubItems = _dbContext.PurchaseSubItems.Where(subItem => request.DeleteSubItemIdList.Contains(subItem.ItemId)).ToList();
+                matchedDeletedSubItems.ForEach(subItem => {
+                    string beforeJsonString = JsonSerializer.Serialize(subItem);
+                    string formattedDate = purchaseMainSheet.ApplyDate.ToString("yyyyMMdd");
+                    string purchaseIdPrefix = purchaseMainSheet.PurchaseMainId.Substring(0, 5);
+                    PurchaseSubItemHistory newPurchaseSubItemHistory = new PurchaseSubItemHistory
+                    {
+                        Action = CommonConstants.PurchaseSubItemHistoryAction.DELETE,
+                        ItemId = subItem.ItemId,
+                        PurchaseMainId = subItem.PurchaseMainId,
+                        PurchaseOrderNo = formattedDate + purchaseIdPrefix,
+                        UserId = user.UserId,
+                        UserName = user.DisplayName,
+                        BeforeValues = beforeJsonString,
+                    };
+                    _dbContext.PurchaseSubItemHistories.Add(newPurchaseSubItemHistory);
+                });
                 _dbContext.AcceptanceItems.Where(acceptItem => request.DeleteSubItemIdList.Contains(acceptItem.ItemId)).ExecuteDelete();
 
+
+                request.UpdateSubItemList.ForEach(subItem =>
+                {
+                    if (!request.DeleteSubItemIdList.Contains(subItem.ItemId))
+                    {
+                        var matchedUpdateItem = purchaseSubItemList.Where(i => i.ItemId == subItem.ItemId).FirstOrDefault();
+                        if (matchedUpdateItem != null)
+                        {
+                            string beforeJsonString = JsonSerializer.Serialize(matchedUpdateItem);
+                            string formattedDate = purchaseMainSheet.ApplyDate.ToString("yyyyMMdd");
+                            string purchaseIdPrefix = purchaseMainSheet.PurchaseMainId.Substring(0, 5);
+                            matchedUpdateItem.Quantity = subItem.Quantity;
+                            string afterJsonString = JsonSerializer.Serialize(matchedUpdateItem);
+
+                            PurchaseSubItemHistory newPurchaseSubItemHistory = new PurchaseSubItemHistory
+                            {
+                                Action = CommonConstants.PurchaseSubItemHistoryAction.MODIFY,
+                                ItemId = matchedUpdateItem.ItemId,
+                                PurchaseMainId = matchedUpdateItem.PurchaseMainId,
+                                PurchaseOrderNo = formattedDate + purchaseIdPrefix,
+                                UserId = user.UserId,
+                                UserName = user.DisplayName,
+                                BeforeValues = beforeJsonString,
+                                AfterValues = afterJsonString
+                            };
+                            _dbContext.AcceptanceItems.Where(acceptItem => acceptItem.ItemId == matchedUpdateItem.ItemId).ExecuteUpdate(a => a.SetProperty(a => a.OrderQuantity, subItem.Quantity));
+                            _dbContext.PurchaseSubItemHistories.Add(newPurchaseSubItemHistory);
+                        }
+                    }
+                });
                 _dbContext.SaveChanges();
                 scope.Complete();
                 return true;
