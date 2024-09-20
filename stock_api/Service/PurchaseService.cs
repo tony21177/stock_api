@@ -969,9 +969,9 @@ namespace stock_api.Service
             try
             {
                 var beforeSubItemsJsonString = JsonSerializer.Serialize(purchaseSubItemList);
-                _dbContext.PurchaseSubItems.Where(subItem => request.DeleteSubItemIdList.Contains(subItem.ItemId)).ExecuteDelete();
                 // Delete history
-                var matchedDeletedSubItems = _dbContext.PurchaseSubItems.Where(subItem => request.DeleteSubItemIdList.Contains(subItem.ItemId)).ToList();
+                var allSubItems = _dbContext.PurchaseSubItems.Where(s=>s.PurchaseMainId==purchaseMainSheet.PurchaseMainId).ToList();
+                var matchedDeletedSubItems = allSubItems.Where(subItem => request.DeleteSubItemIdList.Contains(subItem.ItemId)).ToList();
                 matchedDeletedSubItems.ForEach(subItem => {
                     string beforeJsonString = JsonSerializer.Serialize(subItem);
                     string formattedDate = purchaseMainSheet.ApplyDate.ToString("yyyyMMdd");
@@ -989,7 +989,10 @@ namespace stock_api.Service
                     _dbContext.PurchaseSubItemHistories.Add(newPurchaseSubItemHistory);
                 });
 
+                _dbContext.PurchaseSubItems.Where(subItem => request.DeleteSubItemIdList.Contains(subItem.ItemId)).ExecuteDelete();
                 _dbContext.AcceptanceItems.Where(acceptItem => request.DeleteSubItemIdList.Contains(acceptItem.ItemId)).ExecuteDelete();
+                
+                // update history
                 request.UpdateSubItemList.ForEach(subItem =>
                 {
                     var updateSubItemId = subItem.ItemId;
@@ -1054,7 +1057,6 @@ namespace stock_api.Service
             try
             {
                 var beforeSubItemsJsonString = JsonSerializer.Serialize(purchaseSubItemList);
-                _dbContext.PurchaseSubItems.Where(subItem => request.DeleteSubItemIdList.Contains(subItem.ItemId)).ExecuteDelete();
                 // Delete history
                 var matchedDeletedSubItems = _dbContext.PurchaseSubItems.Where(subItem => request.DeleteSubItemIdList.Contains(subItem.ItemId)).ToList();
                 matchedDeletedSubItems.ForEach(subItem => {
@@ -1073,9 +1075,10 @@ namespace stock_api.Service
                     };
                     _dbContext.PurchaseSubItemHistories.Add(newPurchaseSubItemHistory);
                 });
+                _dbContext.PurchaseSubItems.Where(subItem => request.DeleteSubItemIdList.Contains(subItem.ItemId)).ExecuteDelete();
                 _dbContext.AcceptanceItems.Where(acceptItem => request.DeleteSubItemIdList.Contains(acceptItem.ItemId)).ExecuteDelete();
 
-
+                // update history
                 request.UpdateSubItemList.ForEach(subItem =>
                 {
                     if (!request.DeleteSubItemIdList.Contains(subItem.ItemId))
