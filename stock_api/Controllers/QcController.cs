@@ -43,14 +43,18 @@ namespace stock_api.Controllers
             _listQcMainWithDetailValidator = new ListQcMainWithDetailValidator();
         }
 
-        [HttpGet("list")]
+        [HttpPost("list")]
         [Authorize]
-        public IActionResult ListUnDoneQcLot()
+        public IActionResult ListUnDoneQcLot(ListUnDoneQcLotRequest request)
         {
             var memberAndPermissionSetting = _authHelpers.GetMemberAndPermissionSetting(User);
             var compId = memberAndPermissionSetting.CompanyWithUnit.CompId;
+            if (request.CompId == null)
+            {
+                request.CompId = compId;
+            }
 
-            List<UnDoneQcLot> unDoneQcList = _qcService.ListUnDoneQcLotList(compId);
+            List<UnDoneQcLot> unDoneQcList = _qcService.ListUnDoneQcLotList(request);
             List<string> distinctLotNumberBatchList = unDoneQcList.Where(e=>e.LotNumberBatch!=null).Select(e => e.LotNumberBatch).Distinct().ToList();
             
             List<string> distincLotNumberList = unDoneQcList.Where(e => e.LotNumber != null).Select(e => e.LotNumber).Distinct().ToList();

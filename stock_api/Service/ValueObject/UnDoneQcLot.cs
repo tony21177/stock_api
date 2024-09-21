@@ -1,4 +1,6 @@
-﻿namespace stock_api.Service.ValueObject
+﻿using Org.BouncyCastle.Utilities;
+
+namespace stock_api.Service.ValueObject
 {
     public class UnDoneQcLot
     {
@@ -26,5 +28,21 @@
         public string? InStockUserName { get; set; }
         public bool IsNewLotNumber { get; set; } = true;
         public bool IsNewLotNumberBatch { get; set; } = true;
+        public List<string>? GroupIdList { get; set; }
+        public List<string>? GroupNameList { get; set; }
+
+        public bool IsContainKeywords(string keywords)
+        {
+            string formattedDate = "";
+            if (ApplyDate.HasValue)
+            {
+                formattedDate = ApplyDate.Value.ToString("yyyyMMdd");
+            }
+            string purchaseIdPrefix = PurchaseMainId.Substring(0, 5);
+            
+            string searchedString = $"{formattedDate}{purchaseIdPrefix} {this.ProductName} {this.ProductCode} {this.LotNumber} {this.LotNumberBatch} {this.ProductModel} {string.Join(" ",this.GroupNameList)}";
+            bool isContainsString = searchedString.Contains(keywords);
+            return isContainsString;
+        }
     }
 }

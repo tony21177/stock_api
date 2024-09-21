@@ -24,11 +24,11 @@ namespace stock_api.Service
         }
 
 
-        public List<UnDoneQcLot> ListUnDoneQcLotList(string compId)
+        public List<UnDoneQcLot> ListUnDoneQcLotList(ListUnDoneQcLotRequest request)
         {
             var needQcProductList = _dbContext.WarehouseProducts.Where(p=>p.IsActive==true&&p.IsNeedAcceptProcess==true&&p.QcType!=CommonConstants.QcTypeConstants.NONE).ToList();    
             var needQcProductIdList = needQcProductList.Select(p=>p.ProductId).ToList();
-            var unDoneLotNumberQcInStockRecords = _dbContext.InStockItemRecords.Where(i=>i.CompId==compId&&i.QcTestStatus==CommonConstants.QcTestStatus.NONE
+            var unDoneLotNumberQcInStockRecords = _dbContext.InStockItemRecords.Where(i=>i.CompId== request.CompId && i.QcTestStatus==CommonConstants.QcTestStatus.NONE
             &&i.IsNeedQc==true&&i.QcType!=CommonConstants.QcTypeConstants.NONE).ToList();
             unDoneLotNumberQcInStockRecords = unDoneLotNumberQcInStockRecords.Where(r => needQcProductIdList.Contains(r.ProductId)).ToList();
             var unDoneLotNumberQcInStockIdList = unDoneLotNumberQcInStockRecords.Select(r => r.InStockId).ToList();
@@ -48,11 +48,13 @@ namespace stock_api.Service
                     ProductModel = matchedProduct.ProductModel,
                     InStockTime = inStockItemRecord.CreatedAt,
                     InStockUserId = inStockItemRecord.UserId,
-                    InStockUserName = inStockItemRecord.UserName
+                    InStockUserName = inStockItemRecord.UserName,
+                    GroupIdList = matchedProduct.GroupIds==null?null:matchedProduct.GroupIds.Split(",", StringSplitOptions.RemoveEmptyEntries).ToList(),
+                    GroupNameList = matchedProduct.GroupNames == null ? null : matchedProduct.GroupNames.Split(",", StringSplitOptions.RemoveEmptyEntries).ToList(),
                 };
                 unDoneQcLotList.Add(unDoneQcLot);
             }
-            var newLotNumberInStockIdList = _dbContext.ProductNewLotnumberViews.ToList().Where(e=>e.LotNumber!= "N/A"&&e.CompId==compId).ToList().Select(e=>e.InStockId).ToList();
+            var newLotNumberInStockIdList = _dbContext.ProductNewLotnumberViews.ToList().Where(e=>e.LotNumber!= "N/A"&&e.CompId== request.CompId).ToList().Select(e=>e.InStockId).ToList();
             var newLotNumberInStockItems = _dbContext.InStockItemRecords.Where(i=>newLotNumberInStockIdList.Contains(i.InStockId)).ToList();
             var allProducts = _dbContext.WarehouseProducts.ToList();
             foreach (var inStockItemRecord in newLotNumberInStockItems)
@@ -71,10 +73,87 @@ namespace stock_api.Service
                     ProductModel = matchedProduct.ProductModel,
                     InStockTime = inStockItemRecord.CreatedAt,
                     InStockUserId = inStockItemRecord.UserId,
-                    InStockUserName = inStockItemRecord.UserName
+                    InStockUserName = inStockItemRecord.UserName,
+                    GroupIdList = matchedProduct.GroupIds == null ? null : matchedProduct.GroupIds.Split(",", StringSplitOptions.RemoveEmptyEntries).ToList(),
+                    GroupNameList = matchedProduct.GroupNames == null ? null : matchedProduct.GroupNames.Split(",", StringSplitOptions.RemoveEmptyEntries).ToList(),
                 };
                 unDoneQcLotList.Add(unDoneQcLot);
             }
+
+            if (request.GroupId != null)
+            {
+                unDoneQcLotList = unDoneQcLotList.Where(e=> e.GroupIdList!=null&& string.Join(" ",e.GroupIdList).Contains(request.GroupId)).ToList();
+            }
+
+            string? orderByField = request.PaginationCondition.OrderByField;
+            if (orderByField == null)
+            {
+                orderByField = "AcceptedAt";
+            }
+            orderByField = StringUtils.CapitalizeFirstLetter(orderByField);
+            if (request.PaginationCondition.IsDescOrderBy)
+            {
+                switch (orderByField)
+                {
+                    case "ProductName":
+                        unDoneQcLotList = unDoneQcLotList.OrderByDescending(item => item.ProductName).ToList();
+                        break;
+                    case "ProductCode":
+                        unDoneQcLotList = unDoneQcLotList.OrderByDescending(item => item.ProductCode).ToList();
+                        break;
+                    case "LotNumber":
+                        unDoneQcLotList = unDoneQcLotList.OrderByDescending(item => item.LotNumber).ToList();
+                        break;
+                    case "LotNumberBatch":
+                        unDoneQcLotList = unDoneQcLotList.OrderByDescending(item => item.LotNumberBatch).ToList();
+                        break;
+                    case "QcType":
+                        unDoneQcLotList = unDoneQcLotList.OrderByDescending(item => item.QcType).ToList();
+                        break;
+                    case "PurchaseMainId":
+                        unDoneQcLotList = unDoneQcLotList.OrderByDescending(item => item.PurchaseMainId).ToList();
+                        break;
+                    case "AcceptUserName":
+                        unDoneQcLotList = unDoneQcLotList.OrderByDescending(item => item.AcceptUserName).ToList();
+                        break;
+                    case "AcceptedAt":
+                        unDoneQcLotList = unDoneQcLotList.OrderByDescending(item => item.AcceptedAt).ToList();
+                        break;
+                }
+            }
+            else
+            {
+                switch (orderByField)
+                {
+                    case "ProductName":
+                        unDoneQcLotList = unDoneQcLotList.OrderBy(item => item.ProductName).ToList();
+                        break;
+                    case "ProductCode":
+                        unDoneQcLotList = unDoneQcLotList.OrderBy(item => item.ProductCode).ToList();
+                        break;
+                    case "LotNumber":
+                        unDoneQcLotList = unDoneQcLotList.OrderBy(item => item.LotNumber).ToList();
+                        break;
+                    case "LotNumberBatch":
+                        unDoneQcLotList = unDoneQcLotList.OrderBy(item => item.LotNumberBatch).ToList();
+                        break;
+                    case "QcType":
+                        unDoneQcLotList = unDoneQcLotList.OrderBy(item => item.QcType).ToList();
+                        break;
+                    case "PurchaseMainId":
+                        unDoneQcLotList = unDoneQcLotList.OrderBy(item => item.PurchaseMainId).ToList();
+                        break;
+                    case "AcceptUserName":
+                        unDoneQcLotList = unDoneQcLotList.OrderBy(item => item.AcceptUserName).ToList();
+                        break;
+                    case "AcceptedAt":
+                        unDoneQcLotList = unDoneQcLotList.OrderBy(item => item.AcceptedAt).ToList();
+                        break;
+                }
+            }
+            int totalPages = 0;
+            int totalItems = unDoneQcLotList.Count;
+            totalPages = (int)Math.Ceiling((double)totalItems / request.PaginationCondition.PageSize);
 
             return unDoneQcLotList;
         }
