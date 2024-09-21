@@ -11,7 +11,7 @@ namespace stock_api.Service.ValueObject
         public string? LotNumberBatch { get; set; }
         public string QcType { get; set; } = null!;
         public string? QcTestStatus { get; set; }
-        public string PurchaseMainId { get; set; } = null!;
+        public string? PurchaseMainId { get; set; } = null!;
         public DateTime? ApplyDate { get; set; } 
         public String InStockId { get; set; } = null!;
         public DateTime? AcceptedAt { get; set; }
@@ -38,7 +38,12 @@ namespace stock_api.Service.ValueObject
             {
                 formattedDate = ApplyDate.Value.ToString("yyyyMMdd");
             }
-            string purchaseIdPrefix = PurchaseMainId.Substring(0, 5);
+            string purchaseIdPrefix = "";
+            if (PurchaseMainId!=null)
+            {
+                purchaseIdPrefix = PurchaseMainId.Substring(0, 5);
+            }
+            
             
             string searchedString = $"{formattedDate}{purchaseIdPrefix} {this.ProductName} {this.ProductCode} {this.LotNumber} {this.LotNumberBatch} {this.ProductModel} {string.Join(" ",this.GroupNameList)}";
             bool isContainsString = searchedString.Contains(keywords);
