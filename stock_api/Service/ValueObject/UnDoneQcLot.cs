@@ -10,7 +10,7 @@
         public string QcType { get; set; } = null!;
         public string? QcTestStatus { get; set; }
         public string PurchaseMainId { get; set; } = null!;
-        public DateTime ApplyDate { get; set; } 
+        public DateTime? ApplyDate { get; set; } 
         public String InStockId { get; set; } = null!;
         public DateTime AcceptedAt { get; set; }
         public string AcceptUserName { get; set; }

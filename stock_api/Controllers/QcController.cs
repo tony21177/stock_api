@@ -11,6 +11,8 @@ using stock_api.Models;
 using stock_api.Service;
 using stock_api.Service.ValueObject;
 using stock_api.Utils;
+using System.Linq;
+using System.Reflection.Metadata.Ecma335;
 
 namespace stock_api.Controllers
 {
@@ -50,6 +52,7 @@ namespace stock_api.Controllers
 
             List<UnDoneQcLot> unDoneQcList = _qcService.ListUnDoneQcLotList(compId);
             List<string> distinctLotNumberBatchList = unDoneQcList.Where(e=>e.LotNumberBatch!=null).Select(e => e.LotNumberBatch).Distinct().ToList();
+            
             List<string> distincLotNumberList = unDoneQcList.Where(e => e.LotNumber != null).Select(e => e.LotNumber).Distinct().ToList();
             List<InStockItemRecord> inStockItems = _stockInService.GetInStockRecordByLotNumberBatchList(distinctLotNumberBatchList, compId);
             List<OutStockRecord> outStockRecordsByLotNumber = _stockOutService.GetOutStockRecordsByLotNumberList(distincLotNumberList);
@@ -60,7 +63,6 @@ namespace stock_api.Controllers
             {
                 lotNumberBatchAndItemIdMap.Add(i.LotNumberBatch, i.ItemId);
             });
-
             var purchaseDetailList = _purchaseService.GetPurchaseDetailListByItemIdList(inStockItems.Select(i => i.ItemId).ToList());
             Dictionary<String, PurchaseDetailView> itemIdAndPurchaseDetailMap = new Dictionary<String, PurchaseDetailView>();
             purchaseDetailList.ForEach(d =>
@@ -75,38 +77,40 @@ namespace stock_api.Controllers
             unDoneQcList.ForEach(lot =>
             {
                 var matchedInStock = inStockItems.Where(i => i.LotNumberBatch == lot.LotNumberBatch).FirstOrDefault();
-                var matchedItemId = lotNumberBatchAndItemIdMap[lot.LotNumberBatch];
-                var matchedPurchaseDetail = itemIdAndPurchaseDetailMap[matchedItemId];
-                //        public string PurchaseMainId { get; set; } = null!;
-                //public DateTime ApplyDate { get; set; }
-                //public String InStockId { get; set; } = null!;
-                //public DateTime AcceptedAt { get; set; }
-                //public string AcceptUserName { get; set; }
-                //public string AcceptUserId { get; set; }
-
-                //public string ProductSpec { get; set; } = null!;
-                lot.PurchaseMainId = matchedPurchaseDetail.PurchaseMainId;
-                lot.ApplyDate = matchedPurchaseDetail.ApplyDate;
-                lot.InStockId = matchedInStock.InStockId;
-                lot.AcceptedAt = matchedInStock.CreatedAt.Value;
-                lot.AcceptUserId = matchedInStock.UserId;
-                lot.AcceptUserName = matchedInStock.UserName;
-                lot.ProductSpec = matchedPurchaseDetail.ProductSpec;
-                if (outStockRecordsByLotNumber.Where(i => i.LotNumber == lot.LotNumber).FirstOrDefault() != null)
-                {
-                    lot.IsLotNumberOutStock = true;
-                }
-                if (outStockRecordsByLotNumberBatch.Where(i => i.LotNumberBatch == lot.LotNumberBatch).FirstOrDefault() != null)
-                {
-                    lot.IsLotNumberBatchOutStock = true;
-                }
-                if (!newLotNumberList.Contains(lot.LotNumber))
-                {
-                    lot.IsNewLotNumber = false;
-                }
-                if (!newLotNumberBatchList.Contains(lot.LotNumberBatch))
-                {
-                    lot.IsNewLotNumberBatch = false;
+                if (lotNumberBatchAndItemIdMap.ContainsKey(lot.LotNumberBatch) && lotNumberBatchAndItemIdMap.ContainsKey(lot.LotNumberBatch)){
+                    var matchedItemId = lotNumberBatchAndItemIdMap[lot.LotNumberBatch];
+                    // ItemId為null表示非由採購來的,可能是盤點
+                    if (matchedItemId != null)
+                    {
+                        PurchaseDetailView? matchedPurchaseDetail = null;
+                        if (itemIdAndPurchaseDetailMap.ContainsKey(matchedItemId))
+                        {
+                            matchedPurchaseDetail = itemIdAndPurchaseDetailMap[matchedItemId];
+                            lot.PurchaseMainId = matchedPurchaseDetail?.PurchaseMainId;
+                            lot.ApplyDate = matchedPurchaseDetail?.ApplyDate;
+                            lot.InStockId = matchedInStock.InStockId;
+                            lot.AcceptedAt = matchedInStock.CreatedAt.Value;
+                            lot.AcceptUserId = matchedInStock.UserId;
+                            lot.AcceptUserName = matchedInStock.UserName;
+                            lot.ProductSpec = matchedPurchaseDetail?.ProductSpec;
+                            if (outStockRecordsByLotNumber.Where(i => i.LotNumber == lot.LotNumber).FirstOrDefault() != null)
+                            {
+                                lot.IsLotNumberOutStock = true;
+                            }
+                            if (outStockRecordsByLotNumberBatch.Where(i => i.LotNumberBatch == lot.LotNumberBatch).FirstOrDefault() != null)
+                            {
+                                lot.IsLotNumberBatchOutStock = true;
+                            }
+                            if (!newLotNumberList.Contains(lot.LotNumber))
+                            {
+                                lot.IsNewLotNumber = false;
+                            }
+                            if (!newLotNumberBatchList.Contains(lot.LotNumberBatch))
+                            {
+                                lot.IsNewLotNumberBatch = false;
+                            }
+                        }
+                    }
                 }
             });
 
