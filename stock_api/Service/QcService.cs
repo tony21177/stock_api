@@ -31,6 +31,7 @@ namespace stock_api.Service
             var unDoneLotNumberQcInStockRecords = _dbContext.InStockItemRecords.Where(i=>i.CompId==compId&&i.QcTestStatus==CommonConstants.QcTestStatus.NONE
             &&i.IsNeedQc==true&&i.QcType!=CommonConstants.QcTypeConstants.NONE).ToList();
             unDoneLotNumberQcInStockRecords = unDoneLotNumberQcInStockRecords.Where(r => needQcProductIdList.Contains(r.ProductId)).ToList();
+            var unDoneLotNumberQcInStockIdList = unDoneLotNumberQcInStockRecords.Select(r => r.InStockId).ToList();
             List<UnDoneQcLot> unDoneQcLotList = new();
             foreach (var inStockItemRecord in unDoneLotNumberQcInStockRecords)
             {
@@ -51,6 +52,29 @@ namespace stock_api.Service
                 };
                 unDoneQcLotList.Add(unDoneQcLot);
             }
+            var newLotNumberInStockIdList = _dbContext.ProductNewLotnumberViews.ToList().Where(e=>e.LotNumber!= "N/A").ToList().Select(e=>e.InStockId).ToList();
+            var newLotNumberInStockItems = _dbContext.InStockItemRecords.Where(i=>newLotNumberInStockIdList.Contains(i.InStockId)).ToList();
+            foreach (var inStockItemRecord in newLotNumberInStockItems)
+            {
+                if (unDoneLotNumberQcInStockIdList.Contains(inStockItemRecord.InStockId)) continue;
+                var matchedProduct = needQcProductList.Where(p => p.ProductId == inStockItemRecord.ProductId).FirstOrDefault();
+                var unDoneQcLot = new UnDoneQcLot()
+                {
+                    ProductId = inStockItemRecord.ProductId,
+                    ProductCode = inStockItemRecord.ProductCode,
+                    ProductName = inStockItemRecord.ProductName,
+                    LotNumber = inStockItemRecord.LotNumber,
+                    LotNumberBatch = inStockItemRecord.LotNumberBatch,
+                    QcType = matchedProduct.QcType,
+                    QcTestStatus = inStockItemRecord.QcTestStatus,
+                    ProductModel = matchedProduct.ProductModel,
+                    InStockTime = inStockItemRecord.CreatedAt,
+                    InStockUserId = inStockItemRecord.UserId,
+                    InStockUserName = inStockItemRecord.UserName
+                };
+                unDoneQcLotList.Add(unDoneQcLot);
+            }
+
             return unDoneQcLotList;
         }
 

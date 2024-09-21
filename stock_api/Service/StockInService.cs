@@ -811,7 +811,7 @@ namespace stock_api.Service
 
         public List<ProductNewLotnumberView> GetProductsNewLotNumberList()
         {
-            return _dbContext.ProductNewLotnumberViews.ToList();
+            return _dbContext.ProductNewLotnumberViews.ToList().Where(e=>e.LotNumber!= "N/A").ToList();
         }
 
         public List<ProductNewLotnumberbatchView> GetProductsNewLotNumberBatchList()

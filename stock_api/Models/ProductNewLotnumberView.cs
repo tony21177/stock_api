@@ -22,4 +22,22 @@ public partial class ProductNewLotnumberView
     /// </summary>
     [StringLength(100)]
     public string? LotNumber { get; set; }
+
+    /// <summary>
+    /// 批次
+    /// </summary>
+    [StringLength(100)]
+    public string LotNumberBatch { get; set; } = null!;
+
+    /// <summary>
+    /// 所屬公司ID
+    /// </summary>
+    [StringLength(100)]
+    public string CompId { get; set; } = null!;
+
+    [StringLength(100)]
+    public string InStockId { get; set; } = null!;
+
+    [Column(TypeName = "timestamp")]
+    public DateTime? CreatedAt { get; set; }
 }
