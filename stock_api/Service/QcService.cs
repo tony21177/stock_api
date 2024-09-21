@@ -72,6 +72,7 @@ namespace stock_api.Service
                     QcTestStatus = inStockItemRecord.QcTestStatus,
                     ProductModel = matchedProduct.ProductModel,
                     InStockTime = inStockItemRecord.CreatedAt,
+                    AcceptedAt = inStockItemRecord.CreatedAt,
                     InStockUserId = inStockItemRecord.UserId,
                     InStockUserName = inStockItemRecord.UserName,
                     GroupIdList = matchedProduct.GroupIds == null ? null : matchedProduct.GroupIds.Split(",", StringSplitOptions.RemoveEmptyEntries).ToList(),
@@ -119,6 +120,9 @@ namespace stock_api.Service
                     case "AcceptedAt":
                         unDoneQcLotList = unDoneQcLotList.OrderByDescending(item => item.AcceptedAt).ToList();
                         break;
+                    case "InStockTime":
+                        unDoneQcLotList = unDoneQcLotList.OrderByDescending(item => item.AcceptedAt).ToList();
+                        break;
                 }
             }
             else
@@ -147,6 +151,9 @@ namespace stock_api.Service
                         unDoneQcLotList = unDoneQcLotList.OrderBy(item => item.AcceptUserName).ToList();
                         break;
                     case "AcceptedAt":
+                        unDoneQcLotList = unDoneQcLotList.OrderBy(item => item.AcceptedAt).ToList();
+                        break;
+                    case "InStockTime":
                         unDoneQcLotList = unDoneQcLotList.OrderBy(item => item.AcceptedAt).ToList();
                         break;
                 }

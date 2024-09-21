@@ -14,7 +14,7 @@ namespace stock_api.Service.ValueObject
         public string PurchaseMainId { get; set; } = null!;
         public DateTime? ApplyDate { get; set; } 
         public String InStockId { get; set; } = null!;
-        public DateTime AcceptedAt { get; set; }
+        public DateTime? AcceptedAt { get; set; }
         public string AcceptUserName { get; set; }
         public string AcceptUserId { get; set; }
 
