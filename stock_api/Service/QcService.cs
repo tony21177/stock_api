@@ -85,6 +85,11 @@ namespace stock_api.Service
             {
                 unDoneQcLotList = unDoneQcLotList.Where(e=> e.GroupIdList!=null&& string.Join(" ",e.GroupIdList).Contains(request.GroupId)).ToList();
             }
+            if (request.Keywords != null)
+            {
+                unDoneQcLotList = unDoneQcLotList.Where(e=>e.IsContainKeywords(request.Keywords)).ToList();
+            }
+
 
             string? orderByField = request.PaginationCondition.OrderByField;
             if (orderByField == null)
