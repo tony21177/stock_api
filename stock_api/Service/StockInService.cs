@@ -808,5 +808,15 @@ namespace stock_api.Service
         {
             return _dbContext.AcceptanceItems.Where(a => acceptIdList.Contains(a.AcceptId)).ToList();   
         }
+
+        public List<ProductNewLotnumberView> GetProductsNewLotNumberList()
+        {
+            return _dbContext.ProductNewLotnumberViews.ToList();
+        }
+
+        public List<ProductNewLotnumberbatchView> GetProductsNewLotNumberBatchList()
+        {
+            return _dbContext.ProductNewLotnumberbatchViews.ToList();
+        }
     }
 }

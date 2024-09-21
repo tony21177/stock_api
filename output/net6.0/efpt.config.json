@@ -172,6 +172,14 @@
          "ObjectType": 3
       },
       {
+         "Name": "product_new_lotnumber_view",
+         "ObjectType": 3
+      },
+      {
+         "Name": "product_new_lotnumberbatch_view",
+         "ObjectType": 3
+      },
+      {
          "Name": "purchase_acceptance_items_view",
          "ObjectType": 3
       },

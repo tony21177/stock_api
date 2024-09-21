@@ -13,9 +13,12 @@ namespace stock_api.Models;
 /// </summary>
 [Table("in_stock_item_record")]
 [Index("CreatedAt", Name = "createdAt_idx")]
+[Index("ProductId", "CreatedAt", Name = "idx_productid_createdat", IsDescending = new[] { false, true })]
 [Index("ProductId", Name = "productId_ids")]
 [Index("CompId", "QcTestStatus", Name = "qc_undone_index")]
 [Index("LotNumberBatch", Name = "unique_lotnumberbatch", IsUnique = true)]
+[Index("IsNeedQc", "QcType", "LotNumber", Name = "update_qc_idx_lotnumber")]
+[Index("IsNeedQc", "QcType", "LotNumberBatch", Name = "update_qc_idx_lotnumberbatch")]
 public partial class InStockItemRecord
 {
     [Key]

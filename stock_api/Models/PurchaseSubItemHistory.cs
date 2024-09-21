@@ -12,6 +12,7 @@ namespace stock_api.Models;
 /// 紀錄sub_item被更改或刪除的紀錄
 /// </summary>
 [Table("purchase_sub_item_history")]
+[Index("PurchaseMainId", Name = "purchaseMainIdIdx")]
 public partial class PurchaseSubItemHistory
 {
     [Key]

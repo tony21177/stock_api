@@ -68,6 +68,8 @@ namespace stock_api.Controllers
                 itemIdAndPurchaseDetailMap.Add(d.ItemId, d);
             });
 
+            var newLotNumberList = _stockInService.GetProductsNewLotNumberList().Select(e=>e.LotNumber).ToList();
+            var newLotNumberBatchList = _stockInService.GetProductsNewLotNumberBatchList().Select(e => e.LotNumberBatch).ToList(); ;
 
 
             unDoneQcList.ForEach(lot =>
@@ -97,6 +99,14 @@ namespace stock_api.Controllers
                 if (outStockRecordsByLotNumberBatch.Where(i => i.LotNumberBatch == lot.LotNumberBatch).FirstOrDefault() != null)
                 {
                     lot.IsLotNumberBatchOutStock = true;
+                }
+                if (!newLotNumberList.Contains(lot.LotNumber))
+                {
+                    lot.IsNewLotNumber = false;
+                }
+                if (!newLotNumberBatchList.Contains(lot.LotNumberBatch))
+                {
+                    lot.IsNewLotNumberBatch = false;
                 }
             });
 

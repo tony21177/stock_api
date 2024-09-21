@@ -24,5 +24,7 @@
         public DateTime? InStockTime { get; set; }
         public string? InStockUserId {  get; set; }
         public string? InStockUserName { get; set; }
+        public bool IsNewLotNumber { get; set; } = true;
+        public bool IsNewLotNumberBatch { get; set; } = true;
     }
 }

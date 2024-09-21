@@ -53,6 +53,10 @@ public partial class StockDbContext : DbContext
 
     public virtual DbSet<ProductImage> ProductImages { get; set; }
 
+    public virtual DbSet<ProductNewLotnumberView> ProductNewLotnumberViews { get; set; }
+
+    public virtual DbSet<ProductNewLotnumberbatchView> ProductNewLotnumberbatchViews { get; set; }
+
     public virtual DbSet<PurchaseAcceptanceItemsView> PurchaseAcceptanceItemsViews { get; set; }
 
     public virtual DbSet<PurchaseDetailView> PurchaseDetailViews { get; set; }
@@ -457,6 +461,22 @@ public partial class StockDbContext : DbContext
             entity.Property(e => e.UpdatedAt)
                 .ValueGeneratedOnAddOrUpdate()
                 .HasDefaultValueSql("CURRENT_TIMESTAMP");
+        });
+
+        modelBuilder.Entity<ProductNewLotnumberView>(entity =>
+        {
+            entity.ToView("product_new_lotnumber_view");
+
+            entity.Property(e => e.LotNumber).HasComment("批號");
+            entity.Property(e => e.ProductId).HasComment("品項PK");
+        });
+
+        modelBuilder.Entity<ProductNewLotnumberbatchView>(entity =>
+        {
+            entity.ToView("product_new_lotnumberbatch_view");
+
+            entity.Property(e => e.LotNumberBatch).HasComment("批次");
+            entity.Property(e => e.ProductId).HasComment("品項PK");
         });
 
         modelBuilder.Entity<PurchaseAcceptanceItemsView>(entity =>
