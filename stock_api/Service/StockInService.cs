@@ -527,6 +527,106 @@ namespace stock_api.Service
                     _ => query.OrderBy(h => h.UpdatedAt),
                 };
             }
+            var productsNewLotNumberList = GetProductsNewLotNumberList();
+
+
+            int totalItems = query.Count();
+            int totalPages = (int)Math.Ceiling((double)totalItems / request.PaginationCondition.PageSize);
+
+            query = query.Skip((request.PaginationCondition.Page - 1) * request.PaginationCondition.PageSize).Take(request.PaginationCondition.PageSize);
+            return (query.ToList(), totalPages);
+
+        }
+
+        public (List<InStockItemRecordNewLotNumberVew>, int TotalPages) ListStockInRecordsWithNewLotNumber(ListStockInRecordsWithNewLotNumberRequest request)
+        {
+            IQueryable<InStockItemRecordNewLotNumberVew> query = _dbContext.InStockItemRecordNewLotNumberVews;
+            if (request.LotNumberBatch != null)
+            {
+                query = query.Where(h => h.LotNumberBatch == request.LotNumberBatch);
+            }
+            if (request.LotNumber != null)
+            {
+                query = query.Where(h => h.LotNumber == request.LotNumber);
+            }
+            
+            if (request.ProductId != null)
+            {
+                query = query.Where(h => h.ProductId == request.ProductId);
+            }
+            if (request.ProductName != null)
+            {
+                query = query.Where(h => h.ProductName == request.ProductName);
+            }
+            if (request.UserId != null)
+            {
+                query = query.Where(h => h.UserId == request.UserId);
+            }
+            if (request.StartDate != null)
+            {
+                query = query.Where(h => h.InStockTime >= DateTimeHelper.ParseDateString(request.StartDate).Value);
+            }
+            if (request.EndDate != null)
+            {
+                DateTime endDateTime = DateTimeHelper.ParseDateString(request.EndDate).Value.AddDays(1);
+                query = query.Where(h => h.InStockTime < endDateTime);
+            }
+            if (request.SupplierId != null)
+            {
+                query = query.Where(h => h.SupplierId == request.SupplierId);
+            }
+            if (request.IsNewLotNumber != null)
+            {
+                query = query.Where(h => h.IsNewLotNumber == request.IsNewLotNumber);
+            }
+            if (request.GroupId != null)
+            {
+                query = query.Where(h => h.GroupIds.Contains(request.GroupId));
+            }
+
+            query = query.Where(h => h.CompId == request.CompId);
+
+            if (!string.IsNullOrEmpty(request.Keywords))
+            {
+                var groupNameList =
+                query = query.Where(h => h.LotNumberBatch.Contains(request.Keywords)
+                || h.LotNumber.Contains(request.Keywords)
+                || h.ProductName.Contains(request.Keywords)
+                || h.UserName.Contains(request.Keywords)
+                || h.GroupNames.Contains(request.Keywords)
+                );
+            }
+            if (request.PaginationCondition.OrderByField == null) request.PaginationCondition.OrderByField = "CreatedAt";
+
+            if (request.PaginationCondition.IsDescOrderBy)
+            {
+                var orderByField = StringUtils.CapitalizeFirstLetter(request.PaginationCondition.OrderByField);
+                query = orderByField switch
+                {
+                    "LotNumberBatch" => query.OrderByDescending(h => h.LotNumberBatch),
+                    "LotNumber" => query.OrderByDescending(h => h.LotNumber),
+                    "ExpirationDate" => query.OrderByDescending(h => h.ExpirationDate),
+                    "InStockTime" => query.OrderByDescending(h => h.InStockTime),
+                    "UpdatedAt" => query.OrderByDescending(h => h.UpdatedAt),
+                    _ => query.OrderByDescending(h => h.UpdatedAt),
+                };
+            }
+            else
+            {
+                var orderByField = StringUtils.CapitalizeFirstLetter(request.PaginationCondition.OrderByField);
+                query = orderByField switch
+                {
+                    "LotNumberBatch" => query.OrderBy(h => h.LotNumberBatch),
+                    "LotNumber" => query.OrderBy(h => h.LotNumber),
+                    "ExpirationDate" => query.OrderBy(h => h.ExpirationDate),
+                    "InStockTime" => query.OrderBy(h => h.InStockTime),
+                    "UpdatedAt" => query.OrderBy(h => h.UpdatedAt),
+                    _ => query.OrderBy(h => h.UpdatedAt),
+                };
+            }
+            var productsNewLotNumberList = GetProductsNewLotNumberList();
+
+
             int totalItems = query.Count();
             int totalPages = (int)Math.Ceiling((double)totalItems / request.PaginationCondition.PageSize);
 

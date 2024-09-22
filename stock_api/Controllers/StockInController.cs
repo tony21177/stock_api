@@ -496,6 +496,36 @@ namespace stock_api.Controllers
             });
         }
 
+        [HttpPost("recordsWithNewLotNumber/list")]
+        [Authorize]
+        public IActionResult ListStockInRecordsWithNewLotNumber(ListStockInRecordsWithNewLotNumberRequest request)
+        {
+            var memberAndPermissionSetting = _authHelpers.GetMemberAndPermissionSetting(User);
+            var compId = memberAndPermissionSetting.CompanyWithUnit.CompId;
+            var userId = memberAndPermissionSetting.Member.UserId;
+            if (request.CompId == null)
+            {
+                request.CompId = compId;
+            }
+            if (request.PaginationCondition.OrderByField == null)
+            {
+                request.PaginationCondition.OrderByField = "CreatedAt";
+            }
+
+            var (data, pages) = _stockInService.ListStockInRecordsWithNewLotNumber(request);
+            var stockInRecordVoList = _mapper.Map<List<InStockItemRecordNewLotNumberVo>>(data);
+            
+
+
+
+            return Ok(new CommonResponse<dynamic>
+            {
+                Result = true,
+                Data = stockInRecordVoList,
+                TotalPages = pages
+            });
+        }
+
         [HttpPost("acceptItem/batchVerify")]
         [Authorize]
         public IActionResult BatchVerifyAcceptItem(UpdateBatchAcceptItemsRequest request)

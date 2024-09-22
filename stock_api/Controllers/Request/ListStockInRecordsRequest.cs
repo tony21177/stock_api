@@ -14,7 +14,6 @@
         public string? StartDate { get; set; }
         public string? EndDate { get; set; }    
         public int? SupplierId { get; set; }
-        
 
         public List<string>? OutStockStatusList { get; set; }
     }
