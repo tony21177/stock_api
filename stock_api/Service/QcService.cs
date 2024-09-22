@@ -166,6 +166,7 @@ namespace stock_api.Service
             int totalPages = 0;
             int totalItems = unDoneQcLotList.Count;
             totalPages = (int)Math.Ceiling((double)totalItems / request.PaginationCondition.PageSize);
+            unDoneQcLotList = unDoneQcLotList.Skip((request.PaginationCondition.Page - 1) * request.PaginationCondition.PageSize).Take(request.PaginationCondition.PageSize).ToList();
 
             return unDoneQcLotList;
         }
