@@ -24,7 +24,7 @@ namespace stock_api.Service
         }
 
 
-        public List<UnDoneQcLot> ListUnDoneQcLotList(ListUnDoneQcLotRequest request)
+        public (List<UnDoneQcLot>,int) ListUnDoneQcLotList(ListUnDoneQcLotRequest request)
         {
             var needQcProductList = _dbContext.WarehouseProducts.Where(p=>p.IsActive==true&&p.IsNeedAcceptProcess==true&&p.QcType!=CommonConstants.QcTypeConstants.NONE).ToList();    
             var needQcProductIdList = needQcProductList.Select(p=>p.ProductId).ToList();
@@ -168,7 +168,7 @@ namespace stock_api.Service
             totalPages = (int)Math.Ceiling((double)totalItems / request.PaginationCondition.PageSize);
             unDoneQcLotList = unDoneQcLotList.Skip((request.PaginationCondition.Page - 1) * request.PaginationCondition.PageSize).Take(request.PaginationCondition.PageSize).ToList();
 
-            return unDoneQcLotList;
+            return (unDoneQcLotList,totalPages);
         }
 
         public (bool,string?) CreateQcValidation(QcValidationMain newQcValidationMain,List<QcValidationDetail> newQcValidationDetailList

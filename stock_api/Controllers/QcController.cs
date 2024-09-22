@@ -54,7 +54,7 @@ namespace stock_api.Controllers
                 request.CompId = compId;
             }
 
-            List<UnDoneQcLot> unDoneQcList = _qcService.ListUnDoneQcLotList(request);
+            var (unDoneQcList, totalPages) = _qcService.ListUnDoneQcLotList(request);
             List<string> distinctLotNumberBatchList = unDoneQcList.Where(e=>e.LotNumberBatch!=null).Select(e => e.LotNumberBatch).Distinct().ToList();
             
             List<string> distincLotNumberList = unDoneQcList.Where(e => e.LotNumber != null).Select(e => e.LotNumber).Distinct().ToList();
@@ -122,7 +122,8 @@ namespace stock_api.Controllers
             var response = new CommonResponse<List<UnDoneQcLot>>
             {
                 Result = true,
-                Data = unDoneQcList
+                Data = unDoneQcList,
+                TotalPages = totalPages,
             };
             return Ok(response);
         }
