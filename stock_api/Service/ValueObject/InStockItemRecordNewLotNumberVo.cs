@@ -5,6 +5,7 @@ namespace stock_api.Service.ValueObject
 {
     public class InStockItemRecordNewLotNumberVo
     {
+        public string ProductCode {get;set;}
         public string ProductName { get; set; } = null!;
         public DateTime? InStockTime { get; set; }
         public float InStockQuantity { get; set; }
