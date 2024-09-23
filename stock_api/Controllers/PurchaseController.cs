@@ -832,8 +832,22 @@ namespace stock_api.Controllers
 
             foreach (var purchaseHistory in purchaseHistoryList)
             {
-                var matchedProduct = allProducts.Where(p=>p.ProductId==purchaseHistory.ItemBeforeValues.ProductId).FirstOrDefault();
-                purchaseHistory.ItemBeforeValues.ProductUnit = matchedProduct.Unit;
+                WarehouseProduct? matchedProduct = null;
+                if (purchaseHistory.ItemBeforeValues != null)
+                {
+                    matchedProduct = allProducts.Where(p => p.ProductId == purchaseHistory.ItemBeforeValues.ProductId).FirstOrDefault();
+                    purchaseHistory.ItemBeforeValues.ProductUnit = matchedProduct.Unit;
+                }
+                if (purchaseHistory.ItemAfterValues != null)
+                {
+                    if (matchedProduct == null)
+                    {
+                        matchedProduct = allProducts.Where(p => p.ProductId == purchaseHistory.ItemAfterValues.ProductId).FirstOrDefault();
+                    }
+                    purchaseHistory.ItemAfterValues.ProductUnit = matchedProduct.Unit;
+                }
+
+
                 purchaseHistory.ItemAfterValues.ProductUnit = matchedProduct.Unit;
             }
 

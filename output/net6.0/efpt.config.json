@@ -194,6 +194,10 @@
       {
          "Name": "purchase_item_list_view",
          "ObjectType": 3
+      },
+      {
+         "Name": "purchase_sub_item_vo_view",
+         "ObjectType": 3
       }
    ],
    "UiHint": "local_mysql",
