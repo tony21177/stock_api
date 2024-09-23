@@ -16,6 +16,7 @@ namespace stock_api.Service.ValueObject
         public string? GroupIds { get; set; }
         public string? GroupNames { get; set; }
         public bool IsNewLotNumber { get; set; }
-        public string ProductUnit {get;set;}
+        public string ProductId { get; set; }
+        public string? ProductUnit {get;set;}
     }
 }

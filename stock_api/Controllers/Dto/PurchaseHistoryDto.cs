@@ -1,6 +1,7 @@
 ﻿using stock_api.Models;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.ComponentModel.DataAnnotations;
+using stock_api.Service.ValueObject;
 
 namespace stock_api.Controllers.Dto
 {
@@ -13,9 +14,9 @@ namespace stock_api.Controllers.Dto
         public string ItemId { get; set; } = null!;
         public string PurchaseMainId { get; set; } = null!;
         public string PurchaseOrderNo { get; set; } = null!;
-        public PurchaseSubItem? ItemBeforeValues { get; set; }
+        public PurchaseSubItemWithUnit? ItemBeforeValues { get; set; }
 
-        public PurchaseSubItem? ItemAfterValues { get; set; }
+        public PurchaseSubItemWithUnit? ItemAfterValues { get; set; }
         public DateTime CreatedAt { get; set; }
 
         public DateTime UpdatedAt { get; set; }

@@ -99,8 +99,26 @@ namespace stock_api.Service
                 var firstFlow = matchedApplyProductFlowSettingVoList.OrderBy(s => s.Sequence).FirstOrDefault();
                 DateTime now = DateTime.Now;
                 string title = $"申請新品項單:{string.Concat(DateTimeHelper.FormatDateStringForEmail(now), firstFlow.SettingId.AsSpan(0, 5))} 需要您審核";
-                string content = $"<a href={_smtpSettings.Domain}/purchase_flow_detail/{firstFlow.SettingId}>{firstFlow.SettingId}</a>";
+                string content = $"<a href={_smtpSettings.Domain}/product_item_verify/{newApplyNewProductMain.ApplyId}>{newApplyNewProductMain.ApplyId}</a>";
                 SendMailByFlowSetting(firstFlow, title, content);
+
+                if (firstFlow != null)
+                {
+                    title = "申請新品項單需要審核";
+                    var purchaseNumber = string.Concat(DateTimeHelper.FormatDateStringForEmail(now), newApplyNewProductMain.ApplyId.AsSpan(0, 5));
+                    var receiver = _memberService.GetMembersByUserId(firstFlow.ReviewUserId);
+                    EmailNotify emailNotify = new EmailNotify()
+                    {
+                        Title = title,
+                        Content = content,
+                        UserId = firstFlow.ReviewUserId,
+                        Email = receiver.Email,
+                        PurchaseNumber = purchaseNumber,
+                        Type = CommonConstants.EmailNotifyType.APPLY_NEW_PRODUCT
+                    };
+                    _emailService.AddEmailNotify(emailNotify);
+                }
+
 
                 _dbContext.SaveChanges();
                 scope.Complete();
@@ -324,7 +342,37 @@ namespace stock_api.Service
                 _dbContext.ApplyProductFlowLogs.Add(newFlowLog);
                 _dbContext.SaveChanges();
                 scope.Complete();
-                
+
+                if (answer == CommonConstants.AnswerPurchaseFlow.AGREE && nextPurchase == null)
+                {
+                    string title = $"申請新品項單:{string.Concat(DateTimeHelper.FormatDateStringForEmail(applyNewProductMain.CreatedAt), applyNewProductMain.ApplyId.AsSpan(0, 5))} 需要您處理";
+                    string content = $"<a href={_smtpSettings.Domain}/product_item_verify/{applyNewProductMain.ApplyId}>{applyNewProductMain.ApplyId}</a>";
+                    SendMailToOwner(title, content, ownerList);
+                   
+                }
+                if (answer == CommonConstants.AnswerPurchaseFlow.AGREE && nextPurchase != null)
+                {
+                    string title = $"申請新品項單:{string.Concat(DateTimeHelper.FormatDateStringForEmail(applyNewProductMain.CreatedAt), applyNewProductMain.ApplyId.AsSpan(0, 5))} 需要您審核";
+                    string content = $"<a href={_smtpSettings.Domain}/product_item_verify/{applyNewProductMain.ApplyId}>{applyNewProductMain.ApplyId}</a>";
+                    using (var scope2 = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled))
+                    {
+                        title = "申請新品項單單需要審核";
+                        var purchaseNumber = string.Concat(DateTimeHelper.FormatDateStringForEmail(applyNewProductMain.CreatedAt), applyNewProductMain.ApplyId.AsSpan(0, 5));
+                        var receiver = _memberService.GetMembersByUserId(nextPurchase.ReviewUserId);
+                        EmailNotify emailNotify = new EmailNotify()
+                        {
+                            Title = title,
+                            Content = content,
+                            UserId = receiver.UserId,
+                            Email = receiver.Email,
+                            PurchaseNumber = purchaseNumber,
+                            Type = CommonConstants.EmailNotifyType.APPLY_NEW_PRODUCT
+                        };
+                        _emailService.AddEmailNotify(emailNotify);
+                        _dbContext.SaveChanges();
+                        scope.Complete();
+                    }
+                }
             }
             catch (Exception ex)
             {

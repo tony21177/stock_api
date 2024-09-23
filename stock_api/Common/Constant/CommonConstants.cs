@@ -10,10 +10,11 @@ namespace stock_api.Common.Constant
         public static class EmailNotifyType
         {
             public const string PURCHASE = "PURCHASE";
+            public const string APPLY_NEW_PRODUCT = "APPLY_NEW_PRODUCT";
 
             public static List<string> GetAllValues()
             {
-                return new List<string> { PURCHASE };
+                return new List<string> { PURCHASE, APPLY_NEW_PRODUCT };
             }
         }
 

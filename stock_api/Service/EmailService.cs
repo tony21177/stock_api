@@ -76,4 +76,14 @@ public class EmailService
             .ToDictionary(g => g.Key, g => g.ToList());
         return emailNotifyDictionary;
     }
+
+    public Dictionary<string, List<EmailNotify>> GetApplyNewProductListToSend()
+    {
+        List<EmailNotify> waitingToNotifyListForApplyNewProduct = _dbContext.EmailNotifies.Where(e => e.Type == CommonConstants.EmailNotifyType.APPLY_NEW_PRODUCT && e.IsDone == false).ToList();
+        Dictionary<string, List<EmailNotify>> emailNotifyDictionary = waitingToNotifyListForApplyNewProduct
+            .Where(e => !string.IsNullOrEmpty(e.Email))
+            .GroupBy(e => e.Email)
+            .ToDictionary(g => g.Key, g => g.ToList());
+        return emailNotifyDictionary;
+    }
 }

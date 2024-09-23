@@ -514,9 +514,13 @@ namespace stock_api.Controllers
 
             var (data, pages) = _stockInService.ListStockInRecordsWithNewLotNumber(request);
             var stockInRecordVoList = _mapper.Map<List<InStockItemRecordNewLotNumberVo>>(data);
-            
+            var allProducts = _warehouseProductService.GetAllProducts(request.CompId);
 
-
+            foreach (var item in stockInRecordVoList)
+            {
+                var matchedProduct = allProducts.Where(p => p.ProductId == item.ProductId).FirstOrDefault();
+                item.ProductUnit = matchedProduct?.Unit;
+            }
 
             return Ok(new CommonResponse<dynamic>
             {

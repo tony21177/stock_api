@@ -825,9 +825,18 @@ namespace stock_api.Controllers
             {
                 var purchaseHistory = purchaseHistoryList[i];
                 var purchaseSubItemHistory = purchaseSubItemHistories[i];
-                purchaseHistory.ItemBeforeValues = purchaseSubItemHistory.BeforeValues !=null? JsonSerializer.Deserialize<PurchaseSubItem>(purchaseSubItemHistory.BeforeValues):null;
-                purchaseHistory.ItemAfterValues = purchaseSubItemHistory.AfterValues != null?JsonSerializer.Deserialize<PurchaseSubItem>(purchaseSubItemHistory.AfterValues):null;
+                purchaseHistory.ItemBeforeValues = purchaseSubItemHistory.BeforeValues !=null? JsonSerializer.Deserialize<PurchaseSubItemWithUnit>(purchaseSubItemHistory.BeforeValues):null;
+                purchaseHistory.ItemAfterValues = purchaseSubItemHistory.AfterValues != null?JsonSerializer.Deserialize<PurchaseSubItemWithUnit>(purchaseSubItemHistory.AfterValues):null;
             }
+            var allProducts = _warehouseProductService.GetAllProducts(compId);
+
+            foreach (var purchaseHistory in purchaseHistoryList)
+            {
+                var matchedProduct = allProducts.Where(p=>p.ProductId==purchaseHistory.ItemBeforeValues.ProductId).FirstOrDefault();
+                purchaseHistory.ItemBeforeValues.ProductUnit = matchedProduct.Unit;
+                purchaseHistory.ItemAfterValues.ProductUnit = matchedProduct.Unit;
+            }
+
 
             return Ok(new CommonResponse<dynamic>
             {
