@@ -846,9 +846,6 @@ namespace stock_api.Controllers
                     }
                     purchaseHistory.ItemAfterValues.ProductUnit = matchedProduct.Unit;
                 }
-
-
-                purchaseHistory.ItemAfterValues.ProductUnit = matchedProduct.Unit;
             }
 
 
