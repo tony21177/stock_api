@@ -123,9 +123,12 @@ namespace stock_api.Controllers
                 // }
                 if (request.Keywords != null && acceptItems.Any(acceptItem => acceptItem.IsContainKeywords(request.Keywords)))
                 {
-                    purchaseAcceptItemsVo.AcceptItems = acceptItems;
-                    data.Add(purchaseAcceptItemsVo);
-                    continue;
+                    List<AcceptItem> filteredAcceptItems = acceptItems.Where(acceptItem => acceptItem.IsContainKeywords(request.Keywords)).ToList();
+                    if (filteredAcceptItems.Any())
+                    {
+                        purchaseAcceptItemsVo.AcceptItems = filteredAcceptItems;
+                        data.Add(purchaseAcceptItemsVo);
+                    }
                 }
 
             }
