@@ -115,7 +115,13 @@ namespace stock_api.Controllers
                     data.Add(purchaseAcceptItemsVo);
                     continue;
                 }
-                if (request.Keywords != null && (purchaseAcceptItemsVo.IsContainKeywords(request.Keywords) || acceptItems.Any(acceptItem => acceptItem.IsContainKeywords(request.Keywords))))
+                // if (request.Keywords != null && (purchaseAcceptItemsVo.IsContainKeywords(request.Keywords) || acceptItems.Any(acceptItem => acceptItem.IsContainKeywords(request.Keywords))))
+                // {
+                //     purchaseAcceptItemsVo.AcceptItems = acceptItems;
+                //     data.Add(purchaseAcceptItemsVo);
+                //     continue;
+                // }
+                if (request.Keywords != null && acceptItems.Any(acceptItem => acceptItem.IsContainKeywords(request.Keywords)))
                 {
                     purchaseAcceptItemsVo.AcceptItems = acceptItems;
                     data.Add(purchaseAcceptItemsVo);
