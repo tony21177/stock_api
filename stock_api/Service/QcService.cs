@@ -61,6 +61,7 @@ namespace stock_api.Service
             {
                 if (unDoneLotNumberQcInStockIdList.Contains(inStockItemRecord.InStockId)) continue;
                 var matchedProduct = allProducts.Where(p => p.ProductId == inStockItemRecord.ProductId).FirstOrDefault();
+                if(matchedProduct.IsNeedAcceptProcess==false) continue;
                 var unDoneQcLot = new UnDoneQcLot()
                 {
                     ProductId = inStockItemRecord.ProductId,
