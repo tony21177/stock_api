@@ -364,6 +364,8 @@ namespace stock_api.Controllers
                     // 因為這邊是要給金萬霖採購總清冊用的
                     var matchedOwnerProduct = productsOfOwner.Where(p => p.ProductCode == item.ProductCode).FirstOrDefault();
                     item.SupplierUnit = matchedOwnerProduct?.ProductSpec;
+                    item.UnitConversion = matchedOwnerProduct?.UnitConversion;
+
                     item.OpenedSealName = matchedProduct?.OpenedSealName;
                     item.StockLocation = matchedProduct?.StockLocation;
                     var matchedProductLastMonthUsage = productsLastMonthUsage.Where(p => p.ProductId == item.ProductId).FirstOrDefault();
