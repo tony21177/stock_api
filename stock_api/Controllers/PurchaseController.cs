@@ -332,12 +332,12 @@ namespace stock_api.Controllers
             {
                 filterKeywordsData.AddRange(listDate);
             }
-            var distinctProductIdList = filterKeywordsData
-            .SelectMany(item => item.Items)
-            .Select(item => item.ProductId)
-            .Distinct()
-            .ToList();
-            var products = _warehouseProductService.GetProductsByProductIds(distinctProductIdList);
+            //var distinctProductIdList = filterKeywordsData
+            //.SelectMany(item => item.Items)
+            //.Select(item => item.ProductId)
+            //.Distinct()
+            //.ToList();
+            var products = _warehouseProductService.GetAllProducts();
 
             var productsLastMonthUsage = _stockOutService.GetLastMonthUsages();
 
@@ -348,7 +348,6 @@ namespace stock_api.Controllers
                 foreach (var item in vo.Items)
                 {
                     var matchedProduct = products.Where(p => p.ProductId == item.ProductId).FirstOrDefault();
-                    var matchedOwnerProduct = productsOfOwner.Where(p=>p.ProductCode==item.ProductCode).FirstOrDefault();
                     item.MaxSafeQuantity = matchedProduct?.MaxSafeQuantity;
                     item.ProductModel = matchedProduct?.ProductModel;
                     item.ManufacturerName = matchedProduct?.ManufacturerName;
@@ -363,6 +362,7 @@ namespace stock_api.Controllers
 
                     // ProductSpec指的是向上游供應商申請時 對方的出貨單位,所以應該是看金萬林的ProductSpec
                     // 因為這邊是要給金萬霖採購總清冊用的
+                    var matchedOwnerProduct = productsOfOwner.Where(p => p.ProductCode == item.ProductCode).FirstOrDefault();
                     item.SupplierUnit = matchedOwnerProduct?.ProductSpec;
                     item.OpenedSealName = matchedProduct?.OpenedSealName;
                     item.StockLocation = matchedProduct?.StockLocation;
