@@ -423,6 +423,9 @@ namespace stock_api.Controllers
 
             var distinctProductIdList = purchaseSubItems.Select(s => s.ProductId).Distinct().ToList();
             var products = _warehouseProductService.GetProductsByProductIdsAndCompId(distinctProductIdList, purchaseMain.CompId);
+
+            var productsOfOwner = _warehouseProductService.GetAllProducts(compId);
+
             purchaseSubItemVoList.ForEach(item =>
             {
                 var matchedProduct = products.Where(p => p.ProductId == item.ProductId).FirstOrDefault();
@@ -431,13 +434,17 @@ namespace stock_api.Controllers
                 item.ManufacturerName = matchedProduct?.ManufacturerName;
                 item.ProductMachine = matchedProduct?.ProductMachine;
                 item.ProductUnit = matchedProduct?.Unit;
-                item.UnitConversion = matchedProduct?.UnitConversion;
                 item.TestCount = matchedProduct?.TestCount;
                 item.Delivery = matchedProduct?.Delievery;
                 item.PackageWay = matchedProduct?.PackageWay;
                 item.ProductCode = matchedProduct?.ProductCode;
-                item.SupplierUnit = matchedProduct?.SupplierUnit;
-                item.SupplierUnitConvertsion = matchedProduct?.SupplierUnitConvertsion;
+
+                var matchedOwnerProduct = productsOfOwner.Where(p => p.ProductCode == item.ProductCode).FirstOrDefault();
+
+                item.SupplierUnit = matchedOwnerProduct?.Unit; // 這裡要用這個品項在金萬林的最小出入庫單位（Gary）
+                item.UnitConversion = matchedProduct?.UnitConversion; // 這裡要用這個品項在原始採購單位的包裝單位轉換（Gary）
+                item.SupplierUnitConvertsion = matchedOwnerProduct?.UnitConversion; // 這裡要用這個品項在金萬林的包裝單位轉換（Gary）
+
                 item.StockLocation = matchedProduct?.StockLocation;
                 if (item.WithCompId != null)
                 {
