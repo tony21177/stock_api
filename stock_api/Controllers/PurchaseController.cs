@@ -362,8 +362,9 @@ namespace stock_api.Controllers
 
                     // ProductSpec指的是向上游供應商申請時 對方的出貨單位,所以應該是看金萬林的ProductSpec
                     // 因為這邊是要給金萬霖採購總清冊用的
+                    // 2024/10/01 Gary改：supplierUnit改成是該品項在金萬林倉的最小出入庫單位
                     var matchedOwnerProduct = productsOfOwner.Where(p => p.ProductCode == item.ProductCode).FirstOrDefault();
-                    item.SupplierUnit = matchedOwnerProduct?.ProductSpec;
+                    item.SupplierUnit = matchedOwnerProduct?.Unit;
                     item.UnitConversion = matchedOwnerProduct?.UnitConversion;
 
                     item.OpenedSealName = matchedProduct?.OpenedSealName;
