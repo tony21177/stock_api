@@ -358,7 +358,6 @@ namespace stock_api.Controllers
                     item.Delivery = matchedProduct?.Delievery;
                     item.PackageWay = matchedProduct?.PackageWay;
                     item.ProductCode = matchedProduct?.ProductCode;
-                    item.SupplierUnitConvertsion = matchedProduct?.SupplierUnitConvertsion;
 
                     // ProductSpec指的是向上游供應商申請時 對方的出貨單位,所以應該是看金萬林的ProductSpec
                     // 因為這邊是要給金萬霖採購總清冊用的
@@ -366,6 +365,7 @@ namespace stock_api.Controllers
                     var matchedOwnerProduct = productsOfOwner.Where(p => p.ProductCode == item.ProductCode).FirstOrDefault();
                     item.SupplierUnit = matchedOwnerProduct?.Unit; // 這裡要用這個品項在金萬林的最小出入庫單位（Gary）
                     item.UnitConversion = matchedProduct?.UnitConversion; // 這裡要用這個品項在原始採購單位的包裝單位轉換（Gary）
+                    item.SupplierUnitConvertsion = matchedOwnerProduct?.UnitConversion; // 這裡要用這個品項在金萬林的包裝單位轉換（Gary）
 
                     item.OpenedSealName = matchedProduct?.OpenedSealName;
                     item.StockLocation = matchedProduct?.StockLocation;
