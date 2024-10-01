@@ -364,8 +364,8 @@ namespace stock_api.Controllers
                     // 因為這邊是要給金萬霖採購總清冊用的
                     // 2024/10/01 Gary改：supplierUnit改成是該品項在金萬林倉的最小出入庫單位
                     var matchedOwnerProduct = productsOfOwner.Where(p => p.ProductCode == item.ProductCode).FirstOrDefault();
-                    item.SupplierUnit = matchedOwnerProduct?.Unit;
-                    item.UnitConversion = matchedOwnerProduct?.UnitConversion;
+                    item.SupplierUnit = matchedOwnerProduct?.Unit; // 這裡要用這個品項在金萬林的最小出入庫單位（Gary）
+                    item.UnitConversion = matchedProduct?.UnitConversion; // 這裡要用這個品項在原始採購單位的包裝單位轉換（Gary）
 
                     item.OpenedSealName = matchedProduct?.OpenedSealName;
                     item.StockLocation = matchedProduct?.StockLocation;
