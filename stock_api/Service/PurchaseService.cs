@@ -418,17 +418,7 @@ namespace stock_api.Service
             {
                 query = query.Where(h => h.CompId == listPurchaseRequest.CompId);
             }
-            //if (listPurchaseRequest.StartDate != null)
-            //{
-            //    var startDateTime = DateTimeHelper.ParseDateString(listPurchaseRequest.StartDate);
-            //    query = query.Where(h => h.UpdatedAt >= startDateTime);
-            //}
-            //if (listPurchaseRequest.EndDate != null)
-            //{
-            //    var endDateTime = DateTimeHelper.ParseDateString(listPurchaseRequest.EndDate).Value.AddDays(1);
-            //    query = query.Where(h => h.UpdatedAt < endDateTime);
-            //}
-            if (listPurchaseRequest.StartDate != null)
+                        if (listPurchaseRequest.StartDate != null)
             {
                 var startDateTime = DateTimeHelper.ParseDateString(listPurchaseRequest.StartDate);
                 query = query.Where(h => h.UpdatedAt >= startDateTime);
@@ -557,12 +547,120 @@ namespace stock_api.Service
             return purchaseMainAndSubItemVoList;
         }
 
+        public List<PurchaseMainAndSubItemVo> ListMyReviewPurchase(ListMyReviewPurchaseRequest listMyReviewPurchaseRequest)
+        {
+            IQueryable<PurchaseItemListView> query = _dbContext.PurchaseItemListViews;
+            
+            if (listMyReviewPurchaseRequest.StartDate != null)
+            {
+                var startDateTime = DateTimeHelper.ParseDateString(listMyReviewPurchaseRequest.StartDate);
+                query = query.Where(h => h.UpdatedAt >= startDateTime);
+            }
+            if (listMyReviewPurchaseRequest.EndDate != null)
+            {
+                var endDateTime = DateTimeHelper.ParseDateString(listMyReviewPurchaseRequest.EndDate).Value.AddDays(1);
+                query = query.Where(h => h.UpdatedAt < endDateTime);
+            }
+            if (listMyReviewPurchaseRequest.Type != null)
+            {
+                query = query.Where(h => h.Type == listMyReviewPurchaseRequest.Type);
+            }
+            query = query.Where(h => h.CurrentStatus == CommonConstants.PurchaseCurrentStatus.APPLY);
+
+            var result = query.ToList();
+            Dictionary<string, List<PurchaseItemListView>> mainSheetIdMap = new Dictionary<string, List<PurchaseItemListView>>();
+
+            foreach (var item in result)
+            {
+                if (!mainSheetIdMap.ContainsKey(item.PurchaseMainId))
+                {
+                    mainSheetIdMap.Add(item.PurchaseMainId, new List<PurchaseItemListView>());
+                }
+                var voList = mainSheetIdMap.GetValueOrDefault(item.PurchaseMainId);
+                if (voList != null)
+                {
+                    voList.Add(item);
+                }
+            }
+            List<PurchaseMainAndSubItemVo> purchaseMainAndSubItemVoList = new List<PurchaseMainAndSubItemVo> { };
+            var flows = GetAllFlowsByCompId(null).OrderBy(f => f.Sequence);
+
+            List<PurchaseSubItemVo> allPurchaseSubItemVoList = new List<PurchaseSubItemVo>();
+            foreach (var purchaseItemListView in result)
+            {
+                var subItem = new PurchaseSubItemVo()
+                {
+                    ItemId = purchaseItemListView.ItemId,
+                    Comment = purchaseItemListView.Comment,
+                    CompId = purchaseItemListView.CompId,
+                    ProductCategory = purchaseItemListView.ProductCategory,
+                    ProductName = purchaseItemListView.ProductName,
+                    ProductId = purchaseItemListView.ProductId,
+                    ProductSpec = purchaseItemListView.ProductSpec,
+                    PurchaseMainId = purchaseItemListView.PurchaseMainId,
+                    Quantity = purchaseItemListView.Quantity,
+                    ReceiveQuantity = purchaseItemListView.ReceiveQuantity,
+                    ReceiveStatus = purchaseItemListView.ItemReceiveStatus,
+                    GroupIds = purchaseItemListView.GroupIds.Split(',').ToList(),
+                    GroupNames = purchaseItemListView.ItemGroupNames.Split(",").ToList(),
+                    ArrangeSupplierId = purchaseItemListView.ArrangeSupplierId,
+                    ArrangeSupplierName = purchaseItemListView.ArrangeSupplierName,
+                    CurrentInStockQuantity = purchaseItemListView.CurrentInStockQuantity,
+                    CreatedAt = purchaseItemListView.CreatedAt.Value,
+                    UpdatedAt = purchaseItemListView.UpdatedAt.Value,
+                    SplitProcess = purchaseItemListView.SubSplitProcess,
+                    OwnerProcess = purchaseItemListView.SubOwnerProcess
+                };
+                allPurchaseSubItemVoList.Add(subItem);
+            }
+
+            foreach (var kvp in mainSheetIdMap)
+            {
+                List<PurchaseSubItemVo> matchedSubItemVoList = allPurchaseSubItemVoList.Where(vo => vo.PurchaseMainId == kvp.Key).ToList();
+
+                var vo = new PurchaseMainAndSubItemVo
+                {
+                    PurchaseMainId = kvp.Key,
+                    ApplyDate = kvp.Value[0].ApplyDate,
+                    CompId = kvp.Value[0].CompId,
+                    CurrentStatus = kvp.Value[0].CurrentStatus,
+                    DemandDate = kvp.Value[0].DemandDate,
+                    GroupIds = kvp.Value[0].GroupIds.Split(",", StringSplitOptions.None).ToList(),
+                    Remarks = kvp.Value[0].Remarks,
+                    UserId = kvp.Value[0].UserId,
+                    ReceiveStatus = kvp.Value[0].ReceiveStatus,
+                    Type = kvp.Value[0].Type,
+                    CreatedAt = kvp.Value[0].CreatedAt,
+                    UpdatedAt = kvp.Value[0].UpdatedAt,
+                    IsActive = kvp.Value[0].IsActive,
+                    SplitProcess = kvp.Value[0].MainSplitPrcoess,
+                    OwnerProcess = kvp.Value[0].OwnerProcess,
+                    Items = matchedSubItemVoList,
+                };
+                purchaseMainAndSubItemVoList.Add(vo);
+            }
+            
+            var differentMainSheetId = purchaseMainAndSubItemVoList.Select(m => m.PurchaseMainId).Distinct().ToList();
+            foreach (var item in purchaseMainAndSubItemVoList)
+            {
+                var matchedFlows = flows.Where(f => f.PurchaseMainId == item.PurchaseMainId).ToList();
+                var rejectedFlowIndex = matchedFlows.FindIndex(f => f.Status == CommonConstants.PurchaseFlowStatus.REJECT);
+                if (rejectedFlowIndex >= 0)
+                {
+                    matchedFlows = matchedFlows.GetRange(0, rejectedFlowIndex + 1);
+                }
+                item.flows = _mapper.Map<List<PurchaseFlowWithAgentsVo>>(matchedFlows);
+            }
+            purchaseMainAndSubItemVoList = purchaseMainAndSubItemVoList.FindAll(element=> element.flows!=null&&element.flows.Find(f=>f.VerifyUserId== listMyReviewPurchaseRequest.UserId)!=null).ToList();
+            return purchaseMainAndSubItemVoList;
+        }
+
         public List<PurchaseFlow> GetFlowsByPurchaseMainIds(List<string> purchaseMainIdList)
         {
             return _dbContext.PurchaseFlows.Where(f => purchaseMainIdList.Contains(f.PurchaseMainId)).ToList();
 
         }
-        public List<PurchaseFlow> GetAllFlowsByCompId(string compId)
+        public List<PurchaseFlow> GetAllFlowsByCompId(string? compId)
         {
             if (compId != null)
             {

@@ -40,7 +40,7 @@ namespace stock_api.Controllers
         [AllowAnonymous]
         public IActionResult Login(LoginRequest loginRequest)
         {
-            var result = new CommonResponse<Dictionary<string, string>>
+            var result = new CommonResponse<Dictionary<string, dynamic>>
             {
                 Result = false,
                 Message = "登入失敗",
@@ -58,9 +58,9 @@ namespace stock_api.Controllers
             var token = _authHelpers.GenerateToken(memberAndPermissionSetting);
             result.Result = true;
             result.Message = "登入成功";
-            result.Data = new Dictionary<string, string> { { "token", token }, { "displayName", memberAndPermissionSetting.Member.DisplayName },{ "userId", memberAndPermissionSetting.Member.UserId }
+            result.Data = new Dictionary<string, dynamic> { { "token", token }, { "displayName", memberAndPermissionSetting.Member.DisplayName },{ "userId", memberAndPermissionSetting.Member.UserId }
             ,{ "compId", memberAndPermissionSetting.Member.CompId } ,{ "compName", memberAndPermissionSetting.CompanyWithUnit.Name },{ "compType", memberAndPermissionSetting.CompanyWithUnit.Type },{ "unitId", memberAndPermissionSetting.CompanyWithUnit.UnitId }
-            ,{ "unitName", memberAndPermissionSetting.CompanyWithUnit.UnitName }};
+            ,{ "unitName", memberAndPermissionSetting.CompanyWithUnit.UnitName },{"isNoStockReviewer",memberAndPermissionSetting.Member.IsNoStockReviewer} };
 
             //NotifyNotEnoughProduct(memberAndPermissionSetting.Member.CompId, memberAndPermissionSetting.Member);
             return Ok(result);

@@ -38,6 +38,7 @@ namespace stock_api.Controllers
         private readonly SupplierService _supplierService;
         private readonly IValidator<CreatePurchaseRequest> _createPurchaseValidator;
         private readonly IValidator<ListPurchaseRequest> _listPurchaseRequestValidator;
+        private readonly IValidator<ListMyReviewPurchaseRequest> _listMyReviewPurchaseRequestValidator;
         private readonly IValidator<AnswerFlowRequest> _answerFlowRequestValidator;
         private readonly IValidator<UpdateOwnerProcessRequest> _updateOwnerProcessRequestValidator;
         private readonly ILogger<PurchaseController> _logger;
@@ -45,7 +46,7 @@ namespace stock_api.Controllers
 
 
         public PurchaseController(IMapper mapper, AuthHelpers authHelpers, PurchaseFlowSettingService purchaseFlowSettingService, MemberService memberService, CompanyService companyService
-            ,SupplierService supplierService, PurchaseService purchaseService, WarehouseProductService warehouseProductService,
+            , SupplierService supplierService, PurchaseService purchaseService, WarehouseProductService warehouseProductService,
             GroupService groupService, ApplyProductFlowSettingService applyProductFlowSettingService, ILogger<PurchaseController> logger, StockOutService stockOutService)
         {
             _mapper = mapper;
@@ -59,6 +60,7 @@ namespace stock_api.Controllers
             _supplierService = supplierService;
             _createPurchaseValidator = new CreatePurchaseValidator(warehouseProductService, groupService, purchaseService);
             _listPurchaseRequestValidator = new ListPurchaseValidator(warehouseProductService, groupService);
+            _listMyReviewPurchaseRequestValidator = new ListMyReviewPurchaseValidator(warehouseProductService, groupService);
             _answerFlowRequestValidator = new AnswerFlowValidator();
             _updateOwnerProcessRequestValidator = new UpdateOwnerProcessValidator();
             _applyProductFlowSettingService = applyProductFlowSettingService;
@@ -97,11 +99,11 @@ namespace stock_api.Controllers
                 }
             });
             itemGroupIdList = itemGroupIdList.Distinct().ToList();
-            if(itemGroupIdList.Count>1) isItemMultiGroup= true;
+            if (itemGroupIdList.Count > 1) isItemMultiGroup = true;
 
             List<ApplyProductFlowSettingVo> applyProductFlowSettingListForGroupReview = new();
             // 沒有跨組別走組別審核流程
-            if (isItemMultiGroup == false&& itemGroupIdList.Count==1)
+            if (isItemMultiGroup == false && itemGroupIdList.Count == 1)
             {
                 applyProductFlowSettingListForGroupReview = _applyProductFlowSettingService.GetApplyProductFlowSettingVoListByGroupId(itemGroupIdList[0]);
                 if (applyProductFlowSettingListForGroupReview.Count == 0)
@@ -178,9 +180,9 @@ namespace stock_api.Controllers
                 };
                 purchaseSubItemList.Add(newPurchaseSubItem);
             });
-            var result = _purchaseService.CreatePurchase(newPurchaseMain, purchaseSubItemList, purchaseFlowSettingList.Where(s => s.IsActive == true).ToList(), applyProductFlowSettingListForGroupReview,isItemMultiGroup,
+            var result = _purchaseService.CreatePurchase(newPurchaseMain, purchaseSubItemList, purchaseFlowSettingList.Where(s => s.IsActive == true).ToList(), applyProductFlowSettingListForGroupReview, isItemMultiGroup,
                 memberAndPermissionSetting.CompanyWithUnit.Type == CommonConstants.CompanyType.OWNER, memberAndPermissionSetting.Member,
-                memberAndPermissionSetting.CompanyWithUnit.Type== CommonConstants.CompanyType.ORGANIZATION_NOSTOCK);
+                memberAndPermissionSetting.CompanyWithUnit.Type == CommonConstants.CompanyType.ORGANIZATION_NOSTOCK);
             var response = new CommonResponse<dynamic>
             {
                 Result = result,
@@ -212,7 +214,7 @@ namespace stock_api.Controllers
             List<PurchaseMainAndSubItemVo> filterKeywordsData = new();
             if (request.Keywords != null)
             {
-                foreach(PurchaseMainAndSubItemVo vo in listData)
+                foreach (PurchaseMainAndSubItemVo vo in listData)
                 {
                     if (vo.IsContainKeywords(request.Keywords))
                     {
@@ -232,7 +234,7 @@ namespace stock_api.Controllers
             .Distinct()
             .ToList();
             _logger.LogInformation("[ListPurchase]---9---{time}", DateTime.Now);
-            var products = _warehouseProductService.GetProductsByCompId( request.CompId);
+            var products = _warehouseProductService.GetProductsByCompId(request.CompId);
             _logger.LogInformation("[ListPurchase]---10---{time}", DateTime.Now);
             foreach (var vo in filterKeywordsData)
             {
@@ -315,7 +317,7 @@ namespace stock_api.Controllers
                 return BadRequest(CommonResponse<dynamic>.BuildNotAuthorizeResponse());
             }
             // ListPurchaseRequest request = new() { CurrentStatus = CommonConstants.PurchaseFlowAnswer.AGREE,ReceiveStatus= CommonConstants.PurchaseReceiveStatus.NONE };
-            ListPurchaseRequest request = new() { CurrentStatus = CommonConstants.PurchaseFlowAnswer.AGREE,Keywords = ownerListPurchasesRequestRequest.Keywords };
+            ListPurchaseRequest request = new() { CurrentStatus = CommonConstants.PurchaseFlowAnswer.AGREE, Keywords = ownerListPurchasesRequestRequest.Keywords };
 
             var listDate = _purchaseService.ListPurchase(request);
             List<PurchaseMainAndSubItemVo> filterKeywordsData = new();
@@ -373,7 +375,7 @@ namespace stock_api.Controllers
                     item.StockLocation = matchedProduct?.StockLocation;
                     var matchedProductLastMonthUsage = productsLastMonthUsage.Where(p => p.ProductId == item.ProductId).FirstOrDefault();
                     item.Manager = matchedProduct?.Manager;
-                    item.LastMonthUsageQuantity = matchedProductLastMonthUsage!=null?matchedProductLastMonthUsage.Quantity:0.0;
+                    item.LastMonthUsageQuantity = matchedProductLastMonthUsage != null ? matchedProductLastMonthUsage.Quantity : 0.0;
                 }
             }
             filterKeywordsData = filterKeywordsData.OrderByDescending(item => item.ApplyDate).ToList();
@@ -416,8 +418,8 @@ namespace stock_api.Controllers
                 purchaseFlowWithAgents = purchaseFlowWithAgents.GetRange(0, rejectedFlowIndex + 1);
             }
             List<PurchaseFlowLog> purchaseFlowLogs = _purchaseService.GetPurchaseFlowLogsByMainId(purchaseMainId).OrderBy(fl => fl.UpdatedAt).ToList();
-            
-            var distinctWithCompId = purchaseSubItems.Where(i=>i.WithCompId!=null).Select(i=>i.WithCompId).Distinct().ToList();
+
+            var distinctWithCompId = purchaseSubItems.Where(i => i.WithCompId != null).Select(i => i.WithCompId).Distinct().ToList();
             List<CompanyWithUnitVo> companyWithUnitVoList = _companyService.GetCompanyWithUnitListByCompanyIdList(distinctWithCompId);
 
             var purchaseAndSubItemVo = _mapper.Map<PurchaseMainAndSubItemVo>(purchaseMain);
@@ -450,10 +452,10 @@ namespace stock_api.Controllers
                 item.StockLocation = matchedProduct?.StockLocation;
                 if (item.WithCompId != null)
                 {
-                    var matchedCompanyWithUnitVo = companyWithUnitVoList.Where(c=>c.CompId==item.WithCompId).FirstOrDefault();
+                    var matchedCompanyWithUnitVo = companyWithUnitVoList.Where(c => c.CompId == item.WithCompId).FirstOrDefault();
                     if (matchedCompanyWithUnitVo != null)
                     {
-                        item.WithCompName = matchedCompanyWithUnitVo.UnitName+matchedCompanyWithUnitVo.Name;
+                        item.WithCompName = matchedCompanyWithUnitVo.UnitName + matchedCompanyWithUnitVo.Name;
                     }
                 }
 
@@ -494,10 +496,10 @@ namespace stock_api.Controllers
             }
             var purchaseFlow = _purchaseService.GetFlowsByFlowId(request.FlowId);
 
-            if(purchaseFlow!=null && memberAndPermissionSetting.CompanyWithUnit.Type == CommonConstants.CompanyType.OWNER&&request.Answer==CommonConstants.AnswerPurchaseFlow.BACK)
+            if (purchaseFlow != null && memberAndPermissionSetting.CompanyWithUnit.Type == CommonConstants.CompanyType.OWNER && request.Answer == CommonConstants.AnswerPurchaseFlow.BACK)
             {
                 // 金萬林退回
-                var backResult = _purchaseService.AnswerFlow(purchaseFlow, memberAndPermissionSetting, request.Answer, request.Reason,true,false);
+                var backResult = _purchaseService.AnswerFlow(purchaseFlow, memberAndPermissionSetting, request.Answer, request.Reason, true, false);
                 var backResponse = new CommonResponse<dynamic>
                 {
                     Result = backResult,
@@ -528,7 +530,8 @@ namespace stock_api.Controllers
             }
             if (purchaseFlow != null && !purchaseFlow.Answer.IsNullOrEmpty())
             {
-                return BadRequest(new CommonResponse<dynamic>() {
+                return BadRequest(new CommonResponse<dynamic>()
+                {
                     Result = false,
                     Message = "不能重複審核"
                 });
@@ -552,7 +555,7 @@ namespace stock_api.Controllers
                 });
             }
 
-            var result = _purchaseService.AnswerFlow(purchaseFlow, memberAndPermissionSetting, request.Answer, request.Reason,false,isVerifiedByAgent);
+            var result = _purchaseService.AnswerFlow(purchaseFlow, memberAndPermissionSetting, request.Answer, request.Reason, false, isVerifiedByAgent);
 
 
             var response = new CommonResponse<dynamic>
@@ -583,7 +586,7 @@ namespace stock_api.Controllers
             }
             PurchaseMainSheet? purchaseMainSheet = _purchaseService.GetPurchaseMainByMainId(request.PurchaseMainId);
             List<PurchaseSubItem> existingSubItemList = _purchaseService.GetPurchaseSubItemsByMainId(request.PurchaseMainId);
-            if (purchaseMainSheet==null|| purchaseMainSheet.IsActive==false||existingSubItemList.Count == 0)
+            if (purchaseMainSheet == null || purchaseMainSheet.IsActive == false || existingSubItemList.Count == 0)
             {
                 return BadRequest(new CommonResponse<dynamic>
                 {
@@ -592,7 +595,7 @@ namespace stock_api.Controllers
                 });
             }
 
-            var result = _purchaseService.UpdateOrDeleteSubItems(request,purchaseMainSheet,existingSubItemList,currentPurchaseFlow,verifier,compId);
+            var result = _purchaseService.UpdateOrDeleteSubItems(request, purchaseMainSheet, existingSubItemList, currentPurchaseFlow, verifier, compId);
 
             return Ok(new CommonResponse<dynamic>
             {
@@ -610,7 +613,7 @@ namespace stock_api.Controllers
 
             PurchaseMainSheet? purchaseMainSheet = _purchaseService.GetPurchaseMainByMainId(request.PurchaseMainId);
             List<PurchaseSubItem> existingSubItemList = _purchaseService.GetPurchaseSubItemsByMainId(request.PurchaseMainId);
-            if (purchaseMainSheet==null|| purchaseMainSheet.IsActive==false||existingSubItemList.Count == 0)
+            if (purchaseMainSheet == null || purchaseMainSheet.IsActive == false || existingSubItemList.Count == 0)
             {
                 return BadRequest(new CommonResponse<dynamic>
                 {
@@ -619,7 +622,7 @@ namespace stock_api.Controllers
                 });
             }
 
-            var result = _purchaseService.OwnerUpdateOrDeleteSubItems(request,purchaseMainSheet,existingSubItemList,memberAndPermissionSetting.Member);
+            var result = _purchaseService.OwnerUpdateOrDeleteSubItems(request, purchaseMainSheet, existingSubItemList, memberAndPermissionSetting.Member);
 
             return Ok(new CommonResponse<dynamic>
             {
@@ -694,7 +697,7 @@ namespace stock_api.Controllers
             {
                 return BadRequest(CommonResponse<dynamic>.BuildNotAuthorizeResponse());
             }
-            var subItemIdList = request.UpdateItems.Select(i=>i.ItemId).ToList();
+            var subItemIdList = request.UpdateItems.Select(i => i.ItemId).ToList();
 
             var subItems = _purchaseService.GetPurchaseSubItemListByItemList(subItemIdList);
             var distinctMainIds = subItems.Select(s => s.PurchaseMainId).Distinct().ToList();
@@ -715,15 +718,16 @@ namespace stock_api.Controllers
                     Message = "沒有對應的採購單"
                 });
             }
-            var suppliers = _supplierService.GetSuppliersByIdList(request.UpdateItems.Select(i=>i.ArrangeSupplierId).ToList());
-            foreach(var  item in request.UpdateItems){
+            var suppliers = _supplierService.GetSuppliersByIdList(request.UpdateItems.Select(i => i.ArrangeSupplierId).ToList());
+            foreach (var item in request.UpdateItems)
+            {
                 if (!suppliers.Select(s => s.Id).ToList().Contains(item.ArrangeSupplierId))
                 {
                     return BadRequest(new CommonResponse<dynamic>
                     {
                         Result = false,
                         Message = $"此{item.ArrangeSupplierId}不存在"
-                    }); 
+                    });
                 }
             }
 
@@ -815,7 +819,7 @@ namespace stock_api.Controllers
                     Message = "採購單不存在"
                 });
             }
-           
+
 
             _purchaseService.UpdatePurchaseOwnerComment(purchaseMainSheet, request);
 
@@ -834,17 +838,17 @@ namespace stock_api.Controllers
             var compId = memberAndPermissionSetting.CompanyWithUnit.CompId;
 
             PurchaseMainSheet? purchaseMainSheet = _purchaseService.GetPurchaseMainByMainId(request.PurchaseMainId);
-           
 
-            var purchaseSubItemHistories = _purchaseService.ListSubItemListHistory(request.PurchaseMainId).OrderByDescending(h=>h.CreatedAt).ToList();
+
+            var purchaseSubItemHistories = _purchaseService.ListSubItemListHistory(request.PurchaseMainId).OrderByDescending(h => h.CreatedAt).ToList();
 
             var purchaseHistoryList = _mapper.Map<List<PurchaseHistoryDto>>(purchaseSubItemHistories);
-            for(var i = 0; i < purchaseHistoryList.Count; i++)
+            for (var i = 0; i < purchaseHistoryList.Count; i++)
             {
                 var purchaseHistory = purchaseHistoryList[i];
                 var purchaseSubItemHistory = purchaseSubItemHistories[i];
-                purchaseHistory.ItemBeforeValues = purchaseSubItemHistory.BeforeValues !=null? JsonSerializer.Deserialize<PurchaseSubItemWithUnit>(purchaseSubItemHistory.BeforeValues):null;
-                purchaseHistory.ItemAfterValues = purchaseSubItemHistory.AfterValues != null?JsonSerializer.Deserialize<PurchaseSubItemWithUnit>(purchaseSubItemHistory.AfterValues):null;
+                purchaseHistory.ItemBeforeValues = purchaseSubItemHistory.BeforeValues != null ? JsonSerializer.Deserialize<PurchaseSubItemWithUnit>(purchaseSubItemHistory.BeforeValues) : null;
+                purchaseHistory.ItemAfterValues = purchaseSubItemHistory.AfterValues != null ? JsonSerializer.Deserialize<PurchaseSubItemWithUnit>(purchaseSubItemHistory.AfterValues) : null;
             }
             var allProducts = _warehouseProductService.GetAllProducts(compId);
 
@@ -873,5 +877,111 @@ namespace stock_api.Controllers
                 Data = purchaseHistoryList
             });
         }
-    } 
+
+        [HttpPost("crossCompReview/purchaseList")]
+        [Authorize]
+        public IActionResult ListCrossCompPurchase(ListMyReviewPurchaseRequest request)
+        {
+            var memberAndPermissionSetting = _authHelpers.GetMemberAndPermissionSetting(User);
+            var compId = memberAndPermissionSetting.CompanyWithUnit.CompId;
+
+            var validationResult = _listMyReviewPurchaseRequestValidator.Validate(request);
+
+            if (!validationResult.IsValid)
+            {
+                return BadRequest(CommonResponse<dynamic>.BuildValidationFailedResponse(validationResult));
+            }
+            request.UserId = memberAndPermissionSetting.Member.UserId;
+            var listData = _purchaseService.ListMyReviewPurchase(request);
+            // 過濾出不是自己compId的
+            listData = listData.Where(e=>e.CompId!=compId).ToList();
+            List<PurchaseMainAndSubItemVo> filterKeywordsData = new();
+            if (request.Keywords != null)
+            {
+                foreach (PurchaseMainAndSubItemVo vo in listData)
+                {
+                    if (vo.IsContainKeywords(request.Keywords))
+                    {
+                        filterKeywordsData.Add(vo);
+                    }
+                }
+            }
+            else
+            {
+                filterKeywordsData.AddRange(listData);
+            }
+
+            var distinctProductIdList = filterKeywordsData
+            .SelectMany(item => item.Items)
+            .Select(item => item.ProductId)
+            .Distinct()
+            .ToList();
+            var products = _warehouseProductService.GetAllProducts();
+            foreach (var vo in filterKeywordsData)
+            {
+                foreach (var item in vo.Items)
+                {
+                    var matchedProduct = products.Where(p => p.ProductId == item.ProductId).FirstOrDefault();
+                    item.MaxSafeQuantity = matchedProduct?.MaxSafeQuantity;
+                    item.ProductModel = matchedProduct?.ProductModel;
+                    item.ManufacturerName = matchedProduct?.ManufacturerName;
+                    item.ProductMachine = matchedProduct?.ProductMachine;
+                    item.ProductUnit = matchedProduct?.Unit;
+                    item.UnitConversion = matchedProduct?.UnitConversion;
+                    item.TestCount = matchedProduct?.TestCount;
+                    item.Delivery = matchedProduct?.Delievery;
+                    item.PackageWay = matchedProduct?.PackageWay;
+                    item.ProductCode = matchedProduct?.ProductCode;
+                    item.SupplierUnitConvertsion = matchedProduct?.SupplierUnitConvertsion;
+                    item.SupplierUnit = matchedProduct?.SupplierUnit;
+                    item.StockLocation = matchedProduct?.StockLocation;
+                }
+            }
+            filterKeywordsData = filterKeywordsData.OrderByDescending(item => item.ApplyDate).ToList();
+            //
+            int totalPages = 0;
+            var orderByField = request.PaginationCondition.OrderByField;
+            if (orderByField != null)
+            {
+                orderByField = StringUtils.CapitalizeFirstLetter(orderByField);
+                if (request.PaginationCondition.IsDescOrderBy)
+                {
+                    switch (orderByField)
+                    {
+                        case "ApplyDate":
+                            filterKeywordsData = filterKeywordsData.OrderByDescending(item => item.ApplyDate).ToList();
+                            break;
+                        case "DemandDate":
+                            filterKeywordsData = filterKeywordsData.OrderByDescending(item => item.DemandDate).ToList();
+                            break;
+                        default:
+                            break;
+                    }
+                }
+                else
+                {
+                    switch (orderByField)
+                    {
+                        case "ApplyDate":
+                            filterKeywordsData = filterKeywordsData.OrderBy(item => item.ApplyDate).ToList();
+                            break;
+                        case "DemandDate":
+                            filterKeywordsData = filterKeywordsData.OrderBy(item => item.DemandDate).ToList();
+                            break;
+                        default:
+                            break;
+                    }
+                }
+                int totalItems = filterKeywordsData.Count;
+                totalPages = (int)Math.Ceiling((double)totalItems / request.PaginationCondition.PageSize);
+                filterKeywordsData = filterKeywordsData.Skip((request.PaginationCondition.Page - 1) * request.PaginationCondition.PageSize).Take(request.PaginationCondition.PageSize).ToList();
+            }
+            var response = new CommonResponse<List<PurchaseMainAndSubItemVo>>
+            {
+                Result = true,
+                Data = filterKeywordsData
+            };
+            return Ok(response);
+        }
+    }
 }
