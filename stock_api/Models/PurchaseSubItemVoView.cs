@@ -144,7 +144,7 @@ public partial class PurchaseSubItemVoView
     public float? InStockQuantity { get; set; }
 
     /// <summary>
-    /// 單位
+    /// 單位:本身的庫存單位
     /// </summary>
     [StringLength(100)]
     public string? ProductUnit { get; set; }

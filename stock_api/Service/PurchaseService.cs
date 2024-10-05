@@ -168,7 +168,8 @@ namespace stock_api.Service
         }
 
         public bool CreatePurchase(PurchaseMainSheet newPurchasePurchaseMainSheet, List<PurchaseSubItem> newPurchaseSubItemList,
-            List<PurchaseFlowSettingVo> purchaseFlowSettingList, List<ApplyProductFlowSettingVo> applyProductFlowSettingListForGroupReview,bool isItemMultiGroup, bool isOwnerCreate,WarehouseMember createMember)
+            List<PurchaseFlowSettingVo> purchaseFlowSettingList, List<ApplyProductFlowSettingVo> applyProductFlowSettingListForGroupReview,
+            bool isItemMultiGroup, bool isOwnerCreate,WarehouseMember createMember,bool isNotStockComp = false)
         {
             using (var scope = new TransactionScope())
             {
@@ -261,7 +262,53 @@ namespace stock_api.Service
                             purchaseFlows.Add(purchaseFlowForSingleGroup);
                         }
                     }
-                    
+
+                    if (isNotStockComp)
+                    {
+                        var  memberCompVoList = _memberService.GetMemberCompVoList();
+                        var noStockReviewers = memberCompVoList.Where(m=>m.IsNoStockReviewer==true).ToList();
+                        // 找出院區需要跨comp審核者
+                        var noStockReviewersCrossComp = noStockReviewers.Where(m=>m.Type!=CommonConstants.CompanyType.OWNER).ToList();
+                        // 找出得標廠商需要審核者
+                        var noStockReviewersOfOwner = noStockReviewers.Where(m => m.Type == CommonConstants.CompanyType.OWNER).ToList();
+                        noStockReviewersCrossComp.ForEach(r =>
+                        {
+                            var maxSeq = purchaseFlows.Select(f => f.Sequence).Max();
+                            var purchaseFlow = new PurchaseFlow()
+                            {
+                                FlowId = Guid.NewGuid().ToString(),
+                                CompId = newPurchasePurchaseMainSheet.CompId,
+                                PurchaseMainId = purchaseMainId,
+                                Status = CommonConstants.PurchaseFlowStatus.WAIT,
+                                VerifyCompId = r.CompId,
+                                VerifyUserId = r.UserId,
+                                VerifyUserName = r.DisplayName,
+                                Answer = CommonConstants.PurchaseFlowAnswer.EMPTY,
+                                Sequence = maxSeq + 1,
+                                SubmitAt = submitedAt,
+                            };
+                            purchaseFlows.Add(purchaseFlow);
+                        });
+                        noStockReviewersOfOwner.ForEach(r =>
+                        {
+                            var maxSeq = purchaseFlows.Select(f => f.Sequence).Max();
+                            var purchaseFlow = new PurchaseFlow()
+                            {
+                                FlowId = Guid.NewGuid().ToString(),
+                                CompId = newPurchasePurchaseMainSheet.CompId,
+                                PurchaseMainId = purchaseMainId,
+                                Status = CommonConstants.PurchaseFlowStatus.WAIT,
+                                VerifyCompId = r.CompId,
+                                VerifyUserId = r.UserId,
+                                VerifyUserName = r.DisplayName,
+                                Answer = CommonConstants.PurchaseFlowAnswer.EMPTY,
+                                Sequence = maxSeq + 1,
+                                SubmitAt = submitedAt,
+                            };
+                            purchaseFlows.Add(purchaseFlow);
+                        });
+                    }
+
                     _dbContext.PurchaseFlows.AddRange(purchaseFlows);
 
                     Dictionary<string,List<PurchaseSubItem>> mainIdAndPurchaseSubItmeListMapForWith = new ();

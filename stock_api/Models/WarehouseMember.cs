@@ -83,4 +83,6 @@ public partial class WarehouseMember
     /// </summary>
     [StringLength(2000)]
     public string? AgentNames { get; set; }
+
+    public bool? IsNoStockReviewer { get; set; }
 }

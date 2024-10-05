@@ -224,6 +224,36 @@ namespace stock_api.Service
             if(ownerCompany == null) return new List<WarehouseMember>();
             return _dbContext.WarehouseMembers.Where(m=>m.CompId==ownerCompany.CompId).ToList();
         }
-      
+
+
+        public List<MemberCompVo> GetMemberCompVoList()
+        {
+            var result = from member in _dbContext.WarehouseMembers
+                         join comp in _dbContext.Companies
+                         on member.CompId equals comp.CompId
+                         select new MemberCompVo
+                         {
+                             Account = member.Account,
+                             AuthValue = member.AuthValue,
+                             DisplayName = member.DisplayName,
+                             GroupIds = member.GroupIds,
+                             Password = member.Password,
+                             PhotoUrl = member.PhotoUrl,
+                             Email = member.Email,
+                             CompId = member.CompId,
+                             UserId = member.UserId,
+                             IsActive = member.IsActive,
+                             CreatedAt = member.CreatedAt,
+                             UpdatedAt = member.UpdatedAt,
+                             IsAdmin = member.IsAdmin,
+                             Agents = member.Agents,
+                             AgentNames = member.AgentNames,
+                             IsNoStockReviewer = member.IsNoStockReviewer,
+                             CompName = comp.Name,
+                             Type = comp.Type,
+                         };
+
+            return result.ToList();
+        }
     }
 }

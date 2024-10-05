@@ -840,7 +840,7 @@ public partial class StockDbContext : DbContext
             entity.Property(e => e.ProductSpec).HasComment("品項規格");
             entity.Property(e => e.ProductUnit)
                 .HasDefaultValueSql("''")
-                .HasComment("單位");
+                .HasComment("單位:本身的庫存單位");
             entity.Property(e => e.PurchaseMainId).HasComment("PurchaseMainSheet PK");
             entity.Property(e => e.Quantity).HasComment("數量");
             entity.Property(e => e.ReceiveQuantity).HasComment("已收到的數量");
@@ -1084,6 +1084,7 @@ public partial class StockDbContext : DbContext
             entity.Property(e => e.GroupIds).HasComment("屬於數個組別");
             entity.Property(e => e.IsActive).HasDefaultValueSql("'1'");
             entity.Property(e => e.IsAdmin).HasDefaultValueSql("'0'");
+            entity.Property(e => e.IsNoStockReviewer).HasDefaultValueSql("'0'");
             entity.Property(e => e.Password).HasComment("登入密碼");
             entity.Property(e => e.PhotoUrl).HasComment("大頭貼");
             entity.Property(e => e.UpdatedAt)
@@ -1165,7 +1166,7 @@ public partial class StockDbContext : DbContext
                 .HasComment("品項備註");
             entity.Property(e => e.ProductSpec)
                 .HasDefaultValueSql("''")
-                .HasComment("品項規格");
+                .HasComment("品項規格:指的是向上游供應商申請時 對方的出貨單位\n");
             entity.Property(e => e.QcType)
                 .HasDefaultValueSql("'NONE'")
                 .HasComment("NONE,LOT_NUMBER,LOT_NUMBER_BATCH");
@@ -1191,7 +1192,7 @@ public partial class StockDbContext : DbContext
                 .HasComment("UDI 碼");
             entity.Property(e => e.Unit)
                 .HasDefaultValueSql("''")
-                .HasComment("單位");
+                .HasComment("單位:本身的庫存單位");
             entity.Property(e => e.UnitConversion)
                 .HasDefaultValueSql("'1'")
                 .HasComment("用來在訂購時將最小單位轉為訂購規格及驗收時 將訂購規格轉為最小單位數量用的欄位");

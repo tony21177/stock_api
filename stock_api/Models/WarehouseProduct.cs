@@ -167,7 +167,8 @@ public partial class WarehouseProduct
     public string? ProductRemarks { get; set; }
 
     /// <summary>
-    /// 品項規格
+    /// 品項規格:指的是向上游供應商申請時 對方的出貨單位
+    /// 
     /// </summary>
     [StringLength(300)]
     public string? ProductSpec { get; set; }
@@ -206,7 +207,7 @@ public partial class WarehouseProduct
     public string? UdiverifyDateCode { get; set; }
 
     /// <summary>
-    /// 單位
+    /// 單位:本身的庫存單位
     /// </summary>
     [StringLength(100)]
     public string? Unit { get; set; }
