@@ -404,10 +404,23 @@ namespace stock_api.Controllers
                     Data = purchaseMain
                 });
             }
-
-            if (compId != purchaseMain.CompId && memberAndPermissionSetting.CompanyWithUnit.Type != CommonConstants.CompanyType.OWNER)
+            var purchaseComp = _companyService.GetCompanyByCompId(compId);
+            if (purchaseComp == null)
             {
                 return BadRequest(CommonResponse<dynamic>.BuildNotAuthorizeResponse());
+            }
+            if( purchaseComp.Type != CommonConstants.CompanyType.ORGANIZATION_NOSTOCK || memberAndPermissionSetting.Member.IsNoStockReviewer==false)
+            {
+                if (compId != purchaseMain.CompId && memberAndPermissionSetting.CompanyWithUnit.Type != CommonConstants.CompanyType.OWNER)
+                {
+
+                    return BadRequest(CommonResponse<dynamic>.BuildNotAuthorizeResponse());
+                }
+            }
+
+            if(memberAndPermissionSetting.Member.IsNoStockReviewer != true)
+            {
+                
             }
 
             List<PurchaseSubItem> purchaseSubItems = _purchaseService.GetPurchaseSubItemsByMainId(purchaseMainId);
