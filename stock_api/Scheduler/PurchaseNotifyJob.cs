@@ -36,6 +36,7 @@ namespace stock_api.Scheduler
                         emailContent = emailContent + n.PurchaseNumber + "<br/>" + n.Content+ "<br/><br/>";
                     });
                     _emailService.SendAsync(emailTitle, emailContent, email);
+                    _emailService.UpdateEmailNotifyIsDoneByIdList(notifyList.Select(e => e.Id).ToList());
                 }
             }
         }

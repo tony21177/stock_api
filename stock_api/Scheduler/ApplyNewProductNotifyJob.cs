@@ -37,6 +37,7 @@ namespace stock_api.Scheduler
                     });
                     _emailService.SendAsync(emailTitle, emailContent, email);
                 }
+                _emailService.UpdateEmailNotifyIsDoneByIdList(notifyList.Select(e => e.Id).ToList());
             }
         }
     }
