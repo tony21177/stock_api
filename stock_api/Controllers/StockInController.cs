@@ -103,6 +103,10 @@ namespace stock_api.Controllers
                         item.Prod_supplierName = matchedProdcut.DefaultSupplierName;
                         item.ArrangeSupplierId = item.ArrangeSupplierId;
                         item.ArrangeSupplierName = item.ArrangeSupplierName;
+                        item.DeliverFunction = matchedProdcut.DeliverFunction;
+                        item.DeliverTemperature = matchedProdcut.DeliverTemperature;
+                        item.SavingFunction = matchedProdcut.SavingFunction;
+                        item.SavingTemperature = matchedProdcut.SavingTemperature;
                     }
                     var matchedSubItem = purchaseSubItems.Where(s=>s.ItemId==item.ItemId).FirstOrDefault();
                     item.PurchaseSubItem = matchedSubItem;
