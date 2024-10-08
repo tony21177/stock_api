@@ -436,6 +436,7 @@ namespace stock_api.Controllers
             List<CompanyWithUnitVo> companyWithUnitVoList = _companyService.GetCompanyWithUnitListByCompanyIdList(distinctWithCompId);
 
             var purchaseAndSubItemVo = _mapper.Map<PurchaseMainAndSubItemVo>(purchaseMain);
+            purchaseAndSubItemVo.CompName = companyWithUnitVoList.FirstOrDefault(c => c.CompId == purchaseAndSubItemVo.CompId)?.Name;
             var purchaseSubItemVoList = _mapper.Map<List<PurchaseSubItemVo>>(purchaseSubItems);
 
             var distinctProductIdList = purchaseSubItems.Select(s => s.ProductId).Distinct().ToList();
@@ -443,8 +444,11 @@ namespace stock_api.Controllers
 
             var productsOfOwner = _warehouseProductService.GetAllProducts(compId);
 
+            var allComps = _companyService.GetAllCompanyList();
+
             purchaseSubItemVoList.ForEach(item =>
             {
+                var matchedComp = allComps.Where(c=>c.CompId==item.CompId).FirstOrDefault();
                 var matchedProduct = products.Where(p => p.ProductId == item.ProductId).FirstOrDefault();
                 item.MaxSafeQuantity = matchedProduct?.MaxSafeQuantity;
                 item.ProductModel = matchedProduct?.ProductModel;
@@ -455,6 +459,7 @@ namespace stock_api.Controllers
                 item.Delivery = matchedProduct?.Delievery;
                 item.PackageWay = matchedProduct?.PackageWay;
                 item.ProductCode = matchedProduct?.ProductCode;
+                item.CompName = matchedComp.Name;  
 
                 var matchedOwnerProduct = productsOfOwner.Where(p => p.ProductCode == item.ProductCode).FirstOrDefault();
 

@@ -8,6 +8,7 @@ namespace stock_api.Service.ValueObject
         public string ItemId { get; set; }
         public string Comment { get; set; }
         public string CompId { get; set; }
+        public string? CompName { get; set; }
         public string ProductId { get; set; }
         public string ProductName { get; set; }
         public string ProductSpec { get; set; }

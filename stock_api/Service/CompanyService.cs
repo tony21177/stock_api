@@ -41,6 +41,11 @@ namespace stock_api.Service
             return result;
         }
 
+        public List<Company> GetAllCompanyList()
+        {
+            return _dbContext.Companies.ToList();
+        }
+
         public List<CompanyWithUnitVo> GetAllCompanyWithUnit()
         {
             var query = from c in _dbContext.Companies

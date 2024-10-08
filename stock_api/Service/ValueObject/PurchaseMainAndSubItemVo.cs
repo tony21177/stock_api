@@ -9,6 +9,7 @@ namespace stock_api.Service.ValueObject
         public string PurchaseMainId { get; set; }
         public DateTime ApplyDate { get; set; }
         public string CompId { get; set; }
+        public string? CompName { get; set; }
         public string CurrentStatus { get; set; }
         public DateOnly? DemandDate { get; set; }
         public List<string> GroupIds { get; set; }
