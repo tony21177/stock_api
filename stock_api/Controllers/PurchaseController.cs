@@ -436,7 +436,6 @@ namespace stock_api.Controllers
             List<CompanyWithUnitVo> companyWithUnitVoList = _companyService.GetCompanyWithUnitListByCompanyIdList(distinctWithCompId);
 
             var purchaseAndSubItemVo = _mapper.Map<PurchaseMainAndSubItemVo>(purchaseMain);
-            purchaseAndSubItemVo.CompName = companyWithUnitVoList.FirstOrDefault(c => c.CompId == purchaseAndSubItemVo.CompId)?.Name;
             var purchaseSubItemVoList = _mapper.Map<List<PurchaseSubItemVo>>(purchaseSubItems);
 
             var distinctProductIdList = purchaseSubItems.Select(s => s.ProductId).Distinct().ToList();
@@ -445,6 +444,9 @@ namespace stock_api.Controllers
             var productsOfOwner = _warehouseProductService.GetAllProducts(compId);
 
             var allComps = _companyService.GetAllCompanyList();
+            var purchaseCompName = allComps.FirstOrDefault(c => c.CompId == purchaseAndSubItemVo.CompId)?.Name;
+            purchaseAndSubItemVo.CompName = purchaseCompName;
+
 
             purchaseSubItemVoList.ForEach(item =>
             {
