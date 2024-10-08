@@ -404,7 +404,7 @@ namespace stock_api.Controllers
                     Data = purchaseMain
                 });
             }
-            var purchaseComp = _companyService.GetCompanyByCompId(compId);
+            var purchaseComp = _companyService.GetCompanyByCompId(purchaseMain.CompId);
             if (purchaseComp == null)
             {
                 return BadRequest(CommonResponse<dynamic>.BuildNotAuthorizeResponse());
