@@ -509,7 +509,30 @@ namespace stock_api.Controllers
             }
             var purchaseFlow = _purchaseService.GetFlowsByFlowId(request.FlowId);
 
-            if (purchaseFlow != null && memberAndPermissionSetting.CompanyWithUnit.Type == CommonConstants.CompanyType.OWNER && request.Answer == CommonConstants.AnswerPurchaseFlow.BACK)
+            if (purchaseFlow == null)
+            {
+                return BadRequest(new CommonResponse<dynamic>()
+                {
+                    Result = false,
+                    Message = "審核流程不存在"
+                });
+            }
+
+            var purchaseComp = _companyService.GetCompanyByCompId(purchaseFlow.CompId);
+            if (purchaseComp == null)
+            {
+                return BadRequest(CommonResponse<dynamic>.BuildNotAuthorizeResponse());
+            }
+            if (purchaseComp.Type != CommonConstants.CompanyType.ORGANIZATION_NOSTOCK || memberAndPermissionSetting.Member.IsNoStockReviewer == false)
+            {
+
+                if ( purchaseFlow.CompId != compId)
+                {
+                    return BadRequest(CommonResponse<dynamic>.BuildNotAuthorizeResponse());
+                }
+            }
+
+            if ( memberAndPermissionSetting.CompanyWithUnit.Type == CommonConstants.CompanyType.OWNER && request.Answer == CommonConstants.AnswerPurchaseFlow.BACK)
             {
                 // 金萬林退回
                 var backResult = _purchaseService.AnswerFlow(purchaseFlow, memberAndPermissionSetting, request.Answer, request.Reason, true, false);
@@ -522,12 +545,9 @@ namespace stock_api.Controllers
 
             }
 
-            if (purchaseFlow != null && purchaseFlow.CompId != compId)
-            {
-                return BadRequest(CommonResponse<dynamic>.BuildNotAuthorizeResponse());
-            }
+            
             bool isVerifiedByAgent = false;
-            if (purchaseFlow != null && purchaseFlow.VerifyUserId != verifier.UserId)
+            if ( purchaseFlow.VerifyUserId != verifier.UserId)
             {
                 // 檢查是否為代理人
                 var flowVerifier = _memberService.GetMemberByUserId(purchaseFlow.VerifyUserId);
@@ -541,7 +561,7 @@ namespace stock_api.Controllers
 
                 }
             }
-            if (purchaseFlow != null && !purchaseFlow.Answer.IsNullOrEmpty())
+            if ( !purchaseFlow.Answer.IsNullOrEmpty())
             {
                 return BadRequest(new CommonResponse<dynamic>()
                 {
@@ -550,14 +570,7 @@ namespace stock_api.Controllers
                 });
             }
 
-            if (purchaseFlow == null)
-            {
-                return BadRequest(new CommonResponse<dynamic>()
-                {
-                    Result = false,
-                    Message = "審核流程不存在"
-                });
-            }
+            
             var beforeFlows = _purchaseService.GetBeforeFlows(purchaseFlow);
             if (beforeFlows.Any(f => f.Answer == CommonConstants.PurchaseFlowAnswer.EMPTY))
             {
@@ -863,7 +876,7 @@ namespace stock_api.Controllers
                 purchaseHistory.ItemBeforeValues = purchaseSubItemHistory.BeforeValues != null ? JsonSerializer.Deserialize<PurchaseSubItemWithUnit>(purchaseSubItemHistory.BeforeValues) : null;
                 purchaseHistory.ItemAfterValues = purchaseSubItemHistory.AfterValues != null ? JsonSerializer.Deserialize<PurchaseSubItemWithUnit>(purchaseSubItemHistory.AfterValues) : null;
             }
-            var allProducts = _warehouseProductService.GetAllProducts(compId);
+            var allProducts = _warehouseProductService.GetAllProducts();
 
             foreach (var purchaseHistory in purchaseHistoryList)
             {
