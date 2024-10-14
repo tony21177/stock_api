@@ -55,13 +55,14 @@ namespace stock_api.Service
                 unDoneQcLotList.Add(unDoneQcLot);
             }
             var newLotNumberInStockIdList = _dbContext.ProductNewLotnumberViews.ToList().Where(e=>e.LotNumber!= "N/A"&&e.CompId== request.CompId).ToList().Select(e=>e.InStockId).ToList();
+            
             var newLotNumberInStockItems = _dbContext.InStockItemRecords.Where(i=>newLotNumberInStockIdList.Contains(i.InStockId)).ToList();
             var allProducts = _dbContext.WarehouseProducts.ToList();
             foreach (var inStockItemRecord in newLotNumberInStockItems)
             {
                 if (unDoneLotNumberQcInStockIdList.Contains(inStockItemRecord.InStockId)) continue;
                 var matchedProduct = allProducts.Where(p => p.ProductId == inStockItemRecord.ProductId).FirstOrDefault();
-                if(matchedProduct.IsNeedAcceptProcess==false) continue;
+                if(matchedProduct.IsNeedAcceptProcess==false||matchedProduct.QcType==CommonConstants.QcTypeConstants.NONE) continue;
                 var unDoneQcLot = new UnDoneQcLot()
                 {
                     ProductId = inStockItemRecord.ProductId,
