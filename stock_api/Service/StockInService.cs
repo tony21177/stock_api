@@ -720,6 +720,7 @@ namespace stock_api.Service
 
                 var inStockQuantityBefore = inStockRecord.InStockQuantity;
                 var outStockQuantityBefore = outStockRecord.ApplyQuantity;
+                var outStockRecordsAfter = _dbContext.OutStockRecords.Where(r => r.ProductId==outStockRecord.ProductId && r.CreatedAt>outStockRecord.CreatedAt).ToList();
 
 
                 // 退庫回去 只需要庫存量+回來 不需要再修改入庫紀錄的數量
@@ -740,6 +741,12 @@ namespace stock_api.Service
 
                 outStockRecord.ApplyQuantity = outStockRecord.ApplyQuantity - returnQuantity;
                 outStockRecord.IsReturned = true;
+                // 出庫後數量都須更改加回去
+                outStockRecord.AfterQuantity = outStockRecord.AfterQuantity + returnQuantity;
+                outStockRecordsAfter.ForEach(r => { 
+                    r.AfterQuantity = r.AfterQuantity + returnQuantity;
+                });
+
 
                 product.InStockQuantity = product.InStockQuantity + returnQuantity;
 
