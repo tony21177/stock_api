@@ -654,6 +654,18 @@ namespace stock_api.Controllers
                     Message = "該採購單未存在"
                 });
             }
+            foreach (var subItem in request.UpdateSubItemList)
+            {
+                if (subItem.Quantity <= 0)
+                {
+                    return BadRequest(new CommonResponse<dynamic>
+                    {
+                        Result = false,
+                        Message = "數量必須大於0"
+                    });
+                }
+            }
+
 
             var result = _purchaseService.OwnerUpdateOrDeleteSubItems(request, purchaseMainSheet, existingSubItemList, memberAndPermissionSetting.Member);
 
