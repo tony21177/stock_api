@@ -58,10 +58,10 @@ namespace stock_api.Controllers
         [Authorize]
         public IActionResult ListAllCompanyForOwner()
         {
-            var memberAndPermissionSetting = _authHelpers.GetMemberAndPermissionSetting(User);
-            if (memberAndPermissionSetting.CompanyWithUnit==null||memberAndPermissionSetting.CompanyWithUnit.Type!=CommonConstants.CompanyType.OWNER) {
-                return BadRequest(CommonResponse<dynamic>.BuildNotAuthorizeResponse());
-            }
+            // var memberAndPermissionSetting = _authHelpers.GetMemberAndPermissionSetting(User);
+            // if (memberAndPermissionSetting.CompanyWithUnit==null||memberAndPermissionSetting.CompanyWithUnit.Type!=CommonConstants.CompanyType.OWNER) {
+            //     return BadRequest(CommonResponse<dynamic>.BuildNotAuthorizeResponse());
+            // }
 
             var data = _companyService.GetAllCompanyWithUnit();
 
