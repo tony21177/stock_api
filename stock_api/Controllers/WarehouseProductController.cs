@@ -153,8 +153,11 @@ namespace stock_api.Controllers
                 warehouseProductVoList = warehouseProductVoList.Skip((searchRequest.PaginationCondition.Page - 1) * searchRequest.PaginationCondition.PageSize).Take(searchRequest.PaginationCondition.PageSize).ToList();
             }
             var allProductIdListForUsage = warehouseProductVoList.Select(p => p.ProductId).ToList();
-            var productsLastMonthUsage = _stockOutService.GetLastMonthUsages(allProductIdListForUsage);
-            var productsLastYearUsage = _stockOutService.GetLastYearUsages(allProductIdListForUsage);
+            var productsLastMonthUsage = _stockOutService.GetLastMonthUsages();
+            var productsLastYearUsage = _stockOutService.GetLastYearUsages();
+
+            var productsThisYearAverageMonthUsage = _stockOutService.GetThisAverageMonthUsages();
+             
 
             var allProducts = _warehouseProductService.GetAllProducts();
 
@@ -164,6 +167,8 @@ namespace stock_api.Controllers
                 if (matchedLastMonthUsage != null) p.LastMonthUsageQuantity = matchedLastMonthUsage?.Quantity;
                 var matchedLastYearUsage = productsLastYearUsage.Where(u => u.ProductId == p.ProductId).FirstOrDefault();
                 if (matchedLastYearUsage != null) p.LastYearUsageQuantity = matchedLastYearUsage?.Quantity;
+                var matchedThisYearAverageMonthUsage = productsThisYearAverageMonthUsage.Where(u => u.ProductId == p.ProductId).FirstOrDefault();
+                if(matchedThisYearAverageMonthUsage!=null) p.ThisYearAverageMonthUsageQuantity = matchedThisYearAverageMonthUsage?.AverageQuantity;
 
                 var matchedProductOfSameCodeList = allProducts.Where(product=> product.ProductCode==p.ProductCode&&product.IsActive==true).ToList();
                 var distinctCompIds = matchedProductOfSameCodeList.Select(product => product.CompId).Distinct().ToList();

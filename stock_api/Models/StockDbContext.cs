@@ -25,6 +25,8 @@ public partial class StockDbContext : DbContext
 
     public virtual DbSet<ApplyProductFlowSetting> ApplyProductFlowSettings { get; set; }
 
+    public virtual DbSet<AverageMonthUsageThisYear> AverageMonthUsageThisYears { get; set; }
+
     public virtual DbSet<Company> Companies { get; set; }
 
     public virtual DbSet<CompanyUnit> CompanyUnits { get; set; }
@@ -247,6 +249,13 @@ public partial class StockDbContext : DbContext
                 .HasDefaultValueSql("CURRENT_TIMESTAMP");
         });
 
+        modelBuilder.Entity<AverageMonthUsageThisYear>(entity =>
+        {
+            entity.ToView("average_month_usage_this_year");
+
+            entity.Property(e => e.ProductId).HasComment("品項PK");
+        });
+
         modelBuilder.Entity<Company>(entity =>
         {
             entity.HasKey(e => e.CompId).HasName("PRIMARY");
@@ -287,7 +296,11 @@ public partial class StockDbContext : DbContext
         {
             entity.HasKey(e => e.Id).HasName("PRIMARY");
 
+            entity.Property(e => e.CreatedAt).HasDefaultValueSql("CURRENT_TIMESTAMP");
             entity.Property(e => e.IsDone).HasDefaultValueSql("'0'");
+            entity.Property(e => e.UpdatedAt)
+                .ValueGeneratedOnAddOrUpdate()
+                .HasDefaultValueSql("CURRENT_TIMESTAMP");
         });
 
         modelBuilder.Entity<FileDetailInfo>(entity =>

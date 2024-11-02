@@ -13,6 +13,7 @@ namespace stock_api.Service.ValueObject
         public float NeedOrderedQuantityUnit { get; set; } = 0;
         public double? LastMonthUsageQuantity { get; set; } = 0;
         public double? LastYearUsageQuantity { get; set; } = 0;
+        public double? ThisYearAverageMonthUsageQuantity { get; set; } = 0;
         public List<string> ExistCompIds { get; set; }  = new();
     }
 }

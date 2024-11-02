@@ -345,6 +345,8 @@ namespace stock_api.Controllers
 
             var productsLastMonthUsage = _stockOutService.GetLastMonthUsages();
 
+            var productsThisYearAverageMonthUsage = _stockOutService.GetThisAverageMonthUsages();
+
             var productsOfOwner = _warehouseProductService.GetAllProducts(compId);
 
             foreach (var vo in filterKeywordsData)
@@ -376,6 +378,10 @@ namespace stock_api.Controllers
                     var matchedProductLastMonthUsage = productsLastMonthUsage.Where(p => p.ProductId == item.ProductId).FirstOrDefault();
                     item.Manager = matchedProduct?.Manager;
                     item.LastMonthUsageQuantity = matchedProductLastMonthUsage != null ? matchedProductLastMonthUsage.Quantity : 0.0;
+
+                    var matchedProductThisYearAverageMonthUsage = productsThisYearAverageMonthUsage.Where(p => p.ProductId == item.ProductId).FirstOrDefault();
+                    item.ThisYearAverageMonthUsageQuantity = matchedProductThisYearAverageMonthUsage != null ? matchedProductThisYearAverageMonthUsage.AverageQuantity : 0.0;
+
                 }
             }
             filterKeywordsData = filterKeywordsData.OrderByDescending(item => item.ApplyDate).ToList();

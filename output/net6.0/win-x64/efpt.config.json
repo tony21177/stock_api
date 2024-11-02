@@ -160,6 +160,10 @@
          "ObjectType": 3
       },
       {
+         "Name": "average_month_usage_this_year",
+         "ObjectType": 3
+      },
+      {
          "Name": "in_stock_item_record_new_lot_number_vew",
          "ObjectType": 3
       },

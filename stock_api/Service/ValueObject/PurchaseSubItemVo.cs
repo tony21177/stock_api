@@ -49,6 +49,7 @@ namespace stock_api.Service.ValueObject
 
         public string? StockLocation { get; set;}
         public string? Manager {  get; set; }
-        public double? LastMonthUsageQuantity { get; set; }
+        public double? LastMonthUsageQuantity { get; set; } = 0;
+        public double? ThisYearAverageMonthUsageQuantity { get; set; } = 0;
     }
 }

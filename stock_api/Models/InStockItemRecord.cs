@@ -13,8 +13,8 @@ namespace stock_api.Models;
 /// </summary>
 [Table("in_stock_item_record")]
 [Index("CreatedAt", Name = "createdAt_idx")]
-[Index("ProductId", Name = "idx_productid")]
 [Index("ProductId", "CreatedAt", Name = "idx_productid_createdat", IsDescending = new[] { false, true })]
+[Index("ProductId", Name = "productId_ids")]
 [Index("CompId", "QcTestStatus", Name = "qc_undone_index")]
 [Index("LotNumberBatch", Name = "unique_lotnumberbatch", IsUnique = true)]
 [Index("IsNeedQc", "QcType", "LotNumber", Name = "update_qc_idx_lotnumber")]
@@ -166,6 +166,10 @@ public partial class InStockItemRecord
 
     [StringLength(100)]
     public string? ReturnOutStockId { get; set; }
+
+    [Column("in_stock_item_recordcol")]
+    [StringLength(45)]
+    public string? InStockItemRecordcol { get; set; }
 
     /// <summary>
     /// 初驗驗收填寫相關原因

@@ -353,7 +353,7 @@ namespace stock_api.Service
 
         public List<LastMonthUsage> GetLastMonthUsages(List<string> productIdList)
         {
-            return _dbContext.LastMonthUsages.ToList();
+            return _dbContext.LastMonthUsages.Where(e=>productIdList.Contains(e.ProductId)).ToList();
         }
 
         public List<LastMonthUsage> GetLastMonthUsages()
@@ -361,7 +361,17 @@ namespace stock_api.Service
             return _dbContext.LastMonthUsages.ToList();
         }
 
-        public List<LastYearUsage> GetLastYearUsages(List<string> productIdList)
+        public List<AverageMonthUsageThisYear> GetThisAverageMonthUsages(List<string> productIdList)
+        {
+            return _dbContext.AverageMonthUsageThisYears.Where(e => productIdList.Contains(e.ProductId)).ToList();
+        }
+
+        public List<AverageMonthUsageThisYear> GetThisAverageMonthUsages()
+        {
+            return _dbContext.AverageMonthUsageThisYears.ToList();
+        }
+
+        public List<LastYearUsage> GetLastYearUsages()
         {
             return _dbContext.LastYearUsages.ToList();
         }

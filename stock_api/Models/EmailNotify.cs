@@ -33,4 +33,10 @@ public partial class EmailNotify
 
     [StringLength(100)]
     public string? PurchaseNumber { get; set; }
+
+    [Column(TypeName = "timestamp")]
+    public DateTime? CreatedAt { get; set; }
+
+    [Column(TypeName = "timestamp")]
+    public DateTime? UpdatedAt { get; set; }
 }
