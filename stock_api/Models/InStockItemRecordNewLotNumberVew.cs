@@ -193,5 +193,5 @@ public partial class InStockItemRecordNewLotNumberVew
     public string? GroupNames { get; set; }
 
     [Column("isNewLotNumber")]
-    public int IsNewLotNumber { get; set; }
+    public bool? IsNewLotNumber { get; set; }
 }
