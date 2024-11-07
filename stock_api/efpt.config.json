@@ -164,6 +164,10 @@
          "ObjectType": 3
       },
       {
+         "Name": "flow_setting_view",
+         "ObjectType": 3
+      },
+      {
          "Name": "in_stock_item_record_new_lot_number_vew",
          "ObjectType": 3
       },

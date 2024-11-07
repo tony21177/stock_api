@@ -35,6 +35,8 @@ public partial class StockDbContext : DbContext
 
     public virtual DbSet<FileDetailInfo> FileDetailInfos { get; set; }
 
+    public virtual DbSet<FlowSettingView> FlowSettingViews { get; set; }
+
     public virtual DbSet<InStockItemRecord> InStockItemRecords { get; set; }
 
     public virtual DbSet<InStockItemRecordNewLotNumberVew> InStockItemRecordNewLotNumberVews { get; set; }
@@ -312,6 +314,25 @@ public partial class StockDbContext : DbContext
             entity.Property(e => e.CompId).HasComment("member.UserId");
             entity.Property(e => e.CreatedAt).HasDefaultValueSql("CURRENT_TIMESTAMP");
             entity.Property(e => e.CreatorId).HasComment("member.UserId");
+            entity.Property(e => e.UpdatedAt)
+                .ValueGeneratedOnAddOrUpdate()
+                .HasDefaultValueSql("CURRENT_TIMESTAMP");
+        });
+
+        modelBuilder.Entity<FlowSettingView>(entity =>
+        {
+            entity.ToView("flow_setting_view");
+
+            entity.Property(e => e.Account).HasDefaultValueSql("'登入帳號'");
+            entity.Property(e => e.CompId).HasComment("所屬組織ID");
+            entity.Property(e => e.CompName).HasComment("顯示名稱");
+            entity.Property(e => e.CreatedAt).HasDefaultValueSql("CURRENT_TIMESTAMP");
+            entity.Property(e => e.DisplayName).HasComment("顯示名稱");
+            entity.Property(e => e.FlowName).HasComment("審核流程顯示名稱");
+            entity.Property(e => e.ReviewGroupId).HasComment("負責簽核的組別");
+            entity.Property(e => e.ReviewGroupName).HasComment("群組名稱");
+            entity.Property(e => e.ReviewUserId).HasComment("此審核流程的審核者");
+            entity.Property(e => e.Sequence).HasComment("順序");
             entity.Property(e => e.UpdatedAt)
                 .ValueGeneratedOnAddOrUpdate()
                 .HasDefaultValueSql("CURRENT_TIMESTAMP");
