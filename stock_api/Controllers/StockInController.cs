@@ -257,7 +257,7 @@ namespace stock_api.Controllers
             {
                 Result = true,
                 Data = data,
-                TotalPages = totalPages
+                TotalPages = 1
             };
             return Ok(response);
         }
