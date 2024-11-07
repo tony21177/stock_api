@@ -256,7 +256,8 @@ namespace stock_api.Controllers
             var response = new CommonResponse<List<PurchaseAcceptItemsVo>>
             {
                 Result = true,
-                Data = data
+                Data = data,
+                TotalPages = totalPages
             };
             return Ok(response);
         }
