@@ -71,186 +71,223 @@ namespace stock_api.Controllers
                 return BadRequest(CommonResponse<dynamic>.BuildValidationFailedResponse(validationResult));
             }
 
-            var inStockRecord = _stockInService.GetInStockRecordByLotNumberBatch(request.LotNumberBatch,compId);
-            if (inStockRecord == null)
+            if (request.Type == CommonConstants.OutStockType.PURCHASE_OUT)
             {
-                return BadRequest(new CommonResponse<dynamic>
-                {
-                    Result = false,
-                    Message = "未找到該品項尚未出庫的入庫紀錄"
-                });
-            }
-            var productCode = inStockRecord.ProductCode;
-            request.ProductCode = productCode;
-
-            List<InStockItemRecord> inStockItemRecordsNotAllOutExDateFIFO = _stockInService.GetProductInStockRecordsHistoryNotAllOutExpirationFIFO(productCode, compId);
-
-            if (inStockItemRecordsNotAllOutExDateFIFO.Count == 0)
-            {
-                return BadRequest(new CommonResponse<dynamic>
-                {
-                    Result = false,
-                    Message = "未找到該品項尚未出庫的入庫紀錄"
-                });
-            }
-            InStockItemRecord? requestLot = null;
-            if (inStockItemRecordsNotAllOutExDateFIFO.Count > 0)
-            {
-                requestLot = inStockItemRecordsNotAllOutExDateFIFO.FirstOrDefault(item => item.LotNumberBatch == request.LotNumberBatch);
-                if (requestLot == null)
+                var inStockRecord = _stockInService.GetInStockRecordByLotNumberBatch(request.LotNumberBatch, compId);
+                if (inStockRecord == null)
                 {
                     return BadRequest(new CommonResponse<dynamic>
                     {
                         Result = false,
-                        Message = "未找到相對應尚未出庫的入庫紀錄"
+                        Message = "未找到該品項尚未出庫的入庫紀錄"
                     });
                 }
-                var oldestLot = inStockItemRecordsNotAllOutExDateFIFO.FirstOrDefault();
+                var productCode = inStockRecord.ProductCode;
+                request.ProductCode = productCode;
 
-                // 表示要出的批號不是最早的那批 IsAbnormal!=true(非user確認過的)
-                if ((requestLot.LotNumberBatch != oldestLot.LotNumberBatch) && request.IsAbnormal != true)
+                List<InStockItemRecord> inStockItemRecordsNotAllOutExDateFIFO = _stockInService.GetProductInStockRecordsHistoryNotAllOutExpirationFIFO(productCode, compId);
+
+                if (inStockItemRecordsNotAllOutExDateFIFO.Count == 0)
                 {
-                    var IsNeedQc2 = requestLot.IsNeedQc == true && requestLot.QcTestStatus == CommonConstants.QcTestStatus.NONE && requestLot.QcType != CommonConstants.QcTypeConstants.NONE;
-                    NeedQc? needQc2 = null;
-                    if (IsNeedQc2)
-                    {
-                        var purchaseMain = _stockInService.GetPurchaseMainByInStockId(requestLot);
-
-                        needQc2 = new NeedQc()
-                        {
-                            PurchaseMainID = purchaseMain.PurchaseMainId,
-                            LotNumber = requestLot.LotNumber,
-                            LotNumberBatch = requestLot.LotNumberBatch,
-                            QcType = requestLot.QcType,
-                            ProductID = requestLot.ProductId,   
-                            ProductName = requestLot.ProductName,
-                            ApplyDate = purchaseMain.ApplyDate,
-                            AcceptedAt = requestLot.CreatedAt.Value,
-                            AcceptUserId = requestLot.UserId,
-                            AcceptUserName = requestLot.UserName,
-                        };
-                    }
-                    var warehouseProduct = _warehouseProductService.GetProductByProductId(requestLot.ProductId);
-                    List<string> printStickerLotBatchListForBadRequest = new();
-                    List<string> isNewLotNumberListForBadRequest = new();
-                    List<string> isNewLotNumberBatchListForBadRequest = new();
-                    if (warehouseProduct.IsPrintSticker == true)
-                    {
-                        printStickerLotBatchListForBadRequest.Add(requestLot.LotNumberBatch);
-                    }
-                    if(requestLot.LotNumber!= warehouseProduct.LotNumber)
-                    {
-                        isNewLotNumberListForBadRequest.Add(requestLot.LotNumber);
-                    }
-                    if (requestLot.LotNumberBatch != warehouseProduct.LotNumberBatch)
-                    {
-                        isNewLotNumberBatchListForBadRequest.Add(requestLot.LotNumberBatch);
-                    }
-
-                    return BadRequest(new CommonResponse<Dictionary<string, dynamic>>
+                    return BadRequest(new CommonResponse<dynamic>
                     {
                         Result = false,
-                        Message = "還有效期更早的批號還沒出",
-                        Data = new Dictionary<string, dynamic>
-                        {
-                            ["isFIFO"] = false,
-                            ["oldest"] = oldestLot,
-                            ["requestLotNumberBatch"] = requestLot.LotNumberBatch,
-                            ["needQc"] = needQc2,
-                            ["printStickerLotBatchList"] = printStickerLotBatchListForBadRequest,
-                            ["isNewLotNumberList"] = isNewLotNumberListForBadRequest,
-                            ["isNewLotNumberBatchList"] = isNewLotNumberBatchListForBadRequest
-                        }
+                        Message = "未找到該品項尚未出庫的入庫紀錄"
                     });
                 }
-            }
+                InStockItemRecord? requestLot = null;
+                if (inStockItemRecordsNotAllOutExDateFIFO.Count > 0)
+                {
+                    requestLot = inStockItemRecordsNotAllOutExDateFIFO.FirstOrDefault(item => item.LotNumberBatch == request.LotNumberBatch);
+                    if (requestLot == null)
+                    {
+                        return BadRequest(new CommonResponse<dynamic>
+                        {
+                            Result = false,
+                            Message = "未找到相對應尚未出庫的入庫紀錄"
+                        });
+                    }
+                    var oldestLot = inStockItemRecordsNotAllOutExDateFIFO.FirstOrDefault();
 
-            var product = _warehouseProductService.GetProductByProductCodeAndCompId(productCode, compId);
-            if (product == null)
-            {
-                return BadRequest(new CommonResponse<dynamic>
+                    // 表示要出的批號不是最早的那批 IsAbnormal!=true(非user確認過的)
+                    if ((requestLot.LotNumberBatch != oldestLot.LotNumberBatch) && request.IsAbnormal != true)
+                    {
+                        var IsNeedQc2 = requestLot.IsNeedQc == true && requestLot.QcTestStatus == CommonConstants.QcTestStatus.NONE && requestLot.QcType != CommonConstants.QcTypeConstants.NONE;
+                        NeedQc? needQc2 = null;
+                        if (IsNeedQc2)
+                        {
+                            var purchaseMain = _stockInService.GetPurchaseMainByInStockId(requestLot);
+
+                            needQc2 = new NeedQc()
+                            {
+                                PurchaseMainID = purchaseMain.PurchaseMainId,
+                                LotNumber = requestLot.LotNumber,
+                                LotNumberBatch = requestLot.LotNumberBatch,
+                                QcType = requestLot.QcType,
+                                ProductID = requestLot.ProductId,
+                                ProductName = requestLot.ProductName,
+                                ApplyDate = purchaseMain.ApplyDate,
+                                AcceptedAt = requestLot.CreatedAt.Value,
+                                AcceptUserId = requestLot.UserId,
+                                AcceptUserName = requestLot.UserName,
+                            };
+                        }
+                        var warehouseProduct = _warehouseProductService.GetProductByProductId(requestLot.ProductId);
+                        List<string> printStickerLotBatchListForBadRequest = new();
+                        List<string> isNewLotNumberListForBadRequest = new();
+                        List<string> isNewLotNumberBatchListForBadRequest = new();
+                        if (warehouseProduct.IsPrintSticker == true)
+                        {
+                            printStickerLotBatchListForBadRequest.Add(requestLot.LotNumberBatch);
+                        }
+                        if (requestLot.LotNumber != warehouseProduct.LotNumber)
+                        {
+                            isNewLotNumberListForBadRequest.Add(requestLot.LotNumber);
+                        }
+                        if (requestLot.LotNumberBatch != warehouseProduct.LotNumberBatch)
+                        {
+                            isNewLotNumberBatchListForBadRequest.Add(requestLot.LotNumberBatch);
+                        }
+
+                        return BadRequest(new CommonResponse<Dictionary<string, dynamic>>
+                        {
+                            Result = false,
+                            Message = "還有效期更早的批號還沒出",
+                            Data = new Dictionary<string, dynamic>
+                            {
+                                ["isFIFO"] = false,
+                                ["oldest"] = oldestLot,
+                                ["requestLotNumberBatch"] = requestLot.LotNumberBatch,
+                                ["needQc"] = needQc2,
+                                ["printStickerLotBatchList"] = printStickerLotBatchListForBadRequest,
+                                ["isNewLotNumberList"] = isNewLotNumberListForBadRequest,
+                                ["isNewLotNumberBatchList"] = isNewLotNumberBatchListForBadRequest
+                            }
+                        });
+                    }
+                }
+
+                var product = _warehouseProductService.GetProductByProductCodeAndCompId(productCode, compId);
+                if (product == null)
                 {
-                    Result = false,
-                    Message = "無對應的庫存品項"
-                });
-            }
-            if (request.ApplyQuantity > requestLot.InStockQuantity)
-            {
-                return BadRequest(new CommonResponse<dynamic>
-                {
-                    Result = false,
-                    Message = "出庫數量超過入庫數量"
-                });
-            }
-            List<string> printStickerLotBatchList = new();
-            List<string> isNewLotNumberList = new();
-            List<string> isNewLotNumberBatchList = new();
-            if (product.IsPrintSticker == true)
-            {
-                printStickerLotBatchList.Add(requestLot.LotNumberBatch);
-            }
-            if (requestLot.LotNumber != product.LotNumber)
-            {
-                isNewLotNumberList.Add(requestLot.LotNumber);
-            }
-            if (requestLot.LotNumberBatch != product.LotNumberBatch)
-            {
-                isNewLotNumberBatchList.Add(requestLot.LotNumberBatch);
-            }
-            var IsNeedQc = requestLot.IsNeedQc == true && requestLot.QcTestStatus == CommonConstants.QcTestStatus.NONE && requestLot.QcType != CommonConstants.QcTypeConstants.NONE;
-            NeedQc? needQc = null;
-            if (IsNeedQc)
-            {
-                var purchaseMain = _stockInService.GetPurchaseMainByInStockId(requestLot);
-                needQc = new NeedQc()
-                {
-                    PurchaseMainID = purchaseMain.PurchaseMainId,
-                    LotNumber = requestLot.LotNumber,
-                    LotNumberBatch = requestLot.LotNumberBatch,
-                    QcType = requestLot.QcType,
-                    ProductID = requestLot.ProductId,
-                    ProductName = requestLot.ProductName,
-                    ApplyDate = purchaseMain.ApplyDate,
-                    AcceptedAt = requestLot.CreatedAt.Value,
-                    AcceptUserId = requestLot.UserId,
-                    AcceptUserName = requestLot.UserName,
-                };
-                if (request.IsSkipQc == false)
-                {
-                    return BadRequest(new CommonResponse<Dictionary<string, dynamic>>
+                    return BadRequest(new CommonResponse<dynamic>
                     {
                         Result = false,
-                        Message = "請確認是否要跳過品質確效出庫",
-                        Data = new Dictionary<string, dynamic>
-                        {
-                            ["needQc"] = needQc,
-                            ["printStickerLotBatchList"] = printStickerLotBatchList,
-                            ["isNewLotNumberList"] = isNewLotNumberList,
-                            ["isNewLotNumberBatchList"] = isNewLotNumberBatchList,
-                            ["isNewLotNumberList"] = isNewLotNumberList,
-                            ["isNewLotNumberBatchList"] = isNewLotNumberBatchList
-                        }
+                        Message = "無對應的庫存品項"
                     });
                 }
+                if (request.ApplyQuantity > requestLot.InStockQuantity)
+                {
+                    return BadRequest(new CommonResponse<dynamic>
+                    {
+                        Result = false,
+                        Message = "出庫數量超過入庫數量"
+                    });
+                }
+                List<string> printStickerLotBatchList = new();
+                List<string> isNewLotNumberList = new();
+                List<string> isNewLotNumberBatchList = new();
+                if (product.IsPrintSticker == true)
+                {
+                    printStickerLotBatchList.Add(requestLot.LotNumberBatch);
+                }
+                if (requestLot.LotNumber != product.LotNumber)
+                {
+                    isNewLotNumberList.Add(requestLot.LotNumber);
+                }
+                if (requestLot.LotNumberBatch != product.LotNumberBatch)
+                {
+                    isNewLotNumberBatchList.Add(requestLot.LotNumberBatch);
+                }
+                var IsNeedQc = requestLot.IsNeedQc == true && requestLot.QcTestStatus == CommonConstants.QcTestStatus.NONE && requestLot.QcType != CommonConstants.QcTypeConstants.NONE;
+                NeedQc? needQc = null;
+                if (IsNeedQc)
+                {
+                    var purchaseMain = _stockInService.GetPurchaseMainByInStockId(requestLot);
+                    needQc = new NeedQc()
+                    {
+                        PurchaseMainID = purchaseMain.PurchaseMainId,
+                        LotNumber = requestLot.LotNumber,
+                        LotNumberBatch = requestLot.LotNumberBatch,
+                        QcType = requestLot.QcType,
+                        ProductID = requestLot.ProductId,
+                        ProductName = requestLot.ProductName,
+                        ApplyDate = purchaseMain.ApplyDate,
+                        AcceptedAt = requestLot.CreatedAt.Value,
+                        AcceptUserId = requestLot.UserId,
+                        AcceptUserName = requestLot.UserName,
+                    };
+                    if (request.IsSkipQc == false)
+                    {
+                        return BadRequest(new CommonResponse<Dictionary<string, dynamic>>
+                        {
+                            Result = false,
+                            Message = "請確認是否要跳過品質確效出庫",
+                            Data = new Dictionary<string, dynamic>
+                            {
+                                ["needQc"] = needQc,
+                                ["printStickerLotBatchList"] = printStickerLotBatchList,
+                                ["isNewLotNumberList"] = isNewLotNumberList,
+                                ["isNewLotNumberBatchList"] = isNewLotNumberBatchList,
+                                ["isNewLotNumberList"] = isNewLotNumberList,
+                                ["isNewLotNumberBatchList"] = isNewLotNumberBatchList
+                            }
+                        });
+                    }
+                }
+
+
+                var (result, errorMsg, notifyProductQuantity) = _stockOutService.OutStock(request.Type, request, requestLot, product, memberAndPermissionSetting.Member, compId);
+
+
+                //CalculateForQuantityToNotity(new List<NotifyProductQuantity> { notifyProductQuantity });
+                return Ok(new CommonResponse<dynamic>
+                {
+                    Result = result,
+                    Message = errorMsg,
+                    Data = new Dictionary<string, dynamic>
+                    {
+                        ["needQc"] = needQc,
+                        ["printStickerLotBatchList"] = printStickerLotBatchList,
+                        ["isNewLotNumberList"] = isNewLotNumberList,
+                        ["isNewLotNumberBatchList"] = isNewLotNumberBatchList
+                    }
+                });
+            }
+            else
+            {
+                var inStockItemRecords = _stockInService.GetAllInStockItemRecordsByCompId(compId);
+                var products = _warehouseProductService.GetProductsByCompId(compId);
+
+                
+                var matchedInStockRecord = inStockItemRecords.Where(i => i.LotNumberBatch == request.LotNumberBatch).FirstOrDefault();
+                if (matchedInStockRecord == null)
+                {
+                    return BadRequest(new CommonResponse<dynamic>
+                    {
+                        Result = false,
+                        Message = $"找不到批次:${request.LotNumberBatch}的入庫紀錄"
+                    });
+                }
+                var matchedProduct = products.Where(p => p.ProductId == matchedInStockRecord.ProductId).FirstOrDefault();
+                if (matchedProduct == null)
+                {
+                    return BadRequest(new CommonResponse<dynamic>
+                    {
+                        Result = false,
+                        Message = $"找不到該品項"
+                    });
+                }
+                
+                var (successful, _, notifyProductQuantity) = _stockOutService.OutStock(request.Type, request, matchedInStockRecord, matchedProduct, memberAndPermissionSetting.Member, compId);
+
+                return Ok(new CommonResponse<dynamic>
+                {
+                    Result = successful,
+                });
             }
 
-
-            var (result,errorMsg, notifyProductQuantity) = _stockOutService.OutStock(request.Type,request, requestLot, product, memberAndPermissionSetting.Member,compId);
             
-
-            //CalculateForQuantityToNotity(new List<NotifyProductQuantity> { notifyProductQuantity });
-            return Ok(new CommonResponse<dynamic>
-            {
-                Result = result,
-                Message = errorMsg,
-                Data = new Dictionary<string, dynamic>
-                {
-                    ["needQc"]=needQc,
-                    ["printStickerLotBatchList"] = printStickerLotBatchList,
-                    ["isNewLotNumberList"] = isNewLotNumberList,
-                    ["isNewLotNumberBatchList"] = isNewLotNumberBatchList
-                }
-            });
         }
 
         [HttpPost("batchOutbound")]
@@ -268,96 +305,147 @@ namespace stock_api.Controllers
                 return BadRequest(CommonResponse<dynamic>.BuildValidationFailedResponse(validationResult));
             }
 
-
-            (List<string> notFoundLotNumberBatchList, Dictionary<string, List<InStockItemRecord>> lotNumberBatchAndProductCodeInStockExFIFORecordsMap,List<string> productCodeList) 
-                = FindSameProductInStockRecordsNotAllOutExpirationFIFO(request.OutboundItems,compId);
-            if (notFoundLotNumberBatchList.Count > 0)
+            if (request.Type == CommonConstants.OutStockType.PURCHASE_OUT)
             {
-                return BadRequest(new CommonResponse<dynamic>
-                {
-                    Result = false,
-                    Message = $"以下批次{string.Join(",", notFoundLotNumberBatchList)}未找到品項的入庫紀錄"
-                });
-            }
-
-            (notFoundLotNumberBatchList, Dictionary<string, WarehouseProduct> lotNumberBatchAndProductMap,productCodeList) = FindMatchedProd(request.OutboundItems,compId);
-            if (notFoundLotNumberBatchList.Count > 0)
-            {
-                return BadRequest(new CommonResponse<dynamic>
-                {
-                    Result = false,
-                    Message = $"以下批次: {string.Join(",", notFoundLotNumberBatchList)} 未找到相對應的庫存品項productCode: {string.Join(",", productCodeList)}"
-                });
-            }
-
-
-            (List<Dictionary<string, dynamic>> notOldestLotList, Dictionary<string, InStockItemRecord> lotNumberBatchRequestLotMap) =
-                FindNotOldestLotList(request.OutboundItems, lotNumberBatchAndProductMap, lotNumberBatchAndProductCodeInStockExFIFORecordsMap);
-
-            List<NeedQc> needQcListForOutboundItems = FindNeedQcList(request.OutboundItems, lotNumberBatchAndProductMap, lotNumberBatchRequestLotMap);
-            List<string> printStickerLotNumberBatchList = GetPrintStickerLotNumberBatchList(request.OutboundItems, lotNumberBatchAndProductMap);
-            var (isNewLotNumberList, isNewLotNumberBatchList) = GetNewLotList(request.OutboundItems, lotNumberBatchAndProductMap, lotNumberBatchRequestLotMap);
-
-
-            //if (notOldestLotList.Count > 0)
-            //{
-            //    return BadRequest(new CommonResponse<List<Dictionary<string, dynamic>>>
-            //    {
-            //        Result = false,
-            //        Message = "還有效期更早的批號還沒出",
-            //        Data = notOldestLotList
-            //    });
-            //}
-            List<string?> unOutableLotNumberBatchList = notOldestLotList.Select(lot => lot.GetValueOrDefault("requestLotNumberBatch") as string).ToList();
-            List<string>? needConfirmedQcLotNumberBatchList = needQcListForOutboundItems.Where(qc=> !string.IsNullOrEmpty(qc.LotNumberBatch)).Select(qc =>  qc.LotNumberBatch).ToList();
-            var outableOutBoundItems = request.OutboundItems.Where(i => !unOutableLotNumberBatchList.Contains(i.LotNumberBatch)&&!needConfirmedQcLotNumberBatchList.Contains(i.LotNumberBatch));
-
-
-
-            List<string> failedOutLotNumberBatchList = new();
-            List<NotifyProductQuantity> notifyProductQuantityList = new();
-            List<NeedQc> needQcList = new();
-            foreach (var outItem in outableOutBoundItems)
-            {
-                var product = lotNumberBatchAndProductMap[outItem.LotNumberBatch];
-                var requestLot = lotNumberBatchRequestLotMap[outItem.LotNumberBatch];
-                if (outItem.ApplyQuantity > requestLot.InStockQuantity)
+                (List<string> notFoundLotNumberBatchList, Dictionary<string, List<InStockItemRecord>> lotNumberBatchAndProductCodeInStockExFIFORecordsMap, List<string> productCodeList)
+                = FindSameProductInStockRecordsNotAllOutExpirationFIFO(request.OutboundItems, compId);
+                if (notFoundLotNumberBatchList.Count > 0)
                 {
                     return BadRequest(new CommonResponse<dynamic>
                     {
                         Result = false,
-                        Message = $"出庫數量超過入庫數量 批次:{outItem.LotNumberBatch},入庫數量:{requestLot.InStockQuantity}"
+                        Message = $"以下批次{string.Join(",", notFoundLotNumberBatchList)}未找到品項的入庫紀錄"
                     });
                 }
 
-                var (successful,_, notifyProductQuantity) = _stockOutService.OutStock(request.Type,outItem, requestLot, product, memberAndPermissionSetting.Member,compId);
-                if (!successful)
+                (notFoundLotNumberBatchList, Dictionary<string, WarehouseProduct> lotNumberBatchAndProductMap, productCodeList) = FindMatchedProd(request.OutboundItems, compId);
+                if (notFoundLotNumberBatchList.Count > 0)
                 {
-                    failedOutLotNumberBatchList.Add(outItem.LotNumberBatch);
+                    return BadRequest(new CommonResponse<dynamic>
+                    {
+                        Result = false,
+                        Message = $"以下批次: {string.Join(",", notFoundLotNumberBatchList)} 未找到相對應的庫存品項productCode: {string.Join(",", productCodeList)}"
+                    });
                 }
-                else
+
+
+                (List<Dictionary<string, dynamic>> notOldestLotList, Dictionary<string, InStockItemRecord> lotNumberBatchRequestLotMap) =
+                    FindNotOldestLotList(request.OutboundItems, lotNumberBatchAndProductMap, lotNumberBatchAndProductCodeInStockExFIFORecordsMap);
+
+                List<NeedQc> needQcListForOutboundItems = FindNeedQcList(request.OutboundItems, lotNumberBatchAndProductMap, lotNumberBatchRequestLotMap);
+                List<string> printStickerLotNumberBatchList = GetPrintStickerLotNumberBatchList(request.OutboundItems, lotNumberBatchAndProductMap);
+                var (isNewLotNumberList, isNewLotNumberBatchList) = GetNewLotList(request.OutboundItems, lotNumberBatchAndProductMap, lotNumberBatchRequestLotMap);
+
+
+                //if (notOldestLotList.Count > 0)
+                //{
+                //    return BadRequest(new CommonResponse<List<Dictionary<string, dynamic>>>
+                //    {
+                //        Result = false,
+                //        Message = "還有效期更早的批號還沒出",
+                //        Data = notOldestLotList
+                //    });
+                //}
+                List<string?> unOutableLotNumberBatchList = notOldestLotList.Select(lot => lot.GetValueOrDefault("requestLotNumberBatch") as string).ToList();
+                List<string>? needConfirmedQcLotNumberBatchList = needQcListForOutboundItems.Where(qc => !string.IsNullOrEmpty(qc.LotNumberBatch)).Select(qc => qc.LotNumberBatch).ToList();
+                var outableOutBoundItems = request.OutboundItems.Where(i => !unOutableLotNumberBatchList.Contains(i.LotNumberBatch) && !needConfirmedQcLotNumberBatchList.Contains(i.LotNumberBatch));
+
+
+
+                List<string> failedOutLotNumberBatchList = new();
+                List<NotifyProductQuantity> notifyProductQuantityList = new();
+                List<NeedQc> needQcList = new();
+                foreach (var outItem in outableOutBoundItems)
                 {
-                    notifyProductQuantityList.Add(notifyProductQuantity);
+                    var product = lotNumberBatchAndProductMap[outItem.LotNumberBatch];
+                    var requestLot = lotNumberBatchRequestLotMap[outItem.LotNumberBatch];
+                    if (outItem.ApplyQuantity > requestLot.InStockQuantity)
+                    {
+                        return BadRequest(new CommonResponse<dynamic>
+                        {
+                            Result = false,
+                            Message = $"出庫數量超過入庫數量 批次:{outItem.LotNumberBatch},入庫數量:{requestLot.InStockQuantity}"
+                        });
+                    }
+
+                    var (successful, _, notifyProductQuantity) = _stockOutService.OutStock(request.Type, outItem, requestLot, product, memberAndPermissionSetting.Member, compId);
+                    if (!successful)
+                    {
+                        failedOutLotNumberBatchList.Add(outItem.LotNumberBatch);
+                    }
+                    else
+                    {
+                        notifyProductQuantityList.Add(notifyProductQuantity);
+                    }
                 }
+                if (notifyProductQuantityList.Count > 0)
+                {
+                    //CalculateForQuantityToNotity(notifyProductQuantityList);
+                }
+
+                return Ok(new CommonResponse<dynamic>
+                {
+                    Result = (failedOutLotNumberBatchList.Count == 0 && notOldestLotList.Count == 0 && needQcListForOutboundItems.Count == 0),
+                    Data = new Dictionary<string, dynamic>
+                    {
+                        ["failedLotNumberBatchList"] = failedOutLotNumberBatchList,
+                        ["notOldestLotList"] = notOldestLotList,
+                        ["needQcList"] = needQcListForOutboundItems,
+                        ["printStickerLotBatchList"] = printStickerLotNumberBatchList,
+                        ["isNewLotNumberList"] = isNewLotNumberList,
+                        ["isNewLotNumberBatchList"] = isNewLotNumberBatchList
+                    }
+                });
             }
-            if (notifyProductQuantityList.Count > 0)
+            else
             {
-                //CalculateForQuantityToNotity(notifyProductQuantityList);
+                var inStockItemRecords = _stockInService.GetAllInStockItemRecordsByCompId(compId);
+                var products = _warehouseProductService.GetProductsByCompId(compId);
+
+                foreach (var item in request.OutboundItems)
+                {
+                    var matchedInStockRecord = inStockItemRecords.Where(i => i.LotNumberBatch == item.LotNumberBatch).FirstOrDefault();
+                    if (matchedInStockRecord == null)
+                    {
+                        return BadRequest(new CommonResponse<dynamic>
+                        {
+                            Result = false,
+                            Message = $"找不到批次:${item.LotNumberBatch}的入庫紀錄"
+                        });
+                    }
+                    var matchedProduct = products.Where(p => p.ProductId == matchedInStockRecord.ProductId).FirstOrDefault();
+                    if (matchedProduct == null)
+                    {
+                        return BadRequest(new CommonResponse<dynamic>
+                        {
+                            Result = false,
+                            Message = $"找不到該品項"
+                        });
+                    }
+
+                }
+                foreach (var item in request.OutboundItems)
+                {
+                    var matchedInStockRecord = inStockItemRecords.Where(i => i.LotNumberBatch == item.LotNumberBatch).FirstOrDefault();
+                    var matchedProduct = products.Where(p => p.ProductId == matchedInStockRecord.ProductId).FirstOrDefault();
+                    var (successful, _, notifyProductQuantity) = _stockOutService.OutStock(request.Type, item, matchedInStockRecord, matchedProduct, memberAndPermissionSetting.Member, compId);
+                    if (!successful)
+                    {
+                        return Ok(new CommonResponse<dynamic>
+                        {
+                            Result = false,
+                        });
+                    }
+                
+                }
+
+                return Ok(new CommonResponse<dynamic>
+                {
+                    Result = true,
+                });
             }
 
-            return Ok(new CommonResponse<dynamic>
-            {
-                Result = (failedOutLotNumberBatchList.Count == 0&& notOldestLotList.Count==0&&needQcListForOutboundItems.Count==0),
-                Data = new Dictionary<string, dynamic>
-                {
-                    ["failedLotNumberBatchList"] = failedOutLotNumberBatchList,
-                    ["notOldestLotList"] = notOldestLotList,
-                    ["needQcList"] = needQcListForOutboundItems,
-                    ["printStickerLotBatchList"] = printStickerLotNumberBatchList,
-                    ["isNewLotNumberList"]= isNewLotNumberList,
-                    ["isNewLotNumberBatchList"] = isNewLotNumberBatchList
-                }
-            });
+            
         }
 
         [HttpPost("owner/outbound")]

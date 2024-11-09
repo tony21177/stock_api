@@ -67,7 +67,6 @@ namespace stock_api.Service
                     IsTransfer = true,
                     ExpirationDate = inStockItem.ExpirationDate
                 };
-                var test = (product.InStockQuantity ?? 0) - request.ApplyQuantity;
 
                 var outStockRecord = new OutStockRecord()
                 {
@@ -107,16 +106,22 @@ namespace stock_api.Service
                 };
                 _dbContext.OutstockRelatetoInstocks.Add(outStockRelateToInStock);
                 // 更新庫存
-                product.LotNumber = inStockItem.LotNumber;
-                product.LotNumberBatch = request.LotNumberBatch;
+                
                 product.InStockQuantity = product.InStockQuantity - request.ApplyQuantity;
                 DateOnly nowDate = DateOnly.FromDateTime(DateTime.Now);
-                if (product.OpenDeadline != null)
+                if (product.OpenDeadline != null&& outType==CommonConstants.OutStockType.PURCHASE_OUT)
                 {
                     product.LastAbleDate = nowDate.AddDays(product.OpenDeadline.Value);
                 }
-                product.LastOutStockDate = nowDate;
-                product.OriginalDeadline = inStockItem.ExpirationDate;
+                if(outType == CommonConstants.OutStockType.PURCHASE_OUT)
+                {
+                    product.LotNumber = inStockItem.LotNumber;
+                    product.LotNumberBatch = request.LotNumberBatch;
+                    product.LastOutStockDate = nowDate;
+                    product.OriginalDeadline = inStockItem.ExpirationDate;
+                }
+
+                    
                 NotifyProductQuantity notifyProductQuantity = new()
                 {
                     ProductCode = product.ProductCode,

@@ -925,5 +925,10 @@ namespace stock_api.Service
         {
             return _dbContext.ProductNewLotnumberbatchViews.ToList();
         }
+
+        public List<InStockItemRecord> GetAllInStockItemRecordsByCompId(string compId)
+        {
+            return _dbContext.InStockItemRecords.Where(i=>i.CompId==compId).ToList();
+        }
     }
 }

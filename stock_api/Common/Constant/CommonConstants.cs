@@ -334,10 +334,11 @@ namespace stock_api.Common.Constant
             public const string SHIFT_OUT = "SHIFT_OUT";
             public const string ADJUST_OUT = "ADJUST_OUT";
             public const string RETURN_OUT = "RETURN_OUT";
+            public const string DISCARD_OUT = "DISCARD_OUT";
 
             public static List<string> GetAllValues()
             {
-                return new List<string> { PURCHASE_OUT, SHIFT_OUT, ADJUST_OUT, RETURN_OUT };
+                return new List<string> { PURCHASE_OUT, SHIFT_OUT, ADJUST_OUT, RETURN_OUT, DISCARD_OUT };
             }
         }
 
