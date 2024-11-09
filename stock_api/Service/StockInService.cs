@@ -106,7 +106,7 @@ namespace stock_api.Service
 
 
 
-        public (bool, string?, Qc?) UpdateAcceptItem(PurchaseMainSheet purchaseMain, PurchaseSubItem purchaseSubItem, AcceptanceItem existingAcceptanceItem, UpdateAcceptItemRequest updateAcceptItem, WarehouseProduct product, string compId, WarehouseMember acceptMember,bool isDirectOutStock)
+        public (bool, string?, Qc?) UpdateAcceptItem(PurchaseMainSheet purchaseMain, PurchaseSubItem purchaseSubItem, AcceptanceItem existingAcceptanceItem, UpdateAcceptItemRequest updateAcceptItem, WarehouseProduct product, string compId, WarehouseMember acceptMember, bool isDirectOutStock)
         {
             using var scope = new TransactionScope();
             try
@@ -208,7 +208,7 @@ namespace stock_api.Service
 
                 if (updateAcceptItem.AcceptQuantity != null)
                 {
-                    
+
 
                     var tempInStockItemRecord = new TempInStockItemRecord()
                     {
@@ -351,7 +351,7 @@ namespace stock_api.Service
                     }
 
                     //入庫直接出庫
-                    if (isDirectOutStock == true) 
+                    if (isDirectOutStock == true)
                     {
                         product.LotNumber = updateAcceptItem.LotNumber;
                         product.LotNumberBatch = existingAcceptanceItem.LotNumberBatch;
@@ -368,7 +368,7 @@ namespace stock_api.Service
                     //product.DeliverTemperature = updateAcceptItem.DeliverTemperature;
                     //product.SavingFunction = updateAcceptItem.SavingFunction;
                     //product.SavingTemperature = updateAcceptItem.SavingTemperature;
-                    
+
 
 
                     _dbContext.TempInStockItemRecords.Add(tempInStockItemRecord);
@@ -470,7 +470,7 @@ namespace stock_api.Service
             }
             if (request.StartDate != null)
             {
-                query = query.Where(h =>  h.CreatedAt >= DateTimeHelper.ParseDateString(request.StartDate).Value);
+                query = query.Where(h => h.CreatedAt >= DateTimeHelper.ParseDateString(request.StartDate).Value);
             }
             if (request.EndDate != null)
             {
@@ -549,7 +549,7 @@ namespace stock_api.Service
             {
                 query = query.Where(h => h.LotNumber == request.LotNumber);
             }
-            
+
             if (request.ProductId != null)
             {
                 query = query.Where(h => h.ProductId == request.ProductId);
@@ -666,7 +666,7 @@ namespace stock_api.Service
         }
         public List<InStockItemRecord> GetInStockRecordsByItemIdList(List<string> itemIdList)
         {
-            return _dbContext.InStockItemRecords.Where(record => record.ItemId!=null&&itemIdList.Contains(record.ItemId)).ToList();
+            return _dbContext.InStockItemRecords.Where(record => record.ItemId != null && itemIdList.Contains(record.ItemId)).ToList();
         }
 
         public List<AcceptanceItem> GetAcceptanceItemsByInIdList(List<string> idList)
@@ -716,24 +716,24 @@ namespace stock_api.Service
             using var scope = new TransactionScope();
             try
             {
-                var inStockRecord = _dbContext.InStockItemRecords.Where(i=>i.LotNumberBatch==outStockRecord.LotNumberBatch).FirstOrDefault();
+                var inStockRecord = _dbContext.InStockItemRecords.Where(i => i.LotNumberBatch == outStockRecord.LotNumberBatch).FirstOrDefault();
 
                 var inStockQuantityBefore = inStockRecord.InStockQuantity;
                 var outStockQuantityBefore = outStockRecord.ApplyQuantity;
-                var outStockRecordsAfter = _dbContext.OutStockRecords.Where(r => r.ProductId==outStockRecord.ProductId && r.CreatedAt>outStockRecord.CreatedAt).ToList();
+                var outStockRecordsAfter = _dbContext.OutStockRecords.Where(r => r.ProductId == outStockRecord.ProductId && r.CreatedAt > outStockRecord.CreatedAt).ToList();
 
 
                 // 退庫回去 只需要庫存量+回來 不需要再修改入庫紀錄的數量
                 inStockRecord.OutStockQuantity = inStockRecord.OutStockQuantity - returnQuantity;
-                if(inStockRecord.OutStockQuantity - inStockRecord.OutStockQuantity > 0)
+                if (inStockRecord.OutStockQuantity - inStockRecord.OutStockQuantity > 0)
                 {
                     inStockRecord.OutStockStatus = CommonConstants.OutStockStatus.PART;
                 }
-                if(inStockRecord.OutStockQuantity == 0)
+                if (inStockRecord.OutStockQuantity == 0)
                 {
                     inStockRecord.OutStockStatus = CommonConstants.OutStockStatus.NONE;
                 }
-                if(inStockRecord.InStockQuantity - inStockRecord.OutStockQuantity == 0)
+                if (inStockRecord.InStockQuantity - inStockRecord.OutStockQuantity == 0)
                 {
                     inStockRecord.OutStockStatus = CommonConstants.OutStockStatus.ALL;
                 }
@@ -743,7 +743,8 @@ namespace stock_api.Service
                 outStockRecord.IsReturned = true;
                 // 出庫後數量都須更改加回去
                 outStockRecord.AfterQuantity = outStockRecord.AfterQuantity + returnQuantity;
-                outStockRecordsAfter.ForEach(r => { 
+                outStockRecordsAfter.ForEach(r =>
+                {
                     r.AfterQuantity = r.AfterQuantity + returnQuantity;
                 });
 
@@ -760,7 +761,7 @@ namespace stock_api.Service
                     OutStockApplyQuantityAfter = outStockRecord.ApplyQuantity,
                     LotNumberBatch = outStockRecord.LotNumberBatch,
                     LotNumber = outStockRecord.LotNumber,
-                    CompId = outStockRecord.CompId, 
+                    CompId = outStockRecord.CompId,
                     ProductId = product.ProductId,
                     ProductCode = product.ProductCode,
                     ProductName = product.ProductName,
@@ -845,7 +846,7 @@ namespace stock_api.Service
         public List<ReturnStockRecord> ListReturnRecords(ListReturnRecordsRequest request)
         {
             IQueryable<ReturnStockRecord> query = _dbContext.ReturnStockRecords;
-            
+
             if (request.StartDate != null)
             {
                 query = query.Where(h => h.CreatedAt >= DateTimeHelper.ParseDateString(request.StartDate).Value);
@@ -878,13 +879,13 @@ namespace stock_api.Service
 
 
 
-        public List<NearExpiredProductVo> GetNearExpiredProductList(string compId,DateOnly compareDate,int? preDeadline)
+        public List<NearExpiredProductVo> GetNearExpiredProductList(string compId, DateOnly compareDate, int? preDeadline)
         {
             var activeProducts = _dbContext.WarehouseProducts.Where(p => p.CompId == compId && p.IsActive == true).ToList();
-            var productIds = activeProducts.Select(p=>p.ProductId).ToList();
+            var productIds = activeProducts.Select(p => p.ProductId).ToList();
             var allUnAllOutInStockItemList = _dbContext.InStockItemRecords.Where(i => productIds.Contains(i.ProductId) && i.OutStockStatus != CommonConstants.OutStockStatus.ALL).ToList();
             var nearExpireProductVoList = _mapper.Map<List<NearExpiredProductVo>>(activeProducts);
-            
+
             foreach (var product in nearExpireProductVoList)
             {
                 var matchedAllUnAllOutInStockItemList = allUnAllOutInStockItemList.Where(i => i.ProductId == product.ProductId).ToList();
@@ -901,24 +902,24 @@ namespace stock_api.Service
                 }
             }
 
-            return nearExpireProductVoList.Where(p=>p.InStockItemList.Count>0).ToList();
+            return nearExpireProductVoList.Where(p => p.InStockItemList.Count > 0).ToList();
         }
 
         public PurchaseMainSheet GetPurchaseMainByInStockId(InStockItemRecord inStockItemRecord)
         {
-            var purchaseSubItem = _dbContext.PurchaseSubItems.Where(s=>s.ItemId==inStockItemRecord.ItemId).FirstOrDefault();
-            var main = _dbContext.PurchaseMainSheets.Where(m=>m.PurchaseMainId==purchaseSubItem.PurchaseMainId).FirstOrDefault();
+            var purchaseSubItem = _dbContext.PurchaseSubItems.Where(s => s.ItemId == inStockItemRecord.ItemId).FirstOrDefault();
+            var main = _dbContext.PurchaseMainSheets.Where(m => m.PurchaseMainId == purchaseSubItem.PurchaseMainId).FirstOrDefault();
             return main;
         }
 
         public List<AcceptanceItem> GetAcceptanceItemListByAcceptIdList(List<string> acceptIdList)
         {
-            return _dbContext.AcceptanceItems.Where(a => acceptIdList.Contains(a.AcceptId)).ToList();   
+            return _dbContext.AcceptanceItems.Where(a => acceptIdList.Contains(a.AcceptId)).ToList();
         }
 
         public List<ProductNewLotnumberView> GetProductsNewLotNumberList()
         {
-            return _dbContext.ProductNewLotnumberViews.ToList().Where(e=>e.LotNumber!= "N/A").ToList();
+            return _dbContext.ProductNewLotnumberViews.ToList().Where(e => e.LotNumber != "N/A").ToList();
         }
 
         public List<ProductNewLotnumberbatchView> GetProductsNewLotNumberBatchList()
@@ -928,7 +929,33 @@ namespace stock_api.Service
 
         public List<InStockItemRecord> GetAllInStockItemRecordsByCompId(string compId)
         {
-            return _dbContext.InStockItemRecords.Where(i=>i.CompId==compId).ToList();
+            return _dbContext.InStockItemRecords.Where(i => i.CompId == compId).ToList();
+        }
+
+        public (bool, string?) UpdateInStockItem(UpdateInStockRequest request, AcceptanceItem acceptanceItem)
+        {
+            using var scope = new TransactionScope();
+            try
+            {
+                var inStockRecord = _dbContext.InStockItemRecords.Where(i => i.ItemId == acceptanceItem.ItemId).FirstOrDefault();
+                if(request.LotNumber!=null) acceptanceItem.LotNumber = request.LotNumber;
+                if(request.ExpirationDate!=null) acceptanceItem.ExpirationDate =  DateOnly.FromDateTime(DateTimeHelper.ParseDateString(request.ExpirationDate).Value);
+
+                if (inStockRecord != null)
+                {
+                    if (request.LotNumber != null) inStockRecord.LotNumber = request.LotNumber;
+                    if (request.ExpirationDate != null) inStockRecord.ExpirationDate = DateOnly.FromDateTime(DateTimeHelper.ParseDateString(request.ExpirationDate).Value);
+                }
+                _dbContext.SaveChanges();
+                scope.Complete();
+                return (true, null);
+
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError("事務失敗[Return]：{msg}", ex);
+                return (false, ex.Message);
+            }
         }
     }
 }

@@ -2,6 +2,7 @@
 using FluentValidation;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using stock_api.Auth;
 using stock_api.Common;
 using stock_api.Common.Constant;
 using stock_api.Common.Utils;
@@ -32,6 +33,7 @@ namespace stock_api.Controllers
         private readonly IValidator<ListStockInRecordsRequest> _listStockInRecordsValidator;
         private readonly IValidator<ReturnRequest> _returnStockValidator;
         private readonly IValidator<ListReturnRecordsRequest> _listReturnRecordsValidator;
+        private readonly IValidator<UpdateInStockRequest> _updateInStockRequestValidator;
 
         public StockInController(IMapper mapper, AuthHelpers authHelpers, GroupService groupService, StockInService stockInService, WarehouseProductService warehouseProductService, PurchaseService purchaseService, StockOutService stockOutService)
         {
@@ -49,6 +51,7 @@ namespace stock_api.Controllers
             _stockOutService = stockOutService;
             _returnStockValidator = new ReturnStockValidator();
             _listReturnRecordsValidator = new ListReturnRecordsValidator();
+            _updateInStockRequestValidator = new UpdateInStockRequestValidator();
         }
 
         [HttpPost("purchaseAndAcceptItems/list")]
@@ -843,6 +846,8 @@ namespace stock_api.Controllers
             });
         }
 
+        
+
 
         [HttpPost("remind/expired")]
         [Authorize]
@@ -857,6 +862,43 @@ namespace stock_api.Controllers
             {
                 Result = true,
                 Data = nearExpiredProductVoList,
+            });
+        }
+
+        [HttpPost("update")]
+        [AuthorizeRoles("1")]
+        // TODO: 未來還需考慮若已出庫還可更改嗎? 若可以出庫資料也須跟著更動?
+        public IActionResult Update(UpdateInStockRequest request)
+        {
+            var memberAndPermissionSetting = _authHelpers.GetMemberAndPermissionSetting(User);
+            var validationResult = _updateInStockRequestValidator.Validate(request);
+
+            if (!validationResult.IsValid)
+            {
+                return BadRequest(CommonResponse<dynamic>.BuildValidationFailedResponse(validationResult));
+            }
+
+            var compId = memberAndPermissionSetting.CompanyWithUnit.CompId;
+            var acceptItem = _stockInService.GetAcceptanceItemByAcceptId(request.AcceptId);
+            if (acceptItem == null)
+            {
+                return BadRequest(new CommonResponse<dynamic>
+                {
+                    Result = false,
+                    Message = "該筆項目不存在"
+                });
+            }
+            if (acceptItem.CompId != memberAndPermissionSetting.CompanyWithUnit.CompId)
+            {
+                return BadRequest(CommonResponse<dynamic>.BuildNotAuthorizeResponse());
+            }
+
+            var (isSuccessful,errorMsg) = _stockInService.UpdateInStockItem(request, acceptItem);
+
+            return Ok(new CommonResponse<dynamic>
+            {
+                Result = isSuccessful,
+                Message = errorMsg,
             });
         }
     }
