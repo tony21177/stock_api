@@ -390,7 +390,7 @@ namespace stock_api.Service
                 }
             }
             // 發送郵件通知
-            SendNotificationEmails(answer, applyNewProductMain, preFlow, nextPurchase, currentFlow, isOwner,ownerList);
+            //SendNotificationEmails(answer, applyNewProductMain, preFlow, nextPurchase, currentFlow, isOwner,ownerList);
             return true;
         }
        
