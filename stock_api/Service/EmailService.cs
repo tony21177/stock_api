@@ -36,8 +36,8 @@ public class EmailService
         {
             client.Connect(_smtpSettings.Server, _smtpSettings.Port, true);
             client.Authenticate(_smtpSettings.User, _smtpSettings.Password);
-            await client.SendAsync(message);
-            //_logger.LogInformation($"sendResult {sendResult}");
+            var sendResult = await client.SendAsync(message);
+            _logger.LogInformation($"sendResult {sendResult}");
         }
         catch (Exception ex)
         {

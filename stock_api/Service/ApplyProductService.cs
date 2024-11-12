@@ -274,87 +274,97 @@ namespace stock_api.Service
         private bool AnswerFlowInTransactionScope(ApplyNewProductFlow? preFlow, ApplyNewProductFlow? nextPurchase, ApplyNewProductFlow currentFlow, ApplyNewProductMain applyNewProductMain, string answer, string? reason,bool? isOwner)
         {
             List<WarehouseMember> ownerList = new();
-            using var scope = new TransactionScope();
-            try
+            using (var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled))
             {
-                ownerList = _memberService.GetOwnerMembers();
-                // 更新Flow
-                currentFlow.Reason = reason;
-                if (answer != CommonConstants.AnswerApplyNewProductFlow.BACK)
+                try
                 {
-                    currentFlow.ReviewCompId = currentFlow.ReviewCompId;
-                    currentFlow.ReviewUserId = currentFlow.ReviewUserId;
-                    currentFlow.ReviewUserName = currentFlow.ReviewUserName;
-                    currentFlow.ReviewGroupId = currentFlow.ReviewGroupId;
-                    currentFlow.ReviewGroupName = currentFlow.ReviewGroupName;
-                }
-                
-                currentFlow.Answer = answer;
-                currentFlow.SubmitAt = DateTime.Now;
-
-                // 更新主單狀態
-                if (answer == CommonConstants.AnswerPurchaseFlow.AGREE && nextPurchase == null)
-                {
-                    currentFlow.Status = answer;
-                    applyNewProductMain.CurrentStatus = CommonConstants.PurchaseApplyStatus.AGREE;
-                }
-                if (answer == CommonConstants.AnswerPurchaseFlow.REJECT)
-                {
-                    currentFlow.Status = answer;
-                    applyNewProductMain.CurrentStatus = CommonConstants.PurchaseApplyStatus.REJECT;
-                }
-                if (answer == CommonConstants.AnswerPurchaseFlow.BACK&&isOwner!=true)
-                {
-                    currentFlow.Status = answer;
-
-                    currentFlow.Answer = "";
-                    if (preFlow != null)
+                    ownerList = _memberService.GetOwnerMembers();
+                    // 更新Flow
+                    currentFlow.Reason = reason;
+                    if (answer != CommonConstants.AnswerApplyNewProductFlow.BACK)
                     {
-                        preFlow.Status = "";
-                        preFlow.Answer = "";
+                        currentFlow.ReviewCompId = currentFlow.ReviewCompId;
+                        currentFlow.ReviewUserId = currentFlow.ReviewUserId;
+                        currentFlow.ReviewUserName = currentFlow.ReviewUserName;
+                        currentFlow.ReviewGroupId = currentFlow.ReviewGroupId;
+                        currentFlow.ReviewGroupName = currentFlow.ReviewGroupName;
                     }
-                    else
+
+                    currentFlow.Answer = answer;
+                    currentFlow.SubmitAt = DateTime.Now;
+
+                    // 更新主單狀態
+                    if (answer == CommonConstants.AnswerPurchaseFlow.AGREE && nextPurchase == null)
                     {
+                        currentFlow.Status = answer;
+                        applyNewProductMain.CurrentStatus = CommonConstants.PurchaseApplyStatus.AGREE;
+                    }
+                    if (answer == CommonConstants.AnswerPurchaseFlow.REJECT)
+                    {
+                        currentFlow.Status = answer;
                         applyNewProductMain.CurrentStatus = CommonConstants.PurchaseApplyStatus.REJECT;
-
                     }
-                }
-                if (answer == CommonConstants.AnswerPurchaseFlow.BACK && isOwner == true)
-                {
-                    currentFlow.Status = "";
-                    currentFlow.Answer = "";
-                    applyNewProductMain.CurrentStatus = CommonConstants.PurchaseApplyStatus.BACK;
-                }
+                    if (answer == CommonConstants.AnswerPurchaseFlow.BACK && isOwner != true)
+                    {
+                        currentFlow.Status = answer;
+
+                        currentFlow.Answer = "";
+                        if (preFlow != null)
+                        {
+                            preFlow.Status = "";
+                            preFlow.Answer = "";
+                        }
+                        else
+                        {
+                            applyNewProductMain.CurrentStatus = CommonConstants.PurchaseApplyStatus.REJECT;
+
+                        }
+                    }
+                    if (answer == CommonConstants.AnswerPurchaseFlow.BACK && isOwner == true)
+                    {
+                        currentFlow.Status = "";
+                        currentFlow.Answer = "";
+                        applyNewProductMain.CurrentStatus = CommonConstants.PurchaseApplyStatus.BACK;
+                    }
 
 
-                // 新增log
-                var newFlowLog = new ApplyProductFlowLog()
-                {
-                    LogId = Guid.NewGuid().ToString(),
-                    CompId = currentFlow.CompId,
-                    ApplyId = currentFlow.ApplyId,
-                    UserId = currentFlow.ReviewUserId,
-                    UserName = currentFlow.ReviewUserName,
-                    Sequence = currentFlow.Sequence,
-                    Action = answer,
-                    Remarks = reason
-                };
-                _dbContext.ApplyProductFlowLogs.Add(newFlowLog);
-                _dbContext.SaveChanges();
-                scope.Complete();
-
-                if (answer == CommonConstants.AnswerPurchaseFlow.AGREE && nextPurchase == null)
-                {
-                    string title = $"申請新品項單:{string.Concat(DateTimeHelper.FormatDateStringForEmail(applyNewProductMain.CreatedAt), applyNewProductMain.ApplyId.AsSpan(0, 5))} 需要您處理";
-                    string content = $"<a href={_smtpSettings.Domain}/product_item_verify/{applyNewProductMain.ApplyId}>{applyNewProductMain.ApplyId}</a>";
-                    SendMailToOwner(title, content, ownerList);
-                   
+                    // 新增log
+                    var newFlowLog = new ApplyProductFlowLog()
+                    {
+                        LogId = Guid.NewGuid().ToString(),
+                        CompId = currentFlow.CompId,
+                        ApplyId = currentFlow.ApplyId,
+                        UserId = currentFlow.ReviewUserId,
+                        UserName = currentFlow.ReviewUserName,
+                        Sequence = currentFlow.Sequence,
+                        Action = answer,
+                        Remarks = reason
+                    };
+                    _dbContext.ApplyProductFlowLogs.Add(newFlowLog);
+                    _dbContext.SaveChanges();
+                    scope.Complete();
                 }
-                if (answer == CommonConstants.AnswerPurchaseFlow.AGREE && nextPurchase != null)
+                catch (Exception ex)
                 {
-                    string title = $"申請新品項單:{string.Concat(DateTimeHelper.FormatDateStringForEmail(applyNewProductMain.CreatedAt), applyNewProductMain.ApplyId.AsSpan(0, 5))} 需要您審核";
-                    string content = $"<a href={_smtpSettings.Domain}/product_item_verify/{applyNewProductMain.ApplyId}>{applyNewProductMain.ApplyId}</a>";
-                    using (var scope2 = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled))
+                    _logger.LogError("事務失敗[AnswerFlowInTransactionScope]：{msg}", ex);
+                    return false;
+                }
+            }
+
+            if (answer == CommonConstants.AnswerPurchaseFlow.AGREE && nextPurchase == null)
+            {
+                string title = $"申請新品項單:{string.Concat(DateTimeHelper.FormatDateStringForEmail(applyNewProductMain.CreatedAt), applyNewProductMain.ApplyId.AsSpan(0, 5))} 需要您處理";
+                string content = $"<a href={_smtpSettings.Domain}/product_item_verify/{applyNewProductMain.ApplyId}>{applyNewProductMain.ApplyId}</a>";
+                SendMailToOwner(title, content, ownerList);
+
+            }
+            if (answer == CommonConstants.AnswerPurchaseFlow.AGREE && nextPurchase != null)
+            {
+                string title = $"申請新品項單:{string.Concat(DateTimeHelper.FormatDateStringForEmail(applyNewProductMain.CreatedAt), applyNewProductMain.ApplyId.AsSpan(0, 5))} 需要您審核";
+                string content = $"<a href={_smtpSettings.Domain}/product_item_verify/{applyNewProductMain.ApplyId}>{applyNewProductMain.ApplyId}</a>";
+                using (var scope2 = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled))
+                {
+                    try
                     {
                         title = "申請新品項單單需要審核";
                         var purchaseNumber = string.Concat(DateTimeHelper.FormatDateStringForEmail(applyNewProductMain.CreatedAt), applyNewProductMain.ApplyId.AsSpan(0, 5));
@@ -370,14 +380,14 @@ namespace stock_api.Service
                         };
                         _emailService.AddEmailNotify(emailNotify);
                         _dbContext.SaveChanges();
-                        scope.Complete();
+                        scope2.Complete();
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError("事務失敗[AnswerFlowInTransactionScope]：{msg}", ex);
+                        return false;
                     }
                 }
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError("事務失敗[AnswerFlowInTransactionScope]：{msg}", ex);
-                return false;
             }
             // 發送郵件通知
             SendNotificationEmails(answer, applyNewProductMain, preFlow, nextPurchase, currentFlow, isOwner,ownerList);

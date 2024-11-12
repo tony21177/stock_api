@@ -192,7 +192,7 @@ builder.Services.AddQuartz(q =>
     q.AddTrigger(opts => opts
         .ForJob("ApplyNewProductNotifyJob")
         .WithIdentity("ApplyNewProductNotifyTrigger")
-        .WithCronSchedule("00 30 6 * * ?")
+        .WithCronSchedule("00 50 9 * * ?")
     );
 });
 
