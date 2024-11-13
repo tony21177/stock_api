@@ -88,6 +88,12 @@ namespace stock_api.Controllers
 
             List<PurchaseAcceptItemsVo> data = new();
 
+            var allItemSupplierName = purchaseMainIdAndAcceptionItemListMap.SelectMany(entry => entry.Value).Select(item => item.ArrangeSupplierName)
+                                .Where(name => !string.IsNullOrEmpty(name))
+                                .ToList();
+            bool isSearchSupplierNameKeywords =  allItemSupplierName.Where(name=>name!=null&& request.Keywords !=null&& name.Contains(request.Keywords)).Any();
+
+
             foreach (var keyValuePair in purchaseMainIdAndAcceptionItemListMap)
             {
                 List<PurchaseAcceptanceItemsView> purchaseAcceptanceItemViewList = keyValuePair.Value;
@@ -122,21 +128,35 @@ namespace stock_api.Controllers
                     data.Add(purchaseAcceptItemsVo);
                     continue;
                 }
-                // if (request.Keywords != null && (purchaseAcceptItemsVo.IsContainKeywords(request.Keywords) || acceptItems.Any(acceptItem => acceptItem.IsContainKeywords(request.Keywords))))
-                // {
-                //     purchaseAcceptItemsVo.AcceptItems = acceptItems;
-                //     data.Add(purchaseAcceptItemsVo);
-                //     continue;
-                // }
-                if (request.Keywords != null && acceptItems.Any(acceptItem => acceptItem.IsContainKeywords(request.Keywords)))
+
+                 if (request.Keywords != null &&isSearchSupplierNameKeywords==false && (purchaseAcceptItemsVo.IsContainKeywords(request.Keywords) || acceptItems.Any(acceptItem => acceptItem.IsContainKeywords(request.Keywords))))
+                {
+                    purchaseAcceptItemsVo.AcceptItems = acceptItems;
+                    data.Add(purchaseAcceptItemsVo);
+                    continue;
+                }
+
+                if (request.Keywords != null && isSearchSupplierNameKeywords ==true  && acceptItems.Any(acceptItem => acceptItem.IsContainSupplierName(request.Keywords)))
                 {
                     List<AcceptItem> filteredAcceptItems = acceptItems.Where(acceptItem => acceptItem.IsContainKeywords(request.Keywords)).ToList();
-                    if (filteredAcceptItems.Any())
+                    var ifAnyAcceptItemContainSupplierName = (filteredAcceptItems.Count > 1);
+                    if (ifAnyAcceptItemContainSupplierName)
                     {
                         purchaseAcceptItemsVo.AcceptItems = filteredAcceptItems;
                         data.Add(purchaseAcceptItemsVo);
                     }
+                    continue;
+
                 }
+                //if (request.Keywords != null && acceptItems.Any(acceptItem => acceptItem.IsContainKeywords(request.Keywords)))
+                //{
+                //    List<AcceptItem> filteredAcceptItems = acceptItems.Where(acceptItem => acceptItem.IsContainKeywords(request.Keywords)).ToList();
+                //    if (filteredAcceptItems.Any())
+                //    {
+                //        purchaseAcceptItemsVo.AcceptItems = filteredAcceptItems;
+                //        data.Add(purchaseAcceptItemsVo);
+                //    }
+                //}
 
             }
             if (request.GroupId != null)
