@@ -886,7 +886,7 @@ namespace stock_api.Controllers
         }
 
         [HttpPost("update")]
-        [AuthorizeRoles("1","3","5")]
+        [AuthorizeRoles("1","3","5","7")]
         // TODO: 未來還需考慮若已出庫還可更改嗎? 若可以出庫資料也須跟著更動?
         public IActionResult Update(UpdateInStockRequest request)
         {
