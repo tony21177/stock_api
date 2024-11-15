@@ -179,6 +179,7 @@ namespace stock_api.Service
                     existingAcceptanceItem.VerifyAt = DateTime.Now;
                     purchaseSubItem.ReceiveStatus = CommonConstants.PurchaseSubItemReceiveStatus.DONE;
                     purchaseSubItem.InStockQuantity = existingAcceptanceItem.AcceptQuantity;
+                    purchaseSubItem.ReceiveQuantity = purchaseSubItem.InStockQuantity;
                 }
                 else if (existingAcceptanceItem.AcceptQuantity != null && existingAcceptanceItem.AcceptQuantity > 0 && existingAcceptanceItem.AcceptQuantity < existingAcceptanceItem.OrderQuantity)
                 {
@@ -188,6 +189,7 @@ namespace stock_api.Service
                     existingAcceptanceItem.VerifyAt = DateTime.Now;
                     purchaseSubItem.ReceiveStatus = CommonConstants.PurchaseSubItemReceiveStatus.PART;
                     purchaseSubItem.InStockQuantity = existingAcceptanceItem.AcceptQuantity;
+                    purchaseSubItem.ReceiveQuantity = purchaseSubItem.InStockQuantity;
                 }
 
                 var lotNumberBatch = existingAcceptanceItem.LotNumberBatch;
