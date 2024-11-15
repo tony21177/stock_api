@@ -394,5 +394,10 @@ namespace stock_api.Service
         {
             return _dbContext.OutStockRecords.Where(r => r.LotNumberBatch != null && lotNumberBatchList.Contains(r.LotNumberBatch)).ToList();
         }
+
+        public List<ReturnStockRecord> GetReturnStockRecords(string compId)
+        {
+            return _dbContext.ReturnStockRecords.Where(r=>r.CompId==compId).OrderByDescending(r=>r.CreatedAt).ToList();
+        }
     }
 }

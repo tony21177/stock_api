@@ -684,13 +684,30 @@ namespace stock_api.Controllers
             var products = _warehouseProductService.GetProductsByProductIdsAndCompId(distinctProductIds, compId);
 
             var outStockRecordVoList = _mapper.Map<List<OutStockRecordVo>>(data);
+
+            var allReturnStockRecordList = _stockOutService.GetReturnStockRecords(request.CompId);
+
+
             foreach (var item in outStockRecordVoList)
             {
                 var matchedProdcut = products.Where(p => p.ProductId == item.ProductId).FirstOrDefault();
                 item.Unit = matchedProdcut?.Unit;
                 item.OpenDeadline = matchedProdcut?.OpenDeadline ?? 0;
+                if (item.IsReturned == true)
+                {
+                    var matchedReturnRecords = allReturnStockRecordList.Where(r=>r.OutStockId==item.OutStockId).ToList();
+                    var returnInfoList = matchedReturnRecords.Select(r => new ReturnStockInfo
+                    {
+                        ReturnQuantity = r.ReturnQuantity.Value,
+                        OutStockApplyQuantityBefore = r.OutStockApplyQuantityBefore,
+                        OutStockApplyQuantityAfter = r.OutStockApplyQuantityAfter,
+                        AfterQuantityBefore = r.AfterQuantityBefore.Value,
+                        AfterQuantityAfter = r.AfterQuantityAfter.Value,
+                        ReturnStockDateTime = r.CreatedAt.Value,
+                    }).ToList();
+                    item.ReturnStockInfoList = returnInfoList;
+                }
             }
-
 
             return Ok(new CommonResponse<List<OutStockRecordVo>>
             {

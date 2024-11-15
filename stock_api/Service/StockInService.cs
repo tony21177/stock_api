@@ -744,7 +744,9 @@ namespace stock_api.Service
                 outStockRecord.ApplyQuantity = outStockRecord.ApplyQuantity - returnQuantity;
                 outStockRecord.IsReturned = true;
                 // 出庫後數量都須更改加回去
+                var afterQuantityBefore = outStockRecord.AfterQuantity;
                 outStockRecord.AfterQuantity = outStockRecord.AfterQuantity + returnQuantity;
+                var afterQuantityAfter = outStockRecord.AfterQuantity;
                 outStockRecordsAfter.ForEach(r =>
                 {
                     r.AfterQuantity = r.AfterQuantity + returnQuantity;
@@ -757,10 +759,13 @@ namespace stock_api.Service
                 {
                     InStockId = inStockRecord.InStockId,
                     OutStockId = outStockRecord.OutStockId,
+                    ReturnQuantity = returnQuantity,
                     InStockQuantityBefore = inStockQuantityBefore,
                     InStockQuantityAfter = inStockRecord.InStockQuantity,
                     OutStockApplyQuantityBefore = outStockQuantityBefore,
                     OutStockApplyQuantityAfter = outStockRecord.ApplyQuantity,
+                    AfterQuantityBefore = afterQuantityBefore,
+                    AfterQuantityAfter = afterQuantityAfter,
                     LotNumberBatch = outStockRecord.LotNumberBatch,
                     LotNumber = outStockRecord.LotNumber,
                     CompId = outStockRecord.CompId,

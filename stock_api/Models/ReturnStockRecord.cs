@@ -21,6 +21,9 @@ public partial class ReturnStockRecord
     [StringLength(100)]
     public string OutStockId { get; set; } = null!;
 
+    [Column("returnQuantity")]
+    public float? ReturnQuantity { get; set; }
+
     public float InStockQuantityBefore { get; set; }
 
     public float InStockQuantityAfter { get; set; }
@@ -28,6 +31,10 @@ public partial class ReturnStockRecord
     public float OutStockApplyQuantityBefore { get; set; }
 
     public float OutStockApplyQuantityAfter { get; set; }
+
+    public float? AfterQuantityBefore { get; set; }
+
+    public float? AfterQuantityAfter { get; set; }
 
     [Column(TypeName = "timestamp")]
     public DateTime? CreatedAt { get; set; }
