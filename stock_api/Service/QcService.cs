@@ -56,7 +56,7 @@ namespace stock_api.Service
             }
             var newLotNumberInStockIdList = _dbContext.ProductNewLotnumberViews.ToList().Where(e=>e.LotNumber!= "N/A"&&e.CompId== request.CompId).ToList().Select(e=>e.InStockId).ToList();
             
-            var newLotNumberInStockItems = _dbContext.InStockItemRecords.Where(i=>newLotNumberInStockIdList.Contains(i.InStockId)).ToList();
+            var newLotNumberInStockItems = _dbContext.InStockItemRecords.Where(i=>newLotNumberInStockIdList.Contains(i.InStockId)&& i.QcTestStatus == CommonConstants.QcTestStatus.NONE).ToList();
             var allProducts = _dbContext.WarehouseProducts.ToList();
             foreach (var inStockItemRecord in newLotNumberInStockItems)
             {
