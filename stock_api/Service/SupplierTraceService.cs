@@ -76,6 +76,10 @@ namespace stock_api.Service
             {
                 query = query.Where(h => h.SupplierId == listSupplierTraceLogRequest.SupplierId);
             }
+            if (listSupplierTraceLogRequest.StartDate != null && listSupplierTraceLogRequest.EndDate != null) 
+            {
+                query = query.Where(h => h.CreatedAt < listSupplierTraceLogRequest.EndDate && h.CreatedAt >= listSupplierTraceLogRequest.StartDate);
+            }
 
             if (!string.IsNullOrEmpty(listSupplierTraceLogRequest.Keywords))
             {
