@@ -29,6 +29,7 @@ namespace stock_api.Service
         {
             var allProducts = _dbContext.WarehouseProducts.ToList();
             var matchedProducts = allProducts;
+            var allGroups = _dbContext.WarehouseGroups.ToList();
             if (group != null)
             {
                 matchedProducts = allProducts.Where(p=>p.GroupIds!=null && p.GroupIds.Contains(group.GroupId)).ToList();
@@ -68,8 +69,20 @@ namespace stock_api.Service
             var inStockRecordVoList = _mapper.Map<List<InStockItemRecordVo>>(resultInStockRecords);
             inStockRecordVoList.ForEach(vo =>
             {
-                vo.GroupIds = group.GroupId;
-                vo.GroupNames = group.GroupName;
+                if (group != null)
+                {
+                    vo.GroupIds = group.GroupId;
+                    vo.GroupNames = group.GroupName;
+                }
+                else
+                {
+                    var matchedProduct = allProducts.Where(p => p.ProductId == vo.ProductId).FirstOrDefault();
+                    vo.GroupIds = matchedProduct.GroupIds;
+                    vo.GroupNames = matchedProduct.GroupNames;
+
+                }
+
+                
             });
             inStockRecordVoList = inStockRecordVoList.OrderBy(vo => vo.CreatedAt).ToList();
             var outStockRecordVoList = _mapper.Map<List<OutStockRecordVo>>(resultOutStockRecors);
