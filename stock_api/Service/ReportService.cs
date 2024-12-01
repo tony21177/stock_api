@@ -27,7 +27,7 @@ namespace stock_api.Service
 
         public List<ProductInAndOutRecord> GetProductInAndOutRecords(WarehouseGroup? group, GetProductInAndOutStockRecordsRequest request)
         {
-            var allProducts = _dbContext.WarehouseProducts.ToList();
+            var allProducts = _dbContext.WarehouseProducts.Where(p=>p.CompId==request.CompId).ToList();
             var matchedProducts = allProducts;
             var allGroups = _dbContext.WarehouseGroups.ToList();
             if (group != null)
@@ -64,7 +64,7 @@ namespace stock_api.Service
                 outStockQuery = outStockQuery.Where(h => h.CreatedAt < endDateTime);
             }
             var resultInStockRecords = inStockQuery.ToList();
-            var resultOutStockRecors = outStockQuery.ToList();
+            var resultOutStockRecords = outStockQuery.ToList();
 
             var inStockRecordVoList = _mapper.Map<List<InStockItemRecordVo>>(resultInStockRecords);
             inStockRecordVoList.ForEach(vo =>
@@ -85,7 +85,7 @@ namespace stock_api.Service
                 
             });
             inStockRecordVoList = inStockRecordVoList.OrderBy(vo => vo.CreatedAt).ToList();
-            var outStockRecordVoList = _mapper.Map<List<OutStockRecordVo>>(resultOutStockRecors);
+            var outStockRecordVoList = _mapper.Map<List<OutStockRecordVo>>(resultOutStockRecords);
             foreach (var item in outStockRecordVoList)
             {
                 var matchedProduct = matchedProducts.Where(p => p.ProductId == item.ProductId).FirstOrDefault();
@@ -98,6 +98,7 @@ namespace stock_api.Service
 
             foreach (WarehouseProduct product in matchedProducts)
             {
+
                 var productInAndOutRecord = new ProductInAndOutRecord()
                 {
                     ProductName = product.ProductName,
@@ -105,7 +106,12 @@ namespace stock_api.Service
                     InStockItemRecords = inStockRecordVoList.Where(i=>i.ProductId==product.ProductId).ToList(),
                     OutStockRecords = outStockRecordVoList.Where(i => i.ProductId == product.ProductId).ToList(),
                 };
-                productInAndOutRecords.Add(productInAndOutRecord);
+                if (productInAndOutRecord.InStockItemRecords.Count != 0 || productInAndOutRecord.OutStockRecords.Count != 0)
+                {
+                    productInAndOutRecords.Add(productInAndOutRecord);
+
+                }
+
             }
             productInAndOutRecords = productInAndOutRecords.OrderBy(p=>p.ProductCode).ToList();
             return productInAndOutRecords;
