@@ -25,9 +25,17 @@ namespace stock_api.Service
             _logger = logger;
         }
 
-        public List<ProductInAndOutRecord> GetProductInAndOutRecords(WarehouseGroup group,List<WarehouseProduct> products, GetProductInAndOutStockRecordsRequest request)
+        public List<ProductInAndOutRecord> GetProductInAndOutRecords(WarehouseGroup? group, GetProductInAndOutStockRecordsRequest request)
         {
-            var productIdList = products.Select(p => p.ProductId).ToList();
+            var allProducts = _dbContext.WarehouseProducts.ToList();
+            var matchedProducts = allProducts;
+            if (group != null)
+            {
+                matchedProducts = allProducts.Where(p=>p.GroupIds!=null && p.GroupIds.Contains(group.GroupId)).ToList();
+            }
+
+
+            var productIdList = matchedProducts.Select(p => p.ProductId).ToList();
 
             IQueryable<InStockItemRecord> inStockQuery = _dbContext.InStockItemRecords;
             IQueryable<OutStockRecord> outStockQuery = _dbContext.OutStockRecords;
@@ -67,15 +75,15 @@ namespace stock_api.Service
             var outStockRecordVoList = _mapper.Map<List<OutStockRecordVo>>(resultOutStockRecors);
             foreach (var item in outStockRecordVoList)
             {
-                var matchedProdcut = products.Where(p => p.ProductId == item.ProductId).FirstOrDefault();
-                item.Unit = matchedProdcut?.Unit;
-                item.OpenDeadline = matchedProdcut?.OpenDeadline ?? 0;
+                var matchedProduct = matchedProducts.Where(p => p.ProductId == item.ProductId).FirstOrDefault();
+                item.Unit = matchedProduct?.Unit;
+                item.OpenDeadline = matchedProduct?.OpenDeadline ?? 0;
             }
             outStockRecordVoList = outStockRecordVoList.OrderBy(vo => vo.CreatedAt).ToList();
 
             List<ProductInAndOutRecord> productInAndOutRecords = new List<ProductInAndOutRecord>();
 
-            foreach (WarehouseProduct product in products)
+            foreach (WarehouseProduct product in matchedProducts)
             {
                 var productInAndOutRecord = new ProductInAndOutRecord()
                 {

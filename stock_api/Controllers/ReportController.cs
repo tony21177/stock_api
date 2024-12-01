@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 using stock_api.Common;
 using stock_api.Controllers.Request;
 using stock_api.Controllers.Validator;
+using stock_api.Models;
 using stock_api.Service;
 using stock_api.Service.ValueObject;
 using stock_api.Utils;
@@ -54,9 +55,12 @@ namespace stock_api.Controllers
             var compId = memberAndPermissionSetting.CompanyWithUnit.CompId;
             getProductInAndOutStockRecordsRequest.CompId = compId;
 
-            var group = _groupService.GetGroupByGroupId(getProductInAndOutStockRecordsRequest.GroupId);
+            WarehouseGroup? group = null;
+            if (getProductInAndOutStockRecordsRequest.GroupId != null)
+            {
+                group = _groupService.GetGroupByGroupId(getProductInAndOutStockRecordsRequest.GroupId);
+            }
 
-            var products = _warehouseProductService.GetProductsByGroupId(getProductInAndOutStockRecordsRequest.GroupId);
 
             var validationResult = _getProductInAndOutStockRecordsValidator.Validate(getProductInAndOutStockRecordsRequest);
 
@@ -65,7 +69,7 @@ namespace stock_api.Controllers
                 return BadRequest(CommonResponse<dynamic>.BuildValidationFailedResponse(validationResult));
             }
 
-            var data = _reportService.GetProductInAndOutRecords(group, products, getProductInAndOutStockRecordsRequest);
+            var data = _reportService.GetProductInAndOutRecords(group, getProductInAndOutStockRecordsRequest);
 
             return Ok(new CommonResponse<List<ProductInAndOutRecord>>
             {

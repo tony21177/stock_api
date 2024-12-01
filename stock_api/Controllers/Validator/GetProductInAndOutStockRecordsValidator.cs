@@ -29,6 +29,8 @@ namespace stock_api.Controllers.Validator
 
         private bool BeValidGroupId(string groupId, ValidationContext<GetProductInAndOutStockRecordsRequest> context)
         {
+            if(groupId==null) return true;
+
             var group = _groupService.GetGroupByGroupId(groupId); 
 
             if (group == null)
