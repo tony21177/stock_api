@@ -78,7 +78,9 @@ namespace stock_api.Service
             }
             if (listSupplierTraceLogRequest.StartDate != null && listSupplierTraceLogRequest.EndDate != null) 
             {
-                query = query.Where(h => h.CreatedAt < listSupplierTraceLogRequest.EndDate && h.CreatedAt >= listSupplierTraceLogRequest.StartDate);
+                DateTime endDateTime = DateTimeHelper.ParseDateString(listSupplierTraceLogRequest.EndDate).Value.AddDays(1);
+                DateTime startDateTime = DateTimeHelper.ParseDateString(listSupplierTraceLogRequest.StartDate).Value;
+                query = query.Where(h => h.CreatedAt < endDateTime && h.CreatedAt >= startDateTime);
             }
 
             if (!string.IsNullOrEmpty(listSupplierTraceLogRequest.Keywords))
