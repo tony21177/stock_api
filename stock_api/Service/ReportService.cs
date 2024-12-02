@@ -86,11 +86,28 @@ namespace stock_api.Service
             });
             inStockRecordVoList = inStockRecordVoList.OrderBy(vo => vo.CreatedAt).ToList();
             var outStockRecordVoList = _mapper.Map<List<OutStockRecordVo>>(resultOutStockRecords);
+
+            var allReturnStockRecordList = _dbContext.ReturnStockRecords.OrderByDescending(r => r.CreatedAt).ToList();
+            var matchedReturnRecords = allReturnStockRecordList.Where(r => r.OutStockId == item.OutStockId).ToList();
+            
+
+
             foreach (var item in outStockRecordVoList)
             {
                 var matchedProduct = matchedProducts.Where(p => p.ProductId == item.ProductId).FirstOrDefault();
                 item.Unit = matchedProduct?.Unit;
                 item.OpenDeadline = matchedProduct?.OpenDeadline ?? 0;
+
+                var returnInfoList = matchedReturnRecords.Select(r => new ReturnStockInfo
+                {
+                    ReturnQuantity = r.ReturnQuantity.Value,
+                    OutStockApplyQuantityBefore = r.OutStockApplyQuantityBefore,
+                    OutStockApplyQuantityAfter = r.OutStockApplyQuantityAfter,
+                    AfterQuantityBefore = r.AfterQuantityBefore.Value,
+                    AfterQuantityAfter = r.AfterQuantityAfter.Value,
+                    ReturnStockDateTime = r.CreatedAt.Value,
+                }).ToList();
+                item.ReturnStockInfoList = returnInfoList;
             }
             outStockRecordVoList = outStockRecordVoList.OrderBy(vo => vo.CreatedAt).ToList();
 
