@@ -88,7 +88,6 @@ namespace stock_api.Service
             var outStockRecordVoList = _mapper.Map<List<OutStockRecordVo>>(resultOutStockRecords);
 
             var allReturnStockRecordList = _dbContext.ReturnStockRecords.OrderByDescending(r => r.CreatedAt).ToList();
-            var matchedReturnRecords = allReturnStockRecordList.Where(r => r.OutStockId == item.OutStockId).ToList();
             
 
 
@@ -98,6 +97,7 @@ namespace stock_api.Service
                 item.Unit = matchedProduct?.Unit;
                 item.OpenDeadline = matchedProduct?.OpenDeadline ?? 0;
 
+                var matchedReturnRecords = allReturnStockRecordList.Where(r => r.OutStockId == item.OutStockId).ToList();
                 var returnInfoList = matchedReturnRecords.Select(r => new ReturnStockInfo
                 {
                     ReturnQuantity = r.ReturnQuantity.Value,
