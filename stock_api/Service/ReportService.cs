@@ -69,6 +69,7 @@ namespace stock_api.Service
             var inStockRecordVoList = _mapper.Map<List<InStockItemRecordVo>>(resultInStockRecords);
             inStockRecordVoList.ForEach(vo =>
             {
+                var matchedProduct = allProducts.Where(p => p.ProductId == vo.ProductId).FirstOrDefault();
                 if (group != null)
                 {
                     vo.GroupIds = group.GroupId;
@@ -76,13 +77,12 @@ namespace stock_api.Service
                 }
                 else
                 {
-                    var matchedProduct = allProducts.Where(p => p.ProductId == vo.ProductId).FirstOrDefault();
+                    
                     vo.GroupIds = matchedProduct.GroupIds;
                     vo.GroupNames = matchedProduct.GroupNames;
 
                 }
-
-                
+                vo.ProductModel = matchedProduct.ProductModel; 
             });
             inStockRecordVoList = inStockRecordVoList.OrderBy(vo => vo.CreatedAt).ToList();
             var outStockRecordVoList = _mapper.Map<List<OutStockRecordVo>>(resultOutStockRecords);
@@ -108,6 +108,7 @@ namespace stock_api.Service
                     ReturnStockDateTime = r.CreatedAt.Value,
                 }).ToList();
                 item.ReturnStockInfoList = returnInfoList;
+                item.ProductModel = matchedProduct.ProductModel;
             }
             outStockRecordVoList = outStockRecordVoList.OrderBy(vo => vo.CreatedAt).ToList();
 
