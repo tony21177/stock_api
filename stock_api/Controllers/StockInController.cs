@@ -521,6 +521,7 @@ namespace stock_api.Controllers
                 var product = products.Where(p => p.ProductId == vo.ProductId).FirstOrDefault();
                 vo.GroupIds = product.GroupIds;
                 vo.GroupNames = product.GroupNames;
+                vo.ProductModel = product.ProductModel;
             });
 
 

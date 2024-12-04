@@ -120,6 +120,7 @@ namespace stock_api.Service
                 {
                     ProductName = product.ProductName,
                     ProductCode = product.ProductCode,
+                    ProductModel = product.ProductModel,
                     InStockItemRecords = inStockRecordVoList.Where(i=>i.ProductId==product.ProductId).ToList(),
                     OutStockRecords = outStockRecordVoList.Where(i => i.ProductId == product.ProductId).ToList(),
                 };

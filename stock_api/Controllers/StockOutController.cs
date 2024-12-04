@@ -693,6 +693,7 @@ namespace stock_api.Controllers
                 var matchedProdcut = products.Where(p => p.ProductId == item.ProductId).FirstOrDefault();
                 item.Unit = matchedProdcut?.Unit;
                 item.OpenDeadline = matchedProdcut?.OpenDeadline ?? 0;
+                item.ProductModel = matchedProdcut?.ProductModel;
                 if (item.IsReturned == true)
                 {
                     var matchedReturnRecords = allReturnStockRecordList.Where(r=>r.OutStockId==item.OutStockId).ToList();

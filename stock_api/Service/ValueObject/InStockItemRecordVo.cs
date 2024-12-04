@@ -7,5 +7,6 @@ namespace stock_api.Service.ValueObject
     {
         public string? GroupIds { get; set; }
         public string? GroupNames { get; set; }
+        public string? ProductModel {  get; set; }
     }
 }
