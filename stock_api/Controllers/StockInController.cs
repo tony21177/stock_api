@@ -553,12 +553,21 @@ namespace stock_api.Controllers
             var (data, pages) = _stockInService.ListStockInRecordsWithNewLotNumber(request);
             var stockInRecordVoList = _mapper.Map<List<InStockItemRecordNewLotNumberVo>>(data);
             var allProducts = _warehouseProductService.GetAllProducts(request.CompId);
+            var noNeedDisplayProducts = allProducts.Where(p=>p.IsNeedAcceptProcess==null||p.IsNeedAcceptProcess==false||p.QcType==CommonConstants.QcTypeConstants.NONE).ToList();
+
 
             foreach (var item in stockInRecordVoList)
             {
                 var matchedProduct = allProducts.Where(p => p.ProductId == item.ProductId).FirstOrDefault();
                 item.ProductUnit = matchedProduct?.Unit;
             }
+
+            // 彰化醫院婉君要求 設定無的不需要顯示
+            stockInRecordVoList.RemoveAll(vo =>
+            {
+                if (noNeedDisplayProducts.Find(p => p.ProductId == vo.ProductId) != null) return true;
+                return false;
+            });
 
             return Ok(new CommonResponse<dynamic>
             {
