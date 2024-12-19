@@ -324,6 +324,10 @@ namespace stock_api.Service
                 {
                     updateProduct.IsPrintSticker = existingProduct.IsPrintSticker;
                 }
+                if (request.IsAllowDiscard == null)
+                {
+                    updateProduct.IsAllowDiscard = existingProduct.IsAllowDiscard;
+                }
 
                 updateProduct.CompId = existingProduct.CompId;
                 _mapper.Map(updateProduct, existingProduct);
@@ -424,6 +428,10 @@ namespace stock_api.Service
                 if (request.IsPrintSticker == null)
                 {
                     updateProduct.IsPrintSticker = existingProduct.IsPrintSticker;
+                }
+                if (request.IsAllowDiscard == null)
+                {
+                    updateProduct.IsAllowDiscard = existingProduct.IsAllowDiscard;
                 }
                 updateProduct.CompId = existingProduct.CompId;
                 _mapper.Map(updateProduct, existingProduct);

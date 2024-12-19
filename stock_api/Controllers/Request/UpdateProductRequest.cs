@@ -28,5 +28,7 @@ namespace stock_api.Controllers.Request
         public string? QcType { get; set; }
         public bool? IsPrintSticker { get; set; }
         public string? PreDeadline {get;set;}
+
+        public bool? IsAllowDiscard { get; set; }
     }
 }

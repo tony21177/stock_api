@@ -1158,6 +1158,9 @@ public partial class StockDbContext : DbContext
                 .HasDefaultValueSql("'0'")
                 .HasComment("庫存數量");
             entity.Property(e => e.IsActive).HasDefaultValueSql("'1'");
+            entity.Property(e => e.IsAllowDiscard)
+                .HasDefaultValueSql("'0'")
+                .HasComment("是否允許丟棄");
             entity.Property(e => e.IsNeedAcceptProcess)
                 .HasDefaultValueSql("'0'")
                 .HasComment("該品項出庫時，是否需要經過二次驗收");

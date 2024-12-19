@@ -27,5 +27,6 @@
         public string? QcType { get;set; }
         public bool? IsActive { get; set; }
         public bool? IsPrintSticker { get; set; }
+        public bool? IsAllowDiscard { get; set; }
     }
 }

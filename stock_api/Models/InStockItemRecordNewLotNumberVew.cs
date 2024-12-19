@@ -12,13 +12,13 @@ namespace stock_api.Models;
 public partial class InStockItemRecordNewLotNumberVew
 {
     [StringLength(100)]
-    public string InStockId { get; set; } = null!;
+    public string? InStockId { get; set; }
 
     /// <summary>
     /// 批次
     /// </summary>
     [StringLength(100)]
-    public string LotNumberBatch { get; set; } = null!;
+    public string? LotNumberBatch { get; set; }
 
     /// <summary>
     /// 批號
@@ -30,12 +30,12 @@ public partial class InStockItemRecordNewLotNumberVew
     /// 所屬公司ID
     /// </summary>
     [StringLength(100)]
-    public string CompId { get; set; } = null!;
+    public string? CompId { get; set; }
 
     /// <summary>
     /// 現有庫存量
     /// </summary>
-    public float OriginalQuantity { get; set; }
+    public float? OriginalQuantity { get; set; }
 
     /// <summary>
     /// 保存期限
@@ -52,28 +52,28 @@ public partial class InStockItemRecordNewLotNumberVew
     /// <summary>
     /// 此次入庫數量
     /// </summary>
-    public float InStockQuantity { get; set; }
+    public float? InStockQuantity { get; set; }
 
     /// <summary>
     /// 品項PK
     /// </summary>
     [StringLength(100)]
-    public string ProductId { get; set; } = null!;
+    public string? ProductId { get; set; }
 
     [StringLength(200)]
-    public string ProductCode { get; set; } = null!;
+    public string? ProductCode { get; set; }
 
     /// <summary>
     /// 品項名稱
     /// </summary>
     [StringLength(200)]
-    public string ProductName { get; set; } = null!;
+    public string? ProductName { get; set; }
 
     /// <summary>
     /// 品項規格
     /// </summary>
     [StringLength(300)]
-    public string ProductSpec { get; set; } = null!;
+    public string? ProductSpec { get; set; }
 
     /// <summary>
     /// 類型
@@ -83,31 +83,31 @@ public partial class InStockItemRecordNewLotNumberVew
     /// RETURN : 退庫
     /// </summary>
     [StringLength(45)]
-    public string Type { get; set; } = null!;
+    public string? Type { get; set; }
 
     /// <summary>
     /// 用來產生條碼的數字，PadLeft : 7個0
     /// Example : 0000001
     /// </summary>
     [StringLength(200)]
-    public string BarCodeNumber { get; set; } = null!;
+    public string? BarCodeNumber { get; set; }
 
     /// <summary>
     /// 執行入庫人員的UserID
     /// </summary>
     [StringLength(100)]
-    public string UserId { get; set; } = null!;
+    public string? UserId { get; set; }
 
     /// <summary>
     /// 執行入庫人員的UserName
     /// </summary>
     [StringLength(100)]
-    public string UserName { get; set; } = null!;
+    public string? UserName { get; set; }
 
     /// <summary>
     /// 入庫後數量
     /// </summary>
-    public float AfterQuantity { get; set; }
+    public float? AfterQuantity { get; set; }
 
     [Column(TypeName = "timestamp")]
     public DateTime? InStockTime { get; set; }

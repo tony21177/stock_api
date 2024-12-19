@@ -17,6 +17,7 @@ namespace stock_api.Models;
 [PrimaryKey("CompId", "ProductId")]
 [Table("warehouse_product")]
 [Index("ProductId", Name = "idx_warehouse_product_productid")]
+[Index("CompId", "ProductCode", Name = "unique_productCode_company_id", IsUnique = true)]
 public partial class WarehouseProduct
 {
     /// <summary>
@@ -299,4 +300,9 @@ public partial class WarehouseProduct
     public string? CompName { get; set; }
 
     public bool? IsPrintSticker { get; set; }
+
+    /// <summary>
+    /// 是否允許丟棄
+    /// </summary>
+    public bool? IsAllowDiscard { get; set; }
 }
