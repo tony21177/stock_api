@@ -727,7 +727,7 @@ namespace stock_api.Service
 
                 // 退庫回去 只需要庫存量+回來 不需要再修改入庫紀錄的數量
                 inStockRecord.OutStockQuantity = inStockRecord.OutStockQuantity - returnQuantity;
-                if (inStockRecord.OutStockQuantity - inStockRecord.OutStockQuantity > 0)
+                if (inStockRecord.InStockQuantity - inStockRecord.OutStockQuantity > 0)
                 {
                     inStockRecord.OutStockStatus = CommonConstants.OutStockStatus.PART;
                 }
