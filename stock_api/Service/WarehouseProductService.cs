@@ -251,14 +251,14 @@ namespace stock_api.Service
                 var matchedSubItems = allOngoingPurchaseItems.Where(i => i.ProductId == p.ProductId).ToList();                
                 var ongoingOrderQuantities = matchedSubItems.Select(i => i.Quantity).Sum();
 
-                if (p.MaxSafeQuantity>0&&p.MaxSafeQuantity - p.InStockQuantity - ongoingOrderQuantities >= 0)
+                if (p.SafeQuantity>0&&p.SafeQuantity - p.InStockQuantity - ongoingOrderQuantities >= 0)
                 {
                     if(p.ProductModel== "365974")
                     {
                         _logger.LogInformation("....");
                     }
                     p.InProcessingOrderQuantity = ongoingOrderQuantities??0.0f;
-                    p.NeedOrderedQuantity = (p.MaxSafeQuantity??0.0f) - (p.InStockQuantity ?? 0.0f) - (ongoingOrderQuantities ?? 0.0f);
+                    p.NeedOrderedQuantity = (p.SafeQuantity ?? 0.0f) - (p.InStockQuantity ?? 0.0f) - (ongoingOrderQuantities ?? 0.0f);
                     var needOrderedQuantityUnitFloat = p.NeedOrderedQuantity * p.UnitConversion;
                     var needOrderedQuantityUnit = Math.Ceiling((decimal)needOrderedQuantityUnitFloat.Value * 100) / 100;
                     p.NeedUnorderedQuantityUnit = (float)needOrderedQuantityUnit;
