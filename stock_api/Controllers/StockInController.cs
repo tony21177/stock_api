@@ -116,6 +116,8 @@ namespace stock_api.Controllers
                         item.DeliverTemperature = matchedProdcut.DeliverTemperature;
                         item.SavingFunction = matchedProdcut.SavingFunction;
                         item.SavingTemperature = matchedProdcut.SavingTemperature;
+                        item.ProductModel = matchedProdcut.ProductModel;
+                        item.OpenDeadline = matchedProdcut.OpenDeadline;
                     }
                     var matchedSubItem = purchaseSubItems.Where(s=>s.ItemId==item.ItemId).FirstOrDefault();
                     item.PurchaseSubItem = matchedSubItem;

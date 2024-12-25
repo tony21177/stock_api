@@ -88,6 +88,8 @@ namespace stock_api.Service.ValueObject
         public string ProductId { get; set; }
         public string ProductCode { get; set; }
         public string ProductName { get; set; }
+        public string? ProductModel { get; set; }
+        public int? OpenDeadline { get; set; }
         public string ProductSpec { get; set; }
         public string UdiserialCode { get; set; }
         public string QcStatus { get; set; }
