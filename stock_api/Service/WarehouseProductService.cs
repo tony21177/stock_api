@@ -292,10 +292,13 @@ namespace stock_api.Service
                 var updateProduct = _mapper.Map<WarehouseProduct>(request);
                 updateProduct.InStockQuantity = existingProduct.InStockQuantity;
                 updateProduct.MaxSafeQuantity = existingProduct.MaxSafeQuantity;
-                updateProduct.OpenDeadline = existingProduct.OpenDeadline;
                 if (request.PreDeadline == null)
                 {
                     updateProduct.PreDeadline = existingProduct.PreDeadline;
+                }
+                if (request.OpenDeadline == null)
+                {
+                    updateProduct.OpenDeadline = existingProduct.OpenDeadline;
                 }
                 if (request.PreOrderDays == null)
                 {
@@ -316,6 +319,7 @@ namespace stock_api.Service
                 updateProduct.TestCount = existingProduct.TestCount;
                 updateProduct.UnitConversion = existingProduct.UnitConversion;
                 updateProduct.IsActive = existingProduct.IsActive;
+                //updateProduct.OpenDeadline = existingProduct.OpenDeadline;
                 if (request.OpenDeadline == null)
                 {
                     updateProduct.OpenDeadline = existingProduct.OpenDeadline;
