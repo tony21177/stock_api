@@ -505,8 +505,12 @@ public partial class StockDbContext : DbContext
             entity.Property(e => e.BarCodeNumber).HasComment("用來產生條碼的數字，PadLeft : 7個0\nExample : 0000001");
             entity.Property(e => e.CompId).HasComment("所屬公司ID");
             entity.Property(e => e.CreatedAt).HasDefaultValueSql("CURRENT_TIMESTAMP");
+            entity.Property(e => e.DiscardQuantity).HasComment("丟棄數量");
             entity.Property(e => e.ExpirationDate).HasComment("保存期限");
             entity.Property(e => e.IsAbnormal).HasComment("是否為出庫異常\n0為false,1為true");
+            entity.Property(e => e.IsDiscard)
+                .HasDefaultValueSql("'0'")
+                .HasComment("是否丟棄過");
             entity.Property(e => e.IsReturned)
                 .HasDefaultValueSql("'0'")
                 .HasComment("是否已退庫");

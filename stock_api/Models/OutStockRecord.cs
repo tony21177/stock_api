@@ -152,4 +152,14 @@ public partial class OutStockRecord
 
     [StringLength(100)]
     public string? Remark { get; set; }
+
+    /// <summary>
+    /// 是否丟棄過
+    /// </summary>
+    public bool? IsDiscard { get; set; }
+
+    /// <summary>
+    /// 丟棄數量
+    /// </summary>
+    public float? DiscardQuantity { get; set; }
 }
