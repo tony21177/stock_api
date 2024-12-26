@@ -744,23 +744,12 @@ namespace stock_api.Service
                 outStockRecord.ApplyQuantity = outStockRecord.ApplyQuantity - returnQuantity;
                 outStockRecord.IsReturned = true;
 
-                // 不該更改歷史紀錄
-                // 出庫後數量都須更改加回去
-                //var afterQuantityBefore = outStockRecord.AfterQuantity;
-                //outStockRecord.AfterQuantity = outStockRecord.AfterQuantity + returnQuantity;
-                //var afterQuantityAfter = outStockRecord.AfterQuantity;
-                //outStockRecordsAfter.ForEach(r =>
-                //{
-                //    r.AfterQuantity = r.AfterQuantity + returnQuantity;
-                //});
-                var afterQuantityBefore = outStockRecord.AfterQuantity + returnQuantity; // 為了前端不需要改,因為前端目前會把這個欄位 再 - returnQuantity
-                //跟Gary協調好 就可修正成以下
-                //var afterQuantityBefore = outStockRecord.AfterQuantity ;
-                var afterQuantityAfter = inStockRecord.InStockQuantity; // 退庫後的現有庫存量
-                
-
 
                 product.InStockQuantity = product.InStockQuantity + returnQuantity;
+
+                
+                var afterQuantityBefore = outStockRecord.AfterQuantity;
+                var afterQuantityAfter = product.InStockQuantity; // 退庫後的現有庫存量
 
                 var returnStockRecord = new ReturnStockRecord()
                 {
