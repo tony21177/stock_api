@@ -743,14 +743,16 @@ namespace stock_api.Service
 
                 outStockRecord.ApplyQuantity = outStockRecord.ApplyQuantity - returnQuantity;
                 outStockRecord.IsReturned = true;
+
+                // 不該更改歷史紀錄
                 // 出庫後數量都須更改加回去
-                var afterQuantityBefore = outStockRecord.AfterQuantity;
-                outStockRecord.AfterQuantity = outStockRecord.AfterQuantity + returnQuantity;
-                var afterQuantityAfter = outStockRecord.AfterQuantity;
-                outStockRecordsAfter.ForEach(r =>
-                {
-                    r.AfterQuantity = r.AfterQuantity + returnQuantity;
-                });
+                //var afterQuantityBefore = outStockRecord.AfterQuantity;
+                //outStockRecord.AfterQuantity = outStockRecord.AfterQuantity + returnQuantity;
+                //var afterQuantityAfter = outStockRecord.AfterQuantity;
+                //outStockRecordsAfter.ForEach(r =>
+                //{
+                //    r.AfterQuantity = r.AfterQuantity + returnQuantity;
+                //});
 
 
                 product.InStockQuantity = product.InStockQuantity + returnQuantity;
@@ -764,8 +766,8 @@ namespace stock_api.Service
                     InStockQuantityAfter = inStockRecord.InStockQuantity,
                     OutStockApplyQuantityBefore = outStockQuantityBefore,
                     OutStockApplyQuantityAfter = outStockRecord.ApplyQuantity,
-                    AfterQuantityBefore = afterQuantityBefore,
-                    AfterQuantityAfter = afterQuantityAfter,
+                    //AfterQuantityBefore = afterQuantityBefore,
+                    //AfterQuantityAfter = afterQuantityAfter,
                     LotNumberBatch = outStockRecord.LotNumberBatch,
                     LotNumber = outStockRecord.LotNumber,
                     CompId = outStockRecord.CompId,
