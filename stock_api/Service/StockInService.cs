@@ -753,6 +753,9 @@ namespace stock_api.Service
                 //{
                 //    r.AfterQuantity = r.AfterQuantity + returnQuantity;
                 //});
+                var afterQuantityBefore = outStockRecord.AfterQuantity;
+                var afterQuantityAfter = outStockRecord.AfterQuantity;
+                
 
 
                 product.InStockQuantity = product.InStockQuantity + returnQuantity;
@@ -766,8 +769,8 @@ namespace stock_api.Service
                     InStockQuantityAfter = inStockRecord.InStockQuantity,
                     OutStockApplyQuantityBefore = outStockQuantityBefore,
                     OutStockApplyQuantityAfter = outStockRecord.ApplyQuantity,
-                    //AfterQuantityBefore = afterQuantityBefore,
-                    //AfterQuantityAfter = afterQuantityAfter,
+                    AfterQuantityBefore = afterQuantityBefore,
+                    AfterQuantityAfter = afterQuantityAfter,
                     LotNumberBatch = outStockRecord.LotNumberBatch,
                     LotNumber = outStockRecord.LotNumber,
                     CompId = outStockRecord.CompId,
