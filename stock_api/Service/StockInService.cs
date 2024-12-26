@@ -753,8 +753,10 @@ namespace stock_api.Service
                 //{
                 //    r.AfterQuantity = r.AfterQuantity + returnQuantity;
                 //});
-                var afterQuantityBefore = outStockRecord.AfterQuantity;
-                var afterQuantityAfter = outStockRecord.AfterQuantity;
+                var afterQuantityBefore = outStockRecord.AfterQuantity + returnQuantity; // 為了前端不需要改,因為前端目前會把這個欄位 再 - returnQuantity
+                //跟Gary協調好 就可修正成以下
+                //var afterQuantityBefore = outStockRecord.AfterQuantity ;
+                var afterQuantityAfter = inStockRecord.InStockQuantity; // 退庫後的現有庫存量
                 
 
 
