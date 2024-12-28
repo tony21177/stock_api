@@ -31,6 +31,8 @@ public partial class StockDbContext : DbContext
 
     public virtual DbSet<CompanyUnit> CompanyUnits { get; set; }
 
+    public virtual DbSet<DiscardRecord> DiscardRecords { get; set; }
+
     public virtual DbSet<EmailNotify> EmailNotifies { get; set; }
 
     public virtual DbSet<FileDetailInfo> FileDetailInfos { get; set; }
@@ -289,6 +291,19 @@ public partial class StockDbContext : DbContext
             entity.Property(e => e.CreatedAt).HasDefaultValueSql("CURRENT_TIMESTAMP");
             entity.Property(e => e.UnitId).HasComment("如果是同一單位，就會是一樣的 UnitID");
             entity.Property(e => e.UnitName).HasComment("單位名稱");
+            entity.Property(e => e.UpdatedAt)
+                .ValueGeneratedOnAddOrUpdate()
+                .HasDefaultValueSql("CURRENT_TIMESTAMP");
+        });
+
+        modelBuilder.Entity<DiscardRecord>(entity =>
+        {
+            entity.HasKey(e => e.DiscardId).HasName("PRIMARY");
+
+            entity.ToTable("discard_records", tb => tb.HasComment("丟棄紀錄"));
+
+            entity.Property(e => e.CreatedAt).HasDefaultValueSql("CURRENT_TIMESTAMP");
+            entity.Property(e => e.OutStockTime).HasComment("出庫時間(開封時間)");
             entity.Property(e => e.UpdatedAt)
                 .ValueGeneratedOnAddOrUpdate()
                 .HasDefaultValueSql("CURRENT_TIMESTAMP");

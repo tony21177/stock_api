@@ -44,6 +44,10 @@
          "ObjectType": 0
       },
       {
+         "Name": "discard_records",
+         "ObjectType": 0
+      },
+      {
          "Name": "email_notify",
          "ObjectType": 0
       },
