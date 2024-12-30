@@ -63,6 +63,16 @@ namespace stock_api.Controllers
                 return BadRequest(CommonResponse<dynamic>.BuildNotAuthorizeResponse());
             }
 
+            var product = _warehouseProductService.GetProductByProductId(outStockRecord.ProductId);
+            if (product == null||product.IsAllowDiscard==false)
+            {
+                return BadRequest(new CommonResponse<dynamic>
+                {
+                    Result = false,
+                    Message = "該品項不可丟棄"
+                });
+            }
+
             var (result,msg) = _discardService.Discard(outStockRecord, request.ApplyQuantity, memberAndPermissionSetting.Member);
             return Ok(new CommonResponse<dynamic>
             {
