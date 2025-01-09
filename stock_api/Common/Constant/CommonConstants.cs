@@ -383,6 +383,7 @@ namespace stock_api.Common.Constant
             public const string VERIFY_ABNORMAL = "VERIFY_ABNORMAL";
             public const string QA_ABNORMAL = "QA_ABNORMAL";
             public const string OTHER_ABNORMAL = "OTHER_ABNORMAL";
+            public const string REJECT_ABNORMAL = "REJECT_ABNORMAL";
 
             public static List<string> GetAllValues()
             {

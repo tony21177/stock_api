@@ -13,8 +13,10 @@ namespace stock_api.Models;
 /// </summary>
 [Table("in_stock_item_record")]
 [Index("CreatedAt", Name = "createdAt_idx")]
+[Index("LotNumber", "CreatedAt", Name = "idx_lotnumber_createdat")]
+[Index("ProductId", Name = "idx_productId_on_in_stock_item_record")]
+[Index("ProductId", "LotNumber", Name = "idx_product_lotnumber")]
 [Index("ProductId", "CreatedAt", Name = "idx_productid_createdat", IsDescending = new[] { false, true })]
-[Index("ProductId", Name = "productId_ids")]
 [Index("CompId", "QcTestStatus", Name = "qc_undone_index")]
 [Index("LotNumberBatch", Name = "unique_lotnumberbatch", IsUnique = true)]
 [Index("IsNeedQc", "QcType", "LotNumber", Name = "update_qc_idx_lotnumber")]
@@ -144,6 +146,8 @@ public partial class InStockItemRecord
 
     public float? OutStockQuantity { get; set; }
 
+    public float? RejectQuantity { get; set; }
+
     /// <summary>
     /// NONE,LOT_NUMBER,LOT_NUMBER_BATCH
     /// </summary>
@@ -190,8 +194,4 @@ public partial class InStockItemRecord
 
     [StringLength(200)]
     public string? SupplierName { get; set; }
-
-    [Column("in_stock_item_recordcol")]
-    [StringLength(45)]
-    public string? InStockItemRecordcol { get; set; }
 }

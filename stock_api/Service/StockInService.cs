@@ -104,7 +104,10 @@ namespace stock_api.Service
             return _dbContext.AcceptanceItems.Where(ai => ai.CompId == compId && acceptIdList.Contains(ai.AcceptId)).ToList();
         }
 
-
+        public InStockItemRecord? GetInStockRecordById(string inStockId)
+        {
+            return _dbContext.InStockItemRecords.Where(i => i.InStockId == inStockId).FirstOrDefault();
+        }
 
         public (bool, string?, Qc?) UpdateAcceptItem(PurchaseMainSheet purchaseMain, PurchaseSubItem purchaseSubItem, AcceptanceItem existingAcceptanceItem, UpdateAcceptItemRequest updateAcceptItem, WarehouseProduct product, string compId, WarehouseMember acceptMember, bool isDirectOutStock)
         {

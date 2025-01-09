@@ -28,10 +28,10 @@ public partial class SupplierTraceLog
     [StringLength(45)]
     public string AbnormalType { get; set; } = null!;
 
-    public int SupplierId { get; set; }
+    public int? SupplierId { get; set; }
 
     [StringLength(100)]
-    public string SupplierName { get; set; } = null!;
+    public string? SupplierName { get; set; }
 
     [Column(TypeName = "text")]
     public string? AbnormalContent { get; set; }

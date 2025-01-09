@@ -16,7 +16,7 @@ namespace stock_api.Models;
 /// </summary>
 [PrimaryKey("CompId", "ProductId")]
 [Table("warehouse_product")]
-[Index("ProductId", Name = "idx_warehouse_product_productid")]
+[Index("ProductId", Name = "idx_productId_on_warehouse_product")]
 [Index("CompId", "ProductCode", Name = "unique_productCode_company_id", IsUnique = true)]
 public partial class WarehouseProduct
 {

@@ -91,6 +91,8 @@ public partial class StockDbContext : DbContext
 
     public virtual DbSet<QcValidationMain> QcValidationMains { get; set; }
 
+    public virtual DbSet<RejectItemRecord> RejectItemRecords { get; set; }
+
     public virtual DbSet<ReturnStockRecord> ReturnStockRecords { get; set; }
 
     public virtual DbSet<Supplier> Suppliers { get; set; }
@@ -398,47 +400,6 @@ public partial class StockDbContext : DbContext
         modelBuilder.Entity<InStockItemRecordNewLotNumberVew>(entity =>
         {
             entity.ToView("in_stock_item_record_new_lot_number_vew");
-
-            entity.Property(e => e.AdjustItemId).HasComment("若此筆入庫是由盤盈而來才有值");
-            entity.Property(e => e.AfterQuantity).HasComment("入庫後數量");
-            entity.Property(e => e.BarCodeNumber).HasComment("用來產生條碼的數字，PadLeft : 7個0\nExample : 0000001");
-            entity.Property(e => e.Comment).HasComment("初驗驗收填寫相關原因");
-            entity.Property(e => e.CompId).HasComment("所屬公司ID");
-            entity.Property(e => e.ExpirationDate).HasComment("保存期限");
-            entity.Property(e => e.GroupIds)
-                .HasDefaultValueSql("''")
-                .HasComment("屬於數個組別");
-            entity.Property(e => e.GroupNames)
-                .HasDefaultValueSql("''")
-                .HasComment("組別名稱");
-            entity.Property(e => e.InStockQuantity).HasComment("此次入庫數量");
-            entity.Property(e => e.InStockTime).HasDefaultValueSql("CURRENT_TIMESTAMP");
-            entity.Property(e => e.IsNeedQc).HasDefaultValueSql("'0'");
-            entity.Property(e => e.ItemId).HasComment("對應 PurchaseSubItem 的 PK\n非採購入庫，NULL");
-            entity.Property(e => e.LotNumber).HasComment("批號");
-            entity.Property(e => e.LotNumberBatch).HasComment("批次");
-            entity.Property(e => e.OriginalQuantity).HasComment("現有庫存量");
-            entity.Property(e => e.OutStockQuantity).HasDefaultValueSql("'0'");
-            entity.Property(e => e.OutStockStatus)
-                .HasDefaultValueSql("'NONE'")
-                .HasComment("出庫的狀態\\\\nNONE:都還沒出,PART:出部分:ALL:出完全部");
-            entity.Property(e => e.PackagingStatus).HasComment("外觀包裝\\nNORMAL : 完成\\nBREAK : 破損");
-            entity.Property(e => e.ProductId).HasComment("品項PK");
-            entity.Property(e => e.ProductName).HasComment("品項名稱");
-            entity.Property(e => e.ProductSpec).HasComment("品項規格");
-            entity.Property(e => e.QcComment).HasComment("二次驗收填寫相關原因");
-            entity.Property(e => e.QcTestStatus)
-                .HasDefaultValueSql("'NONE'")
-                .HasComment("NONE,DONE");
-            entity.Property(e => e.QcType)
-                .HasDefaultValueSql("'NONE'")
-                .HasComment("NONE,LOT_NUMBER,LOT_NUMBER_BATCH");
-            entity.Property(e => e.Type).HasComment("類型\nPURCHASE : 來源是採購\nSHIFT : 調撥\nADJUST : 調整（盤盈）\nRETURN : 退庫");
-            entity.Property(e => e.UpdatedAt)
-                .ValueGeneratedOnAddOrUpdate()
-                .HasDefaultValueSql("CURRENT_TIMESTAMP");
-            entity.Property(e => e.UserId).HasComment("執行入庫人員的UserID");
-            entity.Property(e => e.UserName).HasComment("執行入庫人員的UserName");
         });
 
         modelBuilder.Entity<InventoryAdjustItem>(entity =>
@@ -569,23 +530,11 @@ public partial class StockDbContext : DbContext
         modelBuilder.Entity<ProductNewLotnumberView>(entity =>
         {
             entity.ToView("product_new_lotnumber_view");
-
-            entity.Property(e => e.CompId).HasComment("所屬公司ID");
-            entity.Property(e => e.CreatedAt).HasDefaultValueSql("CURRENT_TIMESTAMP");
-            entity.Property(e => e.LotNumber).HasComment("批號");
-            entity.Property(e => e.LotNumberBatch).HasComment("批次");
-            entity.Property(e => e.ProductId).HasComment("品項PK");
         });
 
         modelBuilder.Entity<ProductNewLotnumberbatchView>(entity =>
         {
             entity.ToView("product_new_lotnumberbatch_view");
-
-            entity.Property(e => e.CompId).HasComment("所屬公司ID");
-            entity.Property(e => e.CreatedAt).HasDefaultValueSql("CURRENT_TIMESTAMP");
-            entity.Property(e => e.LotNumber).HasComment("批號");
-            entity.Property(e => e.LotNumberBatch).HasComment("批次");
-            entity.Property(e => e.ProductId).HasComment("品項PK");
         });
 
         modelBuilder.Entity<PurchaseAcceptanceItemsView>(entity =>
@@ -958,6 +907,21 @@ public partial class StockDbContext : DbContext
                 .HasDefaultValueSql("CURRENT_TIMESTAMP");
             entity.Property(e => e.ValidationMethod).HasComment("檢驗屬性");
             entity.Property(e => e.ValidationType).HasComment("驗收類型");
+        });
+
+        modelBuilder.Entity<RejectItemRecord>(entity =>
+        {
+            entity.HasKey(e => e.RejectId).HasName("PRIMARY");
+
+            entity.ToTable("reject_item_records", tb => tb.HasComment("退貨紀錄"));
+
+            entity.Property(e => e.CreatedAt).HasDefaultValueSql("CURRENT_TIMESTAMP");
+            entity.Property(e => e.InStockQuantity).HasComment("當初入庫數量");
+            entity.Property(e => e.StockQuantityAfter).HasComment("退庫後庫存數量");
+            entity.Property(e => e.StockQuantityBefore).HasComment("退庫前庫存數量");
+            entity.Property(e => e.UpdatedAt)
+                .ValueGeneratedOnAddOrUpdate()
+                .HasDefaultValueSql("CURRENT_TIMESTAMP");
         });
 
         modelBuilder.Entity<ReturnStockRecord>(entity =>
