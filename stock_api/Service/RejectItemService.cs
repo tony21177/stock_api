@@ -76,6 +76,7 @@ namespace stock_api.Service
                 {
                     inStockItemRecord.OutStockStatus = CommonConstants.OutStockStatus.ALL;
                 }
+                product.InStockQuantity -= rejectQuantity;
 
                 _dbContext.RejectItemRecords.Add(newRejectItemRecord);
 
