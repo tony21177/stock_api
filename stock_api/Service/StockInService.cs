@@ -963,5 +963,10 @@ namespace stock_api.Service
                 return (false, ex.Message);
             }
         }
+
+        public List<InStockItemRecord> GetInStockRecordsNotAllOutOrReject(string productId)
+        {
+            return _dbContext.InStockItemRecords.Where(i => i.ProductId == productId && (i.InStockQuantity - i.OutStockQuantity - i.RejectQuantity)>0).ToList();
+        }
     }
 }

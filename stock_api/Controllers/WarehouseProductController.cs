@@ -813,5 +813,32 @@ namespace stock_api.Controllers
                 Result = true,
             });
         }
+
+        [HttpPost("searchProductLotQuantity")]
+        [Authorize]
+        public IActionResult SearchProductLotQuantity(SearchProductLotQuantityRequest request)
+        {
+            var memberAndPermissionSetting = _authHelpers.GetMemberAndPermissionSetting(User);
+            var compId = memberAndPermissionSetting.CompanyWithUnit.CompId;
+            if (request.CompId == null)
+            {
+                request.CompId = compId;
+            }
+            
+            var stockInRecordList = _stockInService.GetInStockRecordsNotAllOutOrReject(request.ProductId);
+            var inStockLots = _mapper.Map<List<InStockLots>>(stockInRecordList);
+            foreach (var item in inStockLots)
+            {
+                item.RemainingQuantity = item.InStockQuantity - item.OutStockQuantity??0.0f - item.RejectQuantity??0.0f;
+            }
+
+
+
+            return Ok(new CommonResponse<dynamic>
+            {
+                Result = true,
+                Data = inStockLots
+            });
+        }
     }
 }
