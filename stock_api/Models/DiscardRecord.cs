@@ -12,6 +12,7 @@ namespace stock_api.Models;
 /// 丟棄紀錄
 /// </summary>
 [Table("discard_records")]
+[Index("OutStockId", "CompId", Name = "compId_outStockId_idx")]
 public partial class DiscardRecord
 {
     [Key]
@@ -69,4 +70,7 @@ public partial class DiscardRecord
 
     [Column(TypeName = "timestamp")]
     public DateTime UpdatedAt { get; set; }
+
+    [StringLength(300)]
+    public string? DiscardReason { get; set; }
 }

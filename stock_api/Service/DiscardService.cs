@@ -27,13 +27,13 @@ namespace stock_api.Service
             _warehouseProductService = warehouseProductService;
         }
 
-        public (bool, string?) Discard(OutStockRecord outStockRecord, float applyQuantity, WarehouseMember user)
+        public (bool, string?) Discard(OutStockRecord outStockRecord, DiscardRequest request, WarehouseMember user)
         {
             using var scope = new TransactionScope();
             try
             {
                 outStockRecord.IsDiscard = true;
-                outStockRecord.DiscardQuantity = applyQuantity + (outStockRecord.DiscardQuantity??0.0f) ;
+                outStockRecord.DiscardQuantity = request.ApplyQuantity + (outStockRecord.DiscardQuantity??0.0f) ;
 
                 DiscardRecord newDiscardRecord = new()
                 {
@@ -41,7 +41,7 @@ namespace stock_api.Service
                     CompId = outStockRecord.CompId,
                     OutStockId = outStockRecord.OutStockId,
                     OutStockQuantity = outStockRecord.ApplyQuantity,
-                    ApplyQuantity = applyQuantity,
+                    ApplyQuantity = request.ApplyQuantity,
                     OutStockTime = outStockRecord.CreatedAt.Value,
                     ProductId = outStockRecord.ProductId,
                     ProductCode = outStockRecord.ProductCode,
@@ -52,7 +52,8 @@ namespace stock_api.Service
                     DiscardUserId = user.UserId,
                     DiscardUserName = user.DisplayName,
                     OutStockUserId = user.UserId,
-                    OutStockUserName = user.DisplayName
+                    OutStockUserName = user.DisplayName,
+                    DiscardReason = request.DiscardReason,
                 };
                 _dbContext.DiscardRecords.Add(newDiscardRecord);
                 _dbContext.SaveChanges();
@@ -142,6 +143,16 @@ namespace stock_api.Service
             totalPages = (int)Math.Ceiling((double)totalItems / request.PaginationCondition.PageSize);
             query = query.Skip((request.PaginationCondition.Page - 1) * request.PaginationCondition.PageSize).Take(request.PaginationCondition.PageSize);
             return (query.ToList(), totalPages);
+
+        }
+
+        public List<DiscardRecord> ListDiscardRecordsByOutStockIds(List<string> outStockIds,string? compId)
+        {
+            if (compId != null)
+            {
+                return _dbContext.DiscardRecords.Where(h => h.CompId == compId & outStockIds.Contains(h.OutStockId)).ToList();
+            }
+            return _dbContext.DiscardRecords.Where(h =>  outStockIds.Contains(h.OutStockId)).ToList();
 
         }
     }

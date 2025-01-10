@@ -4,5 +4,6 @@
     {
         public string OutStockId { get; set; } = null!;
         public float ApplyQuantity { get; set; }
+        public string? DiscardReason { get; set; }
     }
 }

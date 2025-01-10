@@ -73,7 +73,7 @@ namespace stock_api.Controllers
                 });
             }
 
-            var (result,msg) = _discardService.Discard(outStockRecord, request.ApplyQuantity, memberAndPermissionSetting.Member);
+            var (result,msg) = _discardService.Discard(outStockRecord, request, memberAndPermissionSetting.Member);
             return Ok(new CommonResponse<dynamic>
             {
                 Result = result,

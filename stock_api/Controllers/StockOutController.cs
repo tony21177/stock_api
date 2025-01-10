@@ -36,10 +36,11 @@ namespace stock_api.Controllers
         private readonly IValidator<ListStockOutRecordsRequest> _listStockOutRecordsValidator;
         private readonly EmailService _emailService;
         private readonly MemberService _memberService;
+        private readonly DiscardService _discardService;
 
 
         public StockOutController(IMapper mapper, AuthHelpers authHelpers, GroupService groupService, StockInService stockInService,
-            WarehouseProductService warehouseProductService, PurchaseService purchaseService, StockOutService stockOutService,EmailService emailService, MemberService memberService)
+            WarehouseProductService warehouseProductService, PurchaseService purchaseService, StockOutService stockOutService,EmailService emailService, MemberService memberService,DiscardService discardService)
         {
             _mapper = mapper;
             _authHelpers = authHelpers;
@@ -54,6 +55,7 @@ namespace stock_api.Controllers
             _listStockOutRecordsValidator = new ListStockOutRecordsValidator();
             _emailService = emailService;
             _memberService = memberService;
+            _discardService = discardService;
         }
 
 
@@ -687,6 +689,8 @@ namespace stock_api.Controllers
 
             var allReturnStockRecordList = _stockOutService.GetReturnStockRecords(request.CompId);
 
+            var outStockIds = outStockRecordVoList.Select(o => o.OutStockId).ToList();
+            var discardRecords = _discardService.ListDiscardRecordsByOutStockIds(outStockIds,compId);
 
             foreach (var item in outStockRecordVoList)
             {
@@ -708,6 +712,15 @@ namespace stock_api.Controllers
                     }).ToList();
                     item.ReturnStockInfoList = returnInfoList;
                 }
+                var matchedDiscardRecords = discardRecords.Where(d => d.OutStockId == item.OutStockId).OrderBy(r=>r.CreatedAt).ToList();
+                if (matchedDiscardRecords.Count > 0)
+                {
+                    item.DiscardQuantityList = matchedDiscardRecords.Select(d => d.ApplyQuantity).ToList();
+                    item.DiscardReasonList = matchedDiscardRecords.Select(d => d.DiscardReason).ToList();
+                    item.DiscardTimeList = matchedDiscardRecords.Select(d => d.CreatedAt).ToList();
+                    item.DiscardUserNameList = matchedDiscardRecords.Select(d => d.DiscardUserName).ToList();
+                }
+
             }
 
             return Ok(new CommonResponse<List<OutStockRecordVo>>
@@ -748,10 +761,21 @@ namespace stock_api.Controllers
             var products = _warehouseProductService.GetProductsByProductIdsAndCompId(distinctProductIds, request.CompId);
 
             var outStockRecordVoList = _mapper.Map<List<OutStockRecordVo>>(data);
+            var outStockIds = outStockRecordVoList.Select(o => o.OutStockId).ToList();
+            var discardRecords = _discardService.ListDiscardRecordsByOutStockIds(outStockIds, null);
             foreach (var item in outStockRecordVoList)
             {
                 var matchedProdcut = products.Where(p => p.ProductId == item.ProductId).FirstOrDefault();
                 item.Unit = matchedProdcut?.Unit;
+
+                var matchedDiscardRecords = discardRecords.Where(d => d.OutStockId == item.OutStockId).OrderBy(r => r.CreatedAt).ToList();
+                if (matchedDiscardRecords.Count > 0)
+                {
+                    item.DiscardQuantityList = matchedDiscardRecords.Select(d => d.ApplyQuantity).ToList();
+                    item.DiscardReasonList = matchedDiscardRecords.Select(d => d.DiscardReason).ToList();
+                    item.DiscardTimeList = matchedDiscardRecords.Select(d => d.CreatedAt).ToList();
+                    item.DiscardUserNameList = matchedDiscardRecords.Select(d => d.DiscardUserName).ToList();
+                }
             }
 
 
