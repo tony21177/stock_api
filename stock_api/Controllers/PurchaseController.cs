@@ -477,7 +477,7 @@ namespace stock_api.Controllers
                 item.SupplierUnitConvertsion = matchedOwnerProduct?.UnitConversion; // 這裡要用這個品項在金萬林的包裝單位轉換（Gary）
 
                 item.StockLocation = matchedProduct?.StockLocation;
-                var matchedProductThisYearAverageMonthUsage = productsThisYearAverageMonthUsage.Where(p => p.ProductId == p.ProductId).FirstOrDefault();
+                var matchedProductThisYearAverageMonthUsage = productsThisYearAverageMonthUsage.Where(e => e.ProductId == item.ProductId).FirstOrDefault();
                 if (matchedProductThisYearAverageMonthUsage != null)
                 {
                     item.ThisYearAverageMonthUsageQuantity = matchedProductThisYearAverageMonthUsage.AverageQuantity ?? 0.0;
