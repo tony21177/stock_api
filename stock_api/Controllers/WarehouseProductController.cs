@@ -241,6 +241,7 @@ namespace stock_api.Controllers
                 .Where(m => m.CurrentStatus != CommonConstants.PurchaseCurrentStatus.REJECT && m.CurrentStatus != CommonConstants.PurchaseCurrentStatus.CLOSE)
                 .ToList();
             var allEffectivePurchaseMainId = allEffectivePurchaseMain.Select(m => m.PurchaseMainId).ToList();
+            var productsThisYearAverageMonthUsage = _stockOutService.GetThisAverageMonthUsages();
 
             warehouseProductVoList.ForEach(p =>
             {
@@ -249,6 +250,13 @@ namespace stock_api.Controllers
                 var needOrderedQuantity = p.MaxSafeQuantity ?? 0 - p.InStockQuantity ?? 0 - inProcessingOrderQuantity;
                 p.InProcessingOrderQuantity = inProcessingOrderQuantity ?? 0;
                 p.NeedOrderedQuantity = needOrderedQuantity ?? 0;
+                var matchedProductThisYearAverageMonthUsage = productsThisYearAverageMonthUsage.Where(p => p.ProductId == p.ProductId).FirstOrDefault();
+                if (matchedProductThisYearAverageMonthUsage != null)
+                {
+                    p.ThisYearAverageMonthUsageQuantity = matchedProductThisYearAverageMonthUsage.AverageQuantity ?? 0.0;
+                }
+
+
             });
 
             var result = warehouseProductVoList.Where(p => p.InStockQuantity + p.InProcessingOrderQuantity < p.SafeQuantity).ToList();

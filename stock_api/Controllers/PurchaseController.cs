@@ -453,6 +453,7 @@ namespace stock_api.Controllers
             var purchaseCompName = allComps.FirstOrDefault(c => c.CompId == purchaseAndSubItemVo.CompId)?.Name;
             purchaseAndSubItemVo.CompName = purchaseCompName;
 
+            var productsThisYearAverageMonthUsage = _stockOutService.GetThisAverageMonthUsages();
 
             purchaseSubItemVoList.ForEach(item =>
             {
@@ -476,6 +477,11 @@ namespace stock_api.Controllers
                 item.SupplierUnitConvertsion = matchedOwnerProduct?.UnitConversion; // 這裡要用這個品項在金萬林的包裝單位轉換（Gary）
 
                 item.StockLocation = matchedProduct?.StockLocation;
+                var matchedProductThisYearAverageMonthUsage = productsThisYearAverageMonthUsage.Where(p => p.ProductId == p.ProductId).FirstOrDefault();
+                if (matchedProductThisYearAverageMonthUsage != null)
+                {
+                    item.ThisYearAverageMonthUsageQuantity = matchedProductThisYearAverageMonthUsage.AverageQuantity ?? 0.0;
+                }
                 if (item.WithCompId != null)
                 {
                     var matchedCompanyWithUnitVo = companyWithUnitVoList.Where(c => c.CompId == item.WithCompId).FirstOrDefault();
@@ -802,6 +808,18 @@ namespace stock_api.Controllers
             var compId = memberAndPermissionSetting.CompanyWithUnit.CompId;
             request.CompId = compId;
             var data = _warehouseProductService.ListNotEnoughProducts(request);
+            var productsThisYearAverageMonthUsage = _stockOutService.GetThisAverageMonthUsages();
+
+            foreach (var item in data)
+            {
+                var matchedProductThisYearAverageMonthUsage = productsThisYearAverageMonthUsage.Where(p => p.ProductId == item.ProductId).FirstOrDefault();
+                if (matchedProductThisYearAverageMonthUsage != null)
+                {
+                    item.ThisYearAverageMonthUsageQuantity = matchedProductThisYearAverageMonthUsage.AverageQuantity??0.0;
+                }
+            }
+
+
             var response = new CommonResponse<dynamic>
             {
                 Result = true,

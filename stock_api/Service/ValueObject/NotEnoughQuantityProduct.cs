@@ -8,5 +8,6 @@ namespace stock_api.Service.ValueObject
         public float NeedOrderedQuantity { get; set; } = 0;
 
         public float NeedUnorderedQuantityUnit { get; set; } = 0;
+        public double ThisYearAverageMonthUsageQuantity { get; set; } = 0;
     }
 }
