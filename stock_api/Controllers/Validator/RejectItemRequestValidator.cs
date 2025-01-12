@@ -9,6 +9,7 @@ namespace stock_api.Controllers.Validator
     {
         public RejectItemRequestValidator()
         {
+            RuleFor(x => x.RejectReason).NotEmpty().WithMessage("退貨原因不可為空");
             RuleFor(x => x.RejectDate).Must((request, date, context) => BeValidDate(date, context))
                 .WithMessage("無效格式日期");
             RuleFor(x => x.RejectQuantity).GreaterThan(0).When(x => x.RejectQuantity != null)
