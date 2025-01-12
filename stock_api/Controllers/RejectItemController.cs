@@ -52,6 +52,13 @@ namespace stock_api.Controllers
             var memberAndPermissionSetting = _authHelpers.GetMemberAndPermissionSetting(User);
             var compId = memberAndPermissionSetting.CompanyWithUnit.CompId;
 
+            var validationResult = _rejectItemValidator.Validate(request);
+
+            if (!validationResult.IsValid)
+            {
+                return BadRequest(CommonResponse<dynamic>.BuildValidationFailedResponse(validationResult));
+            }
+
             var inStockItemRecord = _stockInService.GetInStockRecordById(request.InStockId);
             if (inStockItemRecord == null)
             {
