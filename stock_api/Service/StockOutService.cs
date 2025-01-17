@@ -386,6 +386,11 @@ namespace stock_api.Service
             return _dbContext.OutStockRecords.Where(r => r.OutStockId == outStockId).FirstOrDefault();
         }
 
+        public List<OutStockRecord> GetOutStockRecordsByLotNumberBatch(string lotNumberBatch)
+        {
+            return _dbContext.OutStockRecords.Where(r => r.LotNumberBatch==lotNumberBatch).ToList();
+        }
+
         public List<OutStockRecord> GetOutStockRecordsByLotNumberList(List<string> lotNumberList)
         {
             return _dbContext.OutStockRecords.Where(r=>r.LotNumber!=null&&lotNumberList.Contains(r.LotNumber)).ToList();

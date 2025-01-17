@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using Microsoft.EntityFrameworkCore;
 using Org.BouncyCastle.Asn1.Ocsp;
 using Serilog;
 using stock_api.Common.Constant;
@@ -968,5 +969,86 @@ namespace stock_api.Service
         {
             return _dbContext.InStockItemRecords.Where(i => i.ProductId == productId && (i.InStockQuantity - i.OutStockQuantity - i.RejectQuantity)>0).ToList();
         }
-    }
+
+        public (bool,string?) DeleteInStockRecord(InStockItemRecord inStockItemRecord)
+        {
+
+            using var scope = new TransactionScope();
+            try
+            {
+                var acceptItem = _dbContext.AcceptanceItems.Where(i => i.ItemId == inStockItemRecord.ItemId).FirstOrDefault();
+                var purchaseSubItem = _dbContext.PurchaseSubItems.Where(i => i.ItemId == inStockItemRecord.ItemId).FirstOrDefault();
+                var product = _dbContext.WarehouseProducts.Where(p => p.ProductId == inStockItemRecord.ProductId).FirstOrDefault();
+                acceptItem.AcceptQuantity = acceptItem.AcceptQuantity - inStockItemRecord.InStockQuantity;
+                product.InStockQuantity = product.InStockQuantity - inStockItemRecord.InStockQuantity;
+                if (acceptItem.AcceptQuantity == 0)
+                {
+                    acceptItem.AcceptUserId = null;
+                    acceptItem.LotNumber = null;
+                    acceptItem.LotNumberBatch = null;
+                    acceptItem.ExpirationDate = null;
+                    acceptItem.PackagingStatus = null;
+                    acceptItem.QcStatus = null;
+                    acceptItem.Comment = null;
+                    acceptItem.DeliverFunction = null;
+                    acceptItem.DeliverTemperature = null;
+                    acceptItem.SavingFunction = null;
+                    acceptItem.SavingTemperature = null;
+                    acceptItem.VerifyAt = null;
+                }
+                else
+                {
+                    // 表示有之前的入庫
+                    var beforeInStockItemRecord = _dbContext.InStockItemRecords.Where(i=>i.InStockId!=inStockItemRecord.InStockId&&
+                    i.ItemId==inStockItemRecord.ItemId).OrderByDescending(i=>i.CreatedAt).FirstOrDefault();
+                    acceptItem.AcceptUserId = beforeInStockItemRecord.UserId;
+                    acceptItem.LotNumber = beforeInStockItemRecord.LotNumber;
+                    acceptItem.LotNumberBatch = beforeInStockItemRecord.LotNumberBatch;
+                    acceptItem.ExpirationDate = beforeInStockItemRecord.ExpirationDate;
+                    acceptItem.PackagingStatus = beforeInStockItemRecord.PackagingStatus;
+                    acceptItem.QcStatus = null;
+                    acceptItem.Comment = beforeInStockItemRecord.Comment;
+                    acceptItem.DeliverFunction = beforeInStockItemRecord.DeliverFunction;
+                    acceptItem.DeliverTemperature = beforeInStockItemRecord.DeliverTemperature;
+                    acceptItem.SavingFunction = beforeInStockItemRecord.SavingFunction;
+                    acceptItem.SavingTemperature = beforeInStockItemRecord.SavingTemperature;
+                    acceptItem.VerifyAt = beforeInStockItemRecord.CreatedAt;
+
+                }
+
+                // 判斷是否全部驗收完
+                if (acceptItem.AcceptQuantity != null && acceptItem.AcceptQuantity >= acceptItem.OrderQuantity)
+                {
+                    acceptItem.InStockStatus = CommonConstants.PurchaseSubItemReceiveStatus.DONE;
+                    purchaseSubItem.ReceiveStatus = CommonConstants.PurchaseSubItemReceiveStatus.DONE;
+                    
+                }
+                else if (acceptItem.AcceptQuantity != null && acceptItem.AcceptQuantity > 0 && acceptItem.AcceptQuantity < acceptItem.OrderQuantity)
+                {
+                    // 判斷是否部分驗收
+                    _logger.LogInformation("[刪除部分驗收] AcceptId:${acceptId},AcceptQuantity:${AcceptQuantity},OrderQuantity:${}", acceptItem.AcceptId, acceptItem.AcceptQuantity, acceptItem.OrderQuantity);
+                    acceptItem.InStockStatus = CommonConstants.PurchaseSubItemReceiveStatus.PART;
+                    purchaseSubItem.ReceiveStatus = CommonConstants.PurchaseSubItemReceiveStatus.PART;
+                    
+                }else if (acceptItem.AcceptQuantity != null && acceptItem.AcceptQuantity==0)
+                {
+                    acceptItem.InStockStatus = CommonConstants.PurchaseSubItemReceiveStatus.NONE;
+                    purchaseSubItem.ReceiveStatus = CommonConstants.PurchaseSubItemReceiveStatus.NONE;
+                }
+                purchaseSubItem.InStockQuantity = purchaseSubItem.InStockQuantity - inStockItemRecord.InStockQuantity;
+                purchaseSubItem.ReceiveQuantity = purchaseSubItem.InStockQuantity;
+
+                _dbContext.InStockItemRecords.Remove(inStockItemRecord);
+                _dbContext.SaveChanges();
+                scope.Complete();
+                return (true, null);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError("事務失敗[DeleteInStockRecord]：{msg}", ex);
+                return (false, ex.Message);
+            }
+
+        }
+     }
 }

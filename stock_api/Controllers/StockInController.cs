@@ -933,6 +933,53 @@ namespace stock_api.Controllers
                 Message = errorMsg,
             });
         }
+
+        [HttpPost("delete")]
+        [Authorize]
+        public IActionResult DeleteInStockItem(DeleteInStockRecordRequest request)
+        {
+            var memberAndPermissionSetting = _authHelpers.GetMemberAndPermissionSetting(User);
+            var compId = memberAndPermissionSetting.CompanyWithUnit.CompId;
+
+            var inStockItemRecord= _stockInService.GetInStockRecordById(request.InStockId);
+            if (inStockItemRecord == null)
+            {
+                return BadRequest(new CommonResponse<dynamic>
+                {
+                    Result = false,
+                    Message = "該筆入庫紀錄不存在"
+                });
+            }
+            if (inStockItemRecord.CompId != compId)
+            {
+                return BadRequest(CommonResponse<dynamic>.BuildNotAuthorizeResponse());
+            }
+            if (inStockItemRecord.ItemId == null)
+            {
+                return BadRequest(new CommonResponse<dynamic>
+                {
+                    Result = false,
+                    Message = "該筆入庫紀錄非經由採購而來,不可取消"
+                });
+            }
+
+            var outStockRecords = _stockOutService.GetOutStockRecordsByLotNumberBatch(inStockItemRecord.LotNumberBatch);
+            if (outStockRecords.Count > 0)
+            {
+                return BadRequest(new CommonResponse<dynamic>
+                {
+                    Result = false,
+                    Message = "已有出庫,不可刪除"
+                });
+            }
+            var (isSuccessful,errorMsg) = _stockInService.DeleteInStockRecord(inStockItemRecord);
+
+            return Ok(new CommonResponse<dynamic>
+            {
+                Result = isSuccessful,
+                Message = errorMsg,
+            });
+        }
     }
 
     public class SupplierAccepItemsVo
