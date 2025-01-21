@@ -171,6 +171,9 @@ namespace stock_api.Controllers
             }
 
             List<AcceptItem> allAcceptItemList = new();
+            var lotNumberBatchList = data.SelectMany(e => e.AcceptItems).Select(a => a.LotNumberBatch).ToList();
+            var inStockItemRecords = _stockInService.GetInStockItemRecordsByLotNumberBatchList(compId, lotNumberBatchList);
+
             if (request.IsGroupBySupplier == true)
             {
                 
@@ -225,6 +228,22 @@ namespace stock_api.Controllers
                     i.ApplyDate = matchedPurchaseMain.ApplyDate;
                 }));
 
+                // 增加InStockId
+                foreach (var element in result)
+                {
+                    foreach (var item in element.AcceptItems)
+                    {
+                        if (item.LotNumberBatch != null)
+                        {
+                            var matchedInStockItem = inStockItemRecords.Where(i => i.LotNumberBatch == item.LotNumberBatch).FirstOrDefault();
+                            if (matchedInStockItem != null)
+                            {
+                                item.InStockId = matchedInStockItem.InStockId;
+                            }
+                        }
+                    }
+                }
+
                 var responseGroup = new CommonResponse<List<SupplierAccepItemsVo>>
                 {
                     Result = true,
@@ -276,6 +295,22 @@ namespace stock_api.Controllers
             int totalItems = data.Count;
             totalPages = (int)Math.Ceiling((double)totalItems / request.PaginationCondition.PageSize);
             data = data.Skip((request.PaginationCondition.Page - 1) * request.PaginationCondition.PageSize).Take(request.PaginationCondition.PageSize).ToList();
+
+            // 增加InStockId
+            foreach(var element in data)
+            {
+                foreach (var item in element.AcceptItems)
+                {
+                    if (item.LotNumberBatch != null)
+                    {
+                        var matchedInStockItem = inStockItemRecords.Where(i=>i.LotNumberBatch==item.LotNumberBatch).FirstOrDefault();
+                        if (matchedInStockItem != null)
+                        {
+                            item.InStockId = matchedInStockItem.InStockId;
+                        }
+                    }
+                }
+            }
 
 
             var response = new CommonResponse<List<PurchaseAcceptItemsVo>>

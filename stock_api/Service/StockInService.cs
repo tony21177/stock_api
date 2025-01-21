@@ -1050,5 +1050,10 @@ namespace stock_api.Service
             }
 
         }
+
+        public List<InStockItemRecord> GetInStockItemRecordsByLotNumberBatchList(string compId,List<string> lotNumberBatchList)
+        {
+            return _dbContext.InStockItemRecords.Where(i=>lotNumberBatchList.Contains(i.LotNumberBatch)&&i.CompId==compId).ToList();
+        }
      }
 }
