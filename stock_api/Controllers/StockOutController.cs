@@ -767,6 +767,7 @@ namespace stock_api.Controllers
             {
                 var matchedProdcut = products.Where(p => p.ProductId == item.ProductId).FirstOrDefault();
                 item.Unit = matchedProdcut?.Unit;
+                item.IsAllowDiscard = matchedProdcut.IsAllowDiscard;
 
                 var matchedDiscardRecords = discardRecords.Where(d => d.OutStockId == item.OutStockId).OrderBy(r => r.CreatedAt).ToList();
                 if (matchedDiscardRecords.Count > 0)
