@@ -712,6 +712,7 @@ namespace stock_api.Controllers
                     }).ToList();
                     item.ReturnStockInfoList = returnInfoList;
                 }
+                item.IsAllowDiscard = matchedProdcut.IsAllowDiscard;
                 var matchedDiscardRecords = discardRecords.Where(d => d.OutStockId == item.OutStockId).OrderBy(r=>r.CreatedAt).ToList();
                 if (matchedDiscardRecords.Count > 0)
                 {
