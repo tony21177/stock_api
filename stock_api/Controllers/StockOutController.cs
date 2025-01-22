@@ -716,7 +716,7 @@ namespace stock_api.Controllers
                 if (matchedDiscardRecords.Count > 0)
                 {
                     item.DiscardQuantityList = matchedDiscardRecords.Select(d => d.ApplyQuantity).ToList();
-                    item.DiscardReasonList = matchedDiscardRecords.Select(d => d.DiscardReason).ToList();
+                    item.DiscardReasonList = matchedDiscardRecords.Select(d => d.DiscardReason ?? string.Empty).ToList();
                     item.DiscardTimeList = matchedDiscardRecords.Select(d => d.CreatedAt).ToList();
                     item.DiscardUserNameList = matchedDiscardRecords.Select(d => d.DiscardUserName).ToList();
                 }
@@ -772,7 +772,7 @@ namespace stock_api.Controllers
                 if (matchedDiscardRecords.Count > 0)
                 {
                     item.DiscardQuantityList = matchedDiscardRecords.Select(d => d.ApplyQuantity).ToList();
-                    item.DiscardReasonList = matchedDiscardRecords.Select(d => d.DiscardReason).ToList();
+                    item.DiscardReasonList = matchedDiscardRecords.Select(d => d.DiscardReason ?? string.Empty).ToList();
                     item.DiscardTimeList = matchedDiscardRecords.Select(d => d.CreatedAt).ToList();
                     item.DiscardUserNameList = matchedDiscardRecords.Select(d => d.DiscardUserName).ToList();
                 }
