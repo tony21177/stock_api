@@ -242,6 +242,7 @@ namespace stock_api.Service
             }
             query = query.Where(h => h.CompId == request.CompId);
             query = query.Where(h => h.MaxSafeQuantity.HasValue && h.InStockQuantity <= h.MaxSafeQuantity);
+            query = query.Where(h => h.IsActive == true);
 
             var products = query.ToList();
             var matchedProducts = _mapper.Map<List<NotEnoughQuantityProduct>>(products);
