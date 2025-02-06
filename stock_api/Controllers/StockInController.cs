@@ -600,6 +600,7 @@ namespace stock_api.Controllers
                 item.SavingFunction = matchedProduct?.SavingFunction;
                 item.SavingTemperature = matchedProduct?.SavingTemperature;
                 item.ProductModel = matchedProduct?.ProductModel;   
+                item.OpenDeadline = matchedProduct?.OpenDeadline;
             }
 
             // 彰化醫院婉君要求 設定無的不需要顯示
