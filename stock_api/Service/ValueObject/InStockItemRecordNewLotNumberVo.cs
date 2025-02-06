@@ -18,5 +18,10 @@ namespace stock_api.Service.ValueObject
         public bool IsNewLotNumber { get; set; }
         public string ProductId { get; set; }
         public string? ProductUnit {get;set;}
+        public string? ProductModel { get; set; }
+        public string? SavingFunction { get; set; }
+        public double? SavingTemperature { get; set; }
+        public string? ExpirationDate { get; set; }
+
     }
 }

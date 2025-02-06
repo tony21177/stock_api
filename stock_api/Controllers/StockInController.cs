@@ -597,6 +597,9 @@ namespace stock_api.Controllers
             {
                 var matchedProduct = allProducts.Where(p => p.ProductId == item.ProductId).FirstOrDefault();
                 item.ProductUnit = matchedProduct?.Unit;
+                item.SavingFunction = matchedProduct?.SavingFunction;
+                item.SavingTemperature = matchedProduct?.SavingTemperature;
+                item.ProductModel = matchedProduct?.ProductModel;   
             }
 
             // 彰化醫院婉君要求 設定無的不需要顯示
