@@ -4,7 +4,7 @@
     {
         public int? InstrumentId { get; set; }
         public string? CompId { get; set; }
-        public string InstrumentName { get; set; } = null!;
+        public string? InstrumentName { get; set; }
         public bool? IsActive { get; set; } = true;
     }
 }
