@@ -448,7 +448,7 @@ namespace stock_api.Controllers
 
 
 
-            var response = new CommonResponse<WarehouseProduct>()
+            var response = new CommonResponse<WarehouseProductWithInstruments>()
             {
                 Result = true,
                 Message = "",
