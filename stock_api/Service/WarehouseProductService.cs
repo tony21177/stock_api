@@ -1008,5 +1008,18 @@ namespace stock_api.Service
             }
             return;
         }
+
+        public List<ProductInstruments> GetProductInstrumentsByProductIds(string productId)
+        {
+            return (from pi in _dbContext.ProductInstruments
+                    join i in _dbContext.Instruments on pi.InstrumentId equals i.InstrumentId
+                    where pi.ProductId == productId
+                    select new ProductInstruments
+                    {
+                        ProductId = pi.ProductId,
+                        InstrumentId = i.InstrumentId,
+                        InstrumentName = i.InstrumentName
+                    }).ToList();
+        }
     }
 }

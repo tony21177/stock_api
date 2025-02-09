@@ -43,6 +43,8 @@ public partial class StockDbContext : DbContext
 
     public virtual DbSet<InStockItemRecordNewLotNumberVew> InStockItemRecordNewLotNumberVews { get; set; }
 
+    public virtual DbSet<Instrument> Instruments { get; set; }
+
     public virtual DbSet<InventoryAdjustItem> InventoryAdjustItems { get; set; }
 
     public virtual DbSet<InventoryAdjustMain> InventoryAdjustMains { get; set; }
@@ -60,6 +62,8 @@ public partial class StockDbContext : DbContext
     public virtual DbSet<OutstockRelatetoInstock> OutstockRelatetoInstocks { get; set; }
 
     public virtual DbSet<ProductImage> ProductImages { get; set; }
+
+    public virtual DbSet<ProductInstrument> ProductInstruments { get; set; }
 
     public virtual DbSet<ProductNewLotnumberView> ProductNewLotnumberViews { get; set; }
 
@@ -444,6 +448,17 @@ public partial class StockDbContext : DbContext
             entity.Property(e => e.UserName).HasComment("執行入庫人員的UserName");
         });
 
+        modelBuilder.Entity<Instrument>(entity =>
+        {
+            entity.HasKey(e => e.InstrumentId).HasName("PRIMARY");
+
+            entity.Property(e => e.CreatedAt).HasDefaultValueSql("CURRENT_TIMESTAMP");
+            entity.Property(e => e.IsActive).HasDefaultValueSql("'1'");
+            entity.Property(e => e.UpdatedAt)
+                .ValueGeneratedOnAddOrUpdate()
+                .HasDefaultValueSql("CURRENT_TIMESTAMP");
+        });
+
         modelBuilder.Entity<InventoryAdjustItem>(entity =>
         {
             entity.HasKey(e => e.AdjustItemId).HasName("PRIMARY");
@@ -567,6 +582,11 @@ public partial class StockDbContext : DbContext
             entity.Property(e => e.UpdatedAt)
                 .ValueGeneratedOnAddOrUpdate()
                 .HasDefaultValueSql("CURRENT_TIMESTAMP");
+        });
+
+        modelBuilder.Entity<ProductInstrument>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("PRIMARY");
         });
 
         modelBuilder.Entity<ProductNewLotnumberView>(entity =>

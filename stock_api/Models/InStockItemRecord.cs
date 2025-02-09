@@ -194,4 +194,8 @@ public partial class InStockItemRecord
 
     [StringLength(200)]
     public string? SupplierName { get; set; }
+
+    [Column("in_stock_item_recordcol")]
+    [StringLength(45)]
+    public string? InStockItemRecordcol { get; set; }
 }

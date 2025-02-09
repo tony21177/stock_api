@@ -440,14 +440,19 @@ namespace stock_api.Controllers
                 return BadRequest(CommonResponse<dynamic>.BuildNotAuthorizeResponse());
             }
 
-            var data = _warehouseProductService.GetProductByProductIdAndCompId(request.ProductId, request.CompId);
+            var product = _warehouseProductService.GetProductByProductIdAndCompId(request.ProductId, request.CompId);
+            var productWithInstruments = _mapper.Map<WarehouseProductWithInstruments>(product);
+            var productInstruments = _warehouseProductService.GetProductInstrumentsByProductIds(product.ProductId);
+            productWithInstruments.InstrumentIdList = productInstruments.Select(pi => pi.InstrumentId).ToList();
+            productWithInstruments.InstrumentNameList = productInstruments.Select(pi => pi.InstrumentName).ToList();
+
 
 
             var response = new CommonResponse<WarehouseProduct>()
             {
                 Result = true,
                 Message = "",
-                Data = data
+                Data = productWithInstruments
             };
             return Ok(response);
 

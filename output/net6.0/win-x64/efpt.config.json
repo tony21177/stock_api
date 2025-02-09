@@ -60,6 +60,10 @@
          "ObjectType": 0
       },
       {
+         "Name": "instrument",
+         "ObjectType": 0
+      },
+      {
          "Name": "inventory_adjust_item",
          "ObjectType": 0
       },
@@ -81,6 +85,10 @@
       },
       {
          "Name": "product_image",
+         "ObjectType": 0
+      },
+      {
+         "Name": "product_instruments",
          "ObjectType": 0
       },
       {
