@@ -30,5 +30,7 @@ namespace stock_api.Controllers.Request
         public string? PreDeadline {get;set;}
 
         public bool? IsAllowDiscard { get; set; }
+
+        public List<int>? InstrumentIds { get; set; }
     }
 }

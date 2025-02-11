@@ -54,6 +54,11 @@ namespace stock_api.Service
             return _dbContext.Instruments.Where(i=>i.InstrumentId==instrumentId).FirstOrDefault();
         }
 
+        public List<Instrument> GetByIdList(List<int> instrumentIds)
+        {
+            return _dbContext.Instruments.Where(i => instrumentIds.Contains( i.InstrumentId)).ToList();
+        }
+
         public (List<Instrument>,int) ListInstrument(ListInstrumentRequest request)
         {
             IQueryable<Instrument> query = _dbContext.Instruments;

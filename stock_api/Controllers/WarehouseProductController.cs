@@ -44,10 +44,11 @@ namespace stock_api.Controllers
         private readonly StockInService _stockInService;
         private readonly PurchaseService _purchaseService;
         private readonly StockOutService _stockOutService;
+        private readonly InstrumentService _instrumentService;
 
         public WarehouseProductController(AuthLayerService authLayerService, WarehouseProductService warehouseProductService, CompanyService companyService, GroupService groupService, SupplierService supplierService,
             ManufacturerService manufacturerService, IMapper mapper, ILogger<WarehouseProductController> logger, AuthHelpers authHelpers, FileUploadService fileUploadService, StockInService stockInService, PurchaseService purchaseService
-            ,StockOutService stockOutService)
+            ,StockOutService stockOutService,InstrumentService instrumentService)
         {
             _authLayerService = authLayerService;
             _warehouseProductService = warehouseProductService;
@@ -59,14 +60,15 @@ namespace stock_api.Controllers
             _authHelpers = authHelpers;
             _companyService = companyService;
             _searchProductRequestValidator = new SearchProductRequestValidator(companyService, groupService);
-            _updateProductValidator = new UpdateProductValidator(supplierService, groupService);
-            _adminUpdateProductValidator = new AdminUpdateProductValidator(supplierService, groupService, manufacturerService);
+            _updateProductValidator = new UpdateProductValidator(supplierService, groupService,instrumentService);
+            _adminUpdateProductValidator = new AdminUpdateProductValidator(supplierService, groupService, manufacturerService,instrumentService);
             _addNewProductRequestValidator = new AddNewProductValidator(supplierService, manufacturerService, companyService);
             _updateProductToCompRequestValidator = new UpdateProductToCompValidator(companyService, warehouseProductService);
             _fileUploadService = fileUploadService;
             _stockInService = stockInService;
             _purchaseService = purchaseService;
             _stockOutService = stockOutService;
+            _instrumentService = instrumentService;
         }
 
         [HttpPost("search")]

@@ -11,23 +11,30 @@ namespace stock_api.Controllers.Validator
         private readonly SupplierService _supplierService;
         private readonly GroupService _groupService;
         private readonly ManufacturerService _manufacturerService;
+        private readonly InstrumentService _instrumentService;
 
-        public AdminUpdateProductValidator(SupplierService supplierService, GroupService groupService, ManufacturerService manufacturerService)
+        public AdminUpdateProductValidator(SupplierService supplierService, GroupService groupService, ManufacturerService manufacturerService,
+            InstrumentService instrumentService)
         {
             _supplierService = supplierService;
             _groupService = groupService;
             _manufacturerService = manufacturerService;
+            _instrumentService = instrumentService;
+
 
             RuleFor(x => x.GroupIds)
                     .Must((request, groupIds, context) => BeValidGroupList(groupIds, context))
                     .WithMessage("以下 groupId 為無效的 group: {InvalidGroupIds}");
+            RuleFor(x => x.InstrumentIds)
+                    .Must((request, instrumentIds, context) => BeValidInstrumentList(instrumentIds, context))
+                    .WithMessage("以下 instrumentId 為無效的 儀器: {InvalidInstrumentIds}");
             RuleFor(x => x.DefaultSupplierId)
                 .Must((request, supplierId, context) => BeValidSupplier(supplierId, context))
                     .WithMessage("無效的供應商");
             RuleFor(x => x.ManufacturerId)
                 .Must((request, manufacturerId, context) => BeValidManufacturer(manufacturerId, context))
                     .WithMessage("無效的製造商");
-            RuleFor(x=>x.LastAbleDate)
+            RuleFor(x => x.LastAbleDate)
                 .Must((request, lastAbleDate, context) => BeValidDate(lastAbleDate, context))
                     .WithMessage("無效的日期");
             RuleFor(x => x.LastOutStockDate)
@@ -101,6 +108,25 @@ namespace stock_api.Controllers.Validator
             }
             if (DateTimeHelper.ParseDateString(date) != null) return true;
             return false;
+        }
+        private bool BeValidInstrumentList(List<int> instrumentIds, ValidationContext<AdminUpdateProductRequest> context)
+        {
+            if (instrumentIds == null || instrumentIds.Count == 0)
+            {
+                return true;
+            }
+
+            var instrumentList = _instrumentService.GetByIdList(instrumentIds);
+
+            var notExistInstrumentIds = instrumentIds.Except(instrumentList.Select(m => m.InstrumentId)).ToList();
+
+            if (notExistInstrumentIds.Any())
+            {
+                var errorMessage = $"{string.Join(",", notExistInstrumentIds)}";
+                context.MessageFormatter.AppendArgument("InvalidInstrumentIds", errorMessage);
+                return false;
+            }
+            return true;
         }
     }
 }

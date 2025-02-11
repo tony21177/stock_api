@@ -329,6 +329,21 @@ namespace stock_api.Service
                 {
                     updateProduct.IsAllowDiscard = existingProduct.IsAllowDiscard;
                 }
+                if (request.InstrumentIds != null)
+                {
+                    _dbContext.ProductInstruments.Where(p => p.ProductId == request.ProductId).ExecuteDelete();
+                    List<ProductInstrument> productInstrumentList = new List<ProductInstrument>();
+                    foreach (var instrumentId in request.InstrumentIds)
+                    {
+                        productInstrumentList.Add(new ProductInstrument()
+                        {
+                            ProductId = request.ProductId,
+                            InstrumentId = instrumentId
+                        });
+                    }
+                    _dbContext.ProductInstruments.AddRange(productInstrumentList);
+                }
+
 
                 updateProduct.CompId = existingProduct.CompId;
                 _mapper.Map(updateProduct, existingProduct);
@@ -434,6 +449,22 @@ namespace stock_api.Service
                 {
                     updateProduct.IsAllowDiscard = existingProduct.IsAllowDiscard;
                 }
+                if (request.InstrumentIds != null)
+                {
+                    _dbContext.ProductInstruments.Where(p => p.ProductId == request.ProductId).ExecuteDelete();
+                    List<ProductInstrument> productInstrumentList = new List<ProductInstrument>();
+                    foreach (var instrumentId in request.InstrumentIds)
+                    {
+                        productInstrumentList.Add(new ProductInstrument()
+                        {
+                            ProductId = request.ProductId,
+                            InstrumentId = instrumentId
+                        });
+                    }
+                    _dbContext.ProductInstruments.AddRange(productInstrumentList);
+                }
+
+
                 updateProduct.CompId = existingProduct.CompId;
                 _mapper.Map(updateProduct, existingProduct);
                 var groupIds = request.GroupIds;
