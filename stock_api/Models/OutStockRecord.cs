@@ -162,4 +162,6 @@ public partial class OutStockRecord
     /// 丟棄數量
     /// </summary>
     public float? DiscardQuantity { get; set; }
+
+    public int? InstrumentId { get; set; }
 }

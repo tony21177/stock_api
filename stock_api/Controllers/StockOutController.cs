@@ -37,10 +37,13 @@ namespace stock_api.Controllers
         private readonly EmailService _emailService;
         private readonly MemberService _memberService;
         private readonly DiscardService _discardService;
+        private readonly InstrumentService _instrumentService;
 
 
         public StockOutController(IMapper mapper, AuthHelpers authHelpers, GroupService groupService, StockInService stockInService,
-            WarehouseProductService warehouseProductService, PurchaseService purchaseService, StockOutService stockOutService,EmailService emailService, MemberService memberService,DiscardService discardService)
+            WarehouseProductService warehouseProductService, PurchaseService purchaseService,
+            StockOutService stockOutService,EmailService emailService, MemberService memberService,DiscardService discardService,
+            InstrumentService instrumentService)
         {
             _mapper = mapper;
             _authHelpers = authHelpers;
@@ -56,6 +59,7 @@ namespace stock_api.Controllers
             _emailService = emailService;
             _memberService = memberService;
             _discardService = discardService;
+            _instrumentService = instrumentService;
         }
 
 
@@ -721,6 +725,11 @@ namespace stock_api.Controllers
                     item.DiscardTimeList = matchedDiscardRecords.Select(d => d.CreatedAt).ToList();
                     item.DiscardUserNameList = matchedDiscardRecords.Select(d => d.DiscardUserName).ToList();
                 }
+                if (item.InstrumentId.HasValue)
+                {
+                    var instrument = _instrumentService.GetById(item.InstrumentId.Value);
+                    item.InstrumentName = instrument.InstrumentName;
+                }
 
             }
 
@@ -832,7 +841,9 @@ namespace stock_api.Controllers
                 });
             }
 
-            WarehouseProductStockOutView resultItem = new WarehouseProductStockOutView
+            var productInstruments = _warehouseProductService.GetProductInstrumentsByProductId(productInfo.ProductId);
+
+            WarehouseProductStockOutViewWithInstruments resultItem = new WarehouseProductStockOutViewWithInstruments
             {
                 LotNumberBatch = productInfo.LotNumberBatch,
                 LotNumber = productInfo.LotNumber,
@@ -890,12 +901,14 @@ namespace stock_api.Controllers
                 BatchInStockQuantity = inStockRecord.InStockQuantity,
                 BatchOutStockQuantity = inStockRecord.OutStockQuantity,
                 BatchExpirationDate = inStockRecord.ExpirationDate,
-                PurchaseMainId = subItem?.PurchaseMainId
+                PurchaseMainId = subItem?.PurchaseMainId,
+                InstrumentIdList = productInstruments.Select(pi => pi.InstrumentId).ToList(),
+                InstrumentNameList = productInstruments.Select(pi => pi.InstrumentName).ToList(),
             };
 
 
 
-            return Ok(new CommonResponse<WarehouseProductStockOutView>
+            return Ok(new CommonResponse<WarehouseProductStockOutViewWithInstruments>
             {
                 Result = true,
                 Data = resultItem,

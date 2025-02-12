@@ -91,6 +91,7 @@ namespace stock_api.Service
                     ExpirationDate = inStockItem.ExpirationDate,
                     SkipQcCommnet = request.IsSkipQc?request.SkipQcComment:"",
                     Remark = request.Remark,
+                    InstrumentId = request.InstrumentId,
                 };
                
 

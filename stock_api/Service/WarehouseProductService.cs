@@ -1040,11 +1040,24 @@ namespace stock_api.Service
             return;
         }
 
-        public List<ProductInstruments> GetProductInstrumentsByProductIds(string productId)
+        public List<ProductInstruments> GetProductInstrumentsByProductId(string productId)
         {
             return (from pi in _dbContext.ProductInstruments
                     join i in _dbContext.Instruments on pi.InstrumentId equals i.InstrumentId
                     where pi.ProductId == productId
+                    select new ProductInstruments
+                    {
+                        ProductId = pi.ProductId,
+                        InstrumentId = i.InstrumentId,
+                        InstrumentName = i.InstrumentName
+                    }).ToList();
+        }
+
+        public List<ProductInstruments> GetProductInstrumentsByProductIds(List<string> productIds)
+        {
+            return (from pi in _dbContext.ProductInstruments
+                    join i in _dbContext.Instruments on pi.InstrumentId equals i.InstrumentId
+                    where productIds.Contains(pi.ProductId)
                     select new ProductInstruments
                     {
                         ProductId = pi.ProductId,

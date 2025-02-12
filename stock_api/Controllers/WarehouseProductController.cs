@@ -393,7 +393,7 @@ namespace stock_api.Controllers
 
             var product = _warehouseProductService.GetProductByProductId(productWithInstrument.ProductId);
             var productWithInstruments = _mapper.Map<WarehouseProductWithInstruments>(product);
-            var productInstruments = _warehouseProductService.GetProductInstrumentsByProductIds(product.ProductId);
+            var productInstruments = _warehouseProductService.GetProductInstrumentsByProductId(product.ProductId);
             productWithInstruments.InstrumentIdList = productInstruments.Select(pi => pi.InstrumentId).ToList();
             productWithInstruments.InstrumentNameList = productInstruments.Select(pi => pi.InstrumentName).ToList();
 
@@ -452,7 +452,7 @@ namespace stock_api.Controllers
 
             var product = _warehouseProductService.GetProductByProductIdAndCompId(request.ProductId, request.CompId);
             var productWithInstruments = _mapper.Map<WarehouseProductWithInstruments>(product);
-            var productInstruments = _warehouseProductService.GetProductInstrumentsByProductIds(product.ProductId);
+            var productInstruments = _warehouseProductService.GetProductInstrumentsByProductId(product.ProductId);
             productWithInstruments.InstrumentIdList = productInstruments.Select(pi => pi.InstrumentId).ToList();
             productWithInstruments.InstrumentNameList = productInstruments.Select(pi => pi.InstrumentName).ToList();
 
