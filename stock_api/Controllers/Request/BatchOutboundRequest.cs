@@ -22,6 +22,6 @@
         public bool IsSkipQc { get; set; } = false; 
         public string? SkipQcComment { get; set;}
         public string? Remark { get; set; }
-        public int InstrumentId { get; set; }
+        public int? InstrumentId { get; set; }
     }
 }

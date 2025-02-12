@@ -725,7 +725,7 @@ namespace stock_api.Controllers
                     item.DiscardTimeList = matchedDiscardRecords.Select(d => d.CreatedAt).ToList();
                     item.DiscardUserNameList = matchedDiscardRecords.Select(d => d.DiscardUserName).ToList();
                 }
-                if (item.InstrumentId.HasValue)
+                if (item.InstrumentId.HasValue&&item.InstrumentId!=0)
                 {
                     var instrument = _instrumentService.GetById(item.InstrumentId.Value);
                     item.InstrumentName = instrument.InstrumentName;
