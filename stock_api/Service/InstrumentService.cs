@@ -59,9 +59,10 @@ namespace stock_api.Service
             return _dbContext.Instruments.Where(i => instrumentIds.Contains( i.InstrumentId)).ToList();
         }
 
-        public (List<Instrument>,int) ListInstrument(ListInstrumentRequest request)
+        public (List<Instrument>, int) ListInstrument(ListInstrumentRequest request, bool? isActive)
         {
             IQueryable<Instrument> query = _dbContext.Instruments;
+
             if (request.CompId != null)
             {
                 query = query.Where(e => e.CompId == request.CompId);
@@ -74,16 +75,16 @@ namespace stock_api.Service
             {
                 query = query.Where(e => e.InstrumentName == request.InstrumentName);
             }
-            if (request.IsActive != null)
+            if (isActive.HasValue)
             {
-                query = query.Where(e => e.IsActive == request.IsActive);
+                query = query.Where(e => e.IsActive == isActive.Value);
             }
-
 
             if (!string.IsNullOrEmpty(request.Keywords))
             {
                 query = query.Where(h => h.InstrumentName.Contains(request.Keywords));
             }
+
             int totalPages = 0;
             if (request.PaginationCondition.OrderByField == null) request.PaginationCondition.OrderByField = "UpdatedAt";
             if (request.PaginationCondition.IsDescOrderBy)
@@ -110,6 +111,7 @@ namespace stock_api.Service
                     _ => query.OrderBy(h => h.UpdatedAt),
                 };
             }
+
             int totalItems = query.Count();
             totalPages = (int)Math.Ceiling((double)totalItems / request.PaginationCondition.PageSize);
             query = query.Skip((request.PaginationCondition.Page - 1) * request.PaginationCondition.PageSize).Take(request.PaginationCondition.PageSize);

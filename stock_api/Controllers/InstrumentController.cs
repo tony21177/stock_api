@@ -81,7 +81,7 @@ namespace stock_api.Controllers
             }
 
 
-            var (instruments,totalPages) = _instrumentService.ListInstrument(request);
+            var (instruments,totalPages) = _instrumentService.ListInstrument(request,true);
             var response = new CommonResponse<dynamic>()
             {
                 Result = true,
