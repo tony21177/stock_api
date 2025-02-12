@@ -389,12 +389,20 @@ namespace stock_api.Controllers
         {
             var data = _warehouseProductService.GetProductByProductId(request.ProductId);
 
+            var productWithInstrument = _mapper.Map<WarehouseProductWithInstruments>(data);
 
-            var response = new CommonResponse<WarehouseProduct>()
+            var product = _warehouseProductService.GetProductByProductId(productWithInstrument.ProductId);
+            var productWithInstruments = _mapper.Map<WarehouseProductWithInstruments>(product);
+            var productInstruments = _warehouseProductService.GetProductInstrumentsByProductIds(product.ProductId);
+            productWithInstruments.InstrumentIdList = productInstruments.Select(pi => pi.InstrumentId).ToList();
+            productWithInstruments.InstrumentNameList = productInstruments.Select(pi => pi.InstrumentName).ToList();
+
+
+            var response = new CommonResponse<WarehouseProductWithInstruments>()
             {
                 Result = true,
                 Message = "",
-                Data = data
+                Data = productWithInstruments
             };
             return Ok(response);
 
