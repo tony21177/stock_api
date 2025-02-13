@@ -17,12 +17,14 @@ namespace stock_api.Service
         private readonly StockDbContext _dbContext;
         private readonly IMapper _mapper;
         private readonly ILogger<ReportService> _logger;
+        private readonly InstrumentService _instrumentService;
 
-        public ReportService(StockDbContext dbContext, IMapper mapper, ILogger<ReportService> logger)
+        public ReportService(StockDbContext dbContext, IMapper mapper, ILogger<ReportService> logger, InstrumentService instrumentService)
         {
             _dbContext = dbContext;
             _mapper = mapper;
             _logger = logger;
+            _instrumentService = instrumentService;
         }
 
         public List<ProductInAndOutRecord> GetProductInAndOutRecords(WarehouseGroup? group, GetProductInAndOutStockRecordsRequest request)
@@ -109,6 +111,11 @@ namespace stock_api.Service
                 }).ToList();
                 item.ReturnStockInfoList = returnInfoList;
                 item.ProductModel = matchedProduct.ProductModel;
+                if (item.InstrumentId.HasValue && item.InstrumentId != 0)
+                {
+                    var instrument = _instrumentService.GetById(item.InstrumentId.Value);
+                    item.InstrumentName = instrument.InstrumentName;
+                }
             }
             outStockRecordVoList = outStockRecordVoList.OrderBy(vo => vo.CreatedAt).ToList();
 
