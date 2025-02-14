@@ -1088,6 +1088,9 @@ namespace stock_api.Service
 
                 product.InStockQuantity = inStockItemRecord.AfterQuantity;
                 product.LotNumberBatch = inStockItemRecord.LotNumberBatch;
+                _dbContext.InStockItemRecords.Add(inStockItemRecord);
+                _dbContext.SaveChanges();
+                scope.Complete();
                 return (true,null);
             }
             catch (Exception ex)
