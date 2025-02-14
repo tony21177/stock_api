@@ -6,6 +6,7 @@ using stock_api.Controllers.Dto;
 using stock_api.Controllers.Request;
 using stock_api.Models;
 using stock_api.Service.ValueObject;
+using System.Diagnostics.Eventing.Reader;
 using System.Linq;
 using System.Security.AccessControl;
 using System.Transactions;
@@ -404,6 +405,66 @@ namespace stock_api.Service
         public List<ReturnStockRecord> GetReturnStockRecords(string compId)
         {
             return _dbContext.ReturnStockRecords.Where(r=>r.CompId==compId).OrderByDescending(r=>r.CreatedAt).ToList();
+        }
+
+        public (bool,string?) OwnerDirectBatchOut(OwnerDirectBatchOutboundRequest request,List<WarehouseProduct> products,WarehouseMember user)
+        {
+
+            using var scope = new TransactionScope();
+            try
+            {
+                List<OutStockRecord> outStockRecords = new List<OutStockRecord>();
+                foreach (var item in request.OutItems)
+                {
+                    var matchedProduct = products.Where(p => p.ProductId == item.ProductId).FirstOrDefault();
+                    string lotNumberBatch = DateTime.Now.ToString("yyyyMMddHHmmssfff");
+                    OutStockRecord outStockRecord = new OutStockRecord()
+                    {
+                        OutStockId = Guid.NewGuid().ToString(),
+                        ApplyQuantity = item.OutQuantity,
+                        LotNumberBatch = lotNumberBatch,
+                        CompId = request.CompId,
+                        IsAbnormal = false,
+                        ProductId = item.ProductId,
+                        ProductCode = matchedProduct.ProductCode,
+                        ProductName = matchedProduct.ProductName,
+                        ProductSpec = matchedProduct.ProductSpec,
+                        Type = CommonConstants.OutStockType.OWNER_DIRECT_OUT,
+                        UserId = user.UserId,
+                        UserName = user.DisplayName,
+                        OriginalQuantity = matchedProduct.InStockQuantity.Value,
+                        AfterQuantity = (matchedProduct.InStockQuantity.Value - item.OutQuantity),
+                        BarCodeNumber = lotNumberBatch,
+                    };
+                    matchedProduct.LotNumberBatch = lotNumberBatch;
+                    matchedProduct.InStockQuantity = outStockRecord.AfterQuantity;
+
+                    DateOnly nowDate = DateOnly.FromDateTime(DateTime.Now);
+                    if (matchedProduct.OpenDeadline != null)
+                    {
+                        matchedProduct.LastAbleDate = nowDate.AddDays(matchedProduct.OpenDeadline.Value);
+                    }
+                    matchedProduct.LastOutStockDate = nowDate;
+                    outStockRecords.Add(outStockRecord);
+                }
+                _dbContext.OutStockRecords.AddRange(outStockRecords);
+                _dbContext.SaveChanges();
+                scope.Complete();
+                return (true, null);
+
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError("事務失敗[OwnerDirectBatchOut]：{msg}", ex);
+                return (false, ex.Message);
+            }
+
+
+
+
+
+
+
         }
     }
 }

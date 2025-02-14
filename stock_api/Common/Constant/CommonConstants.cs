@@ -246,6 +246,7 @@ namespace stock_api.Common.Constant
             public const string SHIFT = "SHIFT";
             public const string ADJUST = "ADJUST";
             public const string RETURN = "RETURN";
+            public const string OWNER_DIRECT_IN = "OWNER_DIRECT_IN";
 
             public static List<string> GetAllValues()
             {
@@ -335,6 +336,7 @@ namespace stock_api.Common.Constant
             public const string ADJUST_OUT = "ADJUST_OUT";
             public const string RETURN_OUT = "RETURN_OUT";
             public const string DISCARD_OUT = "DISCARD_OUT";
+            public const string OWNER_DIRECT_OUT = "OWNER_DIRECT_OUT";
 
             public static List<string> GetAllValues()
             {

@@ -915,7 +915,36 @@ namespace stock_api.Controllers
             });
         }
 
+        [HttpPost("owner/productDirectOut")]
+        [Authorize]
+        public IActionResult ProductDirectOut(OwnerDirectBatchOutboundRequest request)
+        {
+            var memberAndPermissionSetting = _authHelpers.GetMemberAndPermissionSetting(User);
+            var compId = memberAndPermissionSetting.CompanyWithUnit.CompId;
+            if (memberAndPermissionSetting.CompanyWithUnit.Type != CommonConstants.CompanyType.OWNER)
+            {
+                return BadRequest(CommonResponse<dynamic>.BuildNotAuthorizeResponse());
+            }
+            request.CompId = compId;
 
+            var products = _warehouseProductService.GetProductsByProductIds(request.OutItems.Select(pi => pi.ProductId).ToList());  
+            var notExistProduct = request.OutItems.Where(pi => !products.Any(p => p.ProductId == pi.ProductId)).ToList();
+            if (notExistProduct.Count > 0)
+            {
+                return BadRequest(new CommonResponse<dynamic>
+                {
+                    Result = false,
+                    Message = $"以下productId未找到對應的庫存品項: {string.Join(",", notExistProduct.Select(p => p.ProductId))}"
+                });
+            }
+            var (result, errorMsg) = _stockOutService.OwnerDirectBatchOut(request, products, memberAndPermissionSetting.Member);
+
+            return Ok(new CommonResponse<dynamic>
+            {
+                Result = result,
+                Message = errorMsg,
+            });
+        }
 
         private (List<string>, Dictionary<string, List<InStockItemRecord>>, List<string>) FindSameProductInStockRecordsNotAllOutExpirationFIFO(List<OutboundRequest> outBoundItems, string compId)
         {
@@ -1190,29 +1219,6 @@ namespace stock_api.Controllers
             return (notFoundLotNumberBatchList,lotNumberBatchAndToCompAcceptanceItem);
         }
 
-        private async Task CalculateForQuantityToNotity(List<NotifyProductQuantity> notifyProductQuantityList)
-        {
-            var allProductIdList = notifyProductQuantityList.Select(item => item.ProductId).Distinct().ToList();
-            var allUnDonePurchaseSubItemList = _purchaseService.GetNotDonePurchaseSubItemByProductIdList(allProductIdList);
-            foreach (var notifyProductQuantity in notifyProductQuantityList)
-            {
-                var matchedSubItemList = allUnDonePurchaseSubItemList.Where(i=>i.ProductId==notifyProductQuantity.ProductId).ToList();
-                float inProcessingQrderQuantity = matchedSubItemList.Select(i => i.Quantity??0.0f).DefaultIfEmpty(0.0f).Sum();
-                notifyProductQuantity.InProcessingQrderQuantity = (float)inProcessingQrderQuantity ;
-            }
-            notifyProductQuantityList.ForEach(notifyProductQuantity =>
-            {
-                float neededOrderQuantity = notifyProductQuantity.SafeQuantity - notifyProductQuantity.InProcessingQrderQuantity - notifyProductQuantity.InStockQuantity;
-                if (neededOrderQuantity>0)
-                {
-                    string title = $"品項:{notifyProductQuantity.ProductName}庫存量不足,需訂購數量{neededOrderQuantity}";
-                    string content = $"品項名稱:{notifyProductQuantity.ProductName}<br />品項編號:{notifyProductQuantity.ProductCode}<br />最大庫存量:{notifyProductQuantity.MaxSafeQuantity}<br />"
-                    +$"最低庫存量:{notifyProductQuantity.SafeQuantity}<br />目前庫存量:{notifyProductQuantity.InStockQuantity}<br />正在處理中的訂單數量:{notifyProductQuantity.InProcessingQrderQuantity}<br />";
-                    List<WarehouseMember> receiverList = _memberService.GetAllMembersOfComp(notifyProductQuantity.CompId).Where(m=>m.IsActive==true).ToList();
-                    List<string> effectiveEmailList = receiverList.Where(r=>!string.IsNullOrEmpty(r.Email)).Select(r=>r.Email).ToList();
-                    effectiveEmailList.ForEach(effectiveEmail => _emailService.SendAsync(title, content, effectiveEmail));
-                }
-            });
-        }
+        
     }
 }

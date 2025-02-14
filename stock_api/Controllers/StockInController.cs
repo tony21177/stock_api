@@ -34,6 +34,7 @@ namespace stock_api.Controllers
         private readonly IValidator<ReturnRequest> _returnStockValidator;
         private readonly IValidator<ListReturnRecordsRequest> _listReturnRecordsValidator;
         private readonly IValidator<UpdateInStockRequest> _updateInStockRequestValidator;
+        private readonly IValidator<OwnerStockInRequest> _ownerStockInRequestValidator;
 
         public StockInController(IMapper mapper, AuthHelpers authHelpers, GroupService groupService, StockInService stockInService, WarehouseProductService warehouseProductService, PurchaseService purchaseService, StockOutService stockOutService)
         {
@@ -52,6 +53,7 @@ namespace stock_api.Controllers
             _returnStockValidator = new ReturnStockValidator();
             _listReturnRecordsValidator = new ListReturnRecordsValidator();
             _updateInStockRequestValidator = new UpdateInStockRequestValidator();
+            _ownerStockInRequestValidator = new OwnerStockInRequestValidator();
         }
 
         [HttpPost("purchaseAndAcceptItems/list")]
@@ -91,7 +93,7 @@ namespace stock_api.Controllers
             var allItemSupplierName = purchaseMainIdAndAcceptionItemListMap.SelectMany(entry => entry.Value).Select(item => item.ArrangeSupplierName)
                                 .Where(name => !string.IsNullOrEmpty(name))
                                 .ToList();
-            bool isSearchSupplierNameKeywords =  allItemSupplierName.Where(name=>name!=null&& request.Keywords !=null&& name.Contains(request.Keywords)).Any();
+            bool isSearchSupplierNameKeywords = allItemSupplierName.Where(name => name != null && request.Keywords != null && name.Contains(request.Keywords)).Any();
 
 
             foreach (var keyValuePair in purchaseMainIdAndAcceptionItemListMap)
@@ -119,7 +121,7 @@ namespace stock_api.Controllers
                         item.ProductModel = matchedProdcut.ProductModel;
                         item.OpenDeadline = matchedProdcut.OpenDeadline;
                     }
-                    var matchedSubItem = purchaseSubItems.Where(s=>s.ItemId==item.ItemId).FirstOrDefault();
+                    var matchedSubItem = purchaseSubItems.Where(s => s.ItemId == item.ItemId).FirstOrDefault();
                     item.PurchaseSubItem = matchedSubItem;
 
                 }
@@ -131,14 +133,14 @@ namespace stock_api.Controllers
                     continue;
                 }
 
-                 if (request.Keywords != null &&isSearchSupplierNameKeywords==false && (purchaseAcceptItemsVo.IsContainKeywords(request.Keywords) || acceptItems.Any(acceptItem => acceptItem.IsContainKeywords(request.Keywords))))
+                if (request.Keywords != null && isSearchSupplierNameKeywords == false && (purchaseAcceptItemsVo.IsContainKeywords(request.Keywords) || acceptItems.Any(acceptItem => acceptItem.IsContainKeywords(request.Keywords))))
                 {
                     purchaseAcceptItemsVo.AcceptItems = acceptItems;
                     data.Add(purchaseAcceptItemsVo);
                     continue;
                 }
 
-                if (request.Keywords != null && isSearchSupplierNameKeywords ==true  && acceptItems.Any(acceptItem => acceptItem.IsContainSupplierName(request.Keywords)))
+                if (request.Keywords != null && isSearchSupplierNameKeywords == true && acceptItems.Any(acceptItem => acceptItem.IsContainSupplierName(request.Keywords)))
                 {
                     List<AcceptItem> filteredAcceptItems = acceptItems.Where(acceptItem => acceptItem.IsContainKeywords(request.Keywords)).ToList();
                     var ifAnyAcceptItemContainSupplierName = (filteredAcceptItems.Count > 1);
@@ -167,7 +169,7 @@ namespace stock_api.Controllers
                 {
                     mainAndAccptItems.AcceptItems = mainAndAccptItems.AcceptItems.Where(a => a.PurchaseSubItem != null && a.PurchaseSubItem.GroupIds.Contains(request.GroupId)).ToList();
                 }
-                data = data.Where(e=>e.AcceptItems.Count>0).ToList();
+                data = data.Where(e => e.AcceptItems.Count > 0).ToList();
             }
 
             List<AcceptItem> allAcceptItemList = new();
@@ -176,7 +178,7 @@ namespace stock_api.Controllers
 
             if (request.IsGroupBySupplier == true)
             {
-                
+
 
                 allAcceptItemList = data.SelectMany(item => item.AcceptItems).ToList();
                 Dictionary<int, List<AcceptItem>> supplierIdAndAcceptItemListMap = new();
@@ -217,13 +219,13 @@ namespace stock_api.Controllers
                 }
                 if (request.SupplierId != null)
                 {
-                    result = result.Where(i=>i.Supplier.ArrangeSupplierId==request.SupplierId).ToList();    
+                    result = result.Where(i => i.Supplier.ArrangeSupplierId == request.SupplierId).ToList();
                 }
-                var purchaseMainIdList = result.SelectMany(e => e.AcceptItems.Where(i=>i.PurchaseMainId!=null).Select(i => i.PurchaseMainId)).Distinct().ToList();
+                var purchaseMainIdList = result.SelectMany(e => e.AcceptItems.Where(i => i.PurchaseMainId != null).Select(i => i.PurchaseMainId)).Distinct().ToList();
                 var allPurchaseMainList = _purchaseService.GetPurchaseMainsByMainIdList(purchaseMainIdList);
                 result.ForEach(e => e.AcceptItems.ForEach(i =>
                 {
-                    var matchedPurchaseMain = allPurchaseMainList.Where(m=>m.PurchaseMainId==i.PurchaseMainId).FirstOrDefault();
+                    var matchedPurchaseMain = allPurchaseMainList.Where(m => m.PurchaseMainId == i.PurchaseMainId).FirstOrDefault();
                     i.PurchaseMainId = matchedPurchaseMain.PurchaseMainId;
                     i.ApplyDate = matchedPurchaseMain.ApplyDate;
                 }));
@@ -297,13 +299,13 @@ namespace stock_api.Controllers
             data = data.Skip((request.PaginationCondition.Page - 1) * request.PaginationCondition.PageSize).Take(request.PaginationCondition.PageSize).ToList();
 
             // 增加InStockId
-            foreach(var element in data)
+            foreach (var element in data)
             {
                 foreach (var item in element.AcceptItems)
                 {
                     if (item.LotNumberBatch != null)
                     {
-                        var matchedInStockItem = inStockItemRecords.Where(i=>i.LotNumberBatch==item.LotNumberBatch).FirstOrDefault();
+                        var matchedInStockItem = inStockItemRecords.Where(i => i.LotNumberBatch == item.LotNumberBatch).FirstOrDefault();
                         if (matchedInStockItem != null)
                         {
                             item.InStockId = matchedInStockItem.InStockId;
@@ -502,12 +504,12 @@ namespace stock_api.Controllers
             List<InStockItemRecord> existingStockInRecords = _stockInService.GetInStockRecordsHistory(existingAcceptItem.ProductId, compId).OrderByDescending(item => item.CreatedAt).ToList();
             var lastLotNumber = existingStockInRecords.FirstOrDefault()?.LotNumber;
             List<string> newLotNumberIdList = new();
-            var (result, message,qc) = _stockInService.UpdateAcceptItem(purchaseMain, purchaseSubItem, existingAcceptItem, request, product, compId, memberAndPermissionSetting.Member, isDirectOutStock);
+            var (result, message, qc) = _stockInService.UpdateAcceptItem(purchaseMain, purchaseSubItem, existingAcceptItem, request, product, compId, memberAndPermissionSetting.Member, isDirectOutStock);
             if (request.LotNumber != lastLotNumber)
             {
                 newLotNumberIdList.Add(request.AcceptId);
             }
-            List<Qc> qcList = new ();
+            List<Qc> qcList = new();
             if (qc != null)
             {
                 qcList.Add(qc);
@@ -590,7 +592,7 @@ namespace stock_api.Controllers
             var (data, pages) = _stockInService.ListStockInRecordsWithNewLotNumber(request);
             var stockInRecordVoList = _mapper.Map<List<InStockItemRecordNewLotNumberVo>>(data);
             var allProducts = _warehouseProductService.GetAllProducts(request.CompId);
-            var noNeedDisplayProducts = allProducts.Where(p=>p.IsNeedAcceptProcess==null||p.IsNeedAcceptProcess==false||p.QcType==CommonConstants.QcTypeConstants.NONE).ToList();
+            var noNeedDisplayProducts = allProducts.Where(p => p.IsNeedAcceptProcess == null || p.IsNeedAcceptProcess == false || p.QcType == CommonConstants.QcTypeConstants.NONE).ToList();
 
 
             foreach (var item in stockInRecordVoList)
@@ -599,7 +601,7 @@ namespace stock_api.Controllers
                 item.ProductUnit = matchedProduct?.Unit;
                 item.SavingFunction = matchedProduct?.SavingFunction;
                 item.SavingTemperature = matchedProduct?.SavingTemperature;
-                item.ProductModel = matchedProduct?.ProductModel;   
+                item.ProductModel = matchedProduct?.ProductModel;
                 item.OpenDeadline = matchedProduct?.OpenDeadline;
             }
 
@@ -639,7 +641,7 @@ namespace stock_api.Controllers
             }
             var updateAcceptIdList = request.UpdateAcceptItemList.Select(i => i.AcceptId).ToList();
             var existingAcceptItemList = _stockInService.GetAcceptanceItemByAcceptIdList(updateAcceptIdList);
-            var existingItemId = existingAcceptItemList.Select(item=>item.ItemId).ToList();
+            var existingItemId = existingAcceptItemList.Select(item => item.ItemId).ToList();
             var existingPurchaseSubItems = _purchaseService.GetPurchaseSubItemByItemIdList(existingItemId);
 
 
@@ -658,7 +660,7 @@ namespace stock_api.Controllers
                 return BadRequest(CommonResponse<dynamic>.BuildNotAuthorizeResponse());
             }
 
-            foreach(var existingAcceptItem in existingAcceptItemList)
+            foreach (var existingAcceptItem in existingAcceptItemList)
             {
                 var matchedUpdateAcceptItemRequest = request.UpdateAcceptItemList.Find(a => a.AcceptId == existingAcceptItem.AcceptId);
 
@@ -751,7 +753,7 @@ namespace stock_api.Controllers
                 var matchedExistAcceptItem = existingAcceptItemList.Where(i => i.AcceptId == item.AcceptId).FirstOrDefault();
                 var matchedProduct = existingProductList.Where(p => p.ProductId == matchedExistAcceptItem.ProductId).FirstOrDefault();
                 var matchedPurchaseMain = purchaseMainList.Where(p => p.PurchaseMainId == matchedExistAcceptItem.PurchaseMainId).FirstOrDefault();
-                var matchedPurchaseSubItem = existingPurchaseSubItems.Where(s=>s.ItemId==matchedExistAcceptItem.ItemId).FirstOrDefault();
+                var matchedPurchaseSubItem = existingPurchaseSubItems.Where(s => s.ItemId == matchedExistAcceptItem.ItemId).FirstOrDefault();
 
                 List<InStockItemRecord> existingStockInRecords = _stockInService.GetInStockRecordsHistory(matchedExistAcceptItem.ProductId, compId).OrderByDescending(item => item.CreatedAt).ToList();
                 var lastLotNumber = existingStockInRecords.FirstOrDefault()?.LotNumber;
@@ -759,7 +761,7 @@ namespace stock_api.Controllers
                 {
                     newLotNumberIdList.Add(item.AcceptId);
                 }
-                var (result, message,qc) = _stockInService.UpdateAcceptItem(matchedPurchaseMain, matchedPurchaseSubItem, matchedExistAcceptItem, item, matchedProduct, compId, memberAndPermissionSetting.Member, isDirectOutStock);
+                var (result, message, qc) = _stockInService.UpdateAcceptItem(matchedPurchaseMain, matchedPurchaseSubItem, matchedExistAcceptItem, item, matchedProduct, compId, memberAndPermissionSetting.Member, isDirectOutStock);
                 if (result != true)
                 {
                     failedIdList.Add(matchedExistAcceptItem.AcceptId);
@@ -815,20 +817,20 @@ namespace stock_api.Controllers
                     Message = "驗收項目不存在"
                 });
             }
-            if (accepItem.CompId!=compId)
+            if (accepItem.CompId != compId)
             {
                 return BadRequest(CommonResponse<dynamic>.BuildNotAuthorizeResponse());
             }
 
             var inStockRecords = _stockInService.GetProductInStockRecordsByAcceptId(accepItem.ItemId);
-            var productIdList = inStockRecords.Select(item=>item.ProductId).ToList();
+            var productIdList = inStockRecords.Select(item => item.ProductId).ToList();
             var products = _warehouseProductService.GetProductsByProductIdsAndCompId(productIdList, compId);
 
-            List<InStockRecordForPrint> data =  _mapper.Map<List<InStockRecordForPrint>>(inStockRecords);
+            List<InStockRecordForPrint> data = _mapper.Map<List<InStockRecordForPrint>>(inStockRecords);
 
             data.ForEach(item =>
             {
-                var matchedProduct = products.Where(p=>p.ProductId == item.ProductId).FirstOrDefault();
+                var matchedProduct = products.Where(p => p.ProductId == item.ProductId).FirstOrDefault();
                 item.Unit = matchedProduct?.Unit;
             });
 
@@ -883,7 +885,7 @@ namespace stock_api.Controllers
             //}
             var product = _warehouseProductService.GetProductByProductId(outStockRecord.ProductId);
 
-            var (result, errorMsg) = _stockInService.Return(outStockRecord, product, memberAndPermissionSetting.Member,request.ReturnQuantity);
+            var (result, errorMsg) = _stockInService.Return(outStockRecord, product, memberAndPermissionSetting.Member, request.ReturnQuantity);
             return Ok(new CommonResponse<dynamic>
             {
                 Result = result,
@@ -904,12 +906,12 @@ namespace stock_api.Controllers
             }
 
             var compId = memberAndPermissionSetting.CompanyWithUnit.CompId;
-            if(request.CompId==null) request.CompId = compId;
+            if (request.CompId == null) request.CompId = compId;
 
 
             var returnStockRecords = _stockInService.ListReturnRecords(request);
-            returnStockRecords = returnStockRecords.OrderByDescending(r=>r.CreatedAt).ToList();
-          
+            returnStockRecords = returnStockRecords.OrderByDescending(r => r.CreatedAt).ToList();
+
             return Ok(new CommonResponse<dynamic>
             {
                 Result = true,
@@ -917,7 +919,7 @@ namespace stock_api.Controllers
             });
         }
 
-        
+
 
 
         [HttpPost("remind/expired")]
@@ -928,7 +930,7 @@ namespace stock_api.Controllers
             var compId = memberAndPermissionSetting.CompanyWithUnit.CompId;
             DateOnly today = DateOnly.FromDateTime(DateTime.Now);
             var nearExpiredProductVoList = _stockInService.GetNearExpiredProductList(compId, today, request.PreDeadline);
-            
+
             return Ok(new CommonResponse<dynamic>
             {
                 Result = true,
@@ -937,7 +939,7 @@ namespace stock_api.Controllers
         }
 
         [HttpPost("update")]
-        [AuthorizeRoles("1","3","5","7")]
+        [AuthorizeRoles("1", "3", "5", "7")]
         // TODO: 未來還需考慮若已出庫還可更改嗎? 若可以出庫資料也須跟著更動?
         public IActionResult Update(UpdateInStockRequest request)
         {
@@ -964,7 +966,7 @@ namespace stock_api.Controllers
                 return BadRequest(CommonResponse<dynamic>.BuildNotAuthorizeResponse());
             }
 
-            var (isSuccessful,errorMsg) = _stockInService.UpdateInStockItem(request, acceptItem);
+            var (isSuccessful, errorMsg) = _stockInService.UpdateInStockItem(request, acceptItem);
 
             return Ok(new CommonResponse<dynamic>
             {
@@ -980,7 +982,7 @@ namespace stock_api.Controllers
             var memberAndPermissionSetting = _authHelpers.GetMemberAndPermissionSetting(User);
             var compId = memberAndPermissionSetting.CompanyWithUnit.CompId;
 
-            var inStockItemRecord= _stockInService.GetInStockRecordById(request.InStockId);
+            var inStockItemRecord = _stockInService.GetInStockRecordById(request.InStockId);
             if (inStockItemRecord == null)
             {
                 return BadRequest(new CommonResponse<dynamic>
@@ -1011,7 +1013,7 @@ namespace stock_api.Controllers
                     Message = "已有出庫,不可刪除"
                 });
             }
-            var (isSuccessful,errorMsg) = _stockInService.DeleteInStockRecord(inStockItemRecord);
+            var (isSuccessful, errorMsg) = _stockInService.DeleteInStockRecord(inStockItemRecord);
 
             return Ok(new CommonResponse<dynamic>
             {
@@ -1019,19 +1021,57 @@ namespace stock_api.Controllers
                 Message = errorMsg,
             });
         }
-    }
 
-    public class SupplierAccepItemsVo
-    {
-        public SupplierVo Supplier { get; set; } = null!;
+        [HttpPost("owner/productDirectIn")]
+        [Authorize]
+        public IActionResult ProductDirectIn(OwnerStockInRequest request)
+        {
+            var memberAndPermissionSetting = _authHelpers.GetMemberAndPermissionSetting(User);
+            var compId = memberAndPermissionSetting.CompanyWithUnit.CompId;
+            if (memberAndPermissionSetting.CompanyWithUnit.Type != CommonConstants.CompanyType.OWNER)
+            {
+                return BadRequest(CommonResponse<dynamic>.BuildNotAuthorizeResponse());
+            }
+            request.CompId = compId;
 
-        public List<AcceptItem> AcceptItems {  get; set; } = new();
+            var validationResult = _ownerStockInRequestValidator.Validate(request);
 
-    }
+            if (!validationResult.IsValid)
+            {
+                return BadRequest(CommonResponse<dynamic>.BuildValidationFailedResponse(validationResult));
+            }
 
-    public class SupplierVo
-    {
-        public int ArrangeSupplierId { get; set; }
-        public string? ArrangeSupplierName { get; set; }
+            var product = _warehouseProductService.GetProductByProductId(request.ProductId);
+            if (product == null)
+            {
+                return BadRequest(new CommonResponse<dynamic>
+                {
+                    Result = false,
+                    Message = "該品項不存在"
+                });
+            }
+
+            var (result, errorMsg) = _stockInService.OwnerStockInService(request, product, memberAndPermissionSetting.Member);
+
+            return Ok(new CommonResponse<dynamic>
+            {
+                Result = result,
+                Message = errorMsg,
+            });
+        }
+
+        public class SupplierAccepItemsVo
+        {
+            public SupplierVo Supplier { get; set; } = null!;
+
+            public List<AcceptItem> AcceptItems { get; set; } = new();
+
+        }
+
+        public class SupplierVo
+        {
+            public int ArrangeSupplierId { get; set; }
+            public string? ArrangeSupplierName { get; set; }
+        }
     }
 }

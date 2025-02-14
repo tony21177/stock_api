@@ -751,7 +751,7 @@ namespace stock_api.Service
 
                 product.InStockQuantity = product.InStockQuantity + returnQuantity;
 
-                
+
                 var afterQuantityBefore = outStockRecord.AfterQuantity;
                 var afterQuantityAfter = product.InStockQuantity; // 退庫後的現有庫存量
 
@@ -945,8 +945,8 @@ namespace stock_api.Service
             try
             {
                 var inStockRecord = _dbContext.InStockItemRecords.Where(i => i.ItemId == acceptanceItem.ItemId).FirstOrDefault();
-                if(request.LotNumber!=null) acceptanceItem.LotNumber = request.LotNumber;
-                if(request.ExpirationDate!=null) acceptanceItem.ExpirationDate =  DateOnly.FromDateTime(DateTimeHelper.ParseDateString(request.ExpirationDate).Value);
+                if (request.LotNumber != null) acceptanceItem.LotNumber = request.LotNumber;
+                if (request.ExpirationDate != null) acceptanceItem.ExpirationDate = DateOnly.FromDateTime(DateTimeHelper.ParseDateString(request.ExpirationDate).Value);
 
                 if (inStockRecord != null)
                 {
@@ -967,10 +967,10 @@ namespace stock_api.Service
 
         public List<InStockItemRecord> GetInStockRecordsNotAllOutOrReject(string productId)
         {
-            return _dbContext.InStockItemRecords.Where(i => i.ProductId == productId && (i.InStockQuantity - i.OutStockQuantity - i.RejectQuantity)>0).ToList();
+            return _dbContext.InStockItemRecords.Where(i => i.ProductId == productId && (i.InStockQuantity - i.OutStockQuantity - i.RejectQuantity) > 0).ToList();
         }
 
-        public (bool,string?) DeleteInStockRecord(InStockItemRecord inStockItemRecord)
+        public (bool, string?) DeleteInStockRecord(InStockItemRecord inStockItemRecord)
         {
 
             using var scope = new TransactionScope();
@@ -999,8 +999,8 @@ namespace stock_api.Service
                 else
                 {
                     // 表示有之前的入庫
-                    var beforeInStockItemRecord = _dbContext.InStockItemRecords.Where(i=>i.InStockId!=inStockItemRecord.InStockId&&
-                    i.ItemId==inStockItemRecord.ItemId).OrderByDescending(i=>i.CreatedAt).FirstOrDefault();
+                    var beforeInStockItemRecord = _dbContext.InStockItemRecords.Where(i => i.InStockId != inStockItemRecord.InStockId &&
+                    i.ItemId == inStockItemRecord.ItemId).OrderByDescending(i => i.CreatedAt).FirstOrDefault();
                     acceptItem.AcceptUserId = beforeInStockItemRecord.UserId;
                     acceptItem.LotNumber = beforeInStockItemRecord.LotNumber;
                     acceptItem.LotNumberBatch = beforeInStockItemRecord.LotNumberBatch;
@@ -1021,7 +1021,7 @@ namespace stock_api.Service
                 {
                     acceptItem.InStockStatus = CommonConstants.PurchaseSubItemReceiveStatus.DONE;
                     purchaseSubItem.ReceiveStatus = CommonConstants.PurchaseSubItemReceiveStatus.DONE;
-                    
+
                 }
                 else if (acceptItem.AcceptQuantity != null && acceptItem.AcceptQuantity > 0 && acceptItem.AcceptQuantity < acceptItem.OrderQuantity)
                 {
@@ -1029,8 +1029,8 @@ namespace stock_api.Service
                     _logger.LogInformation("[刪除部分驗收] AcceptId:${acceptId},AcceptQuantity:${AcceptQuantity},OrderQuantity:${}", acceptItem.AcceptId, acceptItem.AcceptQuantity, acceptItem.OrderQuantity);
                     acceptItem.InStockStatus = CommonConstants.PurchaseSubItemReceiveStatus.PART;
                     purchaseSubItem.ReceiveStatus = CommonConstants.PurchaseSubItemReceiveStatus.PART;
-                    
-                }else if (acceptItem.AcceptQuantity != null && acceptItem.AcceptQuantity==0)
+
+                } else if (acceptItem.AcceptQuantity != null && acceptItem.AcceptQuantity == 0)
                 {
                     acceptItem.InStockStatus = CommonConstants.PurchaseSubItemReceiveStatus.NONE;
                     purchaseSubItem.ReceiveStatus = CommonConstants.PurchaseSubItemReceiveStatus.NONE;
@@ -1051,9 +1051,50 @@ namespace stock_api.Service
 
         }
 
-        public List<InStockItemRecord> GetInStockItemRecordsByLotNumberBatchList(string compId,List<string> lotNumberBatchList)
+        public List<InStockItemRecord> GetInStockItemRecordsByLotNumberBatchList(string compId, List<string> lotNumberBatchList)
         {
-            return _dbContext.InStockItemRecords.Where(i=>lotNumberBatchList.Contains(i.LotNumberBatch)&&i.CompId==compId).ToList();
+            return _dbContext.InStockItemRecords.Where(i => lotNumberBatchList.Contains(i.LotNumberBatch) && i.CompId == compId).ToList();
         }
-     }
+
+        public (bool, string?) OwnerStockInService(OwnerStockInRequest request, WarehouseProduct product, WarehouseMember user)
+        {
+            using var scope = new TransactionScope();
+            try
+            {
+                string lotNumberBatch = DateTime.Now.ToString("yyyyMMddHHmmssfff");
+                var inStockItemRecord = new InStockItemRecord()
+                {
+
+                    InStockId = Guid.NewGuid().ToString(),
+                    LotNumberBatch = lotNumberBatch,
+                    CompId = request.CompId,
+                    OriginalQuantity = product.InStockQuantity.Value,
+                    ExpirationDate = request.ExpirationDate != null ? DateOnly.FromDateTime(DateTimeHelper.ParseDateString(request.ExpirationDate).Value) : null,
+                    InStockQuantity = request.Quantity,
+                    ProductId = product.ProductId,
+                    ProductCode = product.ProductCode,
+                    ProductName = product.ProductName,
+                    ProductSpec = product.ProductSpec,
+                    Type = CommonConstants.StockInType.OWNER_DIRECT_IN,
+                    BarCodeNumber = lotNumberBatch,
+                    UserId = user.UserId,
+                    UserName = user.DisplayName,
+                    AfterQuantity = (product.InStockQuantity.Value + request.Quantity),
+                    IsNeedQc = product.IsNeedAcceptProcess,
+                    QcType = product.QcType,
+                    QcTestStatus = CommonConstants.QcTestStatus.NONE,
+                    Comment = request.Comment,
+                };
+
+                product.InStockQuantity = inStockItemRecord.AfterQuantity;
+                product.LotNumberBatch = inStockItemRecord.LotNumberBatch;
+                return (true,null);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError("事務失敗[OwnerStockInService]：{msg}", ex);
+                return (false, ex.Message);
+            }
+        }
+    }
 }
