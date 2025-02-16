@@ -458,13 +458,67 @@ namespace stock_api.Service
                 _logger.LogError("事務失敗[OwnerDirectBatchOut]：{msg}", ex);
                 return (false, ex.Message);
             }
+        }
 
 
+        public (bool, string?) OwnerPurchaseSubItemsBatchOut(OwnerPurchaseSubItemsOutRequest request, List<PurchaseSubItem> subItems, WarehouseMember user)
+        {
+
+            using var scope = new TransactionScope();
+            try
+            {
+                List<OutStockRecord> outStockRecords = new List<OutStockRecord>();
+                var productIds = subItems.Select(x => x.ProductId).ToList();
+                var products = _dbContext.WarehouseProducts.Where(p=> productIds.Contains(p.ProductId)).ToList();
+
+                foreach (var item in request.PurchaseSubOutItems)
+                {
+                    var matchedSubItem = subItems.Where(i=>i.ItemId==item.SubItemId).FirstOrDefault();
+                    var matchedProduct = products.Where(p => p.ProductId == matchedSubItem.ProductId).FirstOrDefault();
 
 
+                    string lotNumberBatch = DateTime.Now.ToString("yyyyMMddHHmmssfff");
 
+                    OutStockRecord outStockRecord = new OutStockRecord()
+                    {
+                        OutStockId = Guid.NewGuid().ToString(),
+                        ApplyQuantity = item.OutQuantity,
+                        LotNumberBatch = lotNumberBatch,
+                        CompId = request.CompId,
+                        IsAbnormal = false,
+                        ProductId = matchedSubItem.ProductId,
+                        ProductCode = matchedSubItem.ProductCode,
+                        ProductName = matchedSubItem.ProductName,
+                        ProductSpec = matchedSubItem.ProductSpec,
+                        Type = CommonConstants.OutStockType.OWNER_DIRECT_OUT_BY_SUB_ITEM,
+                        UserId = user.UserId,
+                        UserName = user.DisplayName,
+                        OriginalQuantity = matchedProduct.InStockQuantity.Value,
+                        AfterQuantity = (matchedProduct.InStockQuantity.Value - item.OutQuantity),
+                        BarCodeNumber = lotNumberBatch,
+                    };
+                    matchedProduct.LotNumberBatch = lotNumberBatch;
+                    matchedProduct.InStockQuantity = outStockRecord.AfterQuantity;
 
+                    DateOnly nowDate = DateOnly.FromDateTime(DateTime.Now);
+                    if (matchedProduct.OpenDeadline != null)
+                    {
+                        matchedProduct.LastAbleDate = nowDate.AddDays(matchedProduct.OpenDeadline.Value);
+                    }
+                    matchedProduct.LastOutStockDate = nowDate;
+                    outStockRecords.Add(outStockRecord);
+                }
+                _dbContext.OutStockRecords.AddRange(outStockRecords);
+                _dbContext.SaveChanges();
+                scope.Complete();
+                return (true, null);
 
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError("事務失敗[OwnerPurchaseSubItemsBatchOut]：{msg}", ex);
+                return (false, ex.Message);
+            }
         }
     }
 }

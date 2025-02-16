@@ -946,6 +946,67 @@ namespace stock_api.Controllers
             });
         }
 
+        [HttpPost("owner/purchaseSubItemsOut")]
+        [Authorize]
+        public IActionResult PurchaseSubItemsOut(OwnerPurchaseSubItemsOutRequest request)
+        {
+            var memberAndPermissionSetting = _authHelpers.GetMemberAndPermissionSetting(User);
+            var compId = memberAndPermissionSetting.CompanyWithUnit.CompId;
+            if (memberAndPermissionSetting.CompanyWithUnit.Type != CommonConstants.CompanyType.OWNER)
+            {
+                return BadRequest(CommonResponse<dynamic>.BuildNotAuthorizeResponse());
+            }
+            request.CompId = compId;
+
+            var subItems = _purchaseService.GetPurchaseSubItemByItemIdList(request.PurchaseSubOutItems.Select(i => i.SubItemId).ToList());
+            var notExistSubItems = request.PurchaseSubOutItems.Where(i => !subItems.Any(si => si.ItemId == i.SubItemId)).ToList();
+            if (notExistSubItems.Count > 0)
+            {
+                return BadRequest(new CommonResponse<dynamic>
+                {
+                    Result = false,
+                    Message = $"以下subItemId未找到對應的採購品項: {string.Join(",", notExistSubItems.Select(p => p.SubItemId))}"
+                });
+            }
+            var purchaseMainIds = subItems.Select(s => s.PurchaseMainId).ToList();
+            if (purchaseMainIds.Count > 1)
+            {
+                return BadRequest(new CommonResponse<dynamic>
+                {
+                    Result = false,
+                    Message = "不可跨採購單出庫"
+                });
+            }
+            var purchaseMain = _purchaseService.GetPurchaseMainByMainId(purchaseMainIds[0]);
+            if (purchaseMain == null)
+            {
+                return BadRequest(new CommonResponse<dynamic>
+                {
+                    Result = false,
+                    Message = "找不到此張採購單主檔"
+                });
+            }
+            if (purchaseMain.CurrentStatus != CommonConstants.PurchaseCurrentStatus.AGREE || purchaseMain.OwnerProcess != CommonConstants.PurchaseMainOwnerProcessStatus.AGREE)
+            {
+                return BadRequest(new CommonResponse<dynamic>
+                {
+                    Result = false,
+                    Message = "院區或供應商尚未審核完"
+                });
+            }
+
+
+
+
+            var (result, errorMsg) = _stockOutService.OwnerPurchaseSubItemsBatchOut(request, subItems, memberAndPermissionSetting.Member);
+
+            return Ok(new CommonResponse<dynamic>
+            {
+                Result = result,
+                Message = errorMsg,
+            });
+        }
+
         private (List<string>, Dictionary<string, List<InStockItemRecord>>, List<string>) FindSameProductInStockRecordsNotAllOutExpirationFIFO(List<OutboundRequest> outBoundItems, string compId)
         {
             List<string> notFoundLotNumberBatchList = new();

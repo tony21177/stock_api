@@ -337,6 +337,7 @@ namespace stock_api.Common.Constant
             public const string RETURN_OUT = "RETURN_OUT";
             public const string DISCARD_OUT = "DISCARD_OUT";
             public const string OWNER_DIRECT_OUT = "OWNER_DIRECT_OUT";
+            public const string OWNER_DIRECT_OUT_BY_SUB_ITEM = "OWNER_DIRECT_OUT_BY_SUB_ITEM";
 
             public static List<string> GetAllValues()
             {
