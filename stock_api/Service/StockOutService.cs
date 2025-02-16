@@ -496,6 +496,7 @@ namespace stock_api.Service
                         OriginalQuantity = matchedProduct.InStockQuantity.Value,
                         AfterQuantity = (matchedProduct.InStockQuantity.Value - item.OutQuantity),
                         BarCodeNumber = lotNumberBatch,
+                        ItemId = item.SubItemId,
                     };
                     matchedProduct.LotNumberBatch = lotNumberBatch;
                     matchedProduct.InStockQuantity = outStockRecord.AfterQuantity;
