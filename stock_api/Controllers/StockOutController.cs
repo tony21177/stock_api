@@ -968,7 +968,7 @@ namespace stock_api.Controllers
                     Message = $"以下subItemId未找到對應的採購品項: {string.Join(",", notExistSubItems.Select(p => p.SubItemId))}"
                 });
             }
-            var purchaseMainIds = subItems.Select(s => s.PurchaseMainId).ToList();
+            var purchaseMainIds = subItems.Select(s => s.PurchaseMainId).Distinct().ToList();
             if (purchaseMainIds.Count > 1)
             {
                 return BadRequest(new CommonResponse<dynamic>
