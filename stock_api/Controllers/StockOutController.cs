@@ -946,7 +946,7 @@ namespace stock_api.Controllers
 
                 if (matchedProduct.InStockQuantity < outItem.OutQuantity)
                 {
-                    notEnoughQuantityMsg += $"品項編碼: {matchedProduct.ProductCode}, 出庫數量: {outItem.OutQuantity}已超過現有庫存數量: {matchedProduct.InStockQuantity}\n";
+                    notEnoughQuantityMsg += $"品項編碼:{matchedProduct.ProductCode}, 出庫數量:{outItem.OutQuantity}已超過現有庫存數量:{matchedProduct.InStockQuantity};";
                 }
             }
             if (!notEnoughQuantityMsg.IsNullOrEmpty())
@@ -956,16 +956,6 @@ namespace stock_api.Controllers
                     Result = false,
                     Message = notEnoughQuantityMsg
                 });
-            }
-            foreach (var outItem in request.OutItems)
-            {
-                var requestProductId = outItem.ProductId;
-                var matchedProduct = products.Where(p => p.ProductId == requestProductId).FirstOrDefault();
-
-                if (matchedProduct.InStockQuantity < outItem.OutQuantity)
-                {
-                    notEnoughQuantityMsg += $"品項編碼:{matchedProduct.ProductCode}, 出庫數量:{outItem.OutQuantity}已超過現有庫存數量:{matchedProduct.InStockQuantity};";
-                }
             }
             var (result, errorMsg) = _stockOutService.OwnerDirectBatchOut(request, products, memberAndPermissionSetting.Member);
 
