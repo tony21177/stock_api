@@ -472,7 +472,7 @@ namespace stock_api.Service
                 foreach (var item in request.PurchaseSubOutItems)
                 {
                     var matchedSubItem = subItems.Where(i=>i.ItemId==item.SubItemId).FirstOrDefault();
-                    var matchedProduct = ownerProducts.Where(p => p.ProductId == matchedSubItem.ProductId).FirstOrDefault();
+                    var matchedProduct = ownerProducts.Where(p => p.ProductCode == matchedSubItem.ProductCode).FirstOrDefault();
 
 
                     string lotNumberBatch = DateTime.Now.ToString("yyyyMMddHHmmssfff");
