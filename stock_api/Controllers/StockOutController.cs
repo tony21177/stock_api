@@ -1052,9 +1052,14 @@ namespace stock_api.Controllers
                     notEnoughQuantityMsg += $"品項編碼: {matchedProduct.ProductCode}, 出庫數量: {outItem.OutQuantity}已超過現有庫存數量: {matchedProduct.InStockQuantity}\n";
                 }
             }
-
-
-
+            if (!notEnoughQuantityMsg.IsNullOrEmpty())
+            {
+                return BadRequest(new CommonResponse<dynamic>
+                {
+                    Result = false,
+                    Message = notEnoughQuantityMsg
+                });
+            }
             var (result, errorMsg) = _stockOutService.OwnerPurchaseSubItemsBatchOut(request, subItems, ownerProducts, memberAndPermissionSetting.Member);
 
             return Ok(new CommonResponse<dynamic>
