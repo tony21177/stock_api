@@ -461,20 +461,18 @@ namespace stock_api.Service
         }
 
 
-        public (bool, string?) OwnerPurchaseSubItemsBatchOut(OwnerPurchaseSubItemsOutRequest request, List<PurchaseSubItem> subItems, WarehouseMember user)
+        public (bool, string?) OwnerPurchaseSubItemsBatchOut(OwnerPurchaseSubItemsOutRequest request, List<PurchaseSubItem> subItems,List<WarehouseProduct> ownerProducts, WarehouseMember user)
         {
 
             using var scope = new TransactionScope();
             try
             {
                 List<OutStockRecord> outStockRecords = new List<OutStockRecord>();
-                var productIds = subItems.Select(x => x.ProductId).ToList();
-                var products = _dbContext.WarehouseProducts.Where(p=> productIds.Contains(p.ProductId)).ToList();
 
                 foreach (var item in request.PurchaseSubOutItems)
                 {
                     var matchedSubItem = subItems.Where(i=>i.ItemId==item.SubItemId).FirstOrDefault();
-                    var matchedProduct = products.Where(p => p.ProductId == matchedSubItem.ProductId).FirstOrDefault();
+                    var matchedProduct = ownerProducts.Where(p => p.ProductId == matchedSubItem.ProductId).FirstOrDefault();
 
 
                     string lotNumberBatch = DateTime.Now.ToString("yyyyMMddHHmmssfff");

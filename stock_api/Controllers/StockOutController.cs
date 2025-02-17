@@ -16,6 +16,7 @@ using Org.BouncyCastle.Asn1.Ocsp;
 using System.Collections.Generic;
 using stock_api.Controllers.Dto;
 using stock_api.Common.Utils;
+using Microsoft.IdentityModel.Tokens;
 
 namespace stock_api.Controllers
 {
@@ -937,6 +938,35 @@ namespace stock_api.Controllers
                     Message = $"以下productId未找到對應的庫存品項: {string.Join(",", notExistProduct.Select(p => p.ProductId))}"
                 });
             }
+            var notEnoughQuantityMsg = "";
+            foreach (var outItem in request.OutItems)
+            {
+                var requestProductId = outItem.ProductId;
+                var matchedProduct = products.Where(p => p.ProductId == requestProductId).FirstOrDefault();
+
+                if (matchedProduct.InStockQuantity < outItem.OutQuantity)
+                {
+                    notEnoughQuantityMsg += $"品項編碼: {matchedProduct.ProductCode}, 出庫數量: {outItem.OutQuantity}已超過現有庫存數量: {matchedProduct.InStockQuantity}\n";
+                }
+            }
+            if (!notEnoughQuantityMsg.IsNullOrEmpty())
+            {
+                return BadRequest(new CommonResponse<dynamic>
+                {
+                    Result = false,
+                    Message = notEnoughQuantityMsg
+                });
+            }
+            foreach (var outItem in request.OutItems)
+            {
+                var requestProductId = outItem.ProductId;
+                var matchedProduct = products.Where(p => p.ProductId == requestProductId).FirstOrDefault();
+
+                if (matchedProduct.InStockQuantity < outItem.OutQuantity)
+                {
+                    notEnoughQuantityMsg += $"品項編碼: {matchedProduct.ProductCode}, 出庫數量: {outItem.OutQuantity}已超過現有庫存數量: {matchedProduct.InStockQuantity}\n";
+                }
+            }
             var (result, errorMsg) = _stockOutService.OwnerDirectBatchOut(request, products, memberAndPermissionSetting.Member);
 
             return Ok(new CommonResponse<dynamic>
@@ -968,6 +998,22 @@ namespace stock_api.Controllers
                     Message = $"以下subItemId未找到對應的採購品項: {string.Join(",", notExistSubItems.Select(p => p.SubItemId))}"
                 });
             }
+
+
+            var unitProductCodesInSubItems = subItems.Select(i=>i.ProductCode).ToList();
+            var ownerProducts = _warehouseProductService.GetProductsByProductCodesAndCompId(subItems.Select(pi => pi.ProductCode).ToList(),compId);
+            var notExistOwnerProducts = unitProductCodesInSubItems.Where(code => !ownerProducts.Any(p => p.ProductCode == code)).ToList();
+            if (notExistOwnerProducts.Count > 0)
+            {
+                return BadRequest(new CommonResponse<dynamic>
+                {
+                    Result = false,
+                    Message = $"以下編碼在廠商端未找到對應的庫存品項: {string.Join(",", notExistOwnerProducts)}"
+                });
+            }
+
+
+
             var purchaseMainIds = subItems.Select(s => s.PurchaseMainId).Distinct().ToList();
             if (purchaseMainIds.Count > 1)
             {
@@ -995,10 +1041,21 @@ namespace stock_api.Controllers
                 });
             }
 
+            var notEnoughQuantityMsg = "";
+            foreach (var outItem in request.PurchaseSubOutItems)
+            {
+                var requestSubItemId = outItem.SubItemId;
+                var requestProductCode = subItems.Where(i => i.ItemId == requestSubItemId).FirstOrDefault().ProductCode;
+                var matchedProduct = ownerProducts.Where(p => p.ProductCode == requestProductCode).FirstOrDefault();
+                if (matchedProduct.InStockQuantity < outItem.OutQuantity)
+                {
+                    notEnoughQuantityMsg += $"品項編碼: {matchedProduct.ProductCode}, 出庫數量: {outItem.OutQuantity}已超過現有庫存數量: {matchedProduct.InStockQuantity}\n";
+                }
+            }
 
 
 
-            var (result, errorMsg) = _stockOutService.OwnerPurchaseSubItemsBatchOut(request, subItems, memberAndPermissionSetting.Member);
+            var (result, errorMsg) = _stockOutService.OwnerPurchaseSubItemsBatchOut(request, subItems, ownerProducts, memberAndPermissionSetting.Member);
 
             return Ok(new CommonResponse<dynamic>
             {
