@@ -73,6 +73,17 @@ namespace stock_api.Common.Constant
             }
         }
 
+        public static class PurchaseSubOwnerProcessStatus
+        {
+            
+            public const string DONE_OUTSTOCK = "DONE_OUTSTOCK";
+
+            public static List<string> GetAllValues()
+            {
+                return new List<string> { DONE_OUTSTOCK };
+            }
+        }
+
         public static class UpdateOwnerProcessStatus
         {
             public const string NOT_AGREE = "NOT_AGREE";

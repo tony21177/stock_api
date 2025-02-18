@@ -506,6 +506,7 @@ namespace stock_api.Service
                     }
                     matchedProduct.LastOutStockDate = nowDate;
                     outStockRecords.Add(outStockRecord);
+                    matchedSubItem.OwnerProcess = CommonConstants.PurchaseSubOwnerProcessStatus.DONE_OUTSTOCK;
                 }
                 _dbContext.OutStockRecords.AddRange(outStockRecords);
                 _dbContext.SaveChanges();
