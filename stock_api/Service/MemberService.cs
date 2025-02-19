@@ -145,7 +145,7 @@ namespace stock_api.Service
             var originalAuthValue = toBeUpdateMember.AuthValue;
             var originalDisplayName = toBeUpdateMember.DisplayName;
             var originalPassword = toBeUpdateMember.Password;
-
+            var originalEmail = toBeUpdateMember.Email;
 
             _mapper.Map(updateMember, toBeUpdateMember);
             if (request.Account == null)
@@ -163,6 +163,10 @@ namespace stock_api.Service
             if (request.Password == null)
             {
                 toBeUpdateMember.Password = originalPassword;
+            }
+            if (request.Email == null)
+            {
+                toBeUpdateMember.Email = originalEmail;
             }
 
 

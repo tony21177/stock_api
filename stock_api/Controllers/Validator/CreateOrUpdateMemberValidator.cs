@@ -23,8 +23,8 @@ namespace stock_api.Controllers.Validator
                 RuleFor(x => x.IsActive).NotEmpty().WithMessage("isActive為必須");
                 RuleFor(x => x.AuthValue).NotEmpty().WithMessage("authValue為必須");
                 RuleFor(x => x.CompId).NotEmpty().WithMessage("compId為必須");
-                RuleFor(x=>x.Email).NotEmpty().WithMessage("email為必須")
-                    .EmailAddress().WithMessage("無效的email格式");
+                //RuleFor(x=>x.Email).NotEmpty().WithMessage("email為必須")
+                //    .EmailAddress().WithMessage("無效的email格式");
                 RuleFor(x => x.Agents)
                     .Must((request, agents, context) => BeValidUserList(agents, context))
                     .WithMessage("以下 agents 為無效的 user: {InvalidAgents}");
