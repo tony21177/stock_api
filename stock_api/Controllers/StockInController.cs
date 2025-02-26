@@ -605,12 +605,17 @@ namespace stock_api.Controllers
                 item.OpenDeadline = matchedProduct?.OpenDeadline;
             }
 
-            // 彰化醫院婉君要求 設定無的不需要顯示
-            stockInRecordVoList.RemoveAll(vo =>
+
+            if(memberAndPermissionSetting.CompanyWithUnit.UnitId== "Changhua-unit")
             {
-                if (noNeedDisplayProducts.Find(p => p.ProductId == vo.ProductId) != null) return true;
-                return false;
-            });
+                // 彰化醫院婉君要求 設定無的不需要顯示
+                stockInRecordVoList.RemoveAll(vo =>
+                {
+                    if (noNeedDisplayProducts.Find(p => p.ProductId == vo.ProductId) != null) return true;
+                    return false;
+                });
+            }
+            
 
             return Ok(new CommonResponse<dynamic>
             {
