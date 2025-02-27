@@ -1056,7 +1056,7 @@ namespace stock_api.Service
             return _dbContext.InStockItemRecords.Where(i => lotNumberBatchList.Contains(i.LotNumberBatch) && i.CompId == compId).ToList();
         }
 
-        public (bool, string?) OwnerStockInService(OwnerStockInRequest request, WarehouseProduct product, WarehouseMember user)
+        public (bool, string?,string?) OwnerStockInService(OwnerStockInRequest request, WarehouseProduct product, WarehouseMember user)
         {
             using var scope = new TransactionScope();
             try
@@ -1091,12 +1091,12 @@ namespace stock_api.Service
                 _dbContext.InStockItemRecords.Add(inStockItemRecord);
                 _dbContext.SaveChanges();
                 scope.Complete();
-                return (true,null);
+                return (true,null,lotNumberBatch);
             }
             catch (Exception ex)
             {
                 _logger.LogError("事務失敗[OwnerStockInService]：{msg}", ex);
-                return (false, ex.Message);
+                return (false, ex.Message,null);
             }
         }
     }

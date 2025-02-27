@@ -1056,13 +1056,19 @@ namespace stock_api.Controllers
                 });
             }
 
-            var (result, errorMsg) = _stockInService.OwnerStockInService(request, product, memberAndPermissionSetting.Member);
+            var (result, errorMsg,lotNumberBatch) = _stockInService.OwnerStockInService(request, product, memberAndPermissionSetting.Member);
 
             return Ok(new CommonResponse<dynamic>
             {
                 Result = result,
                 Message = errorMsg,
+                Data = new Dictionary<string, dynamic>
+                {
+                    { "lotNumberBatch", lotNumberBatch },
+                    {"openDeadLint",product.OpenDeadline }
+                }
             });
+           
         }
 
         public class SupplierAccepItemsVo
