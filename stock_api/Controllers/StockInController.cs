@@ -1067,9 +1067,9 @@ namespace stock_api.Controllers
                     {"lotNumberBatch", lotNumberBatch },
                     {"openDeadLine", product.OpenDeadline },
                     {"productCode", product.ProductCode },
-                    // {"groupName", product.groupName },
+                    {"groupName", product.groupName },
+                    {"productModel", product.productModel },
                     // {"savingFunction", product.savingFunction },
-                    // {"productModel", product.productModel },
                 }
             });
            
