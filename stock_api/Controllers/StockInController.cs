@@ -1068,7 +1068,7 @@ namespace stock_api.Controllers
                     {"openDeadLine", product.OpenDeadLine },
                     {"productCode", product.ProductCode },
                     // {"groupName", product.GroupNames },
-                    {"productModel", product.ProductModel },
+                    {"productModel", "productModel" },
                     // {"savingFunction", product.SavingFunction },
                 }
             });
