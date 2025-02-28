@@ -1064,8 +1064,8 @@ namespace stock_api.Controllers
                 Message = errorMsg,
                 Data = new Dictionary<string, dynamic>
                 {
-                    { "lotNumberBatch", lotNumberBatch },
-                    {"openDeadLint",product.OpenDeadline }
+                    {"lotNumberBatch", lotNumberBatch },
+                    {"openDeadLine", product.OpenDeadline }
                 }
             });
            
