@@ -1065,7 +1065,7 @@ namespace stock_api.Controllers
                 Data = new Dictionary<string, dynamic>
                 {
                     {"lotNumberBatch", lotNumberBatch },
-                    {"openDeadLine", product.OpenDeadLine },
+                    {"openDeadLine", product.OpenDeadline },
                     {"productCode", product.ProductCode },
                     {"productModel", product.ProductModel },
                     {"groupName", product.GroupNames },
