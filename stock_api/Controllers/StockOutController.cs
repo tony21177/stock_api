@@ -787,6 +787,8 @@ namespace stock_api.Controllers
                     item.DiscardReasonList = matchedDiscardRecords.Select(d => d.DiscardReason ?? string.Empty).ToList();
                     item.DiscardTimeList = matchedDiscardRecords.Select(d => d.CreatedAt).ToList();
                     item.DiscardUserNameList = matchedDiscardRecords.Select(d => d.DiscardUserName).ToList();
+                    item.GroupIds = matchedProdcut.GroupIds;
+                    item.GroupNames = matchedProdcut.GroupNames;
                 }
             }
 

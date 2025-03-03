@@ -111,6 +111,9 @@ namespace stock_api.Service
                 }).ToList();
                 item.ReturnStockInfoList = returnInfoList;
                 item.ProductModel = matchedProduct.ProductModel;
+                item.GroupIds = matchedProduct.GroupIds;
+                item.GroupNames = matchedProduct.GroupNames;
+
                 if (item.InstrumentId.HasValue && item.InstrumentId != 0)
                 {
                     var instrument = _instrumentService.GetById(item.InstrumentId.Value);

@@ -16,6 +16,7 @@ namespace stock_api.Service.ValueObject
         public List<float> DiscardQuantityList { get; set; } = new List<float>();
         public  bool? IsAllowDiscard { get; set; } 
         public string? InstrumentName { get; set; } 
-
+        public string? GroupIds { get; set; }
+        public string? GroupNames { get; set; }
     }
 }
