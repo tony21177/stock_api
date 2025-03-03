@@ -146,4 +146,7 @@ public partial class PurchaseSubItem
     public string? OwnerProcess { get; set; }
 
     public float? InStockQuantity { get; set; }
+
+    [StringLength(300)]
+    public string? OwnerComment { get; set; }
 }

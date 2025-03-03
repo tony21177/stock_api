@@ -868,6 +868,38 @@ namespace stock_api.Controllers
             return Ok(response);
         }
 
+        [HttpPost("owner/updateItemOwnerComment")]
+        [Authorize]
+        public IActionResult UpdateItemOwnerComment(UpdateSubItemOwnerCommentRequest request)
+        {
+            var memberAndPermissionSetting = _authHelpers.GetMemberAndPermissionSetting(User);
+            var compId = memberAndPermissionSetting.CompanyWithUnit.CompId;
+            if (memberAndPermissionSetting.CompanyWithUnit.Type != CommonConstants.CompanyType.OWNER)
+            {
+                return BadRequest(CommonResponse<dynamic>.BuildNotAuthorizeResponse());
+            }
+
+
+            PurchaseSubItem subItem = _purchaseService.GetPurchaseSubItemByItemId(request.ItemId);
+            if (subItem == null)
+            {
+                {
+                    return BadRequest(new CommonResponse<dynamic>
+                    {
+                        Result = false,
+                        Message = "採購單項目不存在"
+                    });
+                }
+            }
+            _purchaseService.UpdateSubItemOwnerComment(subItem, request);
+
+            var response = new CommonResponse<dynamic>
+            {
+                Result = true,
+            };
+            return Ok(response);
+        }
+
         [HttpPost("owner/updateOwnerComment")]
         [Authorize]
         public IActionResult UpdateOwnerComment(UpdateOwnerCommentRequest request)

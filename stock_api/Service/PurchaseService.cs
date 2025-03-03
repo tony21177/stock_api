@@ -744,6 +744,12 @@ namespace stock_api.Service
             _dbContext.SaveChanges();
         }
 
+        public void UpdateSubItemOwnerComment(PurchaseSubItem item, UpdateSubItemOwnerCommentRequest request)
+        {
+            item.OwnerComment = request.OwnerComment;
+            _dbContext.SaveChanges();
+        }
+
         public void PurchaseFlowRead(PurchaseFlow flow)
         {
             flow.ReadAt = DateTime.Now;
