@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using stock_api.Auth;
 using stock_api.Common;
+using stock_api.Common.Utils;
 using stock_api.Controllers.Dto;
 using stock_api.Controllers.Request;
 using stock_api.Controllers.Validator;
@@ -43,7 +44,19 @@ namespace stock_api.Controllers
         {
             var memberAndPermissionSetting = _authHelpers.GetMemberAndPermissionSetting(User);
             var compId = memberAndPermissionSetting.CompanyWithUnit.CompId;
-            createRequest.CompId = compId;
+            if(createRequest.CompId!=null && createRequest.CompId != compId)
+            {
+                if (AuthUtils.IsCrossCompAuthorized(memberAndPermissionSetting))
+                {
+                    return BadRequest(CommonResponse<dynamic>.BuildNotAuthorizeCrossCompResponse());
+                }
+            }
+
+            if (createRequest.CompId == null)
+            {
+                createRequest.CompId = compId;
+            }
+
 
             var validationResult = _createPurchaseFlowSettingValidator.Validate(createRequest);
 
@@ -80,12 +93,14 @@ namespace stock_api.Controllers
                     Message = "此審核流程不存在"
                 });
             }
-            if (compId != existingPurchaseFlowSetting.CompId)
+            if (compId != existingPurchaseFlowSetting.CompId&& AuthUtils.IsCrossCompAuthorized(memberAndPermissionSetting)==false)
             {
-                return BadRequest(CommonResponse<dynamic>.BuildNotAuthorizeResponse());
+                return BadRequest(CommonResponse<dynamic>.BuildNotAuthorizeCrossCompResponse());
             }
+            
+            updateRequest.CompId = existingPurchaseFlowSetting.CompId;
 
-            updateRequest.CompId = compId;
+            
             var validationResult = _updatePurchaseFlowSettingValidator.Validate(updateRequest);
 
             if (!validationResult.IsValid)
@@ -105,11 +120,15 @@ namespace stock_api.Controllers
 
         [HttpGet("list")]
         [Authorize]
-        public IActionResult ListPurchaseFlowSettings()
+        public IActionResult ListPurchaseFlowSettings(string? compId = null)
         {
             var memberAndPermissionSetting = _authHelpers.GetMemberAndPermissionSetting(User);
-            var compId = memberAndPermissionSetting.CompanyWithUnit.CompId;
-            var data = _purchaseFlowSettingService.GetAllPurchaseFlowSettingsByCompId(compId).OrderBy(pfs => pfs.Sequence);
+            var companyId = compId ?? memberAndPermissionSetting.CompanyWithUnit.CompId;
+            if (compId != null && compId != memberAndPermissionSetting.CompanyWithUnit.CompId && AuthUtils.IsCrossCompAuthorized(memberAndPermissionSetting))
+            {
+                return BadRequest(CommonResponse<dynamic>.BuildNotAuthorizeCrossCompResponse());
+            }
+            var data = _purchaseFlowSettingService.GetAllPurchaseFlowSettingsByCompId(companyId).OrderBy(pfs => pfs.Sequence);
             var response = new CommonResponse<dynamic>
             {
                 Result = true,
