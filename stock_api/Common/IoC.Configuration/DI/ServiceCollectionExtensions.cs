@@ -50,6 +50,7 @@ namespace stock_api.Common.IoC.Configuration.DI
 
                 // Register the job with Quartz
                 services.AddTransient<ProductQuantityNotifyJob>();
+                services.AddScoped<PermissionFilterAttribute>();
             }
         }
 

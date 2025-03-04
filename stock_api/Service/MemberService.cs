@@ -84,13 +84,14 @@ namespace stock_api.Service
             return _dbContext.WarehouseMembers.Where(member => member.CompId == compId&&member.IsAdmin==true).ToList();
         }
 
-        public List<MemberWithCompanyUnitVo> GetAllMembersForOwner()
+        public List<MemberWithCompanyUnitVo> GetAllMembersForOwner(string? compId = null)
         {
             var result = from member in _dbContext.WarehouseMembers
                          join company in _dbContext.Companies
                          on member.CompId equals company.CompId
                          join companyUnit in _dbContext.CompanyUnits
                          on member.CompId equals companyUnit.CompId
+                         where compId == null || member.CompId == compId
                          select new MemberWithCompanyUnitVo
                          {
                              Account = member.Account,
@@ -109,7 +110,6 @@ namespace stock_api.Service
                              UnitId = companyUnit.UnitId,
                              UnitName = companyUnit.UnitName,
                          };
-
 
             return result.ToList();
         }

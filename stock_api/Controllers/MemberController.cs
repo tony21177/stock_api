@@ -14,11 +14,13 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using stock_api.Common.Constant;
 using AutoMapper.Execution;
+using stock_api.Common.Utils;
 
 namespace stock_api.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
+    [ServiceFilter(typeof(PermissionFilterAttribute))]
     public class MemberController : ControllerBase
     {
         private readonly MemberService _memberService;
@@ -45,17 +47,22 @@ namespace stock_api.Controllers
 
         [HttpGet("list")]
         [Authorize]
-        public CommonResponse<List<MemberDto>> List()
+        public IActionResult List(string? compId = null)
         {
             var memberAndPermissionSetting = _authHelpers.GetMemberAndPermissionSetting(User);
+            var companyId = compId ?? memberAndPermissionSetting.CompanyWithUnit.CompId;
+            if (AuthUtils.IsCrossCompAuthorized(memberAndPermissionSetting))
+            {
+                return BadRequest(CommonResponse<dynamic>.BuildNotAuthorizeCrossCompResponse());
+            }
 
-            var memberList = _memberService.GetAllMembersOfComp(memberAndPermissionSetting.CompanyWithUnit.CompId);
+            var memberList = _memberService.GetAllMembersOfComp(companyId);
             List<string> distinctGroupIds = memberList
-            .SelectMany(member =>
-                (member.GroupIds ?? "")
-                .Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries))
-            .Distinct()
-            .ToList();
+                .SelectMany(member =>
+                    (member.GroupIds ?? "")
+                    .Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries))
+                .Distinct()
+                .ToList();
             var memberDtos = _mapper.Map<List<MemberDto>>(memberList);
             var groups = _groupService.GetGroupsByIdList(distinctGroupIds);
 
@@ -72,19 +79,19 @@ namespace stock_api.Controllers
                 Message = "",
                 Data = data
             };
-            return response;
+            return Ok(response);
         }
 
         [HttpGet("owner/list")]
         [Authorize]
-        public IActionResult ListAll()
+        public IActionResult ListAll(string? compId = null)
         {
             var memberAndPermissionSetting = _authHelpers.GetMemberAndPermissionSetting(User);
             if (memberAndPermissionSetting.CompanyWithUnit == null || memberAndPermissionSetting.CompanyWithUnit.Type != CommonConstants.CompanyType.OWNER)
             {
                 return BadRequest(CommonResponse<dynamic>.BuildNotAuthorizeResponse());
             }
-            var memberList = _memberService.GetAllMembersForOwner();
+            var memberList = _memberService.GetAllMembersForOwner(compId);
 
             List<string> distinctGroupIds = memberList
            .SelectMany(member =>member.GroupIds)
@@ -120,10 +127,20 @@ namespace stock_api.Controllers
             {
                 return Unauthorized(CommonResponse<dynamic>.BuildNotAuthorizeResponse());
             }
+            if (createMemberRequset.CompId != null&&createMemberRequset.CompId!= memberAndPermissionSetting.CompanyWithUnit.CompId)
+            {
+                if (AuthUtils.IsCrossCompAuthorized(memberAndPermissionSetting))
+                {
+                    return BadRequest(CommonResponse<dynamic>.BuildNotAuthorizeCrossCompResponse());
+                }
+            }
+
+
             if (createMemberRequset.CompId == null)
             {
                 createMemberRequset.CompId = memberAndPermissionSetting.CompanyWithUnit.CompId;
             }
+
 
 
             var validationResult = await _createMemberRequestValidator.ValidateAsync(createMemberRequset);
@@ -162,6 +179,8 @@ namespace stock_api.Controllers
                 return Unauthorized(CommonResponse<dynamic>.BuildNotAuthorizeResponse());
             }
 
+            
+
             var existingMember = _memberService.GetMemberByUserId(updateMemberRequset.UserId);
             if (existingMember == null)
             {
@@ -172,14 +191,19 @@ namespace stock_api.Controllers
                 });
             }
 
-            updateMemberRequset.CompId = existingMember.CompId;
             var validationResult = await _updateMemberRequestValidator.ValidateAsync(updateMemberRequset);
             if (!validationResult.IsValid)
             {
                 return BadRequest(CommonResponse<dynamic>.BuildValidationFailedResponse(validationResult));
             }
 
-            
+            if (existingMember.CompId != memberAndPermissionSetting.CompanyWithUnit.CompId)
+            {
+                if (AuthUtils.IsCrossCompAuthorized(memberAndPermissionSetting))
+                {
+                    return BadRequest(CommonResponse<dynamic>.BuildNotAuthorizeCrossCompResponse());
+                }
+            }
 
 
             _memberService.UpdateMember(updateMemberRequset, existingMember);
@@ -199,6 +223,23 @@ namespace stock_api.Controllers
             if (memberAndPermissionSetting == null || permissionSetting == null || !permissionSetting.IsMemberManage)
             {
                 return Unauthorized(CommonResponse<dynamic>.BuildNotAuthorizeResponse());
+            }
+            var existingMember = _memberService.GetMemberByUserId(userId);
+            if (existingMember == null)
+            {
+                return BadRequest(new CommonResponse<dynamic>
+                {
+                    Result = false,
+                    Message = "使用者不存在"
+                });
+            }
+
+            if (existingMember.CompId != memberAndPermissionSetting.CompanyWithUnit.CompId)
+            {
+                if (AuthUtils.IsCrossCompAuthorized(memberAndPermissionSetting))
+                {
+                    return BadRequest(CommonResponse<dynamic>.BuildNotAuthorizeCrossCompResponse());
+                }
             }
             _memberService.DeleteMember(userId);
 
@@ -228,6 +269,14 @@ namespace stock_api.Controllers
                     Result = false,
                     Message = "該使用者不存在"
                 });
+            }
+
+            if (memberList[0].CompId != memberAndPermissionSetting.CompanyWithUnit.CompId)
+            {
+                if (AuthUtils.IsCrossCompAuthorized(memberAndPermissionSetting))
+                {
+                    return BadRequest(CommonResponse<dynamic>.BuildNotAuthorizeCrossCompResponse());
+                }
             }
 
             var validationResult = _updateMemberGroupRequestRequestValidator.Validate(updateMemberGroup);

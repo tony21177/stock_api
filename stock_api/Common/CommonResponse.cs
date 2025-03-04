@@ -20,6 +20,15 @@ namespace stock_api.Common
             };
         }
 
+        public static CommonResponse<dynamic> BuildNotAuthorizeCrossCompResponse()
+        {
+            return new CommonResponse<dynamic>
+            {
+                Result = false,
+                Message = "沒有跨組織權限",
+            };
+        }
+
         public static CommonResponse<dynamic> BuildValidationFailedResponse(ValidationResult validationResult)
         {
             var errors = validationResult.Errors.Select(e => e.ErrorMessage);
