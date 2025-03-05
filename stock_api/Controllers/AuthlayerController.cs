@@ -51,7 +51,7 @@ namespace stock_api.Controllers
             var response = new CommonResponse<List<WarehouseAuthlayer>>()
             {
                 Result = true,
-                Message = "",
+                Message = "version 1",
                 Data = data
             };
             return Ok(response);
