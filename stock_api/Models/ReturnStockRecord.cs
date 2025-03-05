@@ -16,7 +16,7 @@ public partial class ReturnStockRecord
     public int Id { get; set; }
 
     [StringLength(100)]
-    public string InStockId { get; set; } = null!;
+    public string? InStockId { get; set; }
 
     [StringLength(100)]
     public string OutStockId { get; set; } = null!;

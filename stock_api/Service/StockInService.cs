@@ -724,26 +724,31 @@ namespace stock_api.Service
             {
                 var inStockRecord = _dbContext.InStockItemRecords.Where(i => i.LotNumberBatch == outStockRecord.LotNumberBatch).FirstOrDefault();
 
-                var inStockQuantityBefore = inStockRecord.InStockQuantity;
+                var inStockQuantityBefore = inStockRecord?.InStockQuantity ?? 0;
                 var outStockQuantityBefore = outStockRecord.ApplyQuantity;
                 var outStockRecordsAfter = _dbContext.OutStockRecords.Where(r => r.ProductId == outStockRecord.ProductId && r.CreatedAt > outStockRecord.CreatedAt).ToList();
 
 
                 // 退庫回去 只需要庫存量+回來 不需要再修改入庫紀錄的數量
-                inStockRecord.OutStockQuantity = inStockRecord.OutStockQuantity - returnQuantity;
-                if (inStockRecord.InStockQuantity - inStockRecord.OutStockQuantity > 0)
+                if (inStockRecord != null)
                 {
-                    inStockRecord.OutStockStatus = CommonConstants.OutStockStatus.PART;
+                    inStockRecord.OutStockQuantity = inStockRecord.OutStockQuantity - returnQuantity;
+                    if (inStockRecord.InStockQuantity - inStockRecord.OutStockQuantity > 0)
+                    {
+                        inStockRecord.OutStockStatus = CommonConstants.OutStockStatus.PART;
+                    }
+                    if (inStockRecord.OutStockQuantity == 0)
+                    {
+                        inStockRecord.OutStockStatus = CommonConstants.OutStockStatus.NONE;
+                    }
+                    if (inStockRecord.InStockQuantity - inStockRecord.OutStockQuantity == 0)
+                    {
+                        inStockRecord.OutStockStatus = CommonConstants.OutStockStatus.ALL;
+                    }
+                    inStockRecord.ReturnOutStockId = outStockRecord.OutStockId;
                 }
-                if (inStockRecord.OutStockQuantity == 0)
-                {
-                    inStockRecord.OutStockStatus = CommonConstants.OutStockStatus.NONE;
-                }
-                if (inStockRecord.InStockQuantity - inStockRecord.OutStockQuantity == 0)
-                {
-                    inStockRecord.OutStockStatus = CommonConstants.OutStockStatus.ALL;
-                }
-                inStockRecord.ReturnOutStockId = outStockRecord.OutStockId;
+
+                
 
                 outStockRecord.ApplyQuantity = outStockRecord.ApplyQuantity - returnQuantity;
                 outStockRecord.IsReturned = true;
@@ -755,13 +760,16 @@ namespace stock_api.Service
                 var afterQuantityBefore = outStockRecord.AfterQuantity;
                 var afterQuantityAfter = product.InStockQuantity; // 退庫後的現有庫存量
 
+                string? inStockId = null;
+                if(inStockRecord!=null) inStockId = inStockRecord.InStockId;
+ 
                 var returnStockRecord = new ReturnStockRecord()
                 {
-                    InStockId = inStockRecord.InStockId,
+                    InStockId = inStockId,
                     OutStockId = outStockRecord.OutStockId,
                     ReturnQuantity = returnQuantity,
                     InStockQuantityBefore = inStockQuantityBefore,
-                    InStockQuantityAfter = inStockRecord.InStockQuantity,
+                    InStockQuantityAfter = inStockRecord?.InStockQuantity??0,
                     OutStockApplyQuantityBefore = outStockQuantityBefore,
                     OutStockApplyQuantityAfter = outStockRecord.ApplyQuantity,
                     AfterQuantityBefore = afterQuantityBefore,
