@@ -47,7 +47,7 @@ namespace stock_api.Controllers
                 return BadRequest(CommonResponse<dynamic>.BuildNotAuthorizeCrossCompResponse());
             }
 
-            var data = _authLayerService.GetAllAuthlayers(compId);
+            var data = _authLayerService.GetAllAuthlayers(companyId);
             var response = new CommonResponse<List<WarehouseAuthlayer>>()
             {
                 Result = true,
