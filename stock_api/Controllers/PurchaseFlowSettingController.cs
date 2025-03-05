@@ -144,9 +144,9 @@ namespace stock_api.Controllers
             var memberAndPermissionSetting = _authHelpers.GetMemberAndPermissionSetting(User);
             var compId = memberAndPermissionSetting.CompanyWithUnit.CompId;
             var data = _purchaseFlowSettingService.GetPurchaseFlowSettingVoByFlowId(flowId);
-            if (data != null&&data.CompId!=compId)
+            if (data != null && data.CompId != compId && AuthUtils.IsCrossCompAuthorized(memberAndPermissionSetting))
             {
-                return BadRequest(CommonResponse<dynamic>.BuildNotAuthorizeResponse());
+                return BadRequest(CommonResponse<dynamic>.BuildNotAuthorizeCrossCompResponse());
             }
 
 
@@ -165,10 +165,13 @@ namespace stock_api.Controllers
             var memberAndPermissionSetting = _authHelpers.GetMemberAndPermissionSetting(User);
             var compId = memberAndPermissionSetting.CompanyWithUnit.CompId;
             var existPurchaseFlowSetting = _purchaseFlowSettingService.GetPurchaseFlowSettingByFlowId(flowId);
-            if (existPurchaseFlowSetting != null && existPurchaseFlowSetting.CompId != compId)
+
+            if (existPurchaseFlowSetting != null && existPurchaseFlowSetting.CompId != compId && AuthUtils.IsCrossCompAuthorized(memberAndPermissionSetting))
             {
-                return BadRequest(CommonResponse<dynamic>.BuildNotAuthorizeResponse());
+                return BadRequest(CommonResponse<dynamic>.BuildNotAuthorizeCrossCompResponse());
             }
+
+           
             _purchaseFlowSettingService.InactivePurchaseFlowSetting(existPurchaseFlowSetting.FlowId,false);
 
             var response = new CommonResponse<dynamic>

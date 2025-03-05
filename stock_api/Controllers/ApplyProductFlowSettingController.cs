@@ -7,6 +7,7 @@ using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using Org.BouncyCastle.Asn1.Ocsp;
 using stock_api.Auth;
 using stock_api.Common;
+using stock_api.Common.Utils;
 using stock_api.Controllers.Dto;
 using stock_api.Controllers.Request;
 using stock_api.Controllers.Validator;
@@ -48,6 +49,19 @@ namespace stock_api.Controllers
         {
             var memberAndPermissionSetting = _authHelpers.GetMemberAndPermissionSetting(User);
             var compId = memberAndPermissionSetting.CompanyWithUnit.CompId;
+            if (createRequest.CompId != null && createRequest.CompId != compId)
+            {
+                if (AuthUtils.IsCrossCompAuthorized(memberAndPermissionSetting))
+                {
+                    return BadRequest(CommonResponse<dynamic>.BuildNotAuthorizeCrossCompResponse());
+                }
+            }
+            if (createRequest.CompId == null)
+            {
+                createRequest.CompId = compId;
+            }
+
+
             createRequest.CompId = compId;
             createRequest.CreateApplyProductFlowSettingList.ForEach(r => r.CompId = compId);
 
@@ -83,12 +97,12 @@ namespace stock_api.Controllers
                     Message = "此審核流程不存在"
                 });
             }
-            if (compId != existingApplyProductFlowSetting.CompId)
+            if (compId != existingApplyProductFlowSetting.CompId && AuthUtils.IsCrossCompAuthorized(memberAndPermissionSetting) == false)
             {
-                return BadRequest(CommonResponse<dynamic>.BuildNotAuthorizeResponse());
+                return BadRequest(CommonResponse<dynamic>.BuildNotAuthorizeCrossCompResponse());
             }
 
-            updateRequest.CompId = compId;
+            updateRequest.CompId = existingApplyProductFlowSetting.CompId;
             var validationResult = _updateApplyProductFlowSettingValidator.Validate(updateRequest);
 
             if (!validationResult.IsValid)
@@ -136,11 +150,15 @@ namespace stock_api.Controllers
 
         [HttpGet("list")]
         [Authorize]
-        public IActionResult ListApplyProductFlowSettings()
+        public IActionResult ListApplyProductFlowSettings(string? compId = null)
         {
             var memberAndPermissionSetting = _authHelpers.GetMemberAndPermissionSetting(User);
-            var compId = memberAndPermissionSetting.CompanyWithUnit.CompId;
-            var data = _applyProductFlowSettingService.GetAllApplyProductFlowSettingsByCompId(compId).OrderBy(pfs => pfs.Sequence).ToList();
+            var companyId = compId ?? memberAndPermissionSetting.CompanyWithUnit.CompId;
+            if (compId != null && compId != memberAndPermissionSetting.CompanyWithUnit.CompId && AuthUtils.IsCrossCompAuthorized(memberAndPermissionSetting))
+            {
+                return BadRequest(CommonResponse<dynamic>.BuildNotAuthorizeCrossCompResponse());
+            }
+            var data = _applyProductFlowSettingService.GetAllApplyProductFlowSettingsByCompId(companyId).OrderBy(pfs => pfs.Sequence).ToList();
             var response = new CommonResponse<List<ApplyProductFlowSettingVo>>
             {
                 Result = true,
@@ -156,10 +174,11 @@ namespace stock_api.Controllers
             var memberAndPermissionSetting = _authHelpers.GetMemberAndPermissionSetting(User);
             var compId = memberAndPermissionSetting.CompanyWithUnit.CompId;
             var data = _applyProductFlowSettingService.GetApplyProductFlowSettingBySettingId(settingId);
-            if (data != null&&data.CompId!=compId)
+            if(data!=null&&data.CompId!=compId && AuthUtils.IsCrossCompAuthorized(memberAndPermissionSetting))
             {
-                return BadRequest(CommonResponse<dynamic>.BuildNotAuthorizeResponse());
+                return BadRequest(CommonResponse<dynamic>.BuildNotAuthorizeCrossCompResponse());
             }
+
 
             var response = new CommonResponse<dynamic>
             {
@@ -184,9 +203,9 @@ namespace stock_api.Controllers
                     Message = "此審核流程不存在"
                 });
             }
-            if (existApplyProductFlowSetting != null && existApplyProductFlowSetting.CompId != compId)
+            if (existApplyProductFlowSetting != null && existApplyProductFlowSetting.CompId != compId && AuthUtils.IsCrossCompAuthorized(memberAndPermissionSetting))
             {
-                return BadRequest(CommonResponse<dynamic>.BuildNotAuthorizeResponse());
+                return BadRequest(CommonResponse<dynamic>.BuildNotAuthorizeCrossCompResponse());
             }
             _applyProductFlowSettingService.DeleteApplyProductFlowSetting(existApplyProductFlowSetting.SettingId);
 
