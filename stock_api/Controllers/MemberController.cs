@@ -179,8 +179,6 @@ namespace stock_api.Controllers
                 return Unauthorized(CommonResponse<dynamic>.BuildNotAuthorizeResponse());
             }
 
-            
-
             var existingMember = _memberService.GetMemberByUserId(updateMemberRequset.UserId);
             if (existingMember == null)
             {
@@ -190,6 +188,7 @@ namespace stock_api.Controllers
                     Message = "使用者不存在"
                 });
             }
+            updateMemberRequset.CompId = existingMember.CompId;
 
             var validationResult = await _updateMemberRequestValidator.ValidateAsync(updateMemberRequset);
             if (!validationResult.IsValid)
