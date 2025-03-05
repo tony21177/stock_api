@@ -59,11 +59,11 @@ namespace stock_api.Controllers
             if (createRequest.CompId == null)
             {
                 createRequest.CompId = compId;
+                
+                var t = 123;
             }
+            createRequest.CreateApplyProductFlowSettingList.ForEach(r => r.CompId = createRequest.CompId);
 
-
-            createRequest.CompId = compId;
-            createRequest.CreateApplyProductFlowSettingList.ForEach(r => r.CompId = compId);
 
             var validationResult = _createApplyProductFlowSettingValidator.Validate(createRequest);
 

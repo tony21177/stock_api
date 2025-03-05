@@ -171,7 +171,7 @@ namespace stock_api.Controllers
                 return BadRequest(CommonResponse<dynamic>.BuildNotAuthorizeCrossCompResponse());
             }
 
-           
+            
             _purchaseFlowSettingService.InactivePurchaseFlowSetting(existPurchaseFlowSetting.FlowId,false);
 
             var response = new CommonResponse<dynamic>
