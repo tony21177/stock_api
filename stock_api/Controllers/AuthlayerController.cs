@@ -36,11 +36,16 @@ namespace stock_api.Controllers
         }
 
         [HttpGet("list")]
-        [AuthorizeRoles("1")]
-        public IActionResult List()
+        [Authorize]
+        public IActionResult List(string? compId = null)
         {
+            // Gary 加入 AuthLayer可以跨公司
             var memberAndPermissionSetting = _authHelpers.GetMemberAndPermissionSetting(User);
-            var compId = memberAndPermissionSetting.CompanyWithUnit.CompId;
+            var companyId = compId ?? memberAndPermissionSetting.CompanyWithUnit.CompId;
+            if (compId!=null&&compId!= memberAndPermissionSetting.CompanyWithUnit.CompId && AuthUtils.IsCrossCompAuthorized(memberAndPermissionSetting))
+            {
+                return BadRequest(CommonResponse<dynamic>.BuildNotAuthorizeCrossCompResponse());
+            }
 
             var data = _authLayerService.GetAllAuthlayers(compId);
             var response = new CommonResponse<List<WarehouseAuthlayer>>()
