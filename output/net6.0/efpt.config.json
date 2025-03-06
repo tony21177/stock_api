@@ -124,6 +124,10 @@
          "ObjectType": 0
       },
       {
+         "Name": "qc_validation_flow_setting",
+         "ObjectType": 0
+      },
+      {
          "Name": "qc_validation_main",
          "ObjectType": 0
       },

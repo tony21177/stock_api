@@ -76,6 +76,14 @@ namespace stock_api.Common.AutoMapper
             CreateMap<ApplyProductFlowSetting, ApplyProductFlowSettingVo>()
                 .ForAllMembers(opt => opt.Condition((src, dest, srcMember) => srcMember != null));
 
+            // QcValidationFlowSetting
+            CreateMap<QcValidationFlowSettingRequest, QcValidationFlowSetting>()
+                .ForAllMembers(opt => opt.Condition((src, dest, srcMember) => srcMember != null));
+            CreateMap<QcValidationFlowSetting, QcValidationFlowSetting>()
+                .ForAllMembers(opt => opt.Condition((src, dest, srcMember) => srcMember != null));
+            CreateMap<QcValidationFlowSetting, QcValidationFlowSettingVo>()
+                .ForAllMembers(opt => opt.Condition((src, dest, srcMember) => srcMember != null));
+
             // ApplyNewProductMain
             CreateMap<ApplyNewProductMain, ApplyNewProductMainWithFlowVo>()
                 .ForAllMembers(opt => opt.Condition((src, dest, srcMember) => srcMember != null));

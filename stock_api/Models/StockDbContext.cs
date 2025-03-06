@@ -93,6 +93,8 @@ public partial class StockDbContext : DbContext
 
     public virtual DbSet<QcValidationDetail> QcValidationDetails { get; set; }
 
+    public virtual DbSet<QcValidationFlowSetting> QcValidationFlowSettings { get; set; }
+
     public virtual DbSet<QcValidationMain> QcValidationMains { get; set; }
 
     public virtual DbSet<RejectItemRecord> RejectItemRecords { get; set; }
@@ -951,6 +953,25 @@ public partial class StockDbContext : DbContext
             entity.Property(e => e.AcceptableRange).HasComment("定量可允許驗收差距");
             entity.Property(e => e.CreatedAt).HasDefaultValueSql("CURRENT_TIMESTAMP");
             entity.Property(e => e.NewLotResult).HasComment("新批號結果");
+            entity.Property(e => e.UpdatedAt)
+                .ValueGeneratedOnAddOrUpdate()
+                .HasDefaultValueSql("CURRENT_TIMESTAMP");
+        });
+
+        modelBuilder.Entity<QcValidationFlowSetting>(entity =>
+        {
+            entity.HasKey(e => new { e.SettingId, e.CompId })
+                .HasName("PRIMARY")
+                .HasAnnotation("MySql:IndexPrefixLength", new[] { 0, 0 });
+
+            entity.ToTable("qc_validation_flow_setting", tb => tb.HasComment("系統先行設定申請的審核流程"));
+
+            entity.Property(e => e.CompId).HasComment("所屬組織ID");
+            entity.Property(e => e.CreatedAt).HasDefaultValueSql("CURRENT_TIMESTAMP");
+            entity.Property(e => e.FlowName).HasComment("審核流程顯示名稱");
+            entity.Property(e => e.ReviewGroupId).HasComment("負責簽核的組別");
+            entity.Property(e => e.ReviewUserId).HasComment("此審核流程的審核者");
+            entity.Property(e => e.Sequence).HasComment("順序");
             entity.Property(e => e.UpdatedAt)
                 .ValueGeneratedOnAddOrUpdate()
                 .HasDefaultValueSql("CURRENT_TIMESTAMP");
