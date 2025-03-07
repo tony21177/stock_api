@@ -51,7 +51,7 @@ namespace stock_api.Controllers
         {
             var memberAndPermissionSetting = _authHelpers.GetMemberAndPermissionSetting(User);
             var companyId = compId ?? memberAndPermissionSetting.CompanyWithUnit.CompId;
-            if (compId!=null&&compId!= memberAndPermissionSetting.CompanyWithUnit.CompId && AuthUtils.IsCrossCompAuthorized(memberAndPermissionSetting))
+            if (compId!=null&&compId!= memberAndPermissionSetting.CompanyWithUnit.CompId && !AuthUtils.IsCrossCompAuthorized(memberAndPermissionSetting))
             {
                 return BadRequest(CommonResponse<dynamic>.BuildNotAuthorizeCrossCompResponse());
             }
@@ -129,7 +129,7 @@ namespace stock_api.Controllers
             }
             if (createMemberRequset.CompId != null&&createMemberRequset.CompId!= memberAndPermissionSetting.CompanyWithUnit.CompId)
             {
-                if (AuthUtils.IsCrossCompAuthorized(memberAndPermissionSetting))
+                if (!AuthUtils.IsCrossCompAuthorized(memberAndPermissionSetting))
                 {
                     return BadRequest(CommonResponse<dynamic>.BuildNotAuthorizeCrossCompResponse());
                 }
@@ -198,7 +198,7 @@ namespace stock_api.Controllers
 
             if (existingMember.CompId != memberAndPermissionSetting.CompanyWithUnit.CompId)
             {
-                if (AuthUtils.IsCrossCompAuthorized(memberAndPermissionSetting))
+                if (!AuthUtils.IsCrossCompAuthorized(memberAndPermissionSetting))
                 {
                     return BadRequest(CommonResponse<dynamic>.BuildNotAuthorizeCrossCompResponse());
                 }
@@ -235,7 +235,7 @@ namespace stock_api.Controllers
 
             if (existingMember.CompId != memberAndPermissionSetting.CompanyWithUnit.CompId)
             {
-                if (AuthUtils.IsCrossCompAuthorized(memberAndPermissionSetting))
+                if (!AuthUtils.IsCrossCompAuthorized(memberAndPermissionSetting))
                 {
                     return BadRequest(CommonResponse<dynamic>.BuildNotAuthorizeCrossCompResponse());
                 }
@@ -272,7 +272,7 @@ namespace stock_api.Controllers
 
             if (memberList[0].CompId != memberAndPermissionSetting.CompanyWithUnit.CompId)
             {
-                if (AuthUtils.IsCrossCompAuthorized(memberAndPermissionSetting))
+                if (!AuthUtils.IsCrossCompAuthorized(memberAndPermissionSetting))
                 {
                     return BadRequest(CommonResponse<dynamic>.BuildNotAuthorizeCrossCompResponse());
                 }

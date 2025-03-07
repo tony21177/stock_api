@@ -43,7 +43,7 @@ namespace stock_api.Controllers
             // Gary 加入 AuthLayer可以跨公司
             var memberAndPermissionSetting = _authHelpers.GetMemberAndPermissionSetting(User);
             var companyId = compId ?? memberAndPermissionSetting.CompanyWithUnit.CompId;
-            if (compId!=null&&compId!= memberAndPermissionSetting.CompanyWithUnit.CompId && AuthUtils.IsCrossCompAuthorized(memberAndPermissionSetting))
+            if (compId!=null&&compId!= memberAndPermissionSetting.CompanyWithUnit.CompId && !AuthUtils.IsCrossCompAuthorized(memberAndPermissionSetting))
             {
                 return BadRequest(CommonResponse<dynamic>.BuildNotAuthorizeCrossCompResponse());
             }

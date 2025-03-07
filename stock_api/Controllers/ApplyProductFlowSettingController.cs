@@ -51,7 +51,7 @@ namespace stock_api.Controllers
             var compId = memberAndPermissionSetting.CompanyWithUnit.CompId;
             if (createRequest.CompId != null && createRequest.CompId != compId)
             {
-                if (AuthUtils.IsCrossCompAuthorized(memberAndPermissionSetting))
+                if (!AuthUtils.IsCrossCompAuthorized(memberAndPermissionSetting))
                 {
                     return BadRequest(CommonResponse<dynamic>.BuildNotAuthorizeCrossCompResponse());
                 }
@@ -97,7 +97,7 @@ namespace stock_api.Controllers
                     Message = "此審核流程不存在"
                 });
             }
-            if (compId != existingApplyProductFlowSetting.CompId && AuthUtils.IsCrossCompAuthorized(memberAndPermissionSetting) == false)
+            if (compId != existingApplyProductFlowSetting.CompId && !AuthUtils.IsCrossCompAuthorized(memberAndPermissionSetting))
             {
                 return BadRequest(CommonResponse<dynamic>.BuildNotAuthorizeCrossCompResponse());
             }
@@ -154,7 +154,7 @@ namespace stock_api.Controllers
         {
             var memberAndPermissionSetting = _authHelpers.GetMemberAndPermissionSetting(User);
             var companyId = compId ?? memberAndPermissionSetting.CompanyWithUnit.CompId;
-            if (compId != null && compId != memberAndPermissionSetting.CompanyWithUnit.CompId && AuthUtils.IsCrossCompAuthorized(memberAndPermissionSetting))
+            if (compId != null && compId != memberAndPermissionSetting.CompanyWithUnit.CompId && !AuthUtils.IsCrossCompAuthorized(memberAndPermissionSetting))
             {
                 return BadRequest(CommonResponse<dynamic>.BuildNotAuthorizeCrossCompResponse());
             }
@@ -174,7 +174,7 @@ namespace stock_api.Controllers
             var memberAndPermissionSetting = _authHelpers.GetMemberAndPermissionSetting(User);
             var compId = memberAndPermissionSetting.CompanyWithUnit.CompId;
             var data = _applyProductFlowSettingService.GetApplyProductFlowSettingBySettingId(settingId);
-            if(data!=null&&data.CompId!=compId && AuthUtils.IsCrossCompAuthorized(memberAndPermissionSetting))
+            if(data!=null&&data.CompId!=compId && !AuthUtils.IsCrossCompAuthorized(memberAndPermissionSetting))
             {
                 return BadRequest(CommonResponse<dynamic>.BuildNotAuthorizeCrossCompResponse());
             }
@@ -203,7 +203,7 @@ namespace stock_api.Controllers
                     Message = "此審核流程不存在"
                 });
             }
-            if (existApplyProductFlowSetting != null && existApplyProductFlowSetting.CompId != compId && AuthUtils.IsCrossCompAuthorized(memberAndPermissionSetting))
+            if (existApplyProductFlowSetting != null && existApplyProductFlowSetting.CompId != compId && !AuthUtils.IsCrossCompAuthorized(memberAndPermissionSetting))
             {
                 return BadRequest(CommonResponse<dynamic>.BuildNotAuthorizeCrossCompResponse());
             }
