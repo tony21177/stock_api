@@ -7,9 +7,9 @@ namespace stock_api.Common.Utils
     {
         public static bool IsCrossCompAuthorized(MemberAndPermissionSetting memberAndPermissionSetting)
         {
-            return memberAndPermissionSetting.CompanyWithUnit?.Type != CommonConstants.CompanyType.OWNER
-                && memberAndPermissionSetting.Member?.IsAdmin != true
-                && memberAndPermissionSetting.Member?.IsNoStockReviewer != true;
+            return memberAndPermissionSetting.CompanyWithUnit?.Type == CommonConstants.CompanyType.OWNER
+                || memberAndPermissionSetting.Member?.IsAdmin == true
+                || memberAndPermissionSetting.Member?.IsNoStockReviewer == true;
         }
     }
 }
