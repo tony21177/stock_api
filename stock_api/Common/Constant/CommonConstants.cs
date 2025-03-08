@@ -11,10 +11,11 @@ namespace stock_api.Common.Constant
         {
             public const string PURCHASE = "PURCHASE";
             public const string APPLY_NEW_PRODUCT = "APPLY_NEW_PRODUCT";
+            public const string QC = "QC";
 
             public static List<string> GetAllValues()
             {
-                return new List<string> { PURCHASE, APPLY_NEW_PRODUCT };
+                return new List<string> { PURCHASE, APPLY_NEW_PRODUCT,QC };
             }
         }
 
@@ -181,6 +182,17 @@ namespace stock_api.Common.Constant
         
 
         public static class PurchaseFlowStatus
+        {
+            public const string WAIT = "WAIT";
+            public const string AGREE = "AGREE";
+            public const string REJECT = "REJECT";
+            public static List<string> GetAllValues()
+            {
+                return new List<string> { WAIT, AGREE, REJECT };
+            }
+        }
+
+        public static class QcFlowStatus
         {
             public const string WAIT = "WAIT";
             public const string AGREE = "AGREE";

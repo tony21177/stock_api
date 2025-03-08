@@ -27,10 +27,13 @@ namespace stock_api.Controllers
         private readonly WarehouseProductService _warehouseProductService;
         private readonly PurchaseService _purchaseService;
         private readonly QcService _qcService;
+        private readonly QcValidationFlowSettingService _qcValidationFlowSettingService;
         private readonly IValidator<CreateQcRequest> _createQcValidator;
         private readonly IValidator<ListMainWithDetailRequest> _listQcMainWithDetailValidator;
 
-        public QcController(IMapper mapper, AuthHelpers authHelpers, StockInService stockInService, StockOutService stockOutService, WarehouseProductService warehouseProductService, QcService qcService, PurchaseService purchaseService)
+        public QcController(IMapper mapper, AuthHelpers authHelpers, StockInService stockInService,
+            StockOutService stockOutService, WarehouseProductService warehouseProductService,
+            QcService qcService, PurchaseService purchaseService,QcValidationFlowSettingService qcValidationFlowSettingService)
         {
             _mapper = mapper;
             _authHelpers = authHelpers;
@@ -41,6 +44,7 @@ namespace stock_api.Controllers
             _purchaseService = purchaseService;
             _createQcValidator = new CreateQcValidator();
             _listQcMainWithDetailValidator = new ListQcMainWithDetailValidator();
+            _qcValidationFlowSettingService = qcValidationFlowSettingService;
         }
 
         [HttpPost("list")]
@@ -142,6 +146,9 @@ namespace stock_api.Controllers
             {
                 return BadRequest(CommonResponse<dynamic>.BuildValidationFailedResponse(validationResult));
             }
+
+            
+
             QcValidationMain newQcMain = _mapper.Map<QcValidationMain>(request);
             if (newQcMain.MainId == null)
             {
@@ -180,6 +187,37 @@ namespace stock_api.Controllers
             List<PurchaseDetailView> purchaseDetailList = _purchaseService.GetPurchaseDetailListByItemIdList(itemIdList);
             WarehouseProduct product = _warehouseProductService.GetProductByProductId(inStockItemRecordList[0].ProductId);
 
+            // 審核流程
+            List<string> groupIds = product.GroupIds?.Split(',').ToList() ?? new List<string>();
+            List<QcValidationFlowSettingVo> qcValidationFlowSettingList = new();
+            bool isGroupCrossGroup = (groupIds.Count() > 1);
+            if (isGroupCrossGroup == true || groupIds.Count == 0)
+            {
+                // 拉取不指定組別的審核流程
+                var crossCompFlowSettings = _qcValidationFlowSettingService.GeQcValidationFlowSettingVoListByCompIdForCrossComp(compId);
+                if (crossCompFlowSettings.Count == 0)
+                {
+                    return BadRequest(new CommonResponse<dynamic>
+                    {
+                        Result = false,
+                        Message = "尚未建立品質確效跨組別審核流程關卡"
+                    });
+                }
+                qcValidationFlowSettingList.AddRange(crossCompFlowSettings);
+            } else {
+                var groupFlowSettings = _qcValidationFlowSettingService.GeQcValidationFlowSettingVoListByGroupId(groupIds[0]);
+                if (groupFlowSettings.Count == 0)
+                {
+                    return BadRequest(new CommonResponse<dynamic>
+                    {
+                        Result = false,
+                        Message = "尚未建立品質確效跨組別審核流程關卡"
+                    });
+                }
+                qcValidationFlowSettingList.AddRange(groupFlowSettings);
+            }
+            
+
             newQcMain.PurchaseMainId = purchaseDetailList.Count > 0 ? purchaseDetailList[0].PurchaseMainId : null;
             newQcMain.PurchaseSubItemId = purchaseDetailList.Count > 0 ? string.Join(",", purchaseDetailList.Select(e => e.ItemId).ToList()) : null;
             newQcMain.InStockId = inStockItemRecordList[0].InStockId;
@@ -201,7 +239,7 @@ namespace stock_api.Controllers
             newAcceptanceList.ForEach(detail => detail.MainId = newQcMain.MainId);
 
 
-            var (result,erroMsg) = _qcService.CreateQcValidation(newQcMain, newQcDetailList, newAcceptanceList);
+            var (result,erroMsg) = _qcService.CreateQcValidation(newQcMain, newQcDetailList, newAcceptanceList, qcValidationFlowSettingList);
             var response = new CommonResponse<List<UnDoneQcLot>>
             {
                 Result = result,

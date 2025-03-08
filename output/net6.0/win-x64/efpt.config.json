@@ -120,6 +120,14 @@
          "ObjectType": 0
       },
       {
+         "Name": "qc_flow",
+         "ObjectType": 0
+      },
+      {
+         "Name": "qc_flow_log",
+         "ObjectType": 0
+      },
+      {
          "Name": "qc_validation_detail",
          "ObjectType": 0
       },

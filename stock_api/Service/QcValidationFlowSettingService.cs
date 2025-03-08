@@ -84,6 +84,29 @@ namespace stock_api.Service
 
             return result.ToList();
         }
+        public List<QcValidationFlowSettingVo> GeQcValidationFlowSettingVoListByCompIdForCrossComp(string compId)
+        {
+            var result = from pfs in _dbContext.QcValidationFlowSettings
+                         join member in _dbContext.WarehouseMembers
+                         on pfs.ReviewUserId equals member.UserId
+                         where pfs.CompId == compId && pfs.ReviewGroupId == null
+                         select new QcValidationFlowSettingVo
+                         {
+                             SettingId = pfs.SettingId,
+                             CompId = pfs.CompId,
+                             FlowName = pfs.FlowName,
+                             Sequence = pfs.Sequence,
+                             ReviewUserId = pfs.ReviewUserId,
+                             ReviewUserName = member.DisplayName,
+                             ReviewGroupId = null,
+                             ReviewGroupName = null,
+                             CreatedAt = pfs.CreatedAt,
+                             UpdatedAt = pfs.UpdatedAt,
+                         };
+
+            return result.ToList();
+        }
+
 
         public QcValidationFlowSetting? GetQcValidationFlowSettingBySettingId(string settingId)
         {

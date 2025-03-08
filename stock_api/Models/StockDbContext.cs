@@ -91,6 +91,10 @@ public partial class StockDbContext : DbContext
 
     public virtual DbSet<QcAcceptanceDetail> QcAcceptanceDetails { get; set; }
 
+    public virtual DbSet<QcFlow> QcFlows { get; set; }
+
+    public virtual DbSet<QcFlowLog> QcFlowLogs { get; set; }
+
     public virtual DbSet<QcValidationDetail> QcValidationDetails { get; set; }
 
     public virtual DbSet<QcValidationFlowSetting> QcValidationFlowSettings { get; set; }
@@ -944,6 +948,45 @@ public partial class StockDbContext : DbContext
                 .ValueGeneratedOnAddOrUpdate()
                 .HasDefaultValueSql("CURRENT_TIMESTAMP");
             entity.Property(e => e.ValidationResult).HasComment("PASS,FAIL,ND");
+        });
+
+        modelBuilder.Entity<QcFlow>(entity =>
+        {
+            entity.HasKey(e => e.FlowId).HasName("PRIMARY");
+
+            entity.ToTable("qc_flow", tb => tb.HasComment("當使用者填寫品質確效時，qc_flow 就會新增一筆資料，且每一次變動就會在此表格寫入一筆資料留下審核紀錄。"));
+
+            entity.Property(e => e.Answer).HasComment("回覆結果\\nAGREE : 同意\\nREJECT : 不同意\\n空白 : 未回應");
+            entity.Property(e => e.CompId).HasComment("申請者的來源組織ID");
+            entity.Property(e => e.CreatedAt).HasDefaultValueSql("CURRENT_TIMESTAMP");
+            entity.Property(e => e.MainId).HasComment("對應 qc_validation_main PK");
+            entity.Property(e => e.ReviewCompId).HasComment("審核此單據的組織ID");
+            entity.Property(e => e.ReviewGroupId).HasComment("負責簽核的組別");
+            entity.Property(e => e.ReviewUserId).HasComment("審核此單據的UserID");
+            entity.Property(e => e.ReviewUserName).HasComment("審核此單據的UserName");
+            entity.Property(e => e.Status).HasComment("當下該單據狀態");
+            entity.Property(e => e.SubmitAt).HasComment("送出時間");
+            entity.Property(e => e.UpdatedAt)
+                .ValueGeneratedOnAddOrUpdate()
+                .HasDefaultValueSql("CURRENT_TIMESTAMP");
+        });
+
+        modelBuilder.Entity<QcFlowLog>(entity =>
+        {
+            entity.HasKey(e => e.LogId).HasName("PRIMARY");
+
+            entity.ToTable("qc_flow_log", tb => tb.HasComment("*假設今天有人員異動，造成單據的審核流程卡住，系統會提供一個畫面給該院區管理者，管理者進入後得強制進行審核。"));
+
+            entity.Property(e => e.Action).HasComment("動作\nNEXT : 下一步\nPREV : 上一步\nCLOSE : 結案");
+            entity.Property(e => e.CompId).HasComment("申請者的來源組織ID");
+            entity.Property(e => e.CreatedAt).HasDefaultValueSql("CURRENT_TIMESTAMP");
+            entity.Property(e => e.MainId).HasComment("對應 qc_validation_main PK");
+            entity.Property(e => e.Remarks).HasComment("備註內容");
+            entity.Property(e => e.UpdatedAt)
+                .ValueGeneratedOnAddOrUpdate()
+                .HasDefaultValueSql("CURRENT_TIMESTAMP");
+            entity.Property(e => e.UserId).HasComment("操作者的UserID");
+            entity.Property(e => e.UserName).HasComment("操作者名稱");
         });
 
         modelBuilder.Entity<QcValidationDetail>(entity =>

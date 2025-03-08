@@ -2,6 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using Org.BouncyCastle.Asn1.Ocsp;
 using stock_api.Common.Constant;
+using stock_api.Common.Settings;
 using stock_api.Common.Utils;
 using stock_api.Controllers.Request;
 using stock_api.Models;
@@ -15,12 +16,18 @@ namespace stock_api.Service
         private readonly StockDbContext _dbContext;
         private readonly IMapper _mapper;
         private readonly ILogger<QcService> _logger;
+        private readonly SmtpSettings _smtpSettings;
+        private readonly EmailService _emailService;
+        private readonly MemberService _memberService;
 
-        public QcService(StockDbContext dbContext, IMapper mapper, ILogger<QcService> logger)
+        public QcService(StockDbContext dbContext, IMapper mapper, ILogger<QcService> logger, EmailService emailService, MemberService memberService, SmtpSettings smtpSettings)
         {
             _dbContext = dbContext;
             _mapper = mapper;
             _logger = logger;
+            _emailService = emailService;
+            _memberService = memberService;
+            _smtpSettings = smtpSettings;
         }
 
 
@@ -174,7 +181,7 @@ namespace stock_api.Service
         }
 
         public (bool,string?) CreateQcValidation(QcValidationMain newQcValidationMain,List<QcValidationDetail> newQcValidationDetailList
-            , List<QcAcceptanceDetail> newQcAcceptanceDetail)
+            , List<QcAcceptanceDetail> newQcAcceptanceDetail, List<QcValidationFlowSettingVo> qcValidationFlowSettings)
         {
             using var scope = new TransactionScope();
             try
@@ -182,6 +189,49 @@ namespace stock_api.Service
                 _dbContext.QcValidationMains.Add(newQcValidationMain);
                 _dbContext.QcValidationDetails.AddRange(newQcValidationDetailList);
                 _dbContext.QcAcceptanceDetails.AddRange(newQcAcceptanceDetail);
+                List<QcFlow> qcFlows = new List<QcFlow>();
+                DateTime submitedAt = DateTime.Now;
+                foreach (var flow in qcValidationFlowSettings)
+                {
+                    qcFlows.Add(new QcFlow
+                    {
+                        FlowId = Guid.NewGuid().ToString(),
+                        CompId = newQcValidationMain.CompId,
+                        MainId = newQcValidationMain.MainId,
+                        Status = CommonConstants.QcFlowStatus.WAIT,
+                        ReviewCompId = newQcValidationMain.CompId,
+                        ReviewUserId = flow.ReviewUserId,
+                        ReviewUserName = flow.ReviewUserName,
+                        ReviewGroupId = flow.ReviewGroupId,
+                        ReviewGroupName = flow.ReviewGroupName,
+                        Answer = CommonConstants.PurchaseFlowAnswer.EMPTY,
+                        Sequence = flow.Sequence,
+                        SubmitAt = submitedAt,
+                    });
+                }
+                _dbContext.QcFlows.AddRange(qcFlows);
+                var firstFlow = qcFlows.OrderBy(s => s.Sequence).FirstOrDefault();
+                DateTime now = DateTime.Now;
+                string title = $"品質確效單:{string.Concat(DateTimeHelper.FormatDateStringForEmail(now), firstFlow.MainId)} 需要您審核";
+                string content = $"<a href={_smtpSettings.Domain}/qc_detail/{firstFlow.MainId}>{firstFlow.MainId}</a>";
+                SendMailByFlowSetting(firstFlow, title, content);
+
+                if (firstFlow != null)
+                {
+                    title = "品質確效單需要審核";
+                    var receiver = _memberService.GetMembersByUserId(firstFlow.ReviewUserId);
+                    EmailNotify emailNotify = new EmailNotify()
+                    {
+                        Title = title,
+                        Content = content,
+                        UserId = firstFlow.ReviewUserId,
+                        Email = receiver.Email,
+                        PurchaseNumber = firstFlow.MainId,
+                        Type = CommonConstants.EmailNotifyType.QC
+                    };
+                    _emailService.AddEmailNotify(emailNotify);
+                }
+
 
                 if (newQcValidationMain.QcType == CommonConstants.QcTypeConstants.LOT_NUMBER)
                 {
@@ -321,5 +371,20 @@ namespace stock_api.Service
             return _dbContext.QcAcceptanceDetails.Where(d => mainIdList.Contains(d.MainId)).ToList();
         }
 
+
+        private async Task SendMailByFlowSetting(QcFlow qcFlow, String title, String content)
+        {
+            var receiver = _memberService.GetMembersByUserId(qcFlow.ReviewUserId);
+            if (receiver != null)
+            {
+
+                if (!string.IsNullOrEmpty(receiver.Email))
+                {
+                    await _emailService.SendAsync(title, content, receiver.Email);
+                    _logger.LogInformation("[寄信]標題:{title},收件者:{email}", title, receiver.Email);
+                }
+
+            }
+        }
     }
 }

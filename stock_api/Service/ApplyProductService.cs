@@ -17,13 +17,13 @@ namespace stock_api.Service
     {
         private readonly StockDbContext _dbContext;
         private readonly IMapper _mapper;
-        private readonly ILogger<PurchaseService> _logger;
+        private readonly ILogger<ApplyProductService> _logger;
         private readonly EmailService _emailService;
         private readonly MemberService _memberService;
         private readonly SmtpSettings _smtpSettings;
 
 
-        public ApplyProductService(StockDbContext dbContext, IMapper mapper, ILogger<PurchaseService> logger, EmailService emailService,MemberService memberService,SmtpSettings smtpSettings)
+        public ApplyProductService(StockDbContext dbContext, IMapper mapper, ILogger<ApplyProductService> logger, EmailService emailService,MemberService memberService,SmtpSettings smtpSettings)
         {
             _dbContext = dbContext;
             _mapper = mapper;
@@ -96,9 +96,9 @@ namespace stock_api.Service
                 }
                 _dbContext.ApplyNewProductFlows.AddRange(flows);
 
-                var firstFlow = matchedApplyProductFlowSettingVoList.OrderBy(s => s.Sequence).FirstOrDefault();
+                var firstFlow = flows.OrderBy(s => s.Sequence).FirstOrDefault();
                 DateTime now = DateTime.Now;
-                string title = $"申請新品項單:{string.Concat(DateTimeHelper.FormatDateStringForEmail(now), firstFlow.SettingId.AsSpan(0, 5))} 需要您審核";
+                string title = $"申請新品項單:{string.Concat(DateTimeHelper.FormatDateStringForEmail(now), firstFlow.ApplyId.AsSpan(0, 5))} 需要您審核";
                 string content = $"<a href={_smtpSettings.Domain}/product_item_verify/{newApplyNewProductMain.ApplyId}>{newApplyNewProductMain.ApplyId}</a>";
                 SendMailByFlowSetting(firstFlow, title, content);
 
@@ -395,9 +395,9 @@ namespace stock_api.Service
         }
        
 
-        private async Task SendMailByFlowSetting(ApplyProductFlowSetting applyProductFlowSetting, String title, String content)
+        private async Task SendMailByFlowSetting(ApplyNewProductFlow applyProductFlow, String title, String content)
         {
-            var receiver = _memberService.GetMembersByUserId(applyProductFlowSetting.ReviewUserId);
+            var receiver = _memberService.GetMembersByUserId(applyProductFlow.ReviewUserId);
             if (receiver != null)
             {
 
