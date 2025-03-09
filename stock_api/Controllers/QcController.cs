@@ -200,7 +200,7 @@ namespace stock_api.Controllers
                     return BadRequest(new CommonResponse<dynamic>
                     {
                         Result = false,
-                        Message = $"尚未建立{product.ProductCode}({product.ProductName})的品質確效跨組別審核流程關卡"
+                        Message = $"尚未建立 {product.ProductCode}({product.ProductName}) 的品質確效跨組別審核流程關卡"
                     });
                 }
                 qcValidationFlowSettingList.AddRange(crossCompFlowSettings);
@@ -211,7 +211,7 @@ namespace stock_api.Controllers
                     return BadRequest(new CommonResponse<dynamic>
                     {
                         Result = false,
-                        Message = $"尚未建立{product.ProductCode}({product.ProductName})所屬組別${product.GroupNames.Split(",")[0]}的品質確效組別審核流程關卡"
+                        Message = $"尚未建立 {product.ProductCode}({product.ProductName}) 所屬組別 {product.GroupNames.Split(",")[0]} 的品質確效組別審核流程關卡"
                     });
                 }
                 qcValidationFlowSettingList.AddRange(groupFlowSettings);

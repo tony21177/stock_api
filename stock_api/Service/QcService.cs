@@ -403,6 +403,8 @@ namespace stock_api.Service
                              ReviewCompId = f.ReviewCompId,
                              ReviewUserId = f.ReviewUserId,
                              ReviewUserName = f.ReviewUserName,
+                             ReviewGroupId = f.ReviewGroupId,
+                             ReviewGroupName = f.ReviewGroupName,
                              Answer = f.Answer,
                              Sequence = f.Sequence,
                              ReadAt = f.ReadAt,
