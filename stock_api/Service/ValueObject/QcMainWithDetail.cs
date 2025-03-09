@@ -5,7 +5,7 @@ using stock_api.Models;
 
 namespace stock_api.Service.ValueObject
 {
-    public class QcMainWithDetail
+    public class QcMainWithDetail 
     {
 
         public string MainId { get; set; } = null!;
@@ -35,6 +35,7 @@ namespace stock_api.Service.ValueObject
         public string QcType { get; set; } = null!;
         public DateTime? CreatedAt { get; set; }
         public DateTime? UpdatedAt { get; set; }
+        public string? CurrentStatus { get; set; } 
         public List<QcValidationDetail> DetailList { get; set; } = new();
         public List<QcAcceptanceDetail> AcceptanceDetails { get; set; } = new();
         public bool IsLotNumberOutStock {  get; set; }
