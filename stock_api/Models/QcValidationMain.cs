@@ -168,4 +168,7 @@ public partial class QcValidationMain
 
     [StringLength(400)]
     public string? ConcentrationComment { get; set; }
+
+    [StringLength(45)]
+    public string CurrentStatus { get; set; } = null!;
 }

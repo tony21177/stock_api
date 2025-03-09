@@ -86,4 +86,7 @@ public partial class QcFlow
     public DateTime? SubmitAt { get; set; }
 
     public int Sequence { get; set; }
+
+    [Column(TypeName = "timestamp")]
+    public DateTime? ReadAt { get; set; }
 }

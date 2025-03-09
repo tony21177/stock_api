@@ -172,6 +172,8 @@ namespace stock_api.Service
 
             return result.ToList();
         }
-       
+
+
+        
     }
 }

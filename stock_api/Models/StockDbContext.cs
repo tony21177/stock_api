@@ -1026,6 +1026,7 @@ public partial class StockDbContext : DbContext
 
             entity.Property(e => e.Comment).HasComment("備註說明");
             entity.Property(e => e.CreatedAt).HasDefaultValueSql("CURRENT_TIMESTAMP");
+            entity.Property(e => e.CurrentStatus).HasDefaultValueSql("'APPLY'");
             entity.Property(e => e.FinalResult).HasComment("結果統整\nPASS(符合驗收條件),FAIL(未符合驗收條件,進行退貨)");
             entity.Property(e => e.InStockTime).HasComment("對應的入庫時間");
             entity.Property(e => e.NewLotNumberTestCode).HasComment("對應記錄編號");

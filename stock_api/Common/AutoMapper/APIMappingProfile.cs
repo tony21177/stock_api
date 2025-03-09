@@ -186,6 +186,8 @@ namespace stock_api.Common.AutoMapper
             .ForAllMembers(opt => opt.Condition((src, dest, srcMember) => srcMember != null));
             CreateMap<QcValidationMain, QcMainWithDetail>()
             .ForAllMembers(opt => opt.Condition((src, dest, srcMember) => srcMember != null));
+            CreateMap<QcValidationMain, QcMainWithDetailAndFlows>()
+            .ForAllMembers(opt => opt.Condition((src, dest, srcMember) => srcMember != null));
         }
         
     }

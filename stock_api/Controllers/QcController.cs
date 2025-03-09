@@ -303,5 +303,61 @@ namespace stock_api.Controllers
             };
             return Ok(response);
         }
+
+
+        [HttpGet("flows/my")]
+        [Authorize]
+        public IActionResult GetFlowsSignedByMy()
+        {
+            var memberAndPermissionSetting = _authHelpers.GetMemberAndPermissionSetting(User);
+            var compId = memberAndPermissionSetting.CompanyWithUnit.CompId;
+
+
+            var flowsSignedByMe = _qcService.GetFlowsByUserId(memberAndPermissionSetting.Member.UserId);
+
+
+            var distinctMainIdList = flowsSignedByMe.Select(f => f.MainId).Distinct().ToList();
+            var qcMainList = _qcService.GetQcMainsByMainIdList(distinctMainIdList).OrderByDescending(m => m.UpdatedAt).ToList();
+            var details = _qcService.GetQcDetailsByMainIdList(qcMainList.Select(m => m.MainId).ToList());
+            var acceptanceDetails = _qcService.GetQcAcceptanceDetailsByMainIdList(qcMainList.Select(m => m.MainId).ToList());
+
+            var flows = _qcService.GetQcFlowListWithAgentsByMainIdList(distinctMainIdList);
+            var flowLogs = _qcService.GetQcFlowLogsByMainIdList(distinctMainIdList);
+
+            //var distinctProductIdList = purchaseSubItems.Select(s => s.ProductId).Distinct().ToList();
+            //var products = _warehouseProductService.GetProductsByProductIdsAndCompId(distinctProductIdList, compId);
+
+            List<QcMainWithDetailAndFlows> qcMainWithDetailAndFlowsList = new List<QcMainWithDetailAndFlows>();
+
+
+            qcMainList.ForEach(m =>
+            {
+                var qcMainWithDetailAndFlows = _mapper.Map<QcMainWithDetailAndFlows>(m);
+
+                var matchedDetails = details.Where(s => s.MainId == m.MainId).OrderBy(s => s.ItemNumber).ToList();
+                var matchedAcceptanceDetails = acceptanceDetails.Where(s => s.MainId == m.MainId).OrderBy(s => s.ItemNumber).ToList();
+                
+
+                var matchedFlows = flows.Where(f => f.MainId == m.MainId).OrderBy(f => f.Sequence).ToList();
+                var matchedFlowLogs = flowLogs.Where(l => l.MainId == m.MainId).OrderBy(l => l.UpdatedAt).ToList();
+
+
+
+                qcMainWithDetailAndFlows.AcceptanceDetails = matchedAcceptanceDetails;
+                qcMainWithDetailAndFlows.DetailList = matchedDetails;
+                qcMainWithDetailAndFlows.Flows = matchedFlows;
+                qcMainWithDetailAndFlows.FlowLogs = matchedFlowLogs;
+                qcMainWithDetailAndFlowsList.Add(qcMainWithDetailAndFlows);
+            });
+            qcMainWithDetailAndFlowsList = qcMainWithDetailAndFlowsList.OrderBy(m => m.UpdatedAt).ToList();
+
+
+            var response = new CommonResponse<List<QcMainWithDetailAndFlows>>
+            {
+                Result = true,
+                Data = qcMainWithDetailAndFlowsList
+            };
+            return Ok(response);
+        }
     }
 }

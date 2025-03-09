@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 using Org.BouncyCastle.Asn1.Ocsp;
 using stock_api.Common.Constant;
 using stock_api.Common.Settings;
@@ -385,6 +386,62 @@ namespace stock_api.Service
                 }
 
             }
+        }
+
+        public List<QcFlowWithAgentsVo> GetQcFlowListWithAgentsByMainIdList(List<string> mainIdList)
+        {
+            var result = from f in _dbContext.QcFlows
+                         join m in _dbContext.WarehouseMembers on f.ReviewUserId equals m.UserId
+                         where mainIdList.Contains(f.MainId)
+                         select new QcFlowWithAgentsVo
+                         {
+                             FlowId = f.FlowId,
+                             CompId = f.CompId,
+                             MainId = f.MainId,
+                             Reason = f.Reason,
+                             Status = f.Status,
+                             ReviewCompId = f.ReviewCompId,
+                             ReviewUserId = f.ReviewUserId,
+                             ReviewUserName = f.ReviewUserName,
+                             Answer = f.Answer,
+                             Sequence = f.Sequence,
+                             ReadAt = f.ReadAt,
+                             SubmitAt = f.SubmitAt,
+                             CreatedAt = f.CreatedAt,
+                             UpdatedAt =f.UpdatedAt,
+                             Agents = m.Agents,
+                             AgentNames = m.AgentNames,
+                         };
+
+            var list = result.ToList();
+            list.ForEach(flow =>
+            {
+                if (!flow.Agents.IsNullOrEmpty())
+                {
+                    flow.ReviewAgentIds = flow.Agents.Split(",", StringSplitOptions.None).ToList();
+                    flow.ReviewAgentNames = flow.AgentNames.Split(",", StringSplitOptions.None).ToList();
+                }
+
+
+            });
+            return list;
+        }
+
+
+        public List<QcFlowLog> GetQcFlowLogsByMainIdList(List<string> mainIdList)
+        {
+            return _dbContext.QcFlowLogs.Where(l => mainIdList.Contains(l.MainId)).ToList();
+        }
+
+        public List<QcValidationMain> GetQcMainsByMainIdList(List<string> mainIdList)
+        {
+            return _dbContext.QcValidationMains.Where(m => mainIdList.Contains(m.MainId)).ToList();
+        }
+
+        public List<QcFlow> GetFlowsByUserId(string userId)
+        {
+            return _dbContext.QcFlows.Where(f => f.ReviewUserId == userId).ToList();
+
         }
     }
 }
