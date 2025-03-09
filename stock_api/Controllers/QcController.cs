@@ -276,9 +276,13 @@ namespace stock_api.Controllers
 
             var details = _qcService.GetQcDetailsByMainIdList(qcMainList.Select(m => m.MainId).ToList());
             var acceptanceDetails = _qcService.GetQcAcceptanceDetailsByMainIdList(qcMainList.Select(m => m.MainId).ToList());
+            var distinctMainIdList = qcMainList.Select(m => m.MainId).ToList();
+            var flows = _qcService.GetQcFlowListWithAgentsByMainIdList(distinctMainIdList);
+            var flowLogs = _qcService.GetQcFlowLogsByMainIdList(distinctMainIdList);
+            var qcMainWithDetailAndFlowsList = _mapper.Map<List<QcMainWithDetailAndFlows>>(qcMainList);
 
-            var qcMainWithDetailList = _mapper.Map<List<QcMainWithDetail>>(qcMainList);
-            qcMainWithDetailList.ForEach(m =>
+
+            qcMainWithDetailAndFlowsList.ForEach(m =>
             {
                 var matchedDetailList = details.Where(d=>d.MainId==m.MainId).ToList();
                 m.DetailList = matchedDetailList;
@@ -292,13 +296,18 @@ namespace stock_api.Controllers
                 }
                 var matchedAcceptanceDetailList = acceptanceDetails.Where(d => d.MainId == m.MainId).ToList();
                 m.AcceptanceDetails = matchedAcceptanceDetailList;
+
+                var matchedFlows = flows.Where(f => f.MainId == m.MainId).OrderBy(f=>f.Sequence).ToList();
+                var matchedFlowLogs = flowLogs.Where(l => l.MainId == m.MainId).OrderByDescending(l=>l.UpdatedAt).ToList();
+                m.FlowLogs = matchedFlowLogs;
+                m.Flows = matchedFlows;
             });
 
             
-            var response = new CommonResponse<List<QcMainWithDetail>>
+            var response = new CommonResponse<List<QcMainWithDetailAndFlows>>
             {
                 Result = true,
-                Data = qcMainWithDetailList,
+                Data = qcMainWithDetailAndFlowsList,
                 TotalPages = totalPages
             };
             return Ok(response);

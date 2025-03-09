@@ -430,6 +430,16 @@ namespace stock_api.Service
         }
 
 
+        public List<QcFlowLog> GetQcFlowLogsByMainId(string mainId)
+        {
+            return _dbContext.QcFlowLogs.Where(l => l.MainId== mainId).ToList();
+        }
+
+        public List<QcValidationMain> GetQcMainsByMainId(string mainId)
+        {
+            return _dbContext.QcValidationMains.Where(m => m.MainId==mainId).ToList();
+        }
+
         public List<QcFlowLog> GetQcFlowLogsByMainIdList(List<string> mainIdList)
         {
             return _dbContext.QcFlowLogs.Where(l => mainIdList.Contains(l.MainId)).ToList();
