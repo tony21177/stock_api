@@ -211,7 +211,7 @@ namespace stock_api.Controllers
                     return BadRequest(new CommonResponse<dynamic>
                     {
                         Result = false,
-                        Message = "尚未建立品質確效跨組別審核流程關卡"
+                        Message = "尚未建立品質確效組別審核流程關卡"
                     });
                 }
                 qcValidationFlowSettingList.AddRange(groupFlowSettings);
