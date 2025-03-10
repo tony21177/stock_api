@@ -66,6 +66,11 @@ public class EmailService
         _dbContext.EmailNotifies.Where(n => n.PurchaseNumber==purchaseNumber).ExecuteUpdate(n => n.SetProperty(n => n.IsDone, true));
         return;
     }
+    public void UpdateEmailNotifyIsDoneByQcMainId(string qcMainId)
+    {
+        _dbContext.EmailNotifies.Where(n => n.PurchaseNumber == qcMainId).ExecuteUpdate(n => n.SetProperty(n => n.IsDone, true));
+        return;
+    }
 
     public Dictionary<string, List<EmailNotify>> GetNormalPurchaseListToSend()
     {

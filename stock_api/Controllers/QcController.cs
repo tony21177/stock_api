@@ -3,8 +3,10 @@ using FluentValidation;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
+using Microsoft.IdentityModel.Tokens;
 using Serilog;
 using stock_api.Common;
+using stock_api.Common.Constant;
 using stock_api.Controllers.Request;
 using stock_api.Controllers.Validator;
 using stock_api.Models;
@@ -28,12 +30,16 @@ namespace stock_api.Controllers
         private readonly PurchaseService _purchaseService;
         private readonly QcService _qcService;
         private readonly QcValidationFlowSettingService _qcValidationFlowSettingService;
+        private readonly CompanyService _companyService;
+        private readonly MemberService _memberService;
         private readonly IValidator<CreateQcRequest> _createQcValidator;
         private readonly IValidator<ListMainWithDetailRequest> _listQcMainWithDetailValidator;
+        private readonly IValidator<AnswerQcFlowRequest> _answerQcFlowRequestValidator;
 
         public QcController(IMapper mapper, AuthHelpers authHelpers, StockInService stockInService,
             StockOutService stockOutService, WarehouseProductService warehouseProductService,
-            QcService qcService, PurchaseService purchaseService,QcValidationFlowSettingService qcValidationFlowSettingService)
+            QcService qcService, PurchaseService purchaseService,QcValidationFlowSettingService qcValidationFlowSettingService
+            ,CompanyService companyService,MemberService memberService)
         {
             _mapper = mapper;
             _authHelpers = authHelpers;
@@ -45,6 +51,9 @@ namespace stock_api.Controllers
             _createQcValidator = new CreateQcValidator();
             _listQcMainWithDetailValidator = new ListQcMainWithDetailValidator();
             _qcValidationFlowSettingService = qcValidationFlowSettingService;
+            _answerQcFlowRequestValidator = new AnswerQcFlowValidator();
+            _companyService = companyService;
+            _memberService = memberService;
         }
 
         [HttpPost("list")]
@@ -365,6 +374,92 @@ namespace stock_api.Controllers
             {
                 Result = true,
                 Data = qcMainWithDetailAndFlowsList
+            };
+            return Ok(response);
+        }
+
+        [HttpPost("flow/answer")]
+        [Authorize]
+        public IActionResult FlowSign(AnswerQcFlowRequest request)
+        {
+            var memberAndPermissionSetting = _authHelpers.GetMemberAndPermissionSetting(User);
+            var verifier = memberAndPermissionSetting.Member;
+            var compId = memberAndPermissionSetting.CompanyWithUnit.CompId;
+
+            var validationResult = _answerQcFlowRequestValidator.Validate(request);
+
+            if (!validationResult.IsValid)
+            {
+                return BadRequest(CommonResponse<dynamic>.BuildValidationFailedResponse(validationResult));
+            }
+            var qcFlow = _qcService.GetFlowsByFlowId(request.FlowId);
+
+            if (qcFlow == null)
+            {
+                return BadRequest(new CommonResponse<dynamic>()
+                {
+                    Result = false,
+                    Message = "審核流程不存在"
+                });
+            }
+
+            var qcComp = _companyService.GetCompanyByCompId(qcFlow.CompId);
+            if (qcComp == null)
+            {
+                return BadRequest(CommonResponse<dynamic>.BuildNotAuthorizeResponse());
+            }
+            if (qcComp.Type != CommonConstants.CompanyType.ORGANIZATION_NOSTOCK || memberAndPermissionSetting.Member.IsNoStockReviewer == false)
+            {
+
+                if (qcFlow.CompId != compId)
+                {
+                    return BadRequest(CommonResponse<dynamic>.BuildNotAuthorizeResponse());
+                }
+            }
+
+
+            bool isVerifiedByAgent = false;
+            if (qcFlow.ReviewUserId != verifier.UserId)
+            {
+                // 檢查是否為代理人
+                var flowVerifier = _memberService.GetMemberByUserId(qcFlow.ReviewUserId);
+                if (flowVerifier.Agents.Contains(verifier.UserId))
+                {
+                    isVerifiedByAgent = true;
+                }
+                else
+                {
+                    return BadRequest(CommonResponse<dynamic>.BuildNotAuthorizeResponse());
+
+                }
+            }
+            if (!qcFlow.Answer.IsNullOrEmpty())
+            {
+                return BadRequest(new CommonResponse<dynamic>()
+                {
+                    Result = false,
+                    Message = "不能重複審核"
+                });
+            }
+
+
+            var beforeFlows = _qcService.GetBeforeFlows(qcFlow);
+            if (beforeFlows.Any(f => f.Answer == CommonConstants.PurchaseFlowAnswer.EMPTY))
+            {
+                return BadRequest(new CommonResponse<dynamic>()
+                {
+                    Result = false,
+                    Message = "之前的審核流程還在跑"
+                });
+            }
+
+            var result = _qcService.AnswerFlow(qcFlow, memberAndPermissionSetting, request.Answer, request.Reason, isVerifiedByAgent);
+
+
+            var response = new CommonResponse<dynamic>
+            {
+                Result = result,
+                Data = null
             };
             return Ok(response);
         }

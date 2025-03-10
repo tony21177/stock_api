@@ -8,6 +8,7 @@ using stock_api.Common.Utils;
 using stock_api.Controllers.Request;
 using stock_api.Models;
 using stock_api.Service.ValueObject;
+using stock_api.Utils;
 using System.Transactions;
 
 namespace stock_api.Service
@@ -32,18 +33,18 @@ namespace stock_api.Service
         }
 
 
-        public (List<UnDoneQcLot>,int) ListUnDoneQcLotList(ListUnDoneQcLotRequest request)
+        public (List<UnDoneQcLot>, int) ListUnDoneQcLotList(ListUnDoneQcLotRequest request)
         {
-            var needQcProductList = _dbContext.WarehouseProducts.Where(p=>p.IsActive==true&&p.IsNeedAcceptProcess==true&&p.QcType!=CommonConstants.QcTypeConstants.NONE).ToList();    
-            var needQcProductIdList = needQcProductList.Select(p=>p.ProductId).ToList();
-            var unDoneLotNumberQcInStockRecords = _dbContext.InStockItemRecords.Where(i=>i.CompId== request.CompId && i.QcTestStatus==CommonConstants.QcTestStatus.NONE
-            &&i.IsNeedQc==true&&i.QcType!=CommonConstants.QcTypeConstants.NONE).ToList();
+            var needQcProductList = _dbContext.WarehouseProducts.Where(p => p.IsActive == true && p.IsNeedAcceptProcess == true && p.QcType != CommonConstants.QcTypeConstants.NONE).ToList();
+            var needQcProductIdList = needQcProductList.Select(p => p.ProductId).ToList();
+            var unDoneLotNumberQcInStockRecords = _dbContext.InStockItemRecords.Where(i => i.CompId == request.CompId && i.QcTestStatus == CommonConstants.QcTestStatus.NONE
+            && i.IsNeedQc == true && i.QcType != CommonConstants.QcTypeConstants.NONE).ToList();
             unDoneLotNumberQcInStockRecords = unDoneLotNumberQcInStockRecords.Where(r => needQcProductIdList.Contains(r.ProductId)).ToList();
             var unDoneLotNumberQcInStockIdList = unDoneLotNumberQcInStockRecords.Select(r => r.InStockId).ToList();
             List<UnDoneQcLot> unDoneQcLotList = new();
             foreach (var inStockItemRecord in unDoneLotNumberQcInStockRecords)
             {
-                var matchedProduct = needQcProductList.Where(p=>p.ProductId == inStockItemRecord.ProductId).FirstOrDefault();
+                var matchedProduct = needQcProductList.Where(p => p.ProductId == inStockItemRecord.ProductId).FirstOrDefault();
                 var unDoneQcLot = new UnDoneQcLot()
                 {
                     ProductId = inStockItemRecord.ProductId,
@@ -57,20 +58,20 @@ namespace stock_api.Service
                     InStockTime = inStockItemRecord.CreatedAt,
                     InStockUserId = inStockItemRecord.UserId,
                     InStockUserName = inStockItemRecord.UserName,
-                    GroupIdList = matchedProduct.GroupIds==null?null:matchedProduct.GroupIds.Split(",", StringSplitOptions.RemoveEmptyEntries).ToList(),
+                    GroupIdList = matchedProduct.GroupIds == null ? null : matchedProduct.GroupIds.Split(",", StringSplitOptions.RemoveEmptyEntries).ToList(),
                     GroupNameList = matchedProduct.GroupNames == null ? null : matchedProduct.GroupNames.Split(",", StringSplitOptions.RemoveEmptyEntries).ToList(),
                 };
                 unDoneQcLotList.Add(unDoneQcLot);
             }
-            var newLotNumberInStockIdList = _dbContext.ProductNewLotnumberViews.ToList().Where(e=>e.LotNumber!= "N/A"&&e.CompId== request.CompId).ToList().Select(e=>e.InStockId).ToList();
-            
-            var newLotNumberInStockItems = _dbContext.InStockItemRecords.Where(i=>newLotNumberInStockIdList.Contains(i.InStockId)&& i.QcTestStatus == CommonConstants.QcTestStatus.NONE).ToList();
+            var newLotNumberInStockIdList = _dbContext.ProductNewLotnumberViews.ToList().Where(e => e.LotNumber != "N/A" && e.CompId == request.CompId).ToList().Select(e => e.InStockId).ToList();
+
+            var newLotNumberInStockItems = _dbContext.InStockItemRecords.Where(i => newLotNumberInStockIdList.Contains(i.InStockId) && i.QcTestStatus == CommonConstants.QcTestStatus.NONE).ToList();
             var allProducts = _dbContext.WarehouseProducts.ToList();
             foreach (var inStockItemRecord in newLotNumberInStockItems)
             {
                 if (unDoneLotNumberQcInStockIdList.Contains(inStockItemRecord.InStockId)) continue;
                 var matchedProduct = allProducts.Where(p => p.ProductId == inStockItemRecord.ProductId).FirstOrDefault();
-                if(matchedProduct.IsNeedAcceptProcess==false||matchedProduct.QcType==CommonConstants.QcTypeConstants.NONE) continue;
+                if (matchedProduct.IsNeedAcceptProcess == false || matchedProduct.QcType == CommonConstants.QcTypeConstants.NONE) continue;
                 var unDoneQcLot = new UnDoneQcLot()
                 {
                     ProductId = inStockItemRecord.ProductId,
@@ -93,11 +94,11 @@ namespace stock_api.Service
 
             if (request.GroupId != null)
             {
-                unDoneQcLotList = unDoneQcLotList.Where(e=> e.GroupIdList!=null&& string.Join(" ",e.GroupIdList).Contains(request.GroupId)).ToList();
+                unDoneQcLotList = unDoneQcLotList.Where(e => e.GroupIdList != null && string.Join(" ", e.GroupIdList).Contains(request.GroupId)).ToList();
             }
             if (request.Keywords != null)
             {
-                unDoneQcLotList = unDoneQcLotList.Where(e=>e.IsContainKeywords(request.Keywords)).ToList();
+                unDoneQcLotList = unDoneQcLotList.Where(e => e.IsContainKeywords(request.Keywords)).ToList();
             }
 
 
@@ -178,10 +179,10 @@ namespace stock_api.Service
             totalPages = (int)Math.Ceiling((double)totalItems / request.PaginationCondition.PageSize);
             unDoneQcLotList = unDoneQcLotList.Skip((request.PaginationCondition.Page - 1) * request.PaginationCondition.PageSize).Take(request.PaginationCondition.PageSize).ToList();
 
-            return (unDoneQcLotList,totalPages);
+            return (unDoneQcLotList, totalPages);
         }
 
-        public (bool,string?) CreateQcValidation(QcValidationMain newQcValidationMain,List<QcValidationDetail> newQcValidationDetailList
+        public (bool, string?) CreateQcValidation(QcValidationMain newQcValidationMain, List<QcValidationDetail> newQcValidationDetailList
             , List<QcAcceptanceDetail> newQcAcceptanceDetail, List<QcValidationFlowSettingVo> qcValidationFlowSettings)
         {
             using var scope = new TransactionScope();
@@ -238,7 +239,7 @@ namespace stock_api.Service
                 {
                     // 更新QcTestStatus成DONE表示已做過確效
                     _dbContext.InStockItemRecords.Where(i => i.IsNeedQc == true && i.QcType == CommonConstants.QcTypeConstants.LOT_NUMBER && i.LotNumber == newQcValidationMain.LotNumber)
-                        .ExecuteUpdate(item => item.SetProperty(x=>x.QcTestStatus,CommonConstants.QcTestStatus.DONE));
+                        .ExecuteUpdate(item => item.SetProperty(x => x.QcTestStatus, CommonConstants.QcTestStatus.DONE));
                 }
                 if (newQcValidationMain.QcType == CommonConstants.QcTypeConstants.LOT_NUMBER_BATCH)
                 {
@@ -258,7 +259,8 @@ namespace stock_api.Service
 
         }
 
-        public (List<QcValidationMain>,int) ListQcMain(ListMainWithDetailRequest request) {
+        public (List<QcValidationMain>, int) ListQcMain(ListMainWithDetailRequest request)
+        {
             IQueryable<QcValidationMain> query = _dbContext.QcValidationMains;
             if (request.CompId != null)
             {
@@ -300,7 +302,7 @@ namespace stock_api.Service
             }
             if (!string.IsNullOrEmpty(request.Keywords))
             {
-                query = query.Where(h => 
+                query = query.Where(h =>
                 h.MainId.Contains(request.MainId)
                 || h.PurchaseMainId.Contains(request.Keywords)
                 || h.PurchaseSubItemId.Contains(request.Keywords)
@@ -410,7 +412,7 @@ namespace stock_api.Service
                              ReadAt = f.ReadAt,
                              SubmitAt = f.SubmitAt,
                              CreatedAt = f.CreatedAt,
-                             UpdatedAt =f.UpdatedAt,
+                             UpdatedAt = f.UpdatedAt,
                              Agents = m.Agents,
                              AgentNames = m.AgentNames,
                          };
@@ -432,12 +434,12 @@ namespace stock_api.Service
 
         public List<QcFlowLog> GetQcFlowLogsByMainId(string mainId)
         {
-            return _dbContext.QcFlowLogs.Where(l => l.MainId== mainId).ToList();
+            return _dbContext.QcFlowLogs.Where(l => l.MainId == mainId).ToList();
         }
 
-        public List<QcValidationMain> GetQcMainsByMainId(string mainId)
+        public QcValidationMain? GetQcMainsByMainId(string mainId)
         {
-            return _dbContext.QcValidationMains.Where(m => m.MainId==mainId).ToList();
+            return _dbContext.QcValidationMains.Where(m => m.MainId == mainId).FirstOrDefault();
         }
 
         public List<QcFlowLog> GetQcFlowLogsByMainIdList(List<string> mainIdList)
@@ -453,6 +455,205 @@ namespace stock_api.Service
         public List<QcFlow> GetFlowsByUserId(string userId)
         {
             return _dbContext.QcFlows.Where(f => f.ReviewUserId == userId).ToList();
+
+        }
+
+        public (QcFlow?, QcFlow?) FindPreviousAndNextFlow(QcFlow flow)
+        {
+            List<QcFlow> flows = _dbContext.QcFlows.Where(f => f.MainId == flow.MainId).OrderBy(f => f.Sequence).ToList();
+
+            return (flows.FirstOrDefault(f => f.Sequence < flow.Sequence), flows.FirstOrDefault(f => f.Sequence > flow.Sequence));
+        }
+
+        public QcFlow? GetFlowsByFlowId(string flowId)
+        {
+            return _dbContext.QcFlows.Where(f => f.FlowId == flowId).FirstOrDefault();
+
+        }
+
+        public List<QcFlow> GetBeforeFlows(QcFlow nowFlow)
+        {
+            return _dbContext.QcFlows.Where(f => f.Sequence < nowFlow.Sequence && f.CompId == nowFlow.CompId && f.MainId == nowFlow.MainId).OrderBy(f => f.Sequence).ToList();
+        }
+
+        public bool AnswerFlow(QcFlow flow, MemberAndPermissionSetting verifierMemberAndPermission, string answer, string? reason, bool isVerifiedByAgent)
+        {
+            string mainId = flow.MainId;
+            QcValidationMain main = GetQcMainsByMainId(mainId);
+            var (preFlow, nextFlow) = FindPreviousAndNextFlow(flow);
+            return AnswerFlowInTransactionScope(preFlow, nextFlow, flow, main, verifierMemberAndPermission, answer, reason, isVerifiedByAgent);
+        }
+
+
+        private bool AnswerFlowInTransactionScope(QcFlow? preFlow, QcFlow? nextFlow, QcFlow currentFlow, QcValidationMain qcValidationMain, MemberAndPermissionSetting verifierMemberAndPermission, string answer, string? reason, bool isVerifiedByAgent)
+        {
+            WarehouseMember verifyMember = verifierMemberAndPermission.Member;
+            var verifyCompId = verifierMemberAndPermission.CompanyWithUnit.CompId;
+            var originVerifierName = currentFlow.ReviewUserName;
+            List<WarehouseMember> ownerList = new();
+            using (var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled))
+            {
+                try
+                {
+                    // 更新Flow
+                    currentFlow.Reason = reason;
+                    if (answer != CommonConstants.PurchaseApplyStatus.BACK)
+                    {
+
+                        currentFlow.ReviewCompId = verifyCompId;
+                        currentFlow.ReviewUserId = verifyMember.UserId;
+                        if (isVerifiedByAgent == true)
+                        {
+                            currentFlow.ReviewUserName = verifyMember.DisplayName + "(代" + originVerifierName + ")";
+                        }
+                        else
+                        {
+                            currentFlow.ReviewUserName = verifyMember.DisplayName;
+                        }
+
+                    }
+
+                    currentFlow.Answer = answer;
+                    currentFlow.SubmitAt = DateTime.Now;
+
+                    // 更新主單狀態
+                    if (answer == CommonConstants.AnswerQcFlow.AGREE && nextFlow == null)
+                    {
+                        currentFlow.Status = answer;
+                        // 已完成所有flow 更新主單狀態
+                        qcValidationMain.CurrentStatus = CommonConstants.PurchaseApplyStatus.AGREE;
+                    }
+                    if (answer == CommonConstants.AnswerPurchaseFlow.REJECT)
+                    {
+                        currentFlow.Status = answer;
+                        qcValidationMain.CurrentStatus = CommonConstants.PurchaseApplyStatus.REJECT;
+                    }
+                    if (answer == CommonConstants.AnswerPurchaseFlow.BACK)
+                    {
+                        currentFlow.Status = answer;
+
+                        currentFlow.Answer = "";
+                        if (preFlow != null)
+                        {
+                            preFlow.Status = "";
+                            preFlow.Answer = "";
+                        }
+                        else
+                        {
+                            qcValidationMain.CurrentStatus = CommonConstants.PurchaseApplyStatus.REJECT;
+                        }
+                    }
+
+                    // 新增log
+                    var newFlowLog = new QcFlowLog()
+                    {
+                        LogId = Guid.NewGuid().ToString(),
+                        CompId = currentFlow.CompId,
+                        MainId = currentFlow.MainId,
+                        UserId = verifyMember.UserId,
+                        UserName = isVerifiedByAgent == false ? verifyMember.DisplayName : verifyMember.DisplayName + "(代" + originVerifierName + ")",
+                        Sequence = currentFlow.Sequence,
+                        Action = answer,
+                        Remarks = reason
+                    };
+
+
+                    _emailService.UpdateEmailNotifyIsDoneByQcMainId(qcValidationMain.MainId);
+
+                    _dbContext.QcFlowLogs.Add(newFlowLog);
+                    _dbContext.SaveChanges();
+                    scope.Complete();
+
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError("事務失敗[AnswerFlow]：{msg}", ex);
+                    return false;
+                }
+            }
+
+
+            if (answer == CommonConstants.AnswerPurchaseFlow.AGREE && nextFlow == null)
+            {
+                string title = $"品質確效單:{qcValidationMain.MainId} 需要您處理";
+                string content = $"<a href={_smtpSettings.Domain}/qc_detail/{qcValidationMain.MainId}>{qcValidationMain.MainId}</a>";
+
+                SendMailToOwner(title, content, ownerList);
+            }
+            if (answer == CommonConstants.AnswerPurchaseFlow.AGREE && nextFlow != null)
+            {
+                string title = $"採購單:{qcValidationMain.MainId} 需要您審核";
+                string content = $"<a href={_smtpSettings.Domain}/qc_detail/{qcValidationMain.MainId}>{qcValidationMain.MainId}</a>";
+
+                using (var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled))
+                {
+                    title = "以下品質確效需要審核";
+                    var purchaseNumber = qcValidationMain.MainId;
+                    var receiver = _memberService.GetMembersByUserId(nextFlow.ReviewUserId);
+                    EmailNotify emailNotify = new EmailNotify()
+                    {
+                        Title = title,
+                        Content = content,
+                        UserId = receiver.UserId,
+                        Email = receiver.Email,
+                        PurchaseNumber = purchaseNumber,
+                        Type = CommonConstants.EmailNotifyType.PURCHASE
+                    };
+                    _emailService.AddEmailNotify(emailNotify);
+                    _dbContext.SaveChanges();
+                    scope.Complete();
+                }
+
+            }
+
+            if (answer == CommonConstants.AnswerPurchaseFlow.BACK)
+            {
+                if (preFlow != null)
+                {
+                    string title = $"採購單:{qcValidationMain.MainId} 需要您審核";
+                    string content = $"<a href={_smtpSettings.Domain}/qc_detail/{qcValidationMain.MainId}>{qcValidationMain.MainId}</a>";
+
+                    using (var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled))
+                    {
+                        title = "以下品質確效需要審核";
+                        var purchaseNumber = qcValidationMain.MainId;
+                        var receiver = _memberService.GetMembersByUserId(preFlow.ReviewUserId);
+                        EmailNotify emailNotify = new EmailNotify()
+                        {
+                            Title = title,
+                            Content = content,
+                            UserId = receiver.UserId,
+                            Email = receiver.Email,
+                            PurchaseNumber = purchaseNumber,
+                            Type = CommonConstants.EmailNotifyType.PURCHASE
+                        };
+                        _emailService.AddEmailNotify(emailNotify);
+                        _dbContext.SaveChanges();
+                        scope.Complete();
+                    }
+                }
+                else
+                {
+
+                }
+            }
+            return true;
+
+        }
+
+
+
+        private async Task SendMailToOwner(String title, String content, List<WarehouseMember> ownerList)
+        {
+
+            ownerList.ForEach(async r =>
+            {
+                if (!string.IsNullOrEmpty(r.Email))
+                {
+                    await _emailService.SendAsync(title, content, r.Email);
+                    _logger.LogInformation("[寄信]標題:{title},收件者:{email}", title, r.Email);
+                }
+            });
 
         }
     }
