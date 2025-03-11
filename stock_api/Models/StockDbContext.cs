@@ -35,6 +35,8 @@ public partial class StockDbContext : DbContext
 
     public virtual DbSet<EmailNotify> EmailNotifies { get; set; }
 
+    public virtual DbSet<EmailNotifyMember> EmailNotifyMembers { get; set; }
+
     public virtual DbSet<FileDetailInfo> FileDetailInfos { get; set; }
 
     public virtual DbSet<FlowSettingView> FlowSettingViews { get; set; }
@@ -330,6 +332,13 @@ public partial class StockDbContext : DbContext
             entity.Property(e => e.UpdatedAt)
                 .ValueGeneratedOnAddOrUpdate()
                 .HasDefaultValueSql("CURRENT_TIMESTAMP");
+        });
+
+        modelBuilder.Entity<EmailNotifyMember>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("PRIMARY");
+
+            entity.Property(e => e.NotifyType).HasComment("EXPIRED,NOT_ENOUGH");
         });
 
         modelBuilder.Entity<FileDetailInfo>(entity =>

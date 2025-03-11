@@ -52,6 +52,10 @@
          "ObjectType": 0
       },
       {
+         "Name": "email_notify_members",
+         "ObjectType": 0
+      },
+      {
          "Name": "file_detail_info",
          "ObjectType": 0
       },

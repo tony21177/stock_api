@@ -91,4 +91,15 @@ public class EmailService
             .ToDictionary(g => g.Key, g => g.ToList());
         return emailNotifyDictionary;
     }
+
+    public List<WarehouseMember> GetMemberByEmailNotifyType(string emailNotifyType, string compId)
+    {
+        var query = from member in _dbContext.WarehouseMembers
+                    join notifyMember in _dbContext.EmailNotifyMembers
+                    on member.UserId equals notifyMember.UserId
+                    where notifyMember.NotifyType == emailNotifyType && notifyMember.CompId == compId
+                    select member;
+
+        return query.ToList();
+    }
 }

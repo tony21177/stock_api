@@ -1,6 +1,7 @@
 ﻿
 using Org.BouncyCastle.Asn1.Ocsp;
 using Quartz;
+using stock_api.Common.Constant;
 using stock_api.Models;
 using stock_api.Service;
 using stock_api.Service.ValueObject;
@@ -37,6 +38,7 @@ namespace stock_api.Scheduler
                     string emailTitle = "以下已入庫的品項即將過期,請盡快使用";
                     string emailBody = GenerateHtmlString(nearExpiredProductVoList);
                     List<WarehouseMember> receiverList = _memberService.GetAdministratorsOfComp(compId).Where(m => m.IsActive == true).ToList();
+                    receiverList.AddRange(_emailService.GetMemberByEmailNotifyType(CommonConstants.EmailNotifyType.EXPIRED,compId).Where(m => m.IsActive == true));
                     List<string> effectiveEmailList = receiverList.Where(r => !string.IsNullOrEmpty(r.Email)).Select(r => r.Email).ToList();
                     effectiveEmailList.ForEach(effectiveEmail => _emailService.SendAsync(emailTitle, emailBody, effectiveEmail));
                 }

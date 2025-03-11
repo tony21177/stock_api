@@ -12,10 +12,12 @@ namespace stock_api.Common.Constant
             public const string PURCHASE = "PURCHASE";
             public const string APPLY_NEW_PRODUCT = "APPLY_NEW_PRODUCT";
             public const string QC = "QC";
+            public const string EXPIRED = "EXPIRED";
+            public const string NOT_ENOUGH = "NOT_ENOUGH";
 
             public static List<string> GetAllValues()
             {
-                return new List<string> { PURCHASE, APPLY_NEW_PRODUCT,QC };
+                return new List<string> { PURCHASE, APPLY_NEW_PRODUCT,QC, EXPIRED, NOT_ENOUGH };
             }
         }
 
@@ -487,6 +489,8 @@ namespace stock_api.Common.Constant
                 return new List<string> { ADD, MODIFY, DELETE };
             }
         }
+
+       
 
     }
 
