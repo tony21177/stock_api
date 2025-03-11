@@ -1,16 +1,10 @@
 ﻿using AutoMapper;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Storage.ValueConversion.Internal;
-using Microsoft.IdentityModel.Tokens;
-using Serilog;
 using stock_api.Common.Constant;
 using stock_api.Common.Utils;
 using stock_api.Controllers.Request;
 using stock_api.Models;
 using stock_api.Service.ValueObject;
-using System.ComponentModel;
-using System.Linq;
 using System.Transactions;
 
 namespace stock_api.Service
@@ -34,12 +28,12 @@ namespace stock_api.Service
 
         public List<WarehouseProduct> GetAllActiveProducts()
         {
-            return _dbContext.WarehouseProducts.Where(p => p.IsActive==true).ToList();
+            return _dbContext.WarehouseProducts.Where(p => p.IsActive == true).ToList();
         }
 
         public List<WarehouseProduct> GetAllProducts(String compId)
         {
-            return _dbContext.WarehouseProducts.Where(p => p.IsActive == true&&p.CompId==compId).ToList();
+            return _dbContext.WarehouseProducts.Where(p => p.IsActive == true && p.CompId == compId).ToList();
         }
 
         public List<WarehouseProduct> GetAllProducts()
@@ -65,16 +59,16 @@ namespace stock_api.Service
         {
             return _dbContext.WarehouseProducts.Where(p => p.ProductCode == productCode && p.CompId == compId).FirstOrDefault();
         }
-       
+
 
         public List<WarehouseProduct> GetProductsByProductIdsAndCompId(List<string> productIdList, string compId)
         {
             return _dbContext.WarehouseProducts.Where(p => productIdList.Contains(p.ProductId) && p.CompId == compId).ToList();
         }
 
-        public List<WarehouseProduct> GetProductsByCompId( string compId)
+        public List<WarehouseProduct> GetProductsByCompId(string compId)
         {
-            return _dbContext.WarehouseProducts.Where(p =>  p.CompId == compId).ToList();
+            return _dbContext.WarehouseProducts.Where(p => p.CompId == compId).ToList();
         }
 
         public List<WarehouseProduct> GetProductsByProductCodesAndCompId(List<string> productCodeList, string compId)
@@ -208,7 +202,7 @@ namespace stock_api.Service
                 totalPages = (int)Math.Ceiling((double)totalItems / searchRequest.PaginationCondition.PageSize);
                 query = query.Skip((searchRequest.PaginationCondition.Page - 1) * searchRequest.PaginationCondition.PageSize).Take(searchRequest.PaginationCondition.PageSize);
             }
-            
+
             return (query.ToList(), totalPages);
         }
 
@@ -216,14 +210,14 @@ namespace stock_api.Service
         public List<NotEnoughQuantityProduct> ListNotEnoughProducts(ListNotEnoughProductsRequest request)
         {
             var allOngoingPurchaseItems = _dbContext.PurchaseSubItems.Where(s => s.ReceiveStatus != CommonConstants.PurchaseSubItemReceiveStatus.CLOSE &&
-            s.ReceiveStatus != CommonConstants.PurchaseSubItemReceiveStatus.DONE && s.CompId == request.CompId && s.OwnerProcess!=CommonConstants.PurchaseMainOwnerProcessStatus.NOT_AGREE).ToList();
+            s.ReceiveStatus != CommonConstants.PurchaseSubItemReceiveStatus.DONE && s.CompId == request.CompId && s.OwnerProcess != CommonConstants.PurchaseMainOwnerProcessStatus.NOT_AGREE).ToList();
             var allPurchaseMainIdList = allOngoingPurchaseItems.Select(p => p.PurchaseMainId).ToList();
             var allPurchaseMain = _purchaseService.GetPurchaseMainsByMainIdList(allPurchaseMainIdList);
             var allEffectivePurchaseMain = _purchaseService.GetPurchaseMainsByMainIdList(allPurchaseMainIdList)
                 .Where(m => m.CurrentStatus != CommonConstants.PurchaseCurrentStatus.REJECT && m.CurrentStatus != CommonConstants.PurchaseCurrentStatus.CLOSE)
                 .ToList();
             var allEffectivePurchaseMainId = allEffectivePurchaseMain.Select(m => m.PurchaseMainId).ToList();
-            allOngoingPurchaseItems = allOngoingPurchaseItems.Where(s=>allEffectivePurchaseMainId.Contains(s.PurchaseMainId)).ToList(); 
+            allOngoingPurchaseItems = allOngoingPurchaseItems.Where(s => allEffectivePurchaseMainId.Contains(s.PurchaseMainId)).ToList();
 
             IQueryable<WarehouseProduct> query = _dbContext.WarehouseProducts;
             if (request.GroupId != null)
@@ -249,13 +243,14 @@ namespace stock_api.Service
 
             var notEnoughProducts = matchedProducts.FindAll(p =>
             {
-                var matchedSubItems = allOngoingPurchaseItems.Where(i => i.ProductId == p.ProductId).ToList();                
+                var matchedSubItems = allOngoingPurchaseItems.Where(i => i.ProductId == p.ProductId).ToList();
                 var ongoingOrderQuantities = matchedSubItems.Select(i => i.Quantity).Sum();
 
 
-                if (p.SafeQuantity>0&&p.SafeQuantity - p.InStockQuantity - ongoingOrderQuantities >= 0)
+                // if (p.SafeQuantity>0&&p.SafeQuantity - p.InStockQuantity - ongoingOrderQuantities >= 0) 2025/0311 大餅要求也與婉君確認過
+                if (p.SafeQuantity - p.InStockQuantity - ongoingOrderQuantities >= 0)
                 {
-                    p.InProcessingOrderQuantity = ongoingOrderQuantities??0.0f;
+                    p.InProcessingOrderQuantity = ongoingOrderQuantities ?? 0.0f;
                     p.NeedOrderedQuantity = (p.SafeQuantity ?? 0.0f) - (p.InStockQuantity ?? 0.0f) - (ongoingOrderQuantities ?? 0.0f);
                     var needOrderedQuantityUnitFloat = p.NeedOrderedQuantity * p.UnitConversion;
                     var needOrderedQuantityUnit = Math.Ceiling((decimal)needOrderedQuantityUnitFloat.Value * 100) / 100;
@@ -307,9 +302,9 @@ namespace stock_api.Service
                 {
                     updateProduct.IsNeedAcceptProcess = existingProduct.IsNeedAcceptProcess;
                 }
-                else if(request.IsNeedAcceptProcess==false)
+                else if (request.IsNeedAcceptProcess == false)
                 {
-                    _dbContext.InStockItemRecords.Where(i=>i.ProductId==existingProduct.ProductId)
+                    _dbContext.InStockItemRecords.Where(i => i.ProductId == existingProduct.ProductId)
                         .ExecuteUpdate(i => i.SetProperty(x => x.IsNeedQc, false));
                 }
                 updateProduct.AllowReceiveDateRange = existingProduct.AllowReceiveDateRange;
@@ -420,7 +415,8 @@ namespace stock_api.Service
                 {
                     updateProduct.IsNeedAcceptProcess = existingProduct.IsNeedAcceptProcess;
 
-                }else if (request.IsNeedAcceptProcess==false)
+                }
+                else if (request.IsNeedAcceptProcess == false)
                 {
                     _dbContext.InStockItemRecords.Where(i => i.ProductId == existingProduct.ProductId)
                         .ExecuteUpdate(i => i.SetProperty(x => x.IsNeedQc, false));
@@ -572,7 +568,7 @@ namespace stock_api.Service
         }
 
 
-        public (bool, string?) UpdateProducts(List<ModifyProductDto> modifyProductDtos,List<WarehouseProduct> products,List<WarehouseGroup> allGroups)
+        public (bool, string?) UpdateProducts(List<ModifyProductDto> modifyProductDtos, List<WarehouseProduct> products, List<WarehouseGroup> allGroups)
         {
             using var scope = new TransactionScope();
             try
@@ -581,7 +577,7 @@ namespace stock_api.Service
                 {
                     var updateProducts = products.Where(p => p.ProductCode == modifyProductDto.ProductCode).ToList();
 
-                    if (updateProducts.Count==0)
+                    if (updateProducts.Count == 0)
                     {
                         _logger.LogWarning("Product with code:{productCode} not found", modifyProductDto.ProductCode);
                         continue;
@@ -589,7 +585,7 @@ namespace stock_api.Service
 
                     if (modifyProductDto.DeadlineRule.HasValue)
 
-                        updateProducts.ForEach(p=>p.DeadlineRule = modifyProductDto.DeadlineRule.Value) ;
+                        updateProducts.ForEach(p => p.DeadlineRule = modifyProductDto.DeadlineRule.Value);
 
                     if (!string.IsNullOrWhiteSpace(modifyProductDto.DeliverRemarks))
                         updateProducts.ForEach(p => p.DeliverRemarks = modifyProductDto.DeliverRemarks);
@@ -597,16 +593,16 @@ namespace stock_api.Service
                     if (!string.IsNullOrWhiteSpace(modifyProductDto.GroupNames))
                     {
 
-                        foreach(var updateProduct in updateProducts)
+                        foreach (var updateProduct in updateProducts)
                         {
                             var updateCompId = updateProduct.CompId;
                             var updateGroupNameList = modifyProductDto.GroupNames.Split(',').ToList();
-                            var matchedUpdateGroup = allGroups.Where(g=>g.CompId==updateCompId&&g.GroupName!=null).Where(g=>updateGroupNameList.Contains(g.GroupName)).ToList();
+                            var matchedUpdateGroup = allGroups.Where(g => g.CompId == updateCompId && g.GroupName != null).Where(g => updateGroupNameList.Contains(g.GroupName)).ToList();
                             updateProduct.GroupIds = string.Join(",", matchedUpdateGroup.Select(g => g.GroupId));
                             updateProduct.GroupNames = string.Join(",", matchedUpdateGroup.Select(g => g.GroupName));
                         }
                     }
-                       
+
 
                     if (!string.IsNullOrWhiteSpace(modifyProductDto.Manager))
                         updateProducts.ForEach(p => p.Manager = modifyProductDto.Manager);
@@ -735,7 +731,7 @@ namespace stock_api.Service
             {
                 foreach (var modifyProductDto in modifyProductDtos)
                 {
-                    var updateProducts = products.Where(p => p.ProductCode == modifyProductDto.ProductCode&&p.CompId==compId).ToList();
+                    var updateProducts = products.Where(p => p.ProductCode == modifyProductDto.ProductCode && p.CompId == compId).ToList();
 
                     if (updateProducts.Count == 0)
                     {
@@ -809,13 +805,13 @@ namespace stock_api.Service
 
         }
 
-        public (bool,string?) AddNewProduct(AddNewProductRequest request)
+        public (bool, string?) AddNewProduct(AddNewProductRequest request)
         {
 
             using var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled);
             try
             {
-                string productCode ="";
+                string productCode = "";
                 string? existingMaxProductCode = _dbContext.WarehouseProducts.Where(p => request.CompIds.Contains(p.CompId)).OrderByDescending(p => p.ProductCode).Select(p => p.ProductCode).FirstOrDefault();
                 if (existingMaxProductCode != null)
                 {
@@ -829,8 +825,8 @@ namespace stock_api.Service
                 foreach (var compId in request.CompIds)
                 {
                     var newProduct = new WarehouseProduct();
-                    newProduct.ProductCode = productCode; 
-                    var comp = _dbContext.Companies.Where(c=>c.CompId==compId).FirstOrDefault();
+                    newProduct.ProductCode = productCode;
+                    var comp = _dbContext.Companies.Where(c => c.CompId == compId).FirstOrDefault();
                     newProduct.CompId = compId;
                     newProduct.CompName = comp.Name;
                     if (request.ManufacturerId != null)
@@ -839,9 +835,9 @@ namespace stock_api.Service
                         newProduct.ManufacturerId = manufacturer.Id;
                         newProduct.ManufacturerName = manufacturer.Name;
                     }
-                    if(request.DeadlineRule!=null) newProduct.DeadlineRule = request.DeadlineRule;
-                    if(request.DeliverRemarks!=null) newProduct.DeliverRemarks = request.DeliverRemarks;
-                    if(request.InStockQuantity!=null) newProduct.InStockQuantity = request.InStockQuantity;
+                    if (request.DeadlineRule != null) newProduct.DeadlineRule = request.DeadlineRule;
+                    if (request.DeliverRemarks != null) newProduct.DeliverRemarks = request.DeliverRemarks;
+                    if (request.InStockQuantity != null) newProduct.InStockQuantity = request.InStockQuantity;
                     if (request.Manager != null) newProduct.Manager = request.Manager;
                     if (request.MaxSafeQuantity != null) newProduct.MaxSafeQuantity = request.MaxSafeQuantity;
                     if (request.OpenDeadline != null) newProduct.OpenDeadline = request.OpenDeadline;
@@ -855,7 +851,7 @@ namespace stock_api.Service
                     if (request.PreOrderDays != null) newProduct.PreOrderDays = request.PreOrderDays;
                     if (request.ProductCategory != null) newProduct.ProductCategory = request.ProductCategory;
 
-                    
+
 
                     newProduct.ProductId = Guid.NewGuid().ToString();
                     if (request.ProductModel != null) newProduct.ProductModel = request.ProductModel;
@@ -970,17 +966,17 @@ namespace stock_api.Service
 
         public List<WarehouseProduct> GetProductsByGroupId(string groupId)
         {
-            return _dbContext.WarehouseProducts.Where(p=>p.GroupIds!=null &&p.GroupIds.Contains(groupId)).ToList();
+            return _dbContext.WarehouseProducts.Where(p => p.GroupIds != null && p.GroupIds.Contains(groupId)).ToList();
         }
 
 
-        public void UpdateProductToCompIds(List<string> toCompIds,WarehouseProduct warehouseProductInFromComp,bool isActive)
+        public void UpdateProductToCompIds(List<string> toCompIds, WarehouseProduct warehouseProductInFromComp, bool isActive)
         {
             foreach (var toCompId in toCompIds)
             {
                 var existingProductInToComp = _dbContext.WarehouseProducts.Where(p => p.ProductCode == warehouseProductInFromComp.ProductCode &&
             p.CompId == toCompId).FirstOrDefault();
-                if (existingProductInToComp != null )
+                if (existingProductInToComp != null)
                 {
                     existingProductInToComp.IsActive = isActive;
                     _dbContext.SaveChanges();
