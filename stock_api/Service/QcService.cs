@@ -662,6 +662,7 @@ namespace stock_api.Service
         {
             return _dbContext.QcValidationMains
                 .Where(m => productIdList.Contains(m.ProductId))
+                .AsEnumerable() // Switch to client-side evaluation
                 .GroupBy(m => m.ProductId)
                 .Select(g => g.OrderByDescending(m => m.CreatedAt).FirstOrDefault())
                 .ToList();
