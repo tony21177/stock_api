@@ -31,6 +31,10 @@ namespace stock_api.Service.ValueObject
         public List<string>? GroupIdList { get; set; }
         public List<string>? GroupNameList { get; set; }
 
+        // 上次QC相關資料
+        public string? LastFinalResult { get; set; }
+        public string? LastInStockLotNumberBatch { get; set; }
+        public string? LastMainId { get; set; }
         public bool IsContainKeywords(string keywords)
         {
             string formattedDate = "";

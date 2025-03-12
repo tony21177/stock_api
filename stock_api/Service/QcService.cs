@@ -656,5 +656,15 @@ namespace stock_api.Service
             });
 
         }
+
+
+        public List<QcValidationMain?> GetLastQcValidationMainsByProductIdList(List<string> productIdList)
+        {
+            return _dbContext.QcValidationMains
+                .Where(m => productIdList.Contains(m.ProductId))
+                .GroupBy(m => m.ProductId)
+                .Select(g => g.OrderByDescending(m => m.CreatedAt).FirstOrDefault())
+                .ToList();
+        }
     }
 }

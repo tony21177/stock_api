@@ -88,12 +88,22 @@ namespace stock_api.Controllers
             });
 
             var newLotNumberList = _stockInService.GetProductsNewLotNumberList().Select(e=>e.LotNumber).ToList();
-            var newLotNumberBatchList = _stockInService.GetProductsNewLotNumberBatchList().Select(e => e.LotNumberBatch).ToList(); ;
+            var newLotNumberBatchList = _stockInService.GetProductsNewLotNumberBatchList().Select(e => e.LotNumberBatch).ToList(); 
 
+            var lastQcMainList = _qcService.GetLastQcValidationMainsByProductIdList(unDoneQcList.Select(q=>q.ProductId).ToList());
 
             unDoneQcList.ForEach(lot =>
             {
                 var matchedInStock = inStockItems.Where(i => i.LotNumberBatch == lot.LotNumberBatch).FirstOrDefault();
+                var matchedLastQcMain = lastQcMainList.Where(i => i.ProductId == lot.ProductId).FirstOrDefault();
+                if (matchedLastQcMain != null)
+                {
+                    lot.LastMainId = matchedLastQcMain.MainId;
+                    lot.LastFinalResult = matchedLastQcMain.FinalResult;
+                    lot.LastInStockLotNumberBatch = matchedLastQcMain.LotNumberBatch;
+                }
+
+
                 if (lotNumberBatchAndItemIdMap.ContainsKey(lot.LotNumberBatch) && lotNumberBatchAndItemIdMap.ContainsKey(lot.LotNumberBatch)){
                     var matchedItemId = lotNumberBatchAndItemIdMap[lot.LotNumberBatch];
                     // ItemId為null表示非由採購來的,可能是盤點
