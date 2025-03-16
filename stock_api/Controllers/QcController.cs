@@ -345,7 +345,7 @@ namespace stock_api.Controllers
 
 
             var distinctMainIdList = flowsSignedByMe.Select(f => f.MainId).Distinct().ToList();
-            var qcMainList = _qcService.GetQcMainsByMainIdList(distinctMainIdList).OrderByDescending(m => m.UpdatedAt).ToList();
+            var qcMainList = _qcService.GetQcMainsByMainIdList(distinctMainIdList).OrderByDescending(m => m.CreatedAt).ToList();
             var details = _qcService.GetQcDetailsByMainIdList(qcMainList.Select(m => m.MainId).ToList());
             var acceptanceDetails = _qcService.GetQcAcceptanceDetailsByMainIdList(qcMainList.Select(m => m.MainId).ToList());
 
@@ -357,6 +357,7 @@ namespace stock_api.Controllers
 
             List<QcMainWithDetailAndFlows> qcMainWithDetailAndFlowsList = new List<QcMainWithDetailAndFlows>();
 
+            qcMainList = qcMainList.Where(m=>m.CurrentStatus==CommonConstants.QcCurrentStatus.APPLY).ToList();
 
             qcMainList.ForEach(m =>
             {

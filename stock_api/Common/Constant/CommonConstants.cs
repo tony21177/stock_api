@@ -181,6 +181,18 @@ namespace stock_api.Common.Constant
             }
         }
 
+        public static class QcCurrentStatus
+        {
+            public const string APPLY = "APPLY";
+            public const string AGREE = "AGREE";
+            public const string REJECT = "REJECT";
+            public const string BACK = "BACK";
+            public static List<string> GetAllValues()
+            {
+                return new List<string> { APPLY, AGREE, REJECT, BACK };
+            }
+        }
+
         public static class AnswerApplyNewProductFlow
         {
             public const string AGREE = "AGREE";
