@@ -235,19 +235,30 @@ namespace stock_api.Service
                 }
 
 
-                if (newQcValidationMain.QcType == CommonConstants.QcTypeConstants.LOT_NUMBER)
+                //if (newQcValidationMain.QcType == CommonConstants.QcTypeConstants.LOT_NUMBER)
+                //{
+                //    // 更新QcTestStatus成DONE表示已做過確效
+                //    _dbContext.InStockItemRecords.Where(i => i.IsNeedQc == true && i.QcType == CommonConstants.QcTypeConstants.LOT_NUMBER && i.LotNumber == newQcValidationMain.LotNumber)
+                //        .ExecuteUpdate(item => item.SetProperty(x => x.QcTestStatus, CommonConstants.QcTestStatus.DONE));
+                //}
+                //if (newQcValidationMain.QcType == CommonConstants.QcTypeConstants.LOT_NUMBER_BATCH)
+                //{
+                //    _dbContext.InStockItemRecords.Where(i => i.IsNeedQc == true && i.QcType == CommonConstants.QcTypeConstants.LOT_NUMBER_BATCH && i.LotNumberBatch == newQcValidationMain.LotNumberBatch)
+                //        .ExecuteUpdate(item => item.SetProperty(x => x.QcTestStatus, CommonConstants.QcTestStatus.DONE));
+                //}
+
+                if (newQcValidationMain.LotNumberBatch != null)
                 {
-                    // 更新QcTestStatus成DONE表示已做過確效
-                    _dbContext.InStockItemRecords.Where(i => i.IsNeedQc == true && i.QcType == CommonConstants.QcTypeConstants.LOT_NUMBER && i.LotNumber == newQcValidationMain.LotNumber)
+                    _dbContext.InStockItemRecords.Where(i=> i.LotNumberBatch == newQcValidationMain.LotNumberBatch)
                         .ExecuteUpdate(item => item.SetProperty(x => x.QcTestStatus, CommonConstants.QcTestStatus.DONE));
                 }
-                if (newQcValidationMain.QcType == CommonConstants.QcTypeConstants.LOT_NUMBER_BATCH)
+                if (newQcValidationMain.LotNumber != null)
                 {
-                    _dbContext.InStockItemRecords.Where(i => i.IsNeedQc == true && i.QcType == CommonConstants.QcTypeConstants.LOT_NUMBER_BATCH && i.LotNumberBatch == newQcValidationMain.LotNumberBatch)
+                    _dbContext.InStockItemRecords.Where(i => i.LotNumber == newQcValidationMain.LotNumber)
                         .ExecuteUpdate(item => item.SetProperty(x => x.QcTestStatus, CommonConstants.QcTestStatus.DONE));
                 }
-                _dbContext.InStockItemRecords.Where(i => i.IsNeedQc == true && i.QcType == CommonConstants.QcTypeConstants.NONE && i.LotNumberBatch == newQcValidationMain.LotNumberBatch)
-                        .ExecuteUpdate(item => item.SetProperty(x => x.QcTestStatus, CommonConstants.QcTestStatus.DONE));
+
+
 
                 _dbContext.SaveChanges();
                 scope.Complete();
