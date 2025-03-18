@@ -818,7 +818,7 @@ namespace stock_api.Controllers
                     item.ThisYearAverageMonthUsageQuantity = matchedProductThisYearAverageMonthUsage.AverageQuantity??0.0;
                 }
             }
-
+            data = data.OrderBy(e => e.ProductCode).ToList();
 
             var response = new CommonResponse<dynamic>
             {
