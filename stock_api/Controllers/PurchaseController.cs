@@ -117,7 +117,7 @@ namespace stock_api.Controllers
             }
 
             List<PurchaseFlowSettingVo> purchaseFlowSettingList = _purchaseFlowSettingService.GetAllPurchaseFlowSettingsByCompId(createRequest.CompId).Where(s => s.IsActive == true).ToList();
-            if (purchaseFlowSettingList.Count == 0)
+            if (purchaseFlowSettingList.Count == 0&& isItemMultiGroup==true)
             {
                 return BadRequest(new CommonResponse<dynamic>
                 {
