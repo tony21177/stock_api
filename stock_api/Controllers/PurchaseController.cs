@@ -492,6 +492,8 @@ namespace stock_api.Controllers
                 }
 
             });
+
+            purchaseSubItemVoList = purchaseSubItemVoList.OrderBy(i=>i.ProductCode).ToList();
             purchaseAndSubItemVo.Items = purchaseSubItemVoList;
             purchaseAndSubItemVo.flows = purchaseFlowWithAgents;
             purchaseAndSubItemVo.flowLogs = purchaseFlowLogs;
