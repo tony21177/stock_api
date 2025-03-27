@@ -313,6 +313,15 @@ namespace stock_api.Service
             {
                 query = query.Where(h => h.QcType == request.QcType);
             }
+            if (request.CurrentStatus != null )
+            {
+                if (request.CurrentStatus == CommonConstants.QcCurrentStatus.AGREE)
+                {
+                    query = query.Where(h => h.CurrentStatus==request.CurrentStatus||h.CurrentStatus==CommonConstants.QcCurrentStatus.CLOSE);
+                }
+                query = query.Where(h => h.CurrentStatus == request.CurrentStatus);
+            }
+
             if (!string.IsNullOrEmpty(request.Keywords))
             {
                 query = query.Where(h =>

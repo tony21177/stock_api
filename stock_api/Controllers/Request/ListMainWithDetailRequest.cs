@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using stock_api.Common.Constant;
+using System.ComponentModel.DataAnnotations;
 
 namespace stock_api.Controllers.Request
 {
@@ -13,5 +14,6 @@ namespace stock_api.Controllers.Request
         public string? LotNumber { get; set; }
         public string? LotNumberBatch { get; set; }
         public string? QcType { get; set; }
+        public string? CurrentStatus { get; set; } = CommonConstants.QcCurrentStatus.CLOSE;
     }
 }
