@@ -231,10 +231,11 @@ namespace stock_api.Service
                         PurchaseNumber = firstFlow.MainId,
                         Type = CommonConstants.EmailNotifyType.QC
                     };
-                    _emailService.AddEmailNotify(emailNotify);
+                    // 不須寄信
+                    //_emailService.AddEmailNotify(emailNotify);
                 }
 
-
+                // 不須寄信
                 //if (newQcValidationMain.QcType == CommonConstants.QcTypeConstants.LOT_NUMBER)
                 //{
                 //    // 更新QcTestStatus成DONE表示已做過確效
@@ -319,7 +320,10 @@ namespace stock_api.Service
                 {
                     query = query.Where(h => h.CurrentStatus==request.CurrentStatus||h.CurrentStatus==CommonConstants.QcCurrentStatus.CLOSE);
                 }
-                query = query.Where(h => h.CurrentStatus == request.CurrentStatus);
+                else
+                {
+                    query = query.Where(h => h.CurrentStatus == request.CurrentStatus);
+                }
             }
 
             if (!string.IsNullOrEmpty(request.Keywords))
@@ -399,17 +403,17 @@ namespace stock_api.Service
 
         private async Task SendMailByFlowSetting(QcFlow qcFlow, String title, String content)
         {
-            var receiver = _memberService.GetMembersByUserId(qcFlow.ReviewUserId);
-            if (receiver != null)
-            {
+            //var receiver = _memberService.GetMembersByUserId(qcFlow.ReviewUserId);
+            //if (receiver != null)
+            //{
 
-                if (!string.IsNullOrEmpty(receiver.Email))
-                {
-                    await _emailService.SendAsync(title, content, receiver.Email);
-                    _logger.LogInformation("[寄信]標題:{title},收件者:{email}", title, receiver.Email);
-                }
+            //    if (!string.IsNullOrEmpty(receiver.Email))
+            //    {
+            //        await _emailService.SendAsync(title, content, receiver.Email);
+            //        _logger.LogInformation("[寄信]標題:{title},收件者:{email}", title, receiver.Email);
+            //    }
 
-            }
+            //}
         }
 
         public List<QcFlowWithAgentsVo> GetQcFlowListWithAgentsByMainIdList(List<string> mainIdList)
@@ -579,8 +583,8 @@ namespace stock_api.Service
                         Remarks = reason
                     };
 
-
-                    _emailService.UpdateEmailNotifyIsDoneByQcMainId(qcValidationMain.MainId);
+                    // 不須寄信
+                    //_emailService.UpdateEmailNotifyIsDoneByQcMainId(qcValidationMain.MainId);
 
                     _dbContext.QcFlowLogs.Add(newFlowLog);
                     _dbContext.SaveChanges();
@@ -621,7 +625,8 @@ namespace stock_api.Service
                         PurchaseNumber = purchaseNumber,
                         Type = CommonConstants.EmailNotifyType.PURCHASE
                     };
-                    _emailService.AddEmailNotify(emailNotify);
+                    // 不須寄信
+                    //_emailService.AddEmailNotify(emailNotify);
                     _dbContext.SaveChanges();
                     scope.Complete();
                 }
@@ -649,7 +654,8 @@ namespace stock_api.Service
                             PurchaseNumber = purchaseNumber,
                             Type = CommonConstants.EmailNotifyType.PURCHASE
                         };
-                        _emailService.AddEmailNotify(emailNotify);
+                        // 不須寄信
+                        //_emailService.AddEmailNotify(emailNotify);
                         _dbContext.SaveChanges();
                         scope.Complete();
                     }
@@ -667,15 +673,15 @@ namespace stock_api.Service
 
         private async Task SendMailToOwner(String title, String content, List<WarehouseMember> ownerList)
         {
-
-            ownerList.ForEach(async r =>
-            {
-                if (!string.IsNullOrEmpty(r.Email))
-                {
-                    await _emailService.SendAsync(title, content, r.Email);
-                    _logger.LogInformation("[寄信]標題:{title},收件者:{email}", title, r.Email);
-                }
-            });
+            // 不須寄信
+            //ownerList.ForEach(async r =>
+            //{
+            //    if (!string.IsNullOrEmpty(r.Email))
+            //    {
+            //        await _emailService.SendAsync(title, content, r.Email);
+            //        _logger.LogInformation("[寄信]標題:{title},收件者:{email}", title, r.Email);
+            //    }
+            //});
 
         }
 

@@ -14,6 +14,6 @@ namespace stock_api.Controllers.Request
         public string? LotNumber { get; set; }
         public string? LotNumberBatch { get; set; }
         public string? QcType { get; set; }
-        public string? CurrentStatus { get; set; } = CommonConstants.QcCurrentStatus.CLOSE;
+        public string? CurrentStatus { get; set; } = CommonConstants.QcCurrentStatus.AGREE;
     }
 }
