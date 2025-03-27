@@ -193,6 +193,7 @@ namespace stock_api.Service
                 _dbContext.QcAcceptanceDetails.AddRange(newQcAcceptanceDetail);
                 List<QcFlow> qcFlows = new List<QcFlow>();
                 DateTime submitedAt = DateTime.Now;
+
                 foreach (var flow in qcValidationFlowSettings)
                 {
                     qcFlows.Add(new QcFlow
@@ -212,6 +213,19 @@ namespace stock_api.Service
                     });
                 }
                 _dbContext.QcFlows.AddRange(qcFlows);
+                // 彰化醫院要求若此批號是舊批號 則不需經過主任審核(移除最後一關)
+                if (newQcValidationMain.LotNumber != null)
+                {
+                    var isNewLotNumber = _dbContext.InStockItemRecordNewLotNumberVews.Where(i => i.LotNumber == newQcValidationMain.LotNumber).FirstOrDefault()?.IsNewLotNumber ?? false;
+                    if (isNewLotNumber == false)
+                    {
+                        if (isNewLotNumber == false)
+                        {
+                            qcFlows.RemoveAt(qcFlows.Count - 1);
+                        }
+                    }
+                }
+
                 var firstFlow = qcFlows.OrderBy(s => s.Sequence).FirstOrDefault();
                 DateTime now = DateTime.Now;
                 string title = $"品質確效單:{string.Concat(DateTimeHelper.FormatDateStringForEmail(now), firstFlow.MainId)} 需要您審核";
