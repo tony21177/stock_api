@@ -218,19 +218,17 @@ namespace stock_api.Service
                         SubmitAt = submitedAt,
                     });
                 }
-                _dbContext.QcFlows.AddRange(qcFlows);
                 // 彰化醫院要求若此批號是舊批號 則不需經過主任審核(移除最後一關)
                 if (newQcValidationMain.LotNumber != null)
                 {
-                    var isNewLotNumber = _dbContext.InStockItemRecordNewLotNumberVews.Where(i => i.InStockId==inStockItemRecord.InStockId).FirstOrDefault()?.IsNewLotNumber ?? false;
-                    if (isNewLotNumber == false)
+                    var isNewLotNumber = _dbContext.InStockItemRecordNewLotNumberVews.Where(i => i.InStockId == inStockItemRecord.InStockId).FirstOrDefault()?.IsNewLotNumber ?? false;
+                    if (isNewLotNumber == false&&qcFlows.Count>2)
                     {
-                        if (isNewLotNumber == false)
-                        {
-                            qcFlows.RemoveAt(qcFlows.Count - 1);
-                        }
+                        qcFlows.RemoveAt(qcFlows.Count - 1);
                     }
                 }
+                _dbContext.QcFlows.AddRange(qcFlows);
+                
 
                 var firstFlow = qcFlows.OrderBy(s => s.Sequence).FirstOrDefault();
                 DateTime now = DateTime.Now;
