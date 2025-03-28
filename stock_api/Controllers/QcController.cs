@@ -261,7 +261,7 @@ namespace stock_api.Controllers
             newAcceptanceList.ForEach(detail => detail.MainId = newQcMain.MainId);
 
 
-            var (result,erroMsg) = _qcService.CreateQcValidation(newQcMain, newQcDetailList, newAcceptanceList, qcValidationFlowSettingList);
+            var (result,erroMsg) = _qcService.CreateQcValidation(newQcMain, newQcDetailList, newAcceptanceList, qcValidationFlowSettingList, inStockItemRecordList[0]);
             var response = new CommonResponse<List<UnDoneQcLot>>
             {
                 Result = result,

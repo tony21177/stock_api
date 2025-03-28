@@ -189,7 +189,7 @@ namespace stock_api.Service
         }
 
         public (bool, string?) CreateQcValidation(QcValidationMain newQcValidationMain, List<QcValidationDetail> newQcValidationDetailList
-            , List<QcAcceptanceDetail> newQcAcceptanceDetail, List<QcValidationFlowSettingVo> qcValidationFlowSettings)
+            , List<QcAcceptanceDetail> newQcAcceptanceDetail, List<QcValidationFlowSettingVo> qcValidationFlowSettings,InStockItemRecord inStockItemRecord)
         {
             using var scope = new TransactionScope();
             try
@@ -222,7 +222,7 @@ namespace stock_api.Service
                 // 彰化醫院要求若此批號是舊批號 則不需經過主任審核(移除最後一關)
                 if (newQcValidationMain.LotNumber != null)
                 {
-                    var isNewLotNumber = _dbContext.InStockItemRecordNewLotNumberVews.Where(i => i.LotNumber == newQcValidationMain.LotNumber).FirstOrDefault()?.IsNewLotNumber ?? false;
+                    var isNewLotNumber = _dbContext.InStockItemRecordNewLotNumberVews.Where(i => i.InStockId==inStockItemRecord.InStockId).FirstOrDefault()?.IsNewLotNumber ?? false;
                     if (isNewLotNumber == false)
                     {
                         if (isNewLotNumber == false)
