@@ -240,7 +240,26 @@ namespace stock_api.Service
                         SavingTemperature = updateAcceptItem.SavingTemperature,
                     };
 
-                    var inStockItemRecord = new InStockItemRecord()
+
+                    var qcTestStatus = CommonConstants.QcTestStatus.NONE;   
+                    if (product.IsNeedAcceptProcess == true)
+                    {
+                        if (updateAcceptItem.LotNumber !=null && product.QcType == CommonConstants.QcTypeConstants.LOT_NUMBER )
+                        {
+                            if (IsThisLotNumberAlreadyQc(updateAcceptItem.LotNumber) == true)
+                            {
+                                qcTestStatus = CommonConstants.QcTestStatus.DONE;
+                            }
+                        }
+                        if (lotNumberBatch!=null&& product.QcType == CommonConstants.QcTypeConstants.LOT_NUMBER_BATCH)
+                        {
+                            if (IsThisLotNumberBatchAlreadyQc(lotNumberBatch) == true)
+                            {
+                                qcTestStatus = CommonConstants.QcTestStatus.DONE;
+                            }
+                        }
+                    }
+                        var inStockItemRecord = new InStockItemRecord()
                     {
                         InStockId = Guid.NewGuid().ToString(),
                         LotNumberBatch = lotNumberBatch,
@@ -265,7 +284,7 @@ namespace stock_api.Service
                         SavingTemperature = updateAcceptItem.SavingTemperature,
                         IsNeedQc = product.IsNeedAcceptProcess,
                         QcType = product.QcType,
-                        QcTestStatus = CommonConstants.QcTestStatus.NONE,
+                        QcTestStatus = qcTestStatus,
                         PackagingStatus = updateAcceptItem.PackagingStatus,
                         Comment = updateAcceptItem.Comment,
                         QcComment = updateAcceptItem.QcComment,
@@ -533,8 +552,6 @@ namespace stock_api.Service
                     _ => query.OrderBy(h => h.UpdatedAt),
                 };
             }
-            var productsNewLotNumberList = GetProductsNewLotNumberList();
-
 
             int totalItems = query.Count();
             int totalPages = (int)Math.Ceiling((double)totalItems / request.PaginationCondition.PageSize);
@@ -630,8 +647,6 @@ namespace stock_api.Service
                     _ => query.OrderBy(h => h.UpdatedAt),
                 };
             }
-            var productsNewLotNumberList = GetProductsNewLotNumberList();
-
 
             int totalItems = query.Count();
             int totalPages = (int)Math.Ceiling((double)totalItems / request.PaginationCondition.PageSize);
@@ -941,6 +956,11 @@ namespace stock_api.Service
             return _dbContext.ProductNewLotnumberViews.ToList().Where(e => e.LotNumber != "N/A").ToList();
         }
 
+        public List<InStockItemRecordNewLotNumberVew> GetInStockItemRecordNewLotNumberViews()
+        {
+            return _dbContext.InStockItemRecordNewLotNumberVews.ToList();
+        }
+
         public List<ProductNewLotnumberbatchView> GetProductsNewLotNumberBatchList()
         {
             return _dbContext.ProductNewLotnumberbatchViews.ToList();
@@ -1111,5 +1131,17 @@ namespace stock_api.Service
                 return (false, ex.Message,null);
             }
         }
+
+        // 傳進來的product其IsNeedAcceptProcess必定為true
+        public bool IsThisLotNumberAlreadyQc(string lotNumber)
+        {
+            return _dbContext.InStockItemRecords.Where(i => i.LotNumber == lotNumber && i.QcTestStatus == CommonConstants.QcTestStatus.DONE).Any();
+        }
+        // 傳進來的product其IsNeedAcceptProcess必定為true
+        public bool IsThisLotNumberBatchAlreadyQc(string lotNumberBatch)
+        {
+            return _dbContext.InStockItemRecords.Where(i => i.LotNumberBatch == lotNumberBatch && i.QcTestStatus == CommonConstants.QcTestStatus.DONE).Any();
+        }
     }
+
 }

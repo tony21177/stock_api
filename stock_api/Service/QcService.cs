@@ -63,8 +63,10 @@ namespace stock_api.Service
                 };
                 unDoneQcLotList.Add(unDoneQcLot);
             }
-            var newLotNumberInStockIdList = _dbContext.ProductNewLotnumberViews.ToList().Where(e => e.LotNumber != "N/A" && e.CompId == request.CompId).ToList().Select(e => e.InStockId).ToList();
 
+
+            // 表示新批號一定要做確效
+            var newLotNumberInStockIdList = _dbContext.ProductNewLotnumberViews.ToList().Where(e => e.LotNumber != "N/A" && e.CompId == request.CompId).ToList().Select(e => e.InStockId).ToList();
             var newLotNumberInStockItems = _dbContext.InStockItemRecords.Where(i => newLotNumberInStockIdList.Contains(i.InStockId) && i.QcTestStatus == CommonConstants.QcTestStatus.NONE).ToList();
             var allProducts = _dbContext.WarehouseProducts.ToList();
             foreach (var inStockItemRecord in newLotNumberInStockItems)
@@ -90,6 +92,10 @@ namespace stock_api.Service
                     GroupNameList = matchedProduct.GroupNames == null ? null : matchedProduct.GroupNames.Split(",", StringSplitOptions.RemoveEmptyEntries).ToList(),
                 };
                 unDoneQcLotList.Add(unDoneQcLot);
+            }
+            if (unDoneQcLotList.Select(e => e.LotNumberBatch).Contains("000000005610"))
+            {
+                var test = 123;
             }
 
             if (request.GroupId != null)
@@ -178,7 +184,7 @@ namespace stock_api.Service
             int totalItems = unDoneQcLotList.Count;
             totalPages = (int)Math.Ceiling((double)totalItems / request.PaginationCondition.PageSize);
             unDoneQcLotList = unDoneQcLotList.Skip((request.PaginationCondition.Page - 1) * request.PaginationCondition.PageSize).Take(request.PaginationCondition.PageSize).ToList();
-
+            
             return (unDoneQcLotList, totalPages);
         }
 
@@ -523,6 +529,8 @@ namespace stock_api.Service
             var (preFlow, nextFlow) = FindPreviousAndNextFlow(flow);
             return AnswerFlowInTransactionScope(preFlow, nextFlow, flow, main, verifierMemberAndPermission, answer, reason, isVerifiedByAgent);
         }
+
+        
 
 
         private bool AnswerFlowInTransactionScope(QcFlow? preFlow, QcFlow? nextFlow, QcFlow currentFlow, QcValidationMain qcValidationMain, MemberAndPermissionSetting verifierMemberAndPermission, string answer, string? reason, bool isVerifiedByAgent)

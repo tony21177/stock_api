@@ -69,7 +69,8 @@ namespace stock_api.Controllers
 
             var (unDoneQcList, totalPages) = _qcService.ListUnDoneQcLotList(request);
             List<string> distinctLotNumberBatchList = unDoneQcList.Where(e=>e.LotNumberBatch!=null).Select(e => e.LotNumberBatch).Distinct().ToList();
-            
+
+
             List<string> distincLotNumberList = unDoneQcList.Where(e => e.LotNumber != null).Select(e => e.LotNumber).Distinct().ToList();
             List<InStockItemRecord> inStockItems = _stockInService.GetInStockRecordByLotNumberBatchList(distinctLotNumberBatchList, compId);
             List<OutStockRecord> outStockRecordsByLotNumber = _stockOutService.GetOutStockRecordsByLotNumberList(distincLotNumberList);
@@ -87,7 +88,9 @@ namespace stock_api.Controllers
                 itemIdAndPurchaseDetailMap.Add(d.ItemId, d);
             });
 
-            var newLotNumberList = _stockInService.GetProductsNewLotNumberList().Select(e=>e.LotNumber).ToList();
+            //var newLotNumberList = _stockInService.GetProductsNewLotNumberList().Select(e=>e.LotNumber).ToList();
+
+            var newLotNumberList = _stockInService.GetInStockItemRecordNewLotNumberViews().Where(i=>i.IsNewLotNumber).Select(e=>e.LotNumber).ToList();
             var newLotNumberBatchList = _stockInService.GetProductsNewLotNumberBatchList().Select(e => e.LotNumberBatch).ToList(); 
 
             var lastQcMainList = _qcService.GetLastQcValidationMainsByProductIdList(unDoneQcList.Select(q=>q.ProductId).ToList());
