@@ -222,9 +222,14 @@ namespace stock_api.Service
                 if (newQcValidationMain.LotNumber != null)
                 {
                     var isNewLotNumber = _dbContext.InStockItemRecordNewLotNumberVews.Where(i => i.InStockId == inStockItemRecord.InStockId).FirstOrDefault()?.IsNewLotNumber ?? false;
-                    if (isNewLotNumber == false&&qcFlows.Count>2)
+                    if (isNewLotNumber == false && qcFlows.Count > 2)
                     {
-                        qcFlows.RemoveAt(qcFlows.Count - 1);
+
+                        var maxSequenceFlow = qcFlows.OrderByDescending(f => f.Sequence).FirstOrDefault();
+                        if (maxSequenceFlow != null)
+                        {
+                            qcFlows.Remove(maxSequenceFlow);
+                        }
                     }
                 }
                 _dbContext.QcFlows.AddRange(qcFlows);
