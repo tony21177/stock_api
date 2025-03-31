@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using stock_api.Common.Constant;
+using stock_api.Common.Settings;
 using stock_api.Controllers.Request;
 using stock_api.Models;
 using stock_api.Service.ValueObject;
@@ -11,11 +12,13 @@ namespace stock_api.Service
     {
         private readonly StockDbContext _dbContext;
         private readonly IMapper _mapper;
+        private readonly OwnerSettings _ownerSettings;
 
-        public MemberService(StockDbContext dbContext, IMapper mapper)
+        public MemberService(StockDbContext dbContext, IMapper mapper,OwnerSettings ownerSettings)
         {
             _dbContext = dbContext;
             _mapper = mapper;
+            _ownerSettings = ownerSettings;
         }
 
         public WarehouseMember? GetMemberByUserId(string userId)
@@ -235,6 +238,39 @@ namespace stock_api.Service
             var result = from member in _dbContext.WarehouseMembers
                          join comp in _dbContext.Companies
                          on member.CompId equals comp.CompId
+                         select new MemberCompVo
+                         {
+                             Account = member.Account,
+                             AuthValue = member.AuthValue,
+                             DisplayName = member.DisplayName,
+                             GroupIds = member.GroupIds,
+                             Password = member.Password,
+                             PhotoUrl = member.PhotoUrl,
+                             Email = member.Email,
+                             CompId = member.CompId,
+                             UserId = member.UserId,
+                             IsActive = member.IsActive,
+                             CreatedAt = member.CreatedAt,
+                             UpdatedAt = member.UpdatedAt,
+                             IsAdmin = member.IsAdmin,
+                             Agents = member.Agents,
+                             AgentNames = member.AgentNames,
+                             IsNoStockReviewer = member.IsNoStockReviewer,
+                             CompName = comp.Name,
+                             Type = comp.Type,
+                         };
+
+            return result.ToList();
+        }
+
+        public List<MemberCompVo> GetReviewMemberCompVoList(string unitId)
+        {
+            var result = from member in _dbContext.WarehouseMembers
+                         join comp in _dbContext.Companies
+                         on member.CompId equals comp.CompId
+                         join companyUnit in _dbContext.CompanyUnits
+                         on member.CompId equals companyUnit.CompId
+                         where companyUnit.UnitId == unitId || companyUnit.UnitId == _ownerSettings.UnitId
                          select new MemberCompVo
                          {
                              Account = member.Account,

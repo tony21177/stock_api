@@ -17,6 +17,7 @@ namespace stock_api.Common.IoC.Configuration.DI
 
                 services.AddSingleton(configuration);
                 services.AddSingleton<SmtpSettings>();
+                services.AddSingleton<OwnerSettings>();
 
                 services.AddScoped<AuthLayerService>();
                 services.AddScoped<MemberService>();

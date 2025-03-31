@@ -25,6 +25,7 @@ namespace stock_api.Service
         private readonly EmailService _emailService;
         private readonly MemberService _memberService;
         private readonly SmtpSettings _smtpSettings;
+        
 
 
         public PurchaseService(StockDbContext dbContext, IMapper mapper, ILogger<PurchaseService> logger, EmailService emailService,MemberService memberService,SmtpSettings smtpSettings)
@@ -169,7 +170,7 @@ namespace stock_api.Service
 
         public bool CreatePurchase(PurchaseMainSheet newPurchasePurchaseMainSheet, List<PurchaseSubItem> newPurchaseSubItemList,
             List<PurchaseFlowSettingVo> purchaseFlowSettingList, List<ApplyProductFlowSettingVo> applyProductFlowSettingListForGroupReview,
-            bool isItemMultiGroup, bool isOwnerCreate,WarehouseMember createMember,bool isNotStockComp = false)
+            bool isItemMultiGroup, bool isOwnerCreate,WarehouseMember createMember,bool isNotStockComp = false,string? unitId=null)
         {
             using (var scope = new TransactionScope())
             {
@@ -265,7 +266,7 @@ namespace stock_api.Service
 
                     if (isNotStockComp)
                     {
-                        var  memberCompVoList = _memberService.GetMemberCompVoList();
+                        var  memberCompVoList = _memberService.GetReviewMemberCompVoList(unitId);
                         var noStockReviewers = memberCompVoList.Where(m=>m.IsNoStockReviewer==true).ToList();
                         // 找出院區需要跨comp審核者
                         var noStockReviewersCrossComp = noStockReviewers.Where(m=>m.Type!=CommonConstants.CompanyType.OWNER).ToList();
@@ -291,7 +292,11 @@ namespace stock_api.Service
                         });
                         noStockReviewersOfOwner.ForEach(r =>
                         {
-                            var maxSeq = purchaseFlows.Select(f => f.Sequence).Max();
+                            var maxSeq = 1;
+                            if (purchaseFlows.Count > 0)
+                            {
+                                maxSeq = purchaseFlows.Select(f => f.Sequence).Max();
+                            }
                             var purchaseFlow = new PurchaseFlow()
                             {
                                 FlowId = Guid.NewGuid().ToString(),

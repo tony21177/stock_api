@@ -182,7 +182,7 @@ namespace stock_api.Controllers
             });
             var result = _purchaseService.CreatePurchase(newPurchaseMain, purchaseSubItemList, purchaseFlowSettingList.Where(s => s.IsActive == true).ToList(), applyProductFlowSettingListForGroupReview, isItemMultiGroup,
                 memberAndPermissionSetting.CompanyWithUnit.Type == CommonConstants.CompanyType.OWNER, memberAndPermissionSetting.Member,
-                memberAndPermissionSetting.CompanyWithUnit.Type == CommonConstants.CompanyType.ORGANIZATION_NOSTOCK);
+                memberAndPermissionSetting.CompanyWithUnit.Type == CommonConstants.CompanyType.ORGANIZATION_NOSTOCK,memberAndPermissionSetting.CompanyWithUnit.UnitId);
             var response = new CommonResponse<dynamic>
             {
                 Result = result,
