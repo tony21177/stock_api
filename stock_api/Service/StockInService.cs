@@ -918,10 +918,7 @@ namespace stock_api.Service
 
             foreach (var product in nearExpireProductVoList)
             {
-                if (product.ProductCode == "472")
-                {
-                    var test = 123;
-                }
+                
                 var matchedAllUnAllOutInStockItemList = allUnAllOutInStockItemList.Where(i => i.ProductId == product.ProductId).ToList();
                 if (product.PreDeadline == null) continue;
                 if (preDeadline != null)
