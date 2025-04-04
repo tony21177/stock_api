@@ -62,6 +62,7 @@ namespace stock_api.Service.ValueObject
         public DateOnly? DemandDate { get; set; }
         public string? Prod_savingFunction { get; set; }
         public string? Prod_stockLocation { get; set; }
+        public DateOnly? ApplyDate { get; set; }
 
         public string InStockStatus { get; set; }
         public bool IsContainKeywords(string keywords)
