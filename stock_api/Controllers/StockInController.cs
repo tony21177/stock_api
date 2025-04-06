@@ -378,7 +378,7 @@ namespace stock_api.Controllers
                 SavingFunction = unVerifyAcceptance.SavingFunction,
                 SavingTemperature = unVerifyAcceptance.SavingTemperature,
                 DemandDate = purchaseMain != null ? purchaseMain.DemandDate : null,
-                ApplyDate = purchaseMain != null ? purchaseMain.ApplyDate : null,
+                ApplyDate = purchaseMain != null ? DateOnly.FromDateTime(purchaseMain.ApplyDate) : null,
             };
 
             if (matchedProdcut != null)
