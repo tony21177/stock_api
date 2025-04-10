@@ -688,7 +688,7 @@ namespace stock_api.Controllers
 
             var (data, totalPages) = _stockOutService.ListStockOutRecords(request);
             var distinctProductIds = data.Select(x => x.ProductId).Distinct().ToList();
-            var products = _warehouseProductService.GetProductsByProductIdsAndCompId(distinctProductIds, compId);
+            var products = _warehouseProductService.GetProductsByProductIdsAndCompId(distinctProductIds, request.CompId);
 
             var outStockRecordVoList = _mapper.Map<List<OutStockRecordVo>>(data);
 

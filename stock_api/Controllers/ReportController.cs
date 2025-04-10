@@ -53,7 +53,6 @@ namespace stock_api.Controllers
         {
             var memberAndPermissionSetting = _authHelpers.GetMemberAndPermissionSetting(User);
             var compId = memberAndPermissionSetting.CompanyWithUnit.CompId;
-            getProductInAndOutStockRecordsRequest.CompId = compId;
             if (getProductInAndOutStockRecordsRequest.CompId == null)
             {
                 getProductInAndOutStockRecordsRequest.CompId = compId;
