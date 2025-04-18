@@ -380,8 +380,13 @@ namespace stock_api.Controllers
                 foreach(PurchaseMainAndSubItemVo vo in listData)
                 {
                     vo.Items.RemoveAll(e => e.Manager != request.Keywords);
+                    if (vo.Items.Count > 0)
+                    {
+                        filterKeywordsData.Add(vo);
+
+                    }
                 }
-                filterKeywordsData = listData;
+
             }
             else
             {
