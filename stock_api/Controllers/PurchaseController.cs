@@ -372,7 +372,7 @@ namespace stock_api.Controllers
 
             List<PurchaseMainAndSubItemVo> filterKeywordsData = new();
 
-            var isKeywordsContainManager = request.Keywords != null&&allItemManagers.Contains(request.Keywords);
+            var isKeywordsContainManager = request.Keywords != null&&request.Keywords!=""&&allItemManagers.Contains(request.Keywords);
 
             // 表示要過濾Manager
             if (isKeywordsContainManager)
@@ -385,7 +385,7 @@ namespace stock_api.Controllers
             }
             else
             {
-                if (request.Keywords != null)
+                if (request.Keywords != null&&request.Keywords!="")
                 {
                     foreach (PurchaseMainAndSubItemVo vo in listData)
                     {
