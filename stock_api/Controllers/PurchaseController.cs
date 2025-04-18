@@ -319,28 +319,8 @@ namespace stock_api.Controllers
             // ListPurchaseRequest request = new() { CurrentStatus = CommonConstants.PurchaseFlowAnswer.AGREE,ReceiveStatus= CommonConstants.PurchaseReceiveStatus.NONE };
             ListPurchaseRequest request = new() { CurrentStatus = CommonConstants.PurchaseFlowAnswer.AGREE, Keywords = ownerListPurchasesRequestRequest.Keywords };
 
-            var listDate = _purchaseService.ListPurchase(request);
-            List<PurchaseMainAndSubItemVo> filterKeywordsData = new();
-            if (request.Keywords != null)
-            {
-                foreach (PurchaseMainAndSubItemVo vo in listDate)
-                {
-                    if (vo.IsContainKeywords(request.Keywords))
-                    {
-                        filterKeywordsData.Add(vo);
-                    }
-                }
+            var listData = _purchaseService.ListPurchase(request);
 
-            }
-            else
-            {
-                filterKeywordsData.AddRange(listDate);
-            }
-            //var distinctProductIdList = filterKeywordsData
-            //.SelectMany(item => item.Items)
-            //.Select(item => item.ProductId)
-            //.Distinct()
-            //.ToList();
             var products = _warehouseProductService.GetAllProducts();
 
             var productsLastMonthUsage = _stockOutService.GetLastMonthUsages();
@@ -348,11 +328,13 @@ namespace stock_api.Controllers
             var productsThisYearAverageMonthUsage = _stockOutService.GetThisAverageMonthUsages();
 
             var productsOfOwner = _warehouseProductService.GetAllProducts(compId);
+            var allItemManagers = new HashSet<string>();
 
-            foreach (var vo in filterKeywordsData)
+            foreach (var vo in listData)
             {
                 foreach (var item in vo.Items)
                 {
+
                     var matchedProduct = products.Where(p => p.ProductId == item.ProductId).FirstOrDefault();
                     item.MaxSafeQuantity = matchedProduct?.MaxSafeQuantity;
                     item.ProductModel = matchedProduct?.ProductModel;
@@ -381,7 +363,42 @@ namespace stock_api.Controllers
 
                     var matchedProductThisYearAverageMonthUsage = productsThisYearAverageMonthUsage.Where(p => p.ProductId == item.ProductId).FirstOrDefault();
                     item.ThisYearAverageMonthUsageQuantity = matchedProductThisYearAverageMonthUsage != null ? matchedProductThisYearAverageMonthUsage.AverageQuantity : 0.0;
+                    if (matchedProduct!=null &&matchedProduct.Manager != null)
+                    {
+                        allItemManagers.Add(matchedProduct.Manager);
+                    }
+                }
+            }
 
+            List<PurchaseMainAndSubItemVo> filterKeywordsData = new();
+
+            var isKeywordsContainManager = request.Keywords != null&&allItemManagers.Contains(request.Keywords);
+
+            // 表示要過濾Manager
+            if (isKeywordsContainManager)
+            {
+                foreach(PurchaseMainAndSubItemVo vo in listData)
+                {
+                    vo.Items.RemoveAll(e => e.Manager != request.Keywords);
+                }
+                filterKeywordsData = listData;
+            }
+            else
+            {
+                if (request.Keywords != null)
+                {
+                    foreach (PurchaseMainAndSubItemVo vo in listData)
+                    {
+                        if (vo.IsContainKeywords(request.Keywords))
+                        {
+                            filterKeywordsData.Add(vo);
+                        }
+                    }
+
+                }
+                else
+                {
+                    filterKeywordsData.AddRange(listData);
                 }
             }
             filterKeywordsData = filterKeywordsData.OrderByDescending(item => item.ApplyDate).ToList();

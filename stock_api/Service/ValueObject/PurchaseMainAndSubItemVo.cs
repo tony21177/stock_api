@@ -27,6 +27,8 @@ namespace stock_api.Service.ValueObject
         public List<PurchaseFlowWithAgentsVo>? flows { get;set;}
         public List<PurchaseFlowLog>? flowLogs { get;set;}
 
+        public List<string> ItemManagers { get; set; } = new List<string>();
+
         public bool IsContainKeywords(string keywords)
         {
             string formattedDate = ApplyDate.ToString("yyyyMMdd");
