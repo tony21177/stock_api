@@ -379,8 +379,8 @@ namespace stock_api.Controllers
             {
                 foreach(PurchaseMainAndSubItemVo vo in listData)
                 {
-                    vo.Items.RemoveAll(e => e.Manager != request.Keywords);
-                    if (vo.Items.Count > 0)
+                    var isItemManagerContainsKeyword = vo.Items.Any(e => e.Manager!=null&&e.Manager.Contains(request.Keywords));
+                    if (isItemManagerContainsKeyword)
                     {
                         filterKeywordsData.Add(vo);
 
