@@ -497,6 +497,7 @@ namespace stock_api.Controllers
                 item.SupplierUnit = matchedOwnerProduct?.Unit; // 這裡要用這個品項在金萬林的最小出入庫單位（Gary）
                 item.UnitConversion = matchedProduct?.UnitConversion; // 這裡要用這個品項在原始採購單位的包裝單位轉換（Gary）
                 item.SupplierUnitConvertsion = matchedOwnerProduct?.UnitConversion; // 這裡要用這個品項在金萬林的包裝單位轉換（Gary）
+                item.SupplierSpec = matchedOwnerProduct?.ProductSpec; // 這裡要用這個品項在金萬林的品項規格（Gary）
 
                 item.StockLocation = matchedProduct?.StockLocation;
                 var matchedProductThisYearAverageMonthUsage = productsThisYearAverageMonthUsage.Where(e => e.ProductId == item.ProductId).FirstOrDefault();

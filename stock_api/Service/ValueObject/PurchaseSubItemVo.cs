@@ -36,6 +36,7 @@ namespace stock_api.Service.ValueObject
         public string ProductCode { get; set; }
         public float? SupplierUnitConvertsion { get; set; }
         public string? SupplierUnit { get; set; }
+        public string? SupplierSpec { get; set; }
         public string? Delivery { get; set; }
 
         public string? SplitProcess { get; set; }
