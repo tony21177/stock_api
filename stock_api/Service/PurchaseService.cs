@@ -274,7 +274,12 @@ namespace stock_api.Service
                         var noStockReviewersOfOwner = noStockReviewers.Where(m => m.Type == CommonConstants.CompanyType.OWNER).ToList();
                         noStockReviewersCrossComp.ForEach(r =>
                         {
-                            var maxSeq = purchaseFlows.Select(f => f.Sequence).Max();
+                            var maxSeq = 1;
+                            if (purchaseFlows.Count > 0)
+                            {
+                                maxSeq = purchaseFlows.Select(f => f.Sequence).Max();
+                            }
+
                             var purchaseFlow = new PurchaseFlow()
                             {
                                 FlowId = Guid.NewGuid().ToString(),
