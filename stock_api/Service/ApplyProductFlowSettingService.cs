@@ -85,6 +85,7 @@ namespace stock_api.Service
             return result.ToList();
         }
 
+
         public ApplyProductFlowSetting? GetApplyProductFlowSettingBySettingId(string settingId)
         {
             return _dbContext.ApplyProductFlowSettings.Where(s => s.SettingId == settingId).FirstOrDefault();
