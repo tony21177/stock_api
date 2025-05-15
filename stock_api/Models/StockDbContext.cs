@@ -654,6 +654,9 @@ public partial class StockDbContext : DbContext
             entity.Property(e => e.LotNumber).HasComment("批號");
             entity.Property(e => e.LotNumberBatch).HasComment("批次");
             entity.Property(e => e.OrderQuantity).HasComment("訂購數量，對應 PurchaseSubItem 的 Quantity");
+            entity.Property(e => e.OwnerProcess)
+                .HasDefaultValueSql("'NONE'")
+                .HasComment("NONE,NOT_AGREE,PART_AGREE,AGREE");
             entity.Property(e => e.PackagingStatus).HasComment("外觀包裝\nNORMAL : 完成\nBREAK : 破損");
             entity.Property(e => e.ProductId).HasComment("品項PK");
             entity.Property(e => e.ProductName).HasComment("品項名稱");

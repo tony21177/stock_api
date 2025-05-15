@@ -87,6 +87,15 @@ public partial class PurchaseAcceptanceItemsView
     [StringLength(45)]
     public string? SplitPrcoess { get; set; }
 
+    /// <summary>
+    /// NONE,NOT_AGREE,PART_AGREE,AGREE
+    /// </summary>
+    [StringLength(45)]
+    public string? OwnerProcess { get; set; }
+
+    [StringLength(300)]
+    public string? OwnerComment { get; set; }
+
     [StringLength(100)]
     public string AcceptId { get; set; } = null!;
 

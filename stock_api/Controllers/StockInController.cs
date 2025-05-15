@@ -76,6 +76,9 @@ namespace stock_api.Controllers
             List<WarehouseProduct> products = _warehouseProductService.GetProductsByProductIdsAndCompId(distinctProductIdList, compId);
 
             Dictionary<string, List<PurchaseAcceptanceItemsView>> purchaseMainIdAndAcceptionItemListMap = new();
+
+            purchaseAcceptanceItemsViewList = purchaseAcceptanceItemsViewList
+                .Where(i => i.OwnerProcess != CommonConstants.PurchaseMainOwnerProcessStatus.NOT_AGREE).ToList();
             purchaseAcceptanceItemsViewList.ForEach(item =>
             {
                 if (!purchaseMainIdAndAcceptionItemListMap.ContainsKey(item.PurchaseMainId))
