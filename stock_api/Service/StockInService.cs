@@ -931,6 +931,20 @@ namespace stock_api.Service
                     var nearExpiredInStockItemList = matchedAllUnAllOutInStockItemList.Where(i => i.ExpirationDate != null && i.ExpirationDate.Value.AddDays(-product.PreDeadline.Value) <= compareDate).OrderBy(i => i.ExpirationDate).ToList();
                     product.InStockItemList = nearExpiredInStockItemList;
                 }
+
+                foreach (var inStockItem in product.InStockItemList)
+                {
+                    if (inStockItem.LotNumber != null)
+                    {
+                        product.NearExpiredLotNumber.Add(inStockItem.LotNumber);
+                    }
+                    if (inStockItem.LotNumberBatch != null)
+                    {
+                        product.NearExpiredLotNumberBatch.Add(inStockItem.LotNumberBatch);
+                    }
+                }
+                product.NearExpiredQuantity = product.InStockItemList.Sum(i => (i.InStockQuantity - i.OutStockQuantity) ?? 0);
+                
             }
 
             return nearExpireProductVoList.Where(p => p.InStockItemList.Count > 0).ToList();
