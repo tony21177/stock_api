@@ -189,6 +189,12 @@ namespace stock_api.Controllers
                 });
             }
             updateMemberRequset.CompId = existingMember.CompId;
+            if (updateMemberRequset.GroupIds != null && updateMemberRequset.GroupIds.Count > 0)
+            {
+                var updateGroupIds = updateMemberRequset.GroupIds;
+                var activeGroups = _groupService.GetGroupsByIdList(updateGroupIds).Where(e=>e.IsActive==true).ToList();
+                updateMemberRequset.GroupIds = activeGroups.Select(e => e.GroupId).ToList();
+            }
 
             var validationResult = await _updateMemberRequestValidator.ValidateAsync(updateMemberRequset);
             if (!validationResult.IsValid)
