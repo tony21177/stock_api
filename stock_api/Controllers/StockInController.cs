@@ -297,7 +297,19 @@ namespace stock_api.Controllers
                         break;
                 }
             }
-            int totalItems = data.Count;
+
+            var filteredZeroQuantityOutData = new List<PurchaseAcceptItemsVo>();
+            data.ForEach(e =>
+            {
+                e.AcceptItems.RemoveAll(i => i.OrderQuantity == 0);
+                if (e.AcceptItems.Count > 0)
+                {
+                    filteredZeroQuantityOutData.Add(e);
+                }
+            });
+            data = filteredZeroQuantityOutData;
+
+            var totalItems = data.Count;
             totalPages = (int)Math.Ceiling((double)totalItems / request.PaginationCondition.PageSize);
             data = data.Skip((request.PaginationCondition.Page - 1) * request.PaginationCondition.PageSize).Take(request.PaginationCondition.PageSize).ToList();
 
