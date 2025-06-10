@@ -188,7 +188,7 @@ namespace stock_api.Service
                 else if (existingAcceptanceItem.AcceptQuantity != null && existingAcceptanceItem.AcceptQuantity > 0 && existingAcceptanceItem.AcceptQuantity < existingAcceptanceItem.OrderQuantity)
                 {
                     // 判斷是否部分驗收
-                    _logger.LogInformation("[品項部分驗收] AcceptId:${acceptId},AcceptQuantity:${AcceptQuantity},OrderQuantity:${}", existingAcceptanceItem.AcceptId, existingAcceptanceItem.AcceptQuantity, existingAcceptanceItem.OrderQuantity);
+                    _logger.LogInformation("[品項部分驗收] AcceptId:${acceptId},AcceptQuantity:${AcceptQuantity},OrderQuantity:${OrderQuantity}", existingAcceptanceItem.AcceptId, existingAcceptanceItem.AcceptQuantity, existingAcceptanceItem.OrderQuantity);
                     existingAcceptanceItem.InStockStatus = CommonConstants.PurchaseSubItemReceiveStatus.PART;
                     existingAcceptanceItem.VerifyAt = DateTime.Now;
                     purchaseSubItem.ReceiveStatus = CommonConstants.PurchaseSubItemReceiveStatus.PART;
