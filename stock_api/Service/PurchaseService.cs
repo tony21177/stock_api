@@ -1340,7 +1340,6 @@ namespace stock_api.Service
                 });
                 _dbContext.SaveChanges();
                 scope.Complete();
-                return true;
             }
             catch (Exception ex)
             {
