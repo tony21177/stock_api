@@ -1314,6 +1314,27 @@ namespace stock_api.Service
                             };
                             _dbContext.AcceptanceItems.Where(acceptItem => acceptItem.ItemId == matchedUpdateItem.ItemId).ExecuteUpdate(a => a.SetProperty(a => a.OrderQuantity, subItem.Quantity));
                             _dbContext.PurchaseSubItemHistories.Add(newPurchaseSubItemHistory);
+                            var matchedAcceptanceItem = _dbContext.AcceptanceItems.Where(a => a.ItemId == matchedUpdateItem.ItemId).FirstOrDefault();
+                            if (matchedAcceptanceItem != null)
+                            {
+                                // 判斷是否全部驗收完
+                                if (matchedAcceptanceItem.AcceptQuantity != null && matchedAcceptanceItem.AcceptQuantity >= subItem.Quantity)
+                                {
+                                    matchedAcceptanceItem.InStockStatus = CommonConstants.PurchaseSubItemReceiveStatus.DONE;
+                                    matchedUpdateItem.ReceiveStatus = CommonConstants.PurchaseSubItemReceiveStatus.DONE;
+                                    matchedUpdateItem.InStockQuantity = matchedAcceptanceItem.AcceptQuantity;
+                                    matchedUpdateItem.ReceiveQuantity = matchedUpdateItem.InStockQuantity;
+                                }
+                                else if (matchedAcceptanceItem.AcceptQuantity != null && matchedAcceptanceItem.AcceptQuantity > 0 && matchedAcceptanceItem.AcceptQuantity < subItem.Quantity)
+                                {
+                                    // 判斷是否部分驗收
+                                    _logger.LogInformation("[品項部分驗收] AcceptId:${acceptId},AcceptQuantity:${AcceptQuantity},OrderQuantity:${OrderQuantity}", matchedAcceptanceItem.AcceptId, matchedAcceptanceItem.AcceptQuantity, subItem.Quantity);
+                                    matchedAcceptanceItem.InStockStatus = CommonConstants.PurchaseSubItemReceiveStatus.PART;
+                                    matchedUpdateItem.ReceiveStatus = CommonConstants.PurchaseSubItemReceiveStatus.PART;
+                                    matchedUpdateItem.InStockQuantity = matchedAcceptanceItem.AcceptQuantity;
+                                    matchedUpdateItem.ReceiveQuantity = matchedUpdateItem.InStockQuantity;
+                                }
+                            }
                         }
                     }
                 });
@@ -1324,6 +1345,28 @@ namespace stock_api.Service
             catch (Exception ex)
             {
                 _logger.LogError("事務失敗[UpdateOrDeleteSubItems]：{msg}", ex);
+                return false;
+            }
+
+            using var scope2 = new TransactionScope();
+            try
+            {
+                var allAcceptItems = _dbContext.AcceptanceItems.Where(i => i.PurchaseMainId == purchaseMainSheet.PurchaseMainId).ToList();
+                if (allAcceptItems.All(item => item.InStockStatus == CommonConstants.PurchaseSubItemReceiveStatus.DONE))
+                {
+                    purchaseMainSheet.ReceiveStatus = CommonConstants.PurchaseReceiveStatus.ALL_ACCEPT;
+                }
+                else if (allAcceptItems.Any(item => item.InStockStatus == CommonConstants.PurchaseSubItemReceiveStatus.PART))
+                {
+                    purchaseMainSheet.ReceiveStatus = CommonConstants.PurchaseReceiveStatus.PART_ACCEPT;
+                }
+                _dbContext.SaveChanges();
+                scope2.Complete();
+                return true;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError("事務失敗[OwnerUpdateOrDeleteSubItems][更新採購單狀態失敗]：{msg}", ex);
                 return false;
             }
         }
