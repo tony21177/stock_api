@@ -23,6 +23,7 @@ namespace stock_api.Service.ValueObject
         public string?  SplitProcess { get; set; }
         public string? OwnerProcess { get; set; }
         public string? OwnerComment { get; set; }
+        public string? VendorComment { get; set; } // 供應商備註
         public List<PurchaseSubItemVo> Items {get;set;}
         public List<PurchaseFlowWithAgentsVo>? flows { get;set;}
         public List<PurchaseFlowLog>? flowLogs { get;set;}
