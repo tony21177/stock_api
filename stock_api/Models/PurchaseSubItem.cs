@@ -149,4 +149,7 @@ public partial class PurchaseSubItem
 
     [StringLength(300)]
     public string? OwnerComment { get; set; }
+
+    [StringLength(300)]
+    public string? VendorComment { get; set; }
 }

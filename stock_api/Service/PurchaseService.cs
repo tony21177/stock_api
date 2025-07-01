@@ -761,6 +761,12 @@ namespace stock_api.Service
             _dbContext.SaveChanges();
         }
 
+        public void UpdateSubItemVendorComment(PurchaseSubItem item, UpdateSubItemVendorCommentRequest request)
+        {
+            item.VendorComment = request.VendorComment;
+            _dbContext.SaveChanges();
+        }
+
         public void PurchaseFlowRead(PurchaseFlow flow)
         {
             flow.ReadAt = DateTime.Now;
