@@ -58,7 +58,7 @@ namespace stock_api.Service
 
         public WarehouseMember? GetMemberByAccount(string account)
         {
-            var member = _dbContext.WarehouseMembers.Where(member => member.Account == account ).FirstOrDefault();
+            var member = _dbContext.WarehouseMembers.Where(member => member.Account == account && member.IsActive==true ).FirstOrDefault();
             return member;
         }
 
