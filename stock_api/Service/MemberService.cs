@@ -26,6 +26,11 @@ namespace stock_api.Service
             return _dbContext.WarehouseMembers.Where(member => member.UserId == userId ).FirstOrDefault();
         }
 
+        public List<WarehouseMember> GetMembersByAccount(string account)
+        {
+            return _dbContext.WarehouseMembers.Where(member => member.Account == account).ToList();
+        }
+
         public List<WarehouseMember> GetMembersByUserIdList(List<string> userIdList, string compId)
         {
             return _dbContext.WarehouseMembers.Where(member => userIdList.Contains(member.UserId) && member.CompId == compId).ToList();

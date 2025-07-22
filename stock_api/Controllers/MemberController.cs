@@ -26,17 +26,19 @@ namespace stock_api.Controllers
         private readonly MemberService _memberService;
         private readonly GroupService _groupService;
         private readonly AuthLayerService _authLayerService;
+        private readonly CompanyService _companyService;
         private readonly IMapper _mapper;
         private readonly ILogger<MemberController> _logger;
         private readonly AuthHelpers _authHelpers;
         private readonly IValidator<CreateOrUpdateMemberRequest> _createMemberRequestValidator;
         private readonly IValidator<CreateOrUpdateMemberRequest> _updateMemberRequestValidator;
         private readonly IValidator<UpdateMemberGroupRequest> _updateMemberGroupRequestRequestValidator;
-        public MemberController(MemberService memberService,GroupService groupService, AuthLayerService authLayerService, IMapper mapper, ILogger<MemberController> logger, AuthHelpers authHelpers)
+        public MemberController(CompanyService companyService, MemberService memberService,GroupService groupService, AuthLayerService authLayerService, IMapper mapper, ILogger<MemberController> logger, AuthHelpers authHelpers)
         {
             _memberService = memberService;
             _groupService = groupService;
             _authLayerService = authLayerService;
+            _companyService = companyService;
             _mapper = mapper;
             _logger = logger;
             _createMemberRequestValidator = new CreateOrUpdateMemberValidator(ActionTypeEnum.Create, authLayerService, memberService,groupService);
@@ -141,6 +143,21 @@ namespace stock_api.Controllers
                 createMemberRequset.CompId = memberAndPermissionSetting.CompanyWithUnit.CompId;
             }
 
+            if (createMemberRequset.Account != null)
+            {
+                var existingAccounts = _memberService.GetMembersByAccount(createMemberRequset.Account);
+                if (existingAccounts.Any(existAccount => existAccount.CompId != createMemberRequset.CompId && existAccount.IsActive == true))
+                {
+                    var existAccount = existingAccounts.Where(existAccount => existAccount.IsActive == true).FirstOrDefault();
+                    var companyName = _companyService.GetCompanyByCompId(existAccount.CompId)?.Name;
+                    var errorMessage = $"帳號 {createMemberRequset.Account} 已存在於其他組織-{companyName}-中且為啟用，請使用其他帳號或先將該帳號停用。";
+                    return BadRequest(new CommonResponse<dynamic>
+                    {
+                        Result = false,
+                        Message = errorMessage
+                    });
+                }
+            }
 
 
             var validationResult = await _createMemberRequestValidator.ValidateAsync(createMemberRequset);
@@ -188,6 +205,22 @@ namespace stock_api.Controllers
                     Message = "使用者不存在"
                 });
             }
+            if (updateMemberRequset.Account != null)
+            {
+                var existingAccounts = _memberService.GetMembersByAccount(updateMemberRequset.Account);
+                if(existingAccounts.Any(existAccount=> existAccount.CompId != existingMember.CompId && existAccount.IsActive == true))
+                {
+                    var existAccount = existingAccounts.Where(existAccount => existAccount.IsActive ==true).FirstOrDefault();
+                    var companyName = _companyService.GetCompanyByCompId(existAccount.CompId)?.Name;
+                    var errorMessage = $"帳號 {updateMemberRequset.Account} 已存在於其他組織-{companyName}-中且為啟用，請使用其他帳號或先將該帳號停用。";
+                    return BadRequest(new CommonResponse<dynamic>
+                    {
+                        Result = false,
+                        Message = errorMessage
+                    });
+                }
+            }
+
             updateMemberRequset.CompId = existingMember.CompId;
             if (updateMemberRequset.GroupIds != null && updateMemberRequset.GroupIds.Count > 0)
             {
