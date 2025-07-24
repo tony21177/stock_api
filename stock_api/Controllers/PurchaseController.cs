@@ -320,6 +320,12 @@ namespace stock_api.Controllers
             ListPurchaseRequest request = new() { CurrentStatus = CommonConstants.PurchaseFlowAnswer.AGREE, Keywords = ownerListPurchasesRequestRequest.Keywords };
 
             var listData = _purchaseService.ListPurchase(request);
+            // 過濾每個 vo 的 Items，移除 OwnerProcess 為 NOT_AGREE 的項目
+            foreach (var vo in listData)
+            {
+                vo.Items = vo.Items.Where(item => item.OwnerProcess != "NOT_AGREE").ToList();
+            }
+
 
             var products = _warehouseProductService.GetAllProducts();
 
