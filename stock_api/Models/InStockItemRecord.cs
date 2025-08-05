@@ -146,6 +146,8 @@ public partial class InStockItemRecord
 
     public float? OutStockQuantity { get; set; }
 
+    public float? AdjustOutQuantity { get; set; }
+
     public float? RejectQuantity { get; set; }
 
     /// <summary>

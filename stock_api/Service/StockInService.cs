@@ -756,7 +756,7 @@ namespace stock_api.Service
                     {
                         inStockRecord.OutStockStatus = CommonConstants.OutStockStatus.NONE;
                     }
-                    if (inStockRecord.InStockQuantity - inStockRecord.OutStockQuantity == 0)
+                    if (inStockRecord.InStockQuantity - inStockRecord.OutStockQuantity - inStockRecord.AdjustOutQuantity <= 0)
                     {
                         inStockRecord.OutStockStatus = CommonConstants.OutStockStatus.ALL;
                     }
@@ -943,7 +943,7 @@ namespace stock_api.Service
                         product.NearExpiredLotNumberBatch.Add(inStockItem.LotNumberBatch);
                     }
                 }
-                product.NearExpiredQuantity = product.InStockItemList.Sum(i => (i.InStockQuantity - i.OutStockQuantity) ?? 0);
+                product.NearExpiredQuantity = product.InStockItemList.Sum(i => (i.InStockQuantity - i.OutStockQuantity - i.AdjustOutQuantity) ?? 0);
                 
             }
 

@@ -381,6 +381,7 @@ public partial class StockDbContext : DbContext
             entity.ToTable("in_stock_item_record", tb => tb.HasComment("每一筆要更新庫存紀錄（增加）的操作，都需要寫入一筆記錄在 InStockRecord，包含採購驗收、調撥、盤點（盤盈）、退庫，類型寫在 Type 欄位。"));
 
             entity.Property(e => e.AdjustItemId).HasComment("若此筆入庫是由盤盈而來才有值");
+            entity.Property(e => e.AdjustOutQuantity).HasDefaultValueSql("'0'");
             entity.Property(e => e.AfterQuantity).HasComment("入庫後數量");
             entity.Property(e => e.BarCodeNumber).HasComment("用來產生條碼的數字，PadLeft : 7個0\nExample : 0000001");
             entity.Property(e => e.Comment).HasComment("初驗驗收填寫相關原因");

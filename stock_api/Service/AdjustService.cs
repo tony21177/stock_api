@@ -26,9 +26,19 @@ namespace stock_api.Service
 
         public (bool,string?) AdjustItems(List<AdjustItem> adjustItems,List<WarehouseProduct> products,WarehouseMember user)
         {   
+            
+
             using var scope = new TransactionScope();
             try
             {
+                var allInStockIds = adjustItems
+                    .Where(item => item.BatchAssignList != null)
+                    .SelectMany(item => item.BatchAssignList)
+                    .Where(assign => assign.InStockId != null)
+                    .Select(assign => assign.InStockId)
+                    .ToList();
+                var allInStockRecords = _stockInService.GetInStockRecordsByInStockIdList(allInStockIds);
+
                 InventoryAdjustMain main = new ()
                 {
                     MainId = Guid.NewGuid().ToString(),
@@ -78,6 +88,17 @@ namespace stock_api.Service
                             AfterQuantity = item.AfterQuantity,
                             AdjustItemId = adjustItem.AdjustItemId,
                         };
+                        if (item.BatchAssignList.Count > 0)
+                        {
+                            var assign = item.BatchAssignList.FirstOrDefault();
+                            var matchedInStockRecord = allInStockRecords.FirstOrDefault(r => r.InStockId == assign.InStockId);
+                            // 盤盈的話 選擇匹配的instock那批的入庫量也要加上盤盈的數量, 相關紀錄再紀錄在另一筆inStock只是type是ADJUST且批號+":AI"
+                            matchedInStockRecord.InStockQuantity += (float)Math.Abs(assign.Adjust_calculate_qty.Value);
+                            record.LotNumberBatch = matchedInStockRecord.LotNumberBatch+":AI";
+                            record.LotNumber = matchedInStockRecord.LotNumber+":AI";
+                            record.BarCodeNumber = matchedInStockRecord.LotNumberBatch+":AI";
+                        }
+
                         matchedProduct.InStockQuantity = item.AfterQuantity;
                         inStockItemRecords.Add(record);
 
@@ -85,6 +106,16 @@ namespace stock_api.Service
 
                     if (item.BeforeQuantity > item.AfterQuantity)
                     {
+                        if (item.BatchAssignList.Count > 0)
+                        {
+                            var assign = item.BatchAssignList.FirstOrDefault();
+                            var matchedInStockRecord = allInStockRecords.FirstOrDefault(r => r.InStockId == assign.InStockId);
+                            if((matchedInStockRecord.InStockQuantity - matchedInStockRecord.OutStockQuantity - matchedInStockRecord.AdjustOutQuantity - matchedInStockRecord.RejectQuantity??0.0f + assign.Adjust_calculate_qty??0) < 0)
+                            {
+                                return (false, $"盤虧數量以超過此批{matchedInStockRecord.LotNumberBatch},剩餘可出的數量{matchedInStockRecord.InStockQuantity - matchedInStockRecord.OutStockQuantity - matchedInStockRecord.AdjustOutQuantity}");
+                            }
+                        }
+
                         //盤虧
                         InventoryAdjustItem adjustItem = new()
                         {
@@ -117,6 +148,25 @@ namespace stock_api.Service
                             BarCodeNumber = matchedProduct.ProductCode + "AO" + nowDateTimeString,
                             AdjustItemId = adjustItem.AdjustItemId
                         };
+                        if (item.BatchAssignList.Count > 0)
+                        {
+                            var assign = item.BatchAssignList.FirstOrDefault();
+                            var matchedInStockRecord = allInStockRecords.FirstOrDefault(r => r.InStockId == assign.InStockId);
+                            // Fix for CS8602: Dereference of a possibly null reference.
+                            // Fix for CS1503: Argument 1: cannot convert from 'float?' to 'decimal'.
+
+                            if (assign?.Adjust_calculate_qty != null && matchedInStockRecord?.AdjustOutQuantity != null)
+                            {
+                                matchedInStockRecord.AdjustOutQuantity += (float)Math.Abs(assign.Adjust_calculate_qty.Value);
+                                outStockRecord.LotNumberBatch = matchedInStockRecord.LotNumberBatch;
+                                outStockRecord.LotNumber = matchedInStockRecord.LotNumber;
+                                outStockRecord.BarCodeNumber = matchedInStockRecord.LotNumberBatch;
+                            }
+                            else
+                            {
+                                _logger.LogWarning("Adjust_calculate_qty or AdjustOutQuantity is null. Skipping adjustment.");
+                            }
+                        }
                         matchedProduct.InStockQuantity = item.AfterQuantity;
                         outStockRecords.Add(outStockRecord);
                     }
