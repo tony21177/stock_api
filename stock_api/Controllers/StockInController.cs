@@ -126,7 +126,6 @@ namespace stock_api.Controllers
                     }
                     var matchedSubItem = purchaseSubItems.Where(s => s.ItemId == item.ItemId).FirstOrDefault();
                     item.PurchaseSubItem = matchedSubItem;
-
                 }
 
                 if (request.Keywords == null)
@@ -173,6 +172,12 @@ namespace stock_api.Controllers
                     mainAndAccptItems.AcceptItems = mainAndAccptItems.AcceptItems.Where(a => a.PurchaseSubItem != null && a.PurchaseSubItem.GroupIds.Contains(request.GroupId)).ToList();
                 }
                 data = data.Where(e => e.AcceptItems.Count > 0).ToList();
+            }
+
+            // Remove AcceptItems with PurchaseSubItem.OwnerProcess == "NOT_AGREE"
+            foreach (var vo in data)
+            {
+                vo.AcceptItems.RemoveAll(a => a.PurchaseSubItem != null && a.PurchaseSubItem.OwnerProcess == CommonConstants.PurchaseMainOwnerProcessStatus.NOT_AGREE);
             }
 
             List<AcceptItem> allAcceptItemList = new();
@@ -308,6 +313,7 @@ namespace stock_api.Controllers
                 }
             });
             data = filteredZeroQuantityOutData;
+
 
             var totalItems = data.Count;
             totalPages = (int)Math.Ceiling((double)totalItems / request.PaginationCondition.PageSize);
