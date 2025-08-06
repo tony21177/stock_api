@@ -35,7 +35,7 @@ namespace stock_api.Service
             {
 
                 float inStockQuantity = inStockItem.InStockQuantity;
-                float existingOutQuantity = inStockItem.OutStockQuantity ?? 0 + inStockItem.AdjustOutQuantity??0;
+                float existingOutQuantity = inStockItem.OutStockQuantity + inStockItem.AdjustOutQuantity;
                 existingOutQuantity += request.ApplyQuantity;
                 inStockItem.OutStockQuantity = existingOutQuantity;
                 if (existingOutQuantity >= inStockQuantity)
@@ -155,7 +155,7 @@ namespace stock_api.Service
             {
 
                 float inStockQuantity = inStockItem.InStockQuantity;
-                float existingOutQuantity = inStockItem.OutStockQuantity ?? 0 + inStockItem.AdjustOutQuantity??0;
+                float existingOutQuantity = inStockItem.OutStockQuantity + inStockItem.AdjustOutQuantity;
                 existingOutQuantity += request.ApplyQuantity;
                 inStockItem.OutStockQuantity = existingOutQuantity;
                 if (existingOutQuantity >= inStockQuantity)

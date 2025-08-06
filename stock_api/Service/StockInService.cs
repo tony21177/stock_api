@@ -943,7 +943,7 @@ namespace stock_api.Service
                         product.NearExpiredLotNumberBatch.Add(inStockItem.LotNumberBatch);
                     }
                 }
-                product.NearExpiredQuantity = product.InStockItemList.Sum(i => (i.InStockQuantity - i.OutStockQuantity - i.AdjustOutQuantity) ?? 0);
+                product.NearExpiredQuantity = product.InStockItemList.Sum(i => (i.InStockQuantity - i.OutStockQuantity - i.AdjustOutQuantity));
                 
             }
 

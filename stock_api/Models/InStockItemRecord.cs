@@ -67,6 +67,8 @@ public partial class InStockItemRecord
     /// </summary>
     public float InStockQuantity { get; set; }
 
+    public float AdjustInQuantity { get; set; }
+
     /// <summary>
     /// 品項PK
     /// </summary>
@@ -144,11 +146,11 @@ public partial class InStockItemRecord
     [StringLength(45)]
     public string? OutStockStatus { get; set; }
 
-    public float? OutStockQuantity { get; set; }
+    public float OutStockQuantity { get; set; }
 
-    public float? AdjustOutQuantity { get; set; }
+    public float AdjustOutQuantity { get; set; }
 
-    public float? RejectQuantity { get; set; }
+    public float RejectQuantity { get; set; }
 
     /// <summary>
     /// NONE,LOT_NUMBER,LOT_NUMBER_BATCH

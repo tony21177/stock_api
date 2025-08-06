@@ -92,11 +92,11 @@ namespace stock_api.Service
                         {
                             var assign = item.BatchAssignList.FirstOrDefault();
                             var matchedInStockRecord = allInStockRecords.FirstOrDefault(r => r.InStockId == assign.InStockId);
-                            // 盤盈的話 選擇匹配的instock那批的入庫量也要加上盤盈的數量, 相關紀錄再紀錄在另一筆inStock只是type是ADJUST且批號+":AI"
-                            matchedInStockRecord.InStockQuantity += (float)Math.Abs(assign.Adjust_calculate_qty.Value);
-                            record.LotNumberBatch = matchedInStockRecord.LotNumberBatch+":AI";
-                            record.LotNumber = matchedInStockRecord.LotNumber+":AI";
-                            record.BarCodeNumber = matchedInStockRecord.LotNumberBatch+":AI";
+                            // 盤盈的話 選擇匹配的instock那批, 相關紀錄再紀錄在另一筆inStock只是type是ADJUST且批號+":AdjustIn"
+                            matchedInStockRecord.AdjustInQuantity += (float)Math.Abs(assign.Adjust_calculate_qty ?? 0);
+                            record.LotNumberBatch = matchedInStockRecord.LotNumberBatch+":AdjustIn";
+                            record.LotNumber = matchedInStockRecord.LotNumber+ ":AdjustIn";
+                            record.BarCodeNumber = matchedInStockRecord.LotNumberBatch+ ":AdjustIn";
                         }
 
                         matchedProduct.InStockQuantity = item.AfterQuantity;
@@ -110,9 +110,9 @@ namespace stock_api.Service
                         {
                             var assign = item.BatchAssignList.FirstOrDefault();
                             var matchedInStockRecord = allInStockRecords.FirstOrDefault(r => r.InStockId == assign.InStockId);
-                            if((matchedInStockRecord.InStockQuantity - matchedInStockRecord.OutStockQuantity - matchedInStockRecord.AdjustOutQuantity - matchedInStockRecord.RejectQuantity??0.0f + assign.Adjust_calculate_qty??0) < 0)
+                            if((matchedInStockRecord.InStockQuantity + matchedInStockRecord.AdjustInQuantity - matchedInStockRecord.OutStockQuantity - matchedInStockRecord.AdjustOutQuantity+ assign.Adjust_calculate_qty) < 0)
                             {
-                                return (false, $"盤虧數量以超過此批{matchedInStockRecord.LotNumberBatch},剩餘可出的數量{matchedInStockRecord.InStockQuantity - matchedInStockRecord.OutStockQuantity - matchedInStockRecord.AdjustOutQuantity}");
+                                return (false, $"盤虧數量以超過此批{matchedInStockRecord.LotNumberBatch},剩餘可出的數量{matchedInStockRecord.InStockQuantity + matchedInStockRecord.AdjustInQuantity - matchedInStockRecord.OutStockQuantity - matchedInStockRecord.AdjustOutQuantity}");
                             }
                         }
 
@@ -152,8 +152,6 @@ namespace stock_api.Service
                         {
                             var assign = item.BatchAssignList.FirstOrDefault();
                             var matchedInStockRecord = allInStockRecords.FirstOrDefault(r => r.InStockId == assign.InStockId);
-                            // Fix for CS8602: Dereference of a possibly null reference.
-                            // Fix for CS1503: Argument 1: cannot convert from 'float?' to 'decimal'.
 
                             if (assign?.Adjust_calculate_qty != null && matchedInStockRecord?.AdjustOutQuantity != null)
                             {
