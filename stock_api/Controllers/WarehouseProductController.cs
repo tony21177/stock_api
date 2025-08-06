@@ -844,7 +844,7 @@ namespace stock_api.Controllers
             var inStockLots = _mapper.Map<List<InStockLots>>(stockInRecordList);
             foreach (var item in inStockLots)
             {
-                item.RemainingQuantity = item.InStockQuantity - item.OutStockQuantity- item.RejectQuantity - item.AdjustOutQuantity;
+                item.RemainingQuantity = item.InStockQuantity + item.AdjustInQuantity - item.OutStockQuantity- item.RejectQuantity - item.AdjustOutQuantity;
             }
 
 
