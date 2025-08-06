@@ -756,7 +756,7 @@ namespace stock_api.Service
                     {
                         inStockRecord.OutStockStatus = CommonConstants.OutStockStatus.NONE;
                     }
-                    if (inStockRecord.InStockQuantity - inStockRecord.OutStockQuantity - inStockRecord.AdjustOutQuantity <= 0)
+                    if (inStockRecord.InStockQuantity+inStockRecord.AdjustInQuantity - inStockRecord.OutStockQuantity - inStockRecord.AdjustOutQuantity-inStockRecord.RejectQuantity <= 0)
                     {
                         inStockRecord.OutStockStatus = CommonConstants.OutStockStatus.ALL;
                     }

@@ -72,7 +72,7 @@ namespace stock_api.Service
                     RejectReason = request.RejectReason,
                 };
                 inStockItemRecord.RejectQuantity = rejectQuantity;
-                if(inStockItemRecord.InStockQuantity - rejectQuantity == 0)
+                if(inStockItemRecord.InStockQuantity+inStockItemRecord.AdjustInQuantity-inStockItemRecord.OutStockQuantity-inStockItemRecord.AdjustInQuantity - rejectQuantity == 0)
                 {
                     inStockItemRecord.OutStockStatus = CommonConstants.OutStockStatus.ALL;
                 }
