@@ -83,6 +83,7 @@ namespace stock_api.Service
                                         CompId = user.CompId,
                                         OriginalQuantity = item.BeforeQuantity,
                                         InStockQuantity = (float)Math.Abs(assign.Adjust_calculate_qty ?? 0),
+                                        ExpirationDate = matchedInStockRecord.ExpirationDate,
                                         ProductId = item.ProductId,
                                         ProductCode = matchedProduct.ProductCode,
                                         ProductName = matchedProduct.ProductName,
