@@ -67,8 +67,8 @@ namespace stock_api.Scheduler
                     stringBuilder.AppendLine($"<td>{inStockItem.LotNumberBatch}</td>");
                     stringBuilder.AppendLine($"<td>{inStockItem.ExpirationDate}</td>");
                     stringBuilder.AppendLine($"<td>{nearExpiredProductVo.PreDeadline}</td>");
-                    stringBuilder.AppendLine($"<td>{inStockItem.InStockQuantity}</td>");
-                    stringBuilder.AppendLine($"<td>{inStockItem.OutStockQuantity}</td>");
+                    stringBuilder.AppendLine($"<td>{(inStockItem.InStockQuantity + inStockItem.AdjustInQuantity)}</td>");
+                    stringBuilder.AppendLine($"<td>{inStockItem.OutStockQuantity+inStockItem.AdjustOutQuantity}</td>");
                     stringBuilder.AppendLine("</tr>");
                 }
                 stringBuilder.AppendLine("</tbody>");

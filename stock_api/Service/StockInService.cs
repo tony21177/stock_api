@@ -739,7 +739,7 @@ namespace stock_api.Service
             {
                 var inStockRecord = _dbContext.InStockItemRecords.Where(i => i.LotNumberBatch == outStockRecord.LotNumberBatch).FirstOrDefault();
 
-                var inStockQuantityBefore = inStockRecord?.InStockQuantity ?? 0;
+                var inStockQuantityBefore = inStockRecord?.InStockQuantity ?? 0+inStockRecord?.AdjustInQuantity??0;
                 var outStockQuantityBefore = outStockRecord.ApplyQuantity;
                 var outStockRecordsAfter = _dbContext.OutStockRecords.Where(r => r.ProductId == outStockRecord.ProductId && r.CreatedAt > outStockRecord.CreatedAt).ToList();
 
@@ -748,15 +748,15 @@ namespace stock_api.Service
                 if (inStockRecord != null)
                 {
                     inStockRecord.OutStockQuantity = inStockRecord.OutStockQuantity - returnQuantity;
-                    if (inStockRecord.InStockQuantity - inStockRecord.OutStockQuantity > 0)
+                    if ((inStockRecord.InStockQuantity+inStockRecord.AdjustInQuantity) - (inStockRecord.OutStockQuantity+inStockRecord.AdjustOutQuantity) > 0)
                     {
                         inStockRecord.OutStockStatus = CommonConstants.OutStockStatus.PART;
                     }
-                    if (inStockRecord.OutStockQuantity == 0)
+                    if ((inStockRecord.OutStockQuantity+inStockRecord.AdjustOutQuantity) == 0)
                     {
                         inStockRecord.OutStockStatus = CommonConstants.OutStockStatus.NONE;
                     }
-                    if (inStockRecord.InStockQuantity - inStockRecord.OutStockQuantity == 0)
+                    if (inStockRecord.InStockQuantity+inStockRecord.AdjustInQuantity - inStockRecord.OutStockQuantity - inStockRecord.AdjustOutQuantity-inStockRecord.RejectQuantity <= 0)
                     {
                         inStockRecord.OutStockStatus = CommonConstants.OutStockStatus.ALL;
                     }
@@ -784,7 +784,7 @@ namespace stock_api.Service
                     OutStockId = outStockRecord.OutStockId,
                     ReturnQuantity = returnQuantity,
                     InStockQuantityBefore = inStockQuantityBefore,
-                    InStockQuantityAfter = inStockRecord?.InStockQuantity??0,
+                    InStockQuantityAfter = inStockRecord?.InStockQuantity??0+inStockRecord?.AdjustInQuantity??0,
                     OutStockApplyQuantityBefore = outStockQuantityBefore,
                     OutStockApplyQuantityAfter = outStockRecord.ApplyQuantity,
                     AfterQuantityBefore = afterQuantityBefore,
@@ -943,7 +943,7 @@ namespace stock_api.Service
                         product.NearExpiredLotNumberBatch.Add(inStockItem.LotNumberBatch);
                     }
                 }
-                product.NearExpiredQuantity = product.InStockItemList.Sum(i => (i.InStockQuantity - i.OutStockQuantity) ?? 0);
+                product.NearExpiredQuantity = product.InStockItemList.Sum(i => (i.InStockQuantity+i.AdjustInQuantity - i.OutStockQuantity - i.AdjustOutQuantity));
                 
             }
 
@@ -1010,7 +1010,7 @@ namespace stock_api.Service
 
         public List<InStockItemRecord> GetInStockRecordsNotAllOutOrReject(string productId)
         {
-            return _dbContext.InStockItemRecords.Where(i => i.ProductId == productId && (i.InStockQuantity - i.OutStockQuantity - i.RejectQuantity) > 0).ToList();
+            return _dbContext.InStockItemRecords.Where(i => i.ProductId == productId && (i.InStockQuantity+i.AdjustInQuantity - i.OutStockQuantity-i.AdjustOutQuantity - i.RejectQuantity) > 0).ToList();
         }
 
         public (bool, string?) DeleteInStockRecord(InStockItemRecord inStockItemRecord)
@@ -1022,8 +1022,8 @@ namespace stock_api.Service
                 var acceptItem = _dbContext.AcceptanceItems.Where(i => i.ItemId == inStockItemRecord.ItemId).FirstOrDefault();
                 var purchaseSubItem = _dbContext.PurchaseSubItems.Where(i => i.ItemId == inStockItemRecord.ItemId).FirstOrDefault();
                 var product = _dbContext.WarehouseProducts.Where(p => p.ProductId == inStockItemRecord.ProductId).FirstOrDefault();
-                acceptItem.AcceptQuantity = acceptItem.AcceptQuantity - inStockItemRecord.InStockQuantity;
-                product.InStockQuantity = product.InStockQuantity - inStockItemRecord.InStockQuantity;
+                acceptItem.AcceptQuantity = acceptItem.AcceptQuantity - inStockItemRecord.InStockQuantity - inStockItemRecord.AdjustInQuantity;
+                product.InStockQuantity = product.InStockQuantity - inStockItemRecord.InStockQuantity - inStockItemRecord.AdjustInQuantity;
                 if (acceptItem.AcceptQuantity == 0)
                 {
                     acceptItem.AcceptUserId = null;
@@ -1078,7 +1078,7 @@ namespace stock_api.Service
                     acceptItem.InStockStatus = CommonConstants.PurchaseSubItemReceiveStatus.NONE;
                     purchaseSubItem.ReceiveStatus = CommonConstants.PurchaseSubItemReceiveStatus.NONE;
                 }
-                purchaseSubItem.InStockQuantity = purchaseSubItem.InStockQuantity - inStockItemRecord.InStockQuantity;
+                purchaseSubItem.InStockQuantity = purchaseSubItem.InStockQuantity - inStockItemRecord.InStockQuantity - inStockItemRecord.AdjustInQuantity;
                 purchaseSubItem.ReceiveQuantity = purchaseSubItem.InStockQuantity;
 
                 _dbContext.InStockItemRecords.Remove(inStockItemRecord);

@@ -183,7 +183,7 @@ namespace stock_api.Controllers
                         Message = "無對應的庫存品項"
                     });
                 }
-                if (request.ApplyQuantity > requestLot.InStockQuantity)
+                if (request.ApplyQuantity > (requestLot.InStockQuantity + requestLot.AdjustInQuantity))
                 {
                     return BadRequest(new CommonResponse<dynamic>
                     {
@@ -366,12 +366,12 @@ namespace stock_api.Controllers
                 {
                     var product = lotNumberBatchAndProductMap[outItem.LotNumberBatch];
                     var requestLot = lotNumberBatchRequestLotMap[outItem.LotNumberBatch];
-                    if (outItem.ApplyQuantity > requestLot.InStockQuantity)
+                    if (outItem.ApplyQuantity > (requestLot.InStockQuantity+requestLot.AdjustInQuantity))
                     {
                         return BadRequest(new CommonResponse<dynamic>
                         {
                             Result = false,
-                            Message = $"出庫數量超過入庫數量 批次:{outItem.LotNumberBatch},入庫數量:{requestLot.InStockQuantity}"
+                            Message = $"出庫數量超過入庫數量 批次:{outItem.LotNumberBatch},入庫數量:{requestLot.InStockQuantity + requestLot.AdjustInQuantity}"
                         });
                     }
 
@@ -903,8 +903,8 @@ namespace stock_api.Controllers
                 SavingFunction = productInfo.SavingFunction,
                 SavingTemperature = productInfo.SavingTemperature,
                 CompName = productInfo.CompName,
-                BatchInStockQuantity = inStockRecord.InStockQuantity,
-                BatchOutStockQuantity = inStockRecord.OutStockQuantity,
+                BatchInStockQuantity = (inStockRecord.InStockQuantity + inStockRecord.AdjustInQuantity),
+                BatchOutStockQuantity = (inStockRecord.OutStockQuantity+inStockRecord.AdjustOutQuantity),
                 BatchExpirationDate = inStockRecord.ExpirationDate,
                 PurchaseMainId = subItem?.PurchaseMainId,
                 InstrumentIdList = productInstruments.Select(pi => pi.InstrumentId).ToList(),

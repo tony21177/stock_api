@@ -841,10 +841,18 @@ namespace stock_api.Controllers
             }
             
             var stockInRecordList = _stockInService.GetInStockRecordsNotAllOutOrReject(request.ProductId);
+            var products = _warehouseProductService.GetProductsByCompId( request.CompId).Where(p=>stockInRecordList.Select(e=>e.ProductId).Contains(p.ProductId)).ToList();
+
+
             var inStockLots = _mapper.Map<List<InStockLots>>(stockInRecordList);
             foreach (var item in inStockLots)
             {
-                item.RemainingQuantity = item.InStockQuantity - item.OutStockQuantity??0.0f - item.RejectQuantity??0.0f;
+                var matchedProduct = products.Where(p => p.ProductId == item.ProductId).FirstOrDefault();
+                item.RemainingQuantity = item.InStockQuantity + item.AdjustInQuantity - item.OutStockQuantity- item.RejectQuantity - item.AdjustOutQuantity;
+                item.ProductUnit = matchedProduct?.Unit;
+                item.GroupName = matchedProduct?.GroupNames;
+                item.OpenDeadline = matchedProduct?.OpenDeadline;
+                item.ProductModel = matchedProduct?.ProductModel;
             }
 
 

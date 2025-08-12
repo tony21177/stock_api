@@ -26,9 +26,19 @@ namespace stock_api.Service
 
         public (bool,string?) AdjustItems(List<AdjustItem> adjustItems,List<WarehouseProduct> products,WarehouseMember user)
         {   
+            
+
             using var scope = new TransactionScope();
             try
             {
+                var allInStockIds = adjustItems
+                    .Where(item => item.BatchAssignList != null)
+                    .SelectMany(item => item.BatchAssignList)
+                    .Where(assign => assign.InStockId != null)
+                    .Select(assign => assign.InStockId)
+                    .ToList();
+                var allInStockRecords = _stockInService.GetInStockRecordsByInStockIdList(allInStockIds);
+
                 InventoryAdjustMain main = new ()
                 {
                     MainId = Guid.NewGuid().ToString(),
@@ -59,32 +69,82 @@ namespace stock_api.Service
                             AfterQuantity = item.AfterQuantity,
                         };
                         inventoryAdjustItems.Add(adjustItem);
-                        InStockItemRecord record = new() 
-                        { 
-                            InStockId = Guid.NewGuid().ToString(),
-                            CompId = user.CompId,
-                            OriginalQuantity = item.BeforeQuantity,
-                            InStockQuantity = item.AfterQuantity - item.BeforeQuantity,
-                            ProductId = item.ProductId,
-                            ProductCode = matchedProduct.ProductCode,
-                            ProductName = matchedProduct.ProductName,
-                            ProductSpec = matchedProduct.ProductSpec,
-                            Type = CommonConstants.StockInType.ADJUST,
-                            LotNumber = item.LotNumber,
-                            LotNumberBatch = item.LotNumberBatch??matchedProduct.ProductCode+"AI"+nowDateTimeString,
-                            BarCodeNumber = item.LotNumberBatch ?? matchedProduct.ProductCode + "AI" + nowDateTimeString,
-                            UserId = user.UserId,
-                            UserName = user.DisplayName,
-                            AfterQuantity = item.AfterQuantity,
-                            AdjustItemId = adjustItem.AdjustItemId,
-                        };
+                        if (item.BatchAssignList.Count > 0)
+                        {
+                            foreach (var assign in item.BatchAssignList)
+                            {
+                                var matchedInStockRecord = allInStockRecords.FirstOrDefault(r => r.InStockId == assign.InStockId);
+                                if (matchedInStockRecord != null)
+                                {
+                                    matchedInStockRecord.AdjustInQuantity += (float)Math.Abs(assign.Adjust_calculate_qty ?? 0);
+                                    InStockItemRecord record = new() 
+                                    { 
+                                        InStockId = Guid.NewGuid().ToString(),
+                                        CompId = user.CompId,
+                                        OriginalQuantity = item.BeforeQuantity,
+                                        InStockQuantity = (float)Math.Abs(assign.Adjust_calculate_qty ?? 0),
+                                        ExpirationDate = matchedInStockRecord.ExpirationDate,
+                                        ProductId = item.ProductId,
+                                        ProductCode = matchedProduct.ProductCode,
+                                        ProductName = matchedProduct.ProductName,
+                                        ProductSpec = matchedProduct.ProductSpec,
+                                        Type = CommonConstants.StockInType.ADJUST,
+                                        SavingFunction = matchedInStockRecord.SavingFunction,
+                                        SavingTemperature = matchedInStockRecord.SavingTemperature,
+                                        LotNumber = matchedInStockRecord.LotNumber,
+                                        LotNumberBatch = matchedInStockRecord.LotNumberBatch+":A",
+                                        BarCodeNumber = matchedInStockRecord.LotNumberBatch+ ":A",
+                                        UserId = user.UserId,
+                                        UserName = user.DisplayName,
+                                        AfterQuantity = item.AfterQuantity,
+                                        AdjustItemId = adjustItem.AdjustItemId,
+                                    };
+                                    inStockItemRecords.Add(record);
+                                }
+                            }
+                        }
+                        else
+                        {
+                            InStockItemRecord record = new() 
+                            { 
+                                InStockId = Guid.NewGuid().ToString(),
+                                CompId = user.CompId,
+                                OriginalQuantity = item.BeforeQuantity,
+                                InStockQuantity = item.AfterQuantity - item.BeforeQuantity,
+                                ProductId = item.ProductId,
+                                ProductCode = matchedProduct.ProductCode,
+                                ProductName = matchedProduct.ProductName,
+                                ProductSpec = matchedProduct.ProductSpec,
+                                Type = CommonConstants.StockInType.ADJUST,
+                                LotNumber = item.LotNumber,
+                                LotNumberBatch = item.LotNumberBatch??matchedProduct.ProductCode+":A"+nowDateTimeString,
+                                BarCodeNumber = item.LotNumberBatch ?? matchedProduct.ProductCode + ":A" + nowDateTimeString,
+                                UserId = user.UserId,
+                                UserName = user.DisplayName,
+                                AfterQuantity = item.AfterQuantity,
+                                AdjustItemId = adjustItem.AdjustItemId,
+                            };
+                            inStockItemRecords.Add(record);
+                        }
                         matchedProduct.InStockQuantity = item.AfterQuantity;
-                        inStockItemRecords.Add(record);
-
                     }
 
                     if (item.BeforeQuantity > item.AfterQuantity)
                     {
+                        if (item.BatchAssignList.Count > 0)
+                        {
+                            foreach (var assign in item.BatchAssignList)
+                            {
+                                var matchedInStockRecord = allInStockRecords.FirstOrDefault(r => r.InStockId == assign.InStockId);
+                                if (matchedInStockRecord != null)
+                                {
+                                    if((matchedInStockRecord.InStockQuantity + matchedInStockRecord.AdjustInQuantity - matchedInStockRecord.OutStockQuantity - matchedInStockRecord.AdjustOutQuantity+ assign.Adjust_calculate_qty) < 0)
+                                    {
+                                        return (false, $"盤虧數量以超過此批{matchedInStockRecord.LotNumberBatch},剩餘可出的數量{matchedInStockRecord.InStockQuantity + matchedInStockRecord.AdjustInQuantity - matchedInStockRecord.OutStockQuantity - matchedInStockRecord.AdjustOutQuantity}");
+                                    }
+                                }
+                            }
+                        }
                         //盤虧
                         InventoryAdjustItem adjustItem = new()
                         {
@@ -97,28 +157,70 @@ namespace stock_api.Service
                             AfterQuantity = item.AfterQuantity,
                         };
                         inventoryAdjustItems.Add(adjustItem);
-                        OutStockRecord outStockRecord = new()
+                        if (item.BatchAssignList.Count > 0)
                         {
-                            OutStockId = Guid.NewGuid().ToString(),
-                            ApplyQuantity = item.BeforeQuantity - item.AfterQuantity,
-                            LotNumberBatch = item.LotNumberBatch ?? matchedProduct.ProductCode + "AO" + nowDateTimeString,
-                            LotNumber = item.LotNumber,
-                            CompId = user.CompId,
-                            IsAbnormal = false,
-                            ProductId = item.ProductId,
-                            ProductCode = matchedProduct.ProductCode,
-                            ProductName = matchedProduct.ProductName,
-                            ProductSpec = matchedProduct.ProductSpec,
-                            Type = CommonConstants.OutStockType.ADJUST_OUT,
-                            UserId = user.UserId,
-                            UserName = user.DisplayName,
-                            OriginalQuantity = item.BeforeQuantity,
-                            AfterQuantity = item.AfterQuantity,
-                            BarCodeNumber = matchedProduct.ProductCode + "AO" + nowDateTimeString,
-                            AdjustItemId = adjustItem.AdjustItemId
-                        };
+                            foreach (var assign in item.BatchAssignList)
+                            {
+                                var matchedInStockRecord = allInStockRecords.FirstOrDefault(r => r.InStockId == assign.InStockId);
+                                if (matchedInStockRecord != null)
+                                {
+                                    if (assign?.Adjust_calculate_qty != null && matchedInStockRecord?.AdjustOutQuantity != null)
+                                    {
+                                        matchedInStockRecord.AdjustOutQuantity += (float)Math.Abs(assign.Adjust_calculate_qty.Value);
+                                        OutStockRecord outStockRecord = new()
+                                        {
+                                            OutStockId = Guid.NewGuid().ToString(),
+                                            ApplyQuantity = (float)Math.Abs(assign.Adjust_calculate_qty ?? 0),
+                                            LotNumberBatch = matchedInStockRecord.LotNumberBatch,
+                                            LotNumber = matchedInStockRecord.LotNumber,
+                                            CompId = user.CompId,
+                                            IsAbnormal = false,
+                                            ProductId = item.ProductId,
+                                            ProductCode = matchedProduct.ProductCode,
+                                            ProductName = matchedProduct.ProductName,
+                                            ProductSpec = matchedProduct.ProductSpec,
+                                            Type = CommonConstants.OutStockType.ADJUST_OUT,
+                                            UserId = user.UserId,
+                                            UserName = user.DisplayName,
+                                            OriginalQuantity = item.BeforeQuantity,
+                                            AfterQuantity = item.AfterQuantity,
+                                            BarCodeNumber = matchedInStockRecord.LotNumberBatch,
+                                            AdjustItemId = adjustItem.AdjustItemId
+                                        };
+                                        outStockRecords.Add(outStockRecord);
+                                    }
+                                    else
+                                    {
+                                        _logger.LogWarning("Adjust_calculate_qty or AdjustOutQuantity is null. Skipping adjustment.");
+                                    }
+                                }
+                            }
+                        }
+                        else
+                        {
+                            OutStockRecord outStockRecord = new()
+                            {
+                                OutStockId = Guid.NewGuid().ToString(),
+                                ApplyQuantity = item.BeforeQuantity - item.AfterQuantity,
+                                LotNumberBatch = item.LotNumberBatch ?? matchedProduct.ProductCode + "AO" + nowDateTimeString,
+                                LotNumber = item.LotNumber,
+                                CompId = user.CompId,
+                                IsAbnormal = false,
+                                ProductId = item.ProductId,
+                                ProductCode = matchedProduct.ProductCode,
+                                ProductName = matchedProduct.ProductName,
+                                ProductSpec = matchedProduct.ProductSpec,
+                                Type = CommonConstants.OutStockType.ADJUST_OUT,
+                                UserId = user.UserId,
+                                UserName = user.DisplayName,
+                                OriginalQuantity = item.BeforeQuantity,
+                                AfterQuantity = item.AfterQuantity,
+                                BarCodeNumber = matchedProduct.ProductCode + "AO" + nowDateTimeString,
+                                AdjustItemId = adjustItem.AdjustItemId
+                            };
+                            outStockRecords.Add(outStockRecord);
+                        }
                         matchedProduct.InStockQuantity = item.AfterQuantity;
-                        outStockRecords.Add(outStockRecord);
                     }
                     if(item.BeforeQuantity == item.AfterQuantity)
                     {

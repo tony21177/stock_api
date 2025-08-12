@@ -12,7 +12,7 @@ namespace stock_api.Models;
 /// 主要是用來設定系統人員登入的相關資料。
 /// </summary>
 [Table("warehouse_member")]
-[Index("Account", Name = "Account_UNIQUE", IsUnique = true)]
+[Index("Account", "CompId", "IsActive", Name = "account_unique", IsUnique = true)]
 public partial class WarehouseMember
 {
     [StringLength(100)]

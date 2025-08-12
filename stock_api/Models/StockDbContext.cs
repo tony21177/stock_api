@@ -393,7 +393,6 @@ public partial class StockDbContext : DbContext
             entity.Property(e => e.LotNumber).HasComment("批號");
             entity.Property(e => e.LotNumberBatch).HasComment("批次");
             entity.Property(e => e.OriginalQuantity).HasComment("現有庫存量");
-            entity.Property(e => e.OutStockQuantity).HasDefaultValueSql("'0'");
             entity.Property(e => e.OutStockStatus)
                 .HasDefaultValueSql("'NONE'")
                 .HasComment("出庫的狀態\\\\nNONE:都還沒出,PART:出部分:ALL:出完全部");
@@ -408,7 +407,6 @@ public partial class StockDbContext : DbContext
             entity.Property(e => e.QcType)
                 .HasDefaultValueSql("'NONE'")
                 .HasComment("NONE,LOT_NUMBER,LOT_NUMBER_BATCH");
-            entity.Property(e => e.RejectQuantity).HasDefaultValueSql("'0'");
             entity.Property(e => e.Type).HasComment("類型\nPURCHASE : 來源是採購\nSHIFT : 調撥\nADJUST : 調整（盤盈）\nRETURN : 退庫");
             entity.Property(e => e.UpdatedAt)
                 .ValueGeneratedOnAddOrUpdate()
