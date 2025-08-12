@@ -89,6 +89,8 @@ namespace stock_api.Service
                                         ProductName = matchedProduct.ProductName,
                                         ProductSpec = matchedProduct.ProductSpec,
                                         Type = CommonConstants.StockInType.ADJUST,
+                                        SavingFunction = matchedInStockRecord.SavingFunction,
+                                        SavingTemperature = matchedInStockRecord.SavingTemperature,
                                         LotNumber = matchedInStockRecord.LotNumber+ ":AdjustIn",
                                         LotNumberBatch = matchedInStockRecord.LotNumberBatch+":AdjustIn",
                                         BarCodeNumber = matchedInStockRecord.LotNumberBatch+ ":AdjustIn",
