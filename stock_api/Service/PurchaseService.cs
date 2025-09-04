@@ -506,7 +506,7 @@ namespace stock_api.Service
                     CreatedAt = purchaseItemListView.CreatedAt.Value,
                     UpdatedAt = purchaseItemListView.UpdatedAt.Value,
                     SplitProcess = purchaseItemListView.SubSplitProcess,
-                    OwnerProcess = purchaseItemListView.SubOwnerProcess
+                    OwnerProcess = purchaseItemListView.SubOwnerProcess,
                 };
                 allPurchaseSubItemVoList.Add(subItem);
             }

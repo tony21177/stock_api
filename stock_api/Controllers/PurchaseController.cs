@@ -414,6 +414,16 @@ namespace stock_api.Controllers
             }
             filterKeywordsData = filterKeywordsData.OrderByDescending(item => item.ApplyDate).ToList();
 
+            foreach(var data in filterKeywordsData)
+            {
+                foreach (var item in data.Items)
+                {
+                    var matchedOwnerProduct = productsOfOwner.Where(p => p.ProductCode == item.ProductCode).FirstOrDefault();
+                    item.SupplierSpec = matchedOwnerProduct?.ProductSpec; 
+                }
+            }
+
+
             var response = new CommonResponse<dynamic>
             {
                 Result = true,
