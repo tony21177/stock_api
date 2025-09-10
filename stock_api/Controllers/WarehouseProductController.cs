@@ -849,6 +849,7 @@ namespace stock_api.Controllers
             {
                 var matchedProduct = products.Where(p => p.ProductId == item.ProductId).FirstOrDefault();
                 item.RemainingQuantity = item.InStockQuantity + item.AdjustInQuantity - item.OutStockQuantity- item.RejectQuantity - item.AdjustOutQuantity;
+                if (item.LotNumberBatch.Contains(":A")) item.RemainingQuantity = 0; // :A的批號結餘量算院批號內
                 item.ProductUnit = matchedProduct?.Unit;
                 item.GroupName = matchedProduct?.GroupNames;
                 item.OpenDeadline = matchedProduct?.OpenDeadline;
