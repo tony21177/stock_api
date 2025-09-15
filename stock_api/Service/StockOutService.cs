@@ -540,7 +540,7 @@ namespace stock_api.Service
                 {
                     var daysOut = (now - (outStock.CreatedAt ?? now)).Days;
                     var remainDays = (product.OpenDeadline ?? 0) - daysOut;
-                    if (daysAfter == null || remainDays <= daysAfter)
+                    if ((daysAfter == null || remainDays <= daysAfter)&&remainDays>=0)
                     {
                         result.Add(new OutStockItemForOpenDeadline
                         {
@@ -552,6 +552,8 @@ namespace stock_api.Service
                             ProductCode = outStock.ProductCode,
                             Type = outStock.Type,
                             OutStockDate = outStock.CreatedAt,
+                            OpenDeadline = product.OpenDeadline,
+                            RemainingDays = remainDays,
                             GroupIds = product.GroupIds,
                             GroupNames = product.GroupNames,
                             DefaultSupplierId = product.DefaultSupplierId,

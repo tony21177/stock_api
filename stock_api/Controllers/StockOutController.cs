@@ -1069,10 +1069,7 @@ namespace stock_api.Controllers
         {
             var memberAndPermissionSetting = _authHelpers.GetMemberAndPermissionSetting(User);
             var compId = memberAndPermissionSetting.CompanyWithUnit.CompId;
-            if (memberAndPermissionSetting.CompanyWithUnit.Type != CommonConstants.CompanyType.OWNER)
-            {
-                return BadRequest(CommonResponse<dynamic>.BuildNotAuthorizeResponse());
-            }
+           
             var result = _stockOutService.SearchByOpenDeadline(compId,request.DaysAfter);
             return Ok(new CommonResponse<List<OutStockItemForOpenDeadline>>
             {
