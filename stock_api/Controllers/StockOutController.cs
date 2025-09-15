@@ -1063,6 +1063,24 @@ namespace stock_api.Controllers
             });
         }
 
+        [HttpPost("searchByOpenDeadline")]
+        [Authorize]
+        public IActionResult SearchByOpenDeadline(SearchByOpenDeadlineRequest request)
+        {
+            var memberAndPermissionSetting = _authHelpers.GetMemberAndPermissionSetting(User);
+            var compId = memberAndPermissionSetting.CompanyWithUnit.CompId;
+            if (memberAndPermissionSetting.CompanyWithUnit.Type != CommonConstants.CompanyType.OWNER)
+            {
+                return BadRequest(CommonResponse<dynamic>.BuildNotAuthorizeResponse());
+            }
+            var result = _stockOutService.SearchByOpenDeadline(compId,request.DaysAfter);
+            return Ok(new CommonResponse<List<OutStockItemForOpenDeadline>>
+            {
+                Result = true,
+                Data = result,
+            });
+        }
+
         private (List<string>, Dictionary<string, List<InStockItemRecord>>, List<string>) FindSameProductInStockRecordsNotAllOutExpirationFIFO(List<OutboundRequest> outBoundItems, string compId)
         {
             List<string> notFoundLotNumberBatchList = new();

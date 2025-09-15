@@ -520,5 +520,48 @@ namespace stock_api.Service
                 return (false, ex.Message);
             }
         }
+
+        public List<OutStockItemForOpenDeadline> SearchByOpenDeadline(string compId, int? daysAfter)
+        {
+            var now = DateTime.Now;
+            var products = _dbContext.WarehouseProducts.Where(p => p.CompId == compId  && p.OpenDeadline != null).ToList();
+            var productIds = products.Select(p => p.ProductId).ToList();
+            var outStockRecords = _dbContext.OutStockRecords
+                .Where(o => productIds.Contains(o.ProductId) && o.CompId == compId)
+                .ToList();
+
+            var result = new List<OutStockItemForOpenDeadline>();
+
+            foreach (var product in products)
+            {
+                var matchedOutStockRecords = outStockRecords.Where(o => o.ProductId == product.ProductId).ToList();
+
+                foreach (var outStock in matchedOutStockRecords)
+                {
+                    var daysOut = (now - (outStock.CreatedAt ?? now)).Days;
+                    var remainDays = (product.OpenDeadline ?? 0) - daysOut;
+                    if (daysAfter == null || remainDays <= daysAfter)
+                    {
+                        result.Add(new OutStockItemForOpenDeadline
+                        {
+                            OutStockQuantity= outStock.ApplyQuantity,
+                            LotNumberBatch = outStock.LotNumberBatch,
+                            LotNumber = outStock.LotNumber,
+                            ProductName = outStock.ProductName,
+                            ProductId = outStock.ProductId,
+                            ProductCode = outStock.ProductCode,
+                            Type = outStock.Type,
+                            OutStockDate = outStock.CreatedAt,
+                            GroupIds = product.GroupIds,
+                            GroupNames = product.GroupNames,
+                            DefaultSupplierId = product.DefaultSupplierId,
+                            DefaultSupplierName = product.DefaultSupplierName,
+                            PackageWay = product.PackageWay,
+                        });
+                    }
+                }
+            }
+            return result;
+        }
     }
 }
