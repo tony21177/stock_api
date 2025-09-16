@@ -856,7 +856,7 @@ namespace stock_api.Controllers
                 item.ProductModel = matchedProduct?.ProductModel;
             }
 
-
+            inStockLots = inStockLots.Where(x => x.RemainingQuantity != 0).ToList();
 
             return Ok(new CommonResponse<dynamic>
             {
