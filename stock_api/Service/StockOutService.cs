@@ -534,6 +534,7 @@ namespace stock_api.Service
 
             foreach (var product in products)
             {
+                if(product.OpenDeadline==null||product.OpenDeadline==0) continue;
                 var matchedOutStockRecords = outStockRecords.Where(o => o.ProductId == product.ProductId).ToList();
 
                 foreach (var outStock in matchedOutStockRecords)
@@ -563,6 +564,12 @@ namespace stock_api.Service
                     }
                 }
             }
+            // 目前開封有效期的部分，可能需要改一下 改成只篩出最後一個出庫日期的資料(目前是全部列出)，另外排除掉開封有效期限設定為0的資料(已跟大餅溝通過)
+            // 只取每個 productId 最新的一筆
+            result = result
+                .GroupBy(x => x.ProductId)
+                .Select(g => g.OrderByDescending(x => x.OutStockDate).First())
+                .ToList();
             return result;
         }
     }
