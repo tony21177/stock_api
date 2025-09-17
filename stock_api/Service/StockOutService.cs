@@ -526,8 +526,8 @@ namespace stock_api.Service
             var now = DateTime.Now;
             var products = _dbContext.WarehouseProducts.Where(p => p.CompId == compId  && p.OpenDeadline != null).ToList();
             var productIds = products.Select(p => p.ProductId).ToList();
-            var outStockRecords = _dbContext.OutStockRecords
-                .Where(o => productIds.Contains(o.ProductId) && o.CompId == compId)
+            var outStockRecords = _dbContext.OutStockRecords.Where(o=>o.CompId==compId).ToList()
+                .Where(o => productIds.Contains(o.ProductId))
                 .ToList();
 
             var result = new List<OutStockItemForOpenDeadline>();
