@@ -736,6 +736,12 @@ namespace stock_api.Controllers
 
             }
 
+            // 補上丟棄相關資訊
+            outStockIds = outStockRecordVoList.Select(o => o.OutStockId).ToList();
+            var discordRecors = _discardService.ListDiscardRecordsByOutStockIds(outStockIds, request.CompId);
+
+
+
             return Ok(new CommonResponse<List<OutStockRecordVo>>
             {
                 Result = true,

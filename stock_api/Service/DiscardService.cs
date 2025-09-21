@@ -150,7 +150,7 @@ namespace stock_api.Service
         {
             if (compId != null)
             {
-                return _dbContext.DiscardRecords.Where(h => h.CompId == compId & outStockIds.Contains(h.OutStockId)).ToList();
+                return _dbContext.DiscardRecords.Where(h => h.CompId == compId && outStockIds.Contains(h.OutStockId)).ToList();
             }
             return _dbContext.DiscardRecords.Where(h =>  outStockIds.Contains(h.OutStockId)).ToList();
 
