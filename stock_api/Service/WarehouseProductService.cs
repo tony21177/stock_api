@@ -245,6 +245,10 @@ namespace stock_api.Service
 
             var notEnoughProducts = matchedProducts.FindAll(p =>
             {
+                if(p.ProductCode == "581")
+                {
+                    var ar = 1223;
+                }
                 var matchedSubItems = allOngoingPurchaseItems.Where(i => i.ProductId == p.ProductId).ToList();
                 var ongoingOrderQuantities = matchedSubItems.Select(i => i.Quantity).Sum();
 

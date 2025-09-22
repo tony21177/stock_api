@@ -736,6 +736,8 @@ namespace stock_api.Service
                     main.OwnerProcess = CommonConstants.PurchaseMainOwnerProcessStatus.NOT_AGREE;
                     main.SplitPrcoess = CommonConstants.SplitProcess.DONE;
                     main.CurrentStatus = CommonConstants.PurchaseApplyStatus.CLOSE;
+                    var subItems = _dbContext.PurchaseSubItems.Where(s => s.PurchaseMainId == main.PurchaseMainId).ToList();
+                    subItems.ForEach(s => s.ReceiveStatus = CommonConstants.PurchaseSubItemReceiveStatus.CLOSE);
                 }
 
                 _dbContext.SaveChanges();
@@ -859,6 +861,8 @@ namespace stock_api.Service
                     {
                         currentFlow.Status = answer;
                         purchaseMain.CurrentStatus = CommonConstants.PurchaseApplyStatus.REJECT;
+                        var subItems = _dbContext.PurchaseSubItems.Where(s => s.PurchaseMainId == purchaseMain.PurchaseMainId).ToList();
+                        subItems.ForEach(s => s.ReceiveStatus=CommonConstants.PurchaseSubItemReceiveStatus.CLOSE);
                     }
                     if (answer == CommonConstants.AnswerPurchaseFlow.BACK && isOwner != true)
                     {
@@ -873,7 +877,8 @@ namespace stock_api.Service
                         else
                         {
                             purchaseMain.CurrentStatus = CommonConstants.PurchaseApplyStatus.REJECT;
-
+                            var subItems = _dbContext.PurchaseSubItems.Where(s => s.PurchaseMainId == purchaseMain.PurchaseMainId).ToList();
+                            subItems.ForEach(s => s.ReceiveStatus = CommonConstants.PurchaseSubItemReceiveStatus.CLOSE);
                         }
                     }
                     if (answer == CommonConstants.AnswerPurchaseFlow.BACK && isOwner == true)
