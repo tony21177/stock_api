@@ -15,6 +15,8 @@ namespace stock_api.Service.ValueObject
         public string? Type { get; set; }
         public DateTime? OutStockDate { get; set; }
         public int? OpenDeadline { get; set; }
+        public DateTime? OpenDeadlineDate { get; set; }
+        public DateOnly? LastAbleDate { get; set; }
         public int? RemainingDays { get; set; }
         public string? GroupIds { get; set; }
         public string? GroupNames { get; set; }
