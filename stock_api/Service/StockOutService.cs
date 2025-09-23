@@ -535,24 +535,27 @@ namespace stock_api.Service
             foreach (var product in products)
             {
                 if(product.OpenDeadline==null||product.OpenDeadline==0) continue;
-                var matchedOutStockRecords = outStockRecords.Where(o => o.ProductId == product.ProductId).ToList();
+                var latestOutStockRecord = outStockRecords
+                    .Where(o => o.ProductId == product.ProductId)
+                    .OrderByDescending(o => o.CreatedAt)
+                    .FirstOrDefault();
 
-                foreach (var outStock in matchedOutStockRecords)
+                if (latestOutStockRecord != null)
                 {
-                    var daysOut = (now - (outStock.CreatedAt ?? now)).Days;
+                    var daysOut = (now - (latestOutStockRecord.CreatedAt ?? now)).Days+1;
                     var remainDays = (product.OpenDeadline ?? 0) - daysOut;
-                    if ((daysAfter == null || remainDays <= daysAfter)&&remainDays>=0)
+                    if ((daysAfter == null || remainDays <= daysAfter))
                     {
                         result.Add(new OutStockItemForOpenDeadline
                         {
-                            OutStockQuantity= outStock.ApplyQuantity,
-                            LotNumberBatch = outStock.LotNumberBatch,
-                            LotNumber = outStock.LotNumber,
-                            ProductName = outStock.ProductName,
-                            ProductId = outStock.ProductId,
-                            ProductCode = outStock.ProductCode,
-                            Type = outStock.Type,
-                            OutStockDate = outStock.CreatedAt,
+                            OutStockQuantity= latestOutStockRecord.ApplyQuantity,
+                            LotNumberBatch = latestOutStockRecord.LotNumberBatch,
+                            LotNumber = latestOutStockRecord.LotNumber,
+                            ProductName = latestOutStockRecord.ProductName,
+                            ProductId = latestOutStockRecord.ProductId,
+                            ProductCode = latestOutStockRecord.ProductCode,
+                            Type = latestOutStockRecord.Type,
+                            OutStockDate = latestOutStockRecord.CreatedAt,
                             OpenDeadline = product.OpenDeadline,
                             RemainingDays = remainDays,
                             GroupIds = product.GroupIds,
@@ -564,12 +567,6 @@ namespace stock_api.Service
                     }
                 }
             }
-            // 目前開封有效期的部分，可能需要改一下 改成只篩出最後一個出庫日期的資料(目前是全部列出)，另外排除掉開封有效期限設定為0的資料(已跟大餅溝通過)
-            // 只取每個 productId 最新的一筆
-            result = result
-                .GroupBy(x => x.ProductId)
-                .Select(g => g.OrderByDescending(x => x.OutStockDate).First())
-                .ToList();
             return result;
         }
     }
