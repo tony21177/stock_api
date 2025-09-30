@@ -542,9 +542,10 @@ namespace stock_api.Service
 
                 if (latestOutStockRecord != null)
                 {
-                    var daysOut = (now - (latestOutStockRecord.CreatedAt ?? now)).Days;
                     var openDeadlineDate = latestOutStockRecord.CreatedAt?.AddDays(product.OpenDeadline ?? 0);
-                    var remainDaysFromNow= (openDeadlineDate - DateTime.Now)?.Days+1;
+                    var openDeadlineDateOnly = openDeadlineDate.HasValue ? DateOnly.FromDateTime(openDeadlineDate.Value) : (DateOnly?)null;
+                    var today = DateOnly.FromDateTime(DateTime.Now);
+                    var remainDaysFromNow = openDeadlineDateOnly.HasValue ? (openDeadlineDateOnly.Value.DayNumber - today.DayNumber)  : (int?)null;
                     if ((daysAfter == null || remainDaysFromNow <= daysAfter))
                     {
                         result.Add(new OutStockItemForOpenDeadline
