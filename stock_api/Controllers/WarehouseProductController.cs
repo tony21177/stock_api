@@ -854,6 +854,7 @@ namespace stock_api.Controllers
                 item.GroupName = matchedProduct?.GroupNames;
                 item.OpenDeadline = matchedProduct?.OpenDeadline;
                 item.ProductModel = matchedProduct?.ProductModel;
+                item.SavingTemperature = matchedProduct?.SavingTemperature;
             }
 
             inStockLots = inStockLots.Where(x => x.RemainingQuantity != 0).ToList();

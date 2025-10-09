@@ -9,5 +9,6 @@ namespace stock_api.Service.ValueObject
         public int? OpenDeadline { get; set; }
         public string? GroupName { get; set; }
         public string? ProductModel { get; set; }
+
     }
 }
