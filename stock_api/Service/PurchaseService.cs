@@ -928,13 +928,13 @@ namespace stock_api.Service
                 {
                     title = "!!!!急件" + title;
                     content = $"<h2 style='color: red;'>急件請盡速處理</h2>" + content;
-                }
-                SendMailToOwner(title, content,ownerList);
+                    SendMailToOwner(title, content,ownerList);
 
-                // 不需通知流程跑完
-                //title = $"採購單:{string.Concat(DateTimeHelper.FormatDateStringForEmail(purchaseMain.ApplyDate), purchaseMain.PurchaseMainId.AsSpan(0, 5))} 審核流程已跑完";
-                //content = $"<a href={_smtpSettings.Domain}/purchase_flow_detail/{purchaseMain.PurchaseMainId}>{purchaseMain.PurchaseMainId}</a>";
-                //SendMailByPurchaseMain(purchaseMain, title,content);
+                    // 不需通知流程跑完
+                    //title = $"採購單:{string.Concat(DateTimeHelper.FormatDateStringForEmail(purchaseMain.ApplyDate), purchaseMain.PurchaseMainId.AsSpan(0, 5))} 審核流程已跑完";
+                    //content = $"<a href={_smtpSettings.Domain}/purchase_flow_detail/{purchaseMain.PurchaseMainId}>{purchaseMain.PurchaseMainId}</a>";
+                    //SendMailByPurchaseMain(purchaseMain, title,content);
+                }
             }
             if (answer == CommonConstants.AnswerPurchaseFlow.AGREE && nextPurchase != null)
             {
@@ -1478,6 +1478,29 @@ namespace stock_api.Service
         public List<PurchaseDetailView> GetPurchaseDetailListByItemIdList(List<string> itemIdList)
         {
             return _dbContext.PurchaseDetailViews.Where(v => itemIdList.Contains(v.ItemId)).ToList();  
+        }
+
+        // 新增：取得每個 productId 的上次訂購日期 (不包含指定的 purchaseMainId)
+        public Dictionary<string, DateTime?> GetLastOrderDateByProductIds(List<string> productIdList, string? excludePurchaseMainId = null)
+        {
+            if (productIdList == null || productIdList.Count == 0)
+            {
+                return new Dictionary<string, DateTime?>();
+            }
+
+            var query = from s in _dbContext.PurchaseSubItems
+                        join m in _dbContext.PurchaseMainSheets on s.PurchaseMainId equals m.PurchaseMainId
+                        where productIdList.Contains(s.ProductId)
+                        select new { s.ProductId, m.PurchaseMainId, m.ApplyDate };
+
+            var list = query.ToList();
+
+            var grouped = list
+                .Where(x => excludePurchaseMainId == null || x.PurchaseMainId != excludePurchaseMainId)
+                .GroupBy(x => x.ProductId)
+                .ToDictionary(g => g.Key, g => (DateTime?)g.Max(x => x.ApplyDate));
+
+            return grouped;
         }
 
         private async Task SendMailToOwner(String title, String content,List<WarehouseMember> ownerList)

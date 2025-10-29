@@ -482,6 +482,10 @@ namespace stock_api.Controllers
             var purchaseAndSubItemVo = _mapper.Map<PurchaseMainAndSubItemVo>(purchaseMain);
             var purchaseSubItemVoList = _mapper.Map<List<PurchaseSubItemVo>>(purchaseSubItems);
 
+            // 取得每個 productId 的上次訂購日期 (排除當前的 purchaseMainId)
+            var distinctProductIdListForLastOrder = purchaseSubItems.Select(s => s.ProductId).Distinct().ToList();
+            var lastOrderDateMap = _purchaseService.GetLastOrderDateByProductIds(distinctProductIdListForLastOrder, purchaseMainId);
+
             var distinctProductIdList = purchaseSubItems.Select(s => s.ProductId).Distinct().ToList();
             var products = _warehouseProductService.GetProductsByProductIdsAndCompId(distinctProductIdList, purchaseMain.CompId);
 
@@ -528,6 +532,12 @@ namespace stock_api.Controllers
                     {
                         item.WithCompName = matchedCompanyWithUnitVo.UnitName + matchedCompanyWithUnitVo.Name;
                     }
+                }
+
+                // 設定最近上次訂購日期
+                if (lastOrderDateMap.ContainsKey(item.ProductId))
+                {
+                    item.LastOrderDate = lastOrderDateMap[item.ProductId];
                 }
 
             });

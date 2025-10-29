@@ -26,7 +26,7 @@ namespace stock_api.Service.ValueObject
         public DateTime UpdatedAt { get; set; }
 
         public float? MaxSafeQuantity { get; set; }
-        public string ProductModel { get; set; } 
+        public string ProductModel { get; set; }
         public string ManufacturerName { get; set; }
         public string ProductMachine { get; set; }
         public string ProductUnit { get; set; }
@@ -48,10 +48,13 @@ namespace stock_api.Service.ValueObject
         public string? WithCompName { get; set; }
         public string? WithItemId { get; set; }
 
-        public string? StockLocation { get; set;}
-        public string? Manager {  get; set; }
+        public string? StockLocation { get; set; }
+        public string? Manager { get; set; }
         public double? LastMonthUsageQuantity { get; set; } = 0;
         public double? ThisYearAverageMonthUsageQuantity { get; set; } = 0;
         public string? OwnerComment { get; set; }
+
+        // 最近訂購日期（此品項在系統中上一次被下訂單的日期）
+        public DateTime? LastOrderDate { get; set; }
     }
 }
