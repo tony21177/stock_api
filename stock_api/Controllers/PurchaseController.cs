@@ -103,10 +103,10 @@ namespace stock_api.Controllers
 
             List<ApplyProductFlowSettingVo> applyProductFlowSettingListForGroupReview = new();
             // 沒有跨組別走組別審核流程
-            if (isItemMultiGroup == false && itemGroupIdList.Count == 1 && memberAndPermissionSetting.CompanyWithUnit.Type!=CommonConstants.CompanyType.ORGANIZATION_NOSTOCK)
+            if (isItemMultiGroup == false && itemGroupIdList.Count == 1)
             {
                 applyProductFlowSettingListForGroupReview = _applyProductFlowSettingService.GetApplyProductFlowSettingVoListByGroupId(itemGroupIdList[0]);
-                if (applyProductFlowSettingListForGroupReview.Count == 0)
+                if (applyProductFlowSettingListForGroupReview.Count == 0 && memberAndPermissionSetting.CompanyWithUnit.Type != CommonConstants.CompanyType.ORGANIZATION_NOSTOCK)
                 {
                     return BadRequest(new CommonResponse<dynamic>
                     {

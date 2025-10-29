@@ -224,7 +224,7 @@ namespace stock_api.Service
 
                     List<PurchaseFlow> purchaseFlows = new();
                     DateTime submitedAt = DateTime.Now;
-                    if (isItemMultiGroup == true|| isNotStockComp)
+                    if (isItemMultiGroup == true)
                     {
                         foreach (var item in purchaseFlowSettingList)
                         {
