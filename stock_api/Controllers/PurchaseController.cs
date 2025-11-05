@@ -511,6 +511,7 @@ namespace stock_api.Controllers
                 item.PackageWay = matchedProduct?.PackageWay;
                 item.ProductCode = matchedProduct?.ProductCode;
                 item.CompName = matchedComp.Name;  
+                item.Manager = matchedProduct?.Manager;
 
                 var matchedOwnerProduct = productsOfOwner.Where(p => p.ProductCode == item.ProductCode).FirstOrDefault();
 
