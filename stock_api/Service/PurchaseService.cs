@@ -1491,6 +1491,10 @@ namespace stock_api.Service
             var query = from s in _dbContext.PurchaseSubItems
                         join m in _dbContext.PurchaseMainSheets on s.PurchaseMainId equals m.PurchaseMainId
                         where productIdList.Contains(s.ProductId)
+                              && m.OwnerProcess != CommonConstants.PurchaseMainOwnerProcessStatus.NOT_AGREE
+                              && m.CurrentStatus != CommonConstants.PurchaseCurrentStatus.REJECT 
+                              && m.CurrentStatus != CommonConstants.PurchaseCurrentStatus.CLOSE
+                              && s.ReceiveStatus != CommonConstants.PurchaseSubItemReceiveStatus.CLOSE
                         select new { s.ProductId, m.PurchaseMainId, m.ApplyDate };
 
             var list = query.ToList();
