@@ -35,6 +35,12 @@ namespace stock_api.Service.ValueObject
         public string? LastFinalResult { get; set; }
         public string? LastInStockLotNumberBatch { get; set; }
         public string? LastMainId { get; set; }
+
+        // 新增回傳欄位
+        public DateOnly? ExpirationDate { get; set; }
+        public string? PrevLotNumber { get; set; }
+        public DateTime? VerifyAt { get; set; }
+
         public bool IsContainKeywords(string keywords)
         {
             string formattedDate = "";

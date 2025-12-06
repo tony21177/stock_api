@@ -123,6 +123,20 @@ namespace stock_api.Controllers
                             lot.AcceptUserId = matchedInStock.UserId;
                             lot.AcceptUserName = matchedInStock.UserName;
                             lot.ProductSpec = matchedPurchaseDetail?.ProductSpec;
+                            // 新增：保存期限
+                            lot.ExpirationDate = matchedInStock.ExpirationDate;
+                            // 新增：前一次入庫的批號 (找出同一產品在當前入庫時間之前的最後一筆入庫紀錄)
+                            var productHistory = _stockInService.GetInStockRecordsHistory(matchedInStock.ProductId, matchedInStock.CompId);
+                            var prev = productHistory.Where(i => i.CreatedAt < matchedInStock.CreatedAt).OrderByDescending(i => i.CreatedAt).FirstOrDefault();
+                            if (prev != null)
+                            {
+                                lot.PrevLotNumber = prev.LotNumber;
+                            }
+                            else
+                            {
+                                lot.PrevLotNumber = null;
+                            }
+                            lot.VerifyAt = matchedInStock.CreatedAt;
                             if (outStockRecordsByLotNumber.Where(i => i.LotNumber == lot.LotNumber).FirstOrDefault() != null)
                             {
                                 lot.IsLotNumberOutStock = true;
@@ -295,6 +309,9 @@ namespace stock_api.Controllers
             List<OutStockRecord> outStockRecordsByLotNumber = _stockOutService.GetOutStockRecordsByLotNumberList(distinctLotNumberList);
             List<OutStockRecord> outStockRecordsByLotNumberBatch = _stockOutService.GetOutStockRecordsByLotNumberBatchList(distinctLotNumberBatchList);
 
+            var newLotNumberList = _stockInService.GetInStockItemRecordNewLotNumberViews().Where(i => i.IsNewLotNumber).Select(e => e.LotNumber).ToList();
+            var newLotNumberBatchList = _stockInService.GetProductsNewLotNumberBatchList().Select(e => e.LotNumberBatch).ToList();
+
 
             var details = _qcService.GetQcDetailsByMainIdList(qcMainList.Select(m => m.MainId).ToList());
             var acceptanceDetails = _qcService.GetQcAcceptanceDetailsByMainIdList(qcMainList.Select(m => m.MainId).ToList());
@@ -323,6 +340,26 @@ namespace stock_api.Controllers
                 var matchedFlowLogs = flowLogs.Where(l => l.MainId == m.MainId).OrderByDescending(l=>l.UpdatedAt).ToList();
                 m.FlowLogs = matchedFlowLogs;
                 m.Flows = matchedFlows;
+                if (!newLotNumberList.Contains(m.LotNumber))
+                {
+                    m.IsNewLotNumber = false;
+                }
+                if (!newLotNumberBatchList.Contains(m.LotNumberBatch))
+                {
+                    m.IsNewLotNumberBatch = false;
+                }
+                // 新增：前一次入庫的批號 (找出同一產品在當前入庫時間之前的最後一筆入庫紀錄)
+                var productHistory = _stockInService.GetInStockRecordsHistory(m.ProductId, m.CompId);
+                var prev = productHistory.Where(i => i.CreatedAt < m.InStockTime).OrderByDescending(i => i.CreatedAt).FirstOrDefault();
+                if (prev != null)
+                {
+                    m.PrevLotNumber = prev.LotNumber;
+                }
+                else
+                {
+                    m.PrevLotNumber = null;
+                }
+                m.VerifyAt = m.InStockTime;
             });
 
             
@@ -362,6 +399,11 @@ namespace stock_api.Controllers
 
             qcMainList = qcMainList.Where(m=>m.CurrentStatus==CommonConstants.QcCurrentStatus.APPLY).ToList();
 
+            var newLotNumberList = _stockInService.GetInStockItemRecordNewLotNumberViews().Where(i => i.IsNewLotNumber).Select(e => e.LotNumber).ToList();
+            var newLotNumberBatchList = _stockInService.GetProductsNewLotNumberBatchList().Select(e => e.LotNumberBatch).ToList();
+
+
+
             qcMainList.ForEach(m =>
             {
                 var qcMainWithDetailAndFlows = _mapper.Map<QcMainWithDetailAndFlows>(m);
@@ -379,7 +421,31 @@ namespace stock_api.Controllers
                 qcMainWithDetailAndFlows.DetailList = matchedDetails;
                 qcMainWithDetailAndFlows.Flows = matchedFlows;
                 qcMainWithDetailAndFlows.FlowLogs = matchedFlowLogs;
+                if (!newLotNumberList.Contains(m.LotNumber))
+                {
+                    qcMainWithDetailAndFlows.IsNewLotNumber = false;
+                }
+                if (!newLotNumberBatchList.Contains(m.LotNumberBatch))
+                {
+                    qcMainWithDetailAndFlows.IsNewLotNumberBatch = false;
+                }
+
+                // 新增：前一次入庫的批號 (找出同一產品在當前入庫時間之前的最後一筆入庫紀錄)
+                var productHistory = _stockInService.GetInStockRecordsHistory(qcMainWithDetailAndFlows.ProductId, qcMainWithDetailAndFlows.CompId);
+                var prev = productHistory.Where(i => i.CreatedAt < qcMainWithDetailAndFlows.InStockTime).OrderByDescending(i => i.CreatedAt).FirstOrDefault();
+                if (prev != null)
+                {
+                    qcMainWithDetailAndFlows.PrevLotNumber = prev.LotNumber;
+                }
+                else
+                {
+                    qcMainWithDetailAndFlows.PrevLotNumber = null;
+                }
+                qcMainWithDetailAndFlows.VerifyAt = qcMainWithDetailAndFlows.InStockTime;
+
                 qcMainWithDetailAndFlowsList.Add(qcMainWithDetailAndFlows);
+
+                
             });
             qcMainWithDetailAndFlowsList = qcMainWithDetailAndFlowsList.OrderBy(m => m.UpdatedAt).ToList();
 

@@ -55,6 +55,14 @@ namespace stock_api.Service.ValueObject
         public string? TestingDate { get; set; }
         public string? ConcentrationComment { get; set; }
 
+        public bool IsNewLotNumber { get; set; } = true;
+        public bool IsNewLotNumberBatch { get; set; } = true;
+
+        // 新增回傳欄位
+        public DateOnly? ExpirationDate { get; set; }
+        public string? PrevLotNumber { get; set; }
+        public DateTime? VerifyAt { get; set; }
+
     }
 
 
