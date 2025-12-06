@@ -447,7 +447,7 @@ namespace stock_api.Controllers
                 {
                     qcMainWithDetailAndFlows.PrevLotNumber = null;
                 }
-                var matchedInStockRecord = inStockRecords.Where(i => i.InStockId==qcMainWithDetailAndFlows.MainId).FirstOrDefault();
+                var matchedInStockRecord = inStockRecords.Where(i => i.InStockId==qcMainWithDetailAndFlows.InStockId).FirstOrDefault();
                 qcMainWithDetailAndFlows.ExpirationDate = matchedInStockRecord?.ExpirationDate;
 
                 qcMainWithDetailAndFlows.VerifyAt = qcMainWithDetailAndFlows.InStockTime;
