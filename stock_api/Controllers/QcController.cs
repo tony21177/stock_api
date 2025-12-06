@@ -402,7 +402,8 @@ namespace stock_api.Controllers
             var newLotNumberList = _stockInService.GetInStockItemRecordNewLotNumberViews().Where(i => i.IsNewLotNumber).Select(e => e.LotNumber).ToList();
             var newLotNumberBatchList = _stockInService.GetProductsNewLotNumberBatchList().Select(e => e.LotNumberBatch).ToList();
 
-
+            var differentInstockIds = qcMainList.Select(m => m.InStockId).Distinct().ToList();
+            var inStockRecords = _stockInService.GetInStockRecordsByInStockIdList(differentInstockIds);
 
             qcMainList.ForEach(m =>
             {
@@ -441,6 +442,9 @@ namespace stock_api.Controllers
                 {
                     qcMainWithDetailAndFlows.PrevLotNumber = null;
                 }
+                var matchedInStockRecord = inStockRecords.Where(i => i.InStockId==qcMainWithDetailAndFlows.MainId).FirstOrDefault();
+                qcMainWithDetailAndFlows.ExpirationDate = matchedInStockRecord?.ExpirationDate;
+
                 qcMainWithDetailAndFlows.VerifyAt = qcMainWithDetailAndFlows.InStockTime;
 
                 qcMainWithDetailAndFlowsList.Add(qcMainWithDetailAndFlows);
