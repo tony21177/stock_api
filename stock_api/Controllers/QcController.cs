@@ -363,7 +363,7 @@ namespace stock_api.Controllers
                 }
                 m.VerifyAt = m.InStockTime;
 
-                var matchedInStockRecord = inStockRecords.Where(i => i.InStockId == m.MainId).FirstOrDefault();
+                var matchedInStockRecord = inStockRecords.Where(i => i.InStockId == m.InStockId).FirstOrDefault();
                 m.ExpirationDate = matchedInStockRecord?.ExpirationDate;
             });
 
