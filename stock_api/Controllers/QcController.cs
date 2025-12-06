@@ -319,6 +319,8 @@ namespace stock_api.Controllers
             var flows = _qcService.GetQcFlowListWithAgentsByMainIdList(distinctMainIdList);
             var flowLogs = _qcService.GetQcFlowLogsByMainIdList(distinctMainIdList);
             var qcMainWithDetailAndFlowsList = _mapper.Map<List<QcMainWithDetailAndFlows>>(qcMainList);
+            var differentInstockIds = qcMainList.Select(m => m.InStockId).Distinct().ToList();
+            var inStockRecords = _stockInService.GetInStockRecordsByInStockIdList(differentInstockIds);
 
 
             qcMainWithDetailAndFlowsList.ForEach(m =>
@@ -360,6 +362,9 @@ namespace stock_api.Controllers
                     m.PrevLotNumber = null;
                 }
                 m.VerifyAt = m.InStockTime;
+
+                var matchedInStockRecord = inStockRecords.Where(i => i.InStockId == m.MainId).FirstOrDefault();
+                m.ExpirationDate = matchedInStockRecord?.ExpirationDate;
             });
 
             
