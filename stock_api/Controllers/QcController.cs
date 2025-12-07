@@ -323,6 +323,8 @@ namespace stock_api.Controllers
             var inStockRecords = _stockInService.GetInStockRecordsByInStockIdList(differentInstockIds);
             var productIds = qcMainList.Select(m => m.ProductId).Distinct().ToList();
             var products = _warehouseProductService.GetProductsByProductIdsAndCompId(productIds, compId);
+            var purchaseMainIds = qcMainList.Where(m => m.PurchaseMainId != null).Select(m => m.PurchaseMainId!).Distinct().ToList();
+            var purchases = _purchaseService.GetPurchaseMainsByMainIdList(purchaseMainIds);
 
 
             qcMainWithDetailAndFlowsList.ForEach(m =>
@@ -375,6 +377,13 @@ namespace stock_api.Controllers
                     m.GroupIdList = matchedProduct.GroupIds?.Split(',').ToList() ?? new List<string>();
                     m.GroupNameList = matchedProduct.GroupNames?.Split(',').ToList() ?? new List<string>();
                 }
+                var matchedPurchase = purchases.Where(p => p.PurchaseMainId == m.PurchaseMainId).FirstOrDefault();
+                if (matchedPurchase != null)
+                {
+                    m.ApplyDate = matchedPurchase.ApplyDate;
+                }
+
+
             });
 
             
@@ -407,9 +416,6 @@ namespace stock_api.Controllers
             var flows = _qcService.GetQcFlowListWithAgentsByMainIdList(distinctMainIdList);
             var flowLogs = _qcService.GetQcFlowLogsByMainIdList(distinctMainIdList);
 
-            //var distinctProductIdList = purchaseSubItems.Select(s => s.ProductId).Distinct().ToList();
-            //var products = _warehouseProductService.GetProductsByProductIdsAndCompId(distinctProductIdList, compId);
-
             List<QcMainWithDetailAndFlows> qcMainWithDetailAndFlowsList = new List<QcMainWithDetailAndFlows>();
 
             qcMainList = qcMainList.Where(m=>m.CurrentStatus==CommonConstants.QcCurrentStatus.APPLY).ToList();
@@ -422,6 +428,9 @@ namespace stock_api.Controllers
 
             var productIds = qcMainList.Select(m => m.ProductId).Distinct().ToList();
             var products = _warehouseProductService.GetProductsByProductIdsAndCompId(productIds, compId);
+
+            var purchaseMainIds = qcMainList.Where(m => m.PurchaseMainId != null).Select(m => m.PurchaseMainId!).Distinct().ToList();
+            var purchases = _purchaseService.GetPurchaseMainsByMainIdList(purchaseMainIds);
 
             qcMainList.ForEach(m =>
             {
@@ -471,7 +480,11 @@ namespace stock_api.Controllers
                     qcMainWithDetailAndFlows.GroupNameList = matchedProduct.GroupNames?.Split(',').ToList() ?? new List<string>();
                 }
 
-                
+                var matchedPurchase = purchases.Where(p => p.PurchaseMainId == qcMainWithDetailAndFlows.PurchaseMainId).FirstOrDefault();
+                if (matchedPurchase != null)
+                {
+                    qcMainWithDetailAndFlows.ApplyDate = matchedPurchase.ApplyDate;
+                }
 
                 qcMainWithDetailAndFlowsList.Add(qcMainWithDetailAndFlows);
 
