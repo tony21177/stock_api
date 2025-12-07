@@ -149,8 +149,14 @@ namespace stock_api.Controllers
                             {
                                 lot.IsNewLotNumber = false;
                             }
-                            var productNewLotNumberBatchList = newLotNumberBatchList.Where(i => i.ProductId == lot.ProductId).Select(m => m.LotNumberBatch).ToList();
-                            if (!productNewLotNumberBatchList.Contains(lot.LotNumberBatch))
+                            //var productNewLotNumberBatchList = newLotNumberBatchList.Where(i => i.ProductId == lot.ProductId).Select(m => m.LotNumberBatch).ToList();
+                            //if (!productNewLotNumberBatchList.Contains(lot.LotNumberBatch))
+                            //{
+                            //    lot.IsNewLotNumberBatch = false;
+                            //}
+
+                            // 歷史資料批次以前沒出現過
+                            if (productHistory.Where(i => i.CreatedAt < lot.InStockTime).Any(p => p.LotNumberBatch == lot.LotNumberBatch))
                             {
                                 lot.IsNewLotNumberBatch = false;
                             }
@@ -353,11 +359,7 @@ namespace stock_api.Controllers
                 {
                     m.IsNewLotNumber = false;
                 }
-                var productNewLotNumberBatchList = newLotNumberBatchList.Where(i => i.ProductId == m.ProductId).Select(m => m.LotNumberBatch).ToList();
-                if (!productNewLotNumberBatchList.Contains(m.LotNumberBatch))
-                {
-                    m.IsNewLotNumberBatch = false;
-                }
+                
                 // 新增：前一次入庫的批號 (找出同一產品在當前入庫時間之前的最後一筆入庫紀錄)
                 var productHistory = _stockInService.GetInStockRecordsHistory(m.ProductId, m.CompId);
                 var prev = productHistory.Where(i => i.CreatedAt < m.InStockTime).OrderByDescending(i => i.CreatedAt).FirstOrDefault();
@@ -370,6 +372,12 @@ namespace stock_api.Controllers
                     m.PrevLotNumber = null;
                 }
                 m.VerifyAt = m.InStockTime;
+
+                // 歷史資料批次以前沒出現過
+                if (productHistory.Where(i=>i.CreatedAt< m.InStockTime).Any(p=>p.LotNumberBatch==m.LotNumberBatch))
+                {
+                    m.IsNewLotNumberBatch = false;
+                }
 
                 var matchedInStockRecord = inStockRecords.Where(i => i.InStockId == m.InStockId).FirstOrDefault();
                 m.ExpirationDate = matchedInStockRecord?.ExpirationDate;
@@ -458,11 +466,11 @@ namespace stock_api.Controllers
                 {
                     qcMainWithDetailAndFlows.IsNewLotNumber = false;
                 }
-                var productNewLotNumberBatchList = newLotNumberBatchList.Where(i => i.ProductId == m.ProductId).Select(m => m.LotNumberBatch).ToList();
-                if (!productNewLotNumberBatchList.Contains(m.LotNumberBatch))
-                {
-                    qcMainWithDetailAndFlows.IsNewLotNumberBatch = false;
-                }
+                //var productNewLotNumberBatchList = newLotNumberBatchList.Where(i => i.ProductId == m.ProductId).Select(m => m.LotNumberBatch).ToList();
+                //if (!productNewLotNumberBatchList.Contains(m.LotNumberBatch))
+                //{
+                //    qcMainWithDetailAndFlows.IsNewLotNumberBatch = false;
+                //}
 
                 // 新增：前一次入庫的批號 (找出同一產品在當前入庫時間之前的最後一筆入庫紀錄)
                 var productHistory = _stockInService.GetInStockRecordsHistory(qcMainWithDetailAndFlows.ProductId, qcMainWithDetailAndFlows.CompId);
@@ -475,6 +483,13 @@ namespace stock_api.Controllers
                 {
                     qcMainWithDetailAndFlows.PrevLotNumber = null;
                 }
+
+                // 歷史資料批次以前沒出現過
+                if (productHistory.Where(i => i.CreatedAt < m.InStockTime).Any(p => p.LotNumberBatch == m.LotNumberBatch))
+                {
+                    qcMainWithDetailAndFlows.IsNewLotNumberBatch = false;
+                }
+
                 var matchedInStockRecord = inStockRecords.Where(i => i.InStockId==qcMainWithDetailAndFlows.InStockId).FirstOrDefault();
                 qcMainWithDetailAndFlows.ExpirationDate = matchedInStockRecord?.ExpirationDate;
 
