@@ -321,6 +321,8 @@ namespace stock_api.Controllers
             var qcMainWithDetailAndFlowsList = _mapper.Map<List<QcMainWithDetailAndFlows>>(qcMainList);
             var differentInstockIds = qcMainList.Select(m => m.InStockId).Distinct().ToList();
             var inStockRecords = _stockInService.GetInStockRecordsByInStockIdList(differentInstockIds);
+            var productIds = qcMainList.Select(m => m.ProductId).Distinct().ToList();
+            var products = _warehouseProductService.GetProductsByProductIdsAndCompId(productIds, compId);
 
 
             qcMainWithDetailAndFlowsList.ForEach(m =>
@@ -365,6 +367,14 @@ namespace stock_api.Controllers
 
                 var matchedInStockRecord = inStockRecords.Where(i => i.InStockId == m.InStockId).FirstOrDefault();
                 m.ExpirationDate = matchedInStockRecord?.ExpirationDate;
+
+
+                var matchedProduct = products.Where(p => p.ProductId == m.ProductId).FirstOrDefault();
+                if (matchedProduct != null)
+                {
+                    m.GroupIdList = matchedProduct.GroupIds?.Split(',').ToList() ?? new List<string>();
+                    m.GroupNameList = matchedProduct.GroupNames?.Split(',').ToList() ?? new List<string>();
+                }
             });
 
             
@@ -410,6 +420,9 @@ namespace stock_api.Controllers
             var differentInstockIds = qcMainList.Select(m => m.InStockId).Distinct().ToList();
             var inStockRecords = _stockInService.GetInStockRecordsByInStockIdList(differentInstockIds);
 
+            var productIds = qcMainList.Select(m => m.ProductId).Distinct().ToList();
+            var products = _warehouseProductService.GetProductsByProductIdsAndCompId(productIds, compId);
+
             qcMainList.ForEach(m =>
             {
                 var qcMainWithDetailAndFlows = _mapper.Map<QcMainWithDetailAndFlows>(m);
@@ -451,6 +464,14 @@ namespace stock_api.Controllers
                 qcMainWithDetailAndFlows.ExpirationDate = matchedInStockRecord?.ExpirationDate;
 
                 qcMainWithDetailAndFlows.VerifyAt = qcMainWithDetailAndFlows.InStockTime;
+                var matchedProduct = products.Where(p => p.ProductId == qcMainWithDetailAndFlows.ProductId).FirstOrDefault();
+                if (matchedProduct != null)
+                {
+                    qcMainWithDetailAndFlows.GroupIdList = matchedProduct.GroupIds?.Split(',').ToList() ?? new List<string>();
+                    qcMainWithDetailAndFlows.GroupNameList = matchedProduct.GroupNames?.Split(',').ToList() ?? new List<string>();
+                }
+
+                
 
                 qcMainWithDetailAndFlowsList.Add(qcMainWithDetailAndFlows);
 

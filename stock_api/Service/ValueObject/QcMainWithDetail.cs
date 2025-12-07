@@ -62,6 +62,8 @@ namespace stock_api.Service.ValueObject
         public DateOnly? ExpirationDate { get; set; }
         public string? PrevLotNumber { get; set; }
         public DateTime? VerifyAt { get; set; }
+        public List<string> GroupIdList { get; set; } = new();
+        public List<string> GroupNameList { get; set; } = new();
 
     }
 
