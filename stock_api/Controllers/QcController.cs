@@ -90,7 +90,7 @@ namespace stock_api.Controllers
 
             //var newLotNumberList = _stockInService.GetProductsNewLotNumberList().Select(e=>e.LotNumber).ToList();
 
-            var newLotNumberList = _stockInService.GetInStockItemRecordNewLotNumberViews().Where(i=>i.IsNewLotNumber).Select(e=>e.LotNumber).ToList();
+            var newLotNumberList = _stockInService.GetInStockItemRecordNewLotNumberViews().Where(i=>i.IsNewLotNumber==true).Select(e=>e.LotNumber).ToList();
             var newLotNumberBatchList = _stockInService.GetProductsNewLotNumberBatchList().Select(e => e.LotNumberBatch).ToList(); 
 
             var lastQcMainList = _qcService.GetLastQcValidationMainsByProductIdList(unDoneQcList.Select(q=>q.ProductId).ToList());
@@ -309,7 +309,7 @@ namespace stock_api.Controllers
             List<OutStockRecord> outStockRecordsByLotNumber = _stockOutService.GetOutStockRecordsByLotNumberList(distinctLotNumberList);
             List<OutStockRecord> outStockRecordsByLotNumberBatch = _stockOutService.GetOutStockRecordsByLotNumberBatchList(distinctLotNumberBatchList);
 
-            var newLotNumberList = _stockInService.GetInStockItemRecordNewLotNumberViews().Where(i => i.IsNewLotNumber).Select(e => e.LotNumber).ToList();
+            var newLotNumberList = _stockInService.GetInStockItemRecordNewLotNumberViews().Where(i => i.IsNewLotNumber==true).Select(e => e.LotNumber).ToList();
             var newLotNumberBatchList = _stockInService.GetProductsNewLotNumberBatchList().Select(e => e.LotNumberBatch).ToList();
 
 
@@ -420,7 +420,7 @@ namespace stock_api.Controllers
 
             qcMainList = qcMainList.Where(m=>m.CurrentStatus==CommonConstants.QcCurrentStatus.APPLY).ToList();
 
-            var newLotNumberList = _stockInService.GetInStockItemRecordNewLotNumberViews().Where(i => i.IsNewLotNumber).Select(e => e.LotNumber).ToList();
+            var newLotNumberList = _stockInService.GetInStockItemRecordNewLotNumberViews().Where(i => i.IsNewLotNumber == true).Select(e => e.LotNumber).ToList();
             var newLotNumberBatchList = _stockInService.GetProductsNewLotNumberBatchList().Select(e => e.LotNumberBatch).ToList();
 
             var differentInstockIds = qcMainList.Select(m => m.InStockId).Distinct().ToList();
