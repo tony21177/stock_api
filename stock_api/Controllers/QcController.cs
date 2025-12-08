@@ -144,13 +144,13 @@ namespace stock_api.Controllers
                             {
                                 lot.IsLotNumberBatchOutStock = true;
                             }
-                            var productNewLotNumberList = newLotNumberList.Where(i => i.ProductId == lot.ProductId).Select(m => m.LotNumber).ToList();
-                            if (!productNewLotNumberList.Contains(lot.LotNumber))
+                            var productNewLotNumberList = newLotNumberList.Where(i => i.ProductId == lot.ProductId).Select(m => new LotNumberAndLotNumberBatch(m.LotNumber,m.LotNumberBatch)).ToList();
+                            if (!productNewLotNumberList.Contains(new LotNumberAndLotNumberBatch(lot.LotNumber,lot.LotNumberBatch)))
                             {
                                 lot.IsNewLotNumber = false;
                             }
-                            var productNewLotNumberBatchList = newLotNumberBatchList.Where(i => i.ProductId == lot.ProductId).Select(m => m.LotNumberBatch).ToList();
-                            if (!productNewLotNumberBatchList.Contains(lot.LotNumberBatch))
+                            var productNewLotNumberBatchList = newLotNumberBatchList.Where(i => i.ProductId == lot.ProductId).Select(m => new LotNumberAndLotNumberBatch(m.LotNumber, m.LotNumberBatch)).ToList();
+                            if (!productNewLotNumberBatchList.Contains(new LotNumberAndLotNumberBatch(lot.LotNumber, lot.LotNumberBatch)))
                             {
                                 lot.IsNewLotNumberBatch = false;
                             }
@@ -354,13 +354,13 @@ namespace stock_api.Controllers
                 m.FlowLogs = matchedFlowLogs;
                 m.Flows = matchedFlows;
 
-                var productNewLotNumberList = newLotNumberList.Where(i => i.ProductId == m.ProductId).Select(m=>m.LotNumber).ToList();
-                if (!productNewLotNumberList.Contains(m.LotNumber))
+                var productNewLotNumberList = newLotNumberList.Where(i => i.ProductId == m.ProductId).Select(m => new LotNumberAndLotNumberBatch(m.LotNumber, m.LotNumberBatch)).ToList();
+                if (!productNewLotNumberList.Contains(new LotNumberAndLotNumberBatch(m.LotNumber, m.LotNumberBatch)))
                 {
                     m.IsNewLotNumber = false;
                 }
-                var productNewLotNumberBatchList = newLotNumberBatchList.Where(i => i.ProductId == m.ProductId).Select(m => m.LotNumberBatch).ToList();
-                if (!productNewLotNumberBatchList.Contains(m.LotNumberBatch))
+                var productNewLotNumberBatchList = newLotNumberBatchList.Where(i => i.ProductId == m.ProductId).Select(m => new LotNumberAndLotNumberBatch(m.LotNumber, m.LotNumberBatch)).ToList();
+                if (!productNewLotNumberBatchList.Contains(new LotNumberAndLotNumberBatch(m.LotNumber, m.LotNumberBatch)))
                 {
                     m.IsNewLotNumberBatch = false;
                 }
@@ -466,14 +466,14 @@ namespace stock_api.Controllers
                 qcMainWithDetailAndFlows.DetailList = matchedDetails;
                 qcMainWithDetailAndFlows.Flows = matchedFlows;
                 qcMainWithDetailAndFlows.FlowLogs = matchedFlowLogs;
-                var productNewLotNumberList = newLotNumberList.Where(i => i.ProductId == m.ProductId).Select(m => m.LotNumber).ToList();
-                if (!productNewLotNumberList.Contains(m.LotNumber))
+                var productNewLotNumberList = newLotNumberList.Where(i => i.ProductId == qcMainWithDetailAndFlows.ProductId).Select(m => new LotNumberAndLotNumberBatch(m.LotNumber, m.LotNumberBatch)).ToList();
+                if (!productNewLotNumberList.Contains(new LotNumberAndLotNumberBatch(qcMainWithDetailAndFlows.LotNumber, qcMainWithDetailAndFlows.LotNumberBatch)))
                 {
                     qcMainWithDetailAndFlows.IsNewLotNumber = false;
                 }
-                var productNewLotNumberBatchList = newLotNumberBatchList.Where(i => i.ProductId == m.ProductId).Select(m => m.LotNumberBatch).ToList();
-                if (!productNewLotNumberBatchList.Contains(m.LotNumberBatch))
-                {
+                var productNewLotNumberBatchList = newLotNumberBatchList.Where(i => i.ProductId == qcMainWithDetailAndFlows.ProductId).Select(m => new LotNumberAndLotNumberBatch(m.LotNumber, m.LotNumberBatch)).ToList();
+                if (!productNewLotNumberBatchList.Contains(new LotNumberAndLotNumberBatch(qcMainWithDetailAndFlows.LotNumber, qcMainWithDetailAndFlows.LotNumberBatch)))
+                            {
                     qcMainWithDetailAndFlows.IsNewLotNumberBatch = false;
                 }
 
@@ -612,5 +612,33 @@ namespace stock_api.Controllers
             };
             return Ok(response);
         }
+
+        private class LotNumberAndLotNumberBatch
+        {
+            public string? LotNumber { get; set; }
+            public string? LotNumberBatch { get; set; }
+
+            public LotNumberAndLotNumberBatch(string? lotNumber, string? lotNumberBatch)
+            {
+                LotNumber = lotNumber;
+                LotNumberBatch = lotNumberBatch;
+            }
+
+            public override bool Equals(object? obj)
+            {
+                if (obj is LotNumberAndLotNumberBatch other)
+                {
+                    return LotNumber == other.LotNumber && LotNumberBatch == other.LotNumberBatch;
+                }
+                return false;
+            }
+
+            public override int GetHashCode()
+            {
+                return HashCode.Combine(LotNumber, LotNumberBatch);
+            }
+        }
     }
+
+    
 }
