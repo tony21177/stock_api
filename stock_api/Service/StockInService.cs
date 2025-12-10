@@ -947,7 +947,7 @@ namespace stock_api.Service
                 
             }
 
-            return nearExpireProductVoList.Where(p => p.InStockItemList.Count > 0).ToList();
+            return nearExpireProductVoList.Where(p => p.InStockItemList.Count > 0&&p.NearExpiredQuantity > 0).ToList();
         }
 
         public PurchaseMainSheet GetPurchaseMainByInStockId(InStockItemRecord inStockItemRecord)
