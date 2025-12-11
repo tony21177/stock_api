@@ -53,9 +53,12 @@ namespace stock_api.Service.ValueObject
             {
                 purchaseIdPrefix = PurchaseMainId.Substring(0, 5);
             }
-            
-            
-            string searchedString = $"{formattedDate}{purchaseIdPrefix} {this.ProductName} {this.ProductCode} {this.LotNumber} {this.LotNumberBatch} {this.ProductModel} {string.Join(" ",this.GroupNameList)}";
+
+
+            //string searchedString = $"{formattedDate}{purchaseIdPrefix} {this.ProductName} {this.ProductCode} {this.LotNumber} {this.LotNumberBatch} {this.ProductModel} {string.Join(" ",this.GroupNameList)}";
+
+            // 20251211彰化醫院婉君只想搜尋批次
+            string searchedString = $"{this.LotNumberBatch}";
             bool isContainsString = searchedString.Contains(keywords);
             return isContainsString;
         }
