@@ -615,16 +615,20 @@ namespace stock_api.Controllers
             var stockInRecordVoList = _mapper.Map<List<InStockItemRecordNewLotNumberVo>>(data);
             var allProducts = _warehouseProductService.GetAllProducts(request.CompId);
             var noNeedDisplayProducts = allProducts.Where(p => p.IsNeedAcceptProcess == null || p.IsNeedAcceptProcess == false || p.QcType == CommonConstants.QcTypeConstants.NONE).ToList();
-
+            var itemIds = data.Select(i => i.ItemId).Distinct().ToList();
+            var subItems = _purchaseService.GetPurchaseSubItemByItemIdList(itemIds);
 
             foreach (var item in stockInRecordVoList)
             {
                 var matchedProduct = allProducts.Where(p => p.ProductId == item.ProductId).FirstOrDefault();
+                var matchedSubItem = subItems.Where(s => s.ItemId == item.ItemId).FirstOrDefault();
                 item.ProductUnit = matchedProduct?.Unit;
                 item.SavingFunction = matchedProduct?.SavingFunction;
                 item.SavingTemperature = matchedProduct?.SavingTemperature;
                 item.ProductModel = matchedProduct?.ProductModel;
                 item.OpenDeadline = matchedProduct?.OpenDeadline;
+                item.DeadlineRule = matchedProduct?.DeadlineRule;
+                item.OrderQuantity = matchedSubItem.Quantity;
             }
 
 

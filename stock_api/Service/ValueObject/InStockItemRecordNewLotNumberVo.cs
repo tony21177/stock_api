@@ -23,6 +23,10 @@ namespace stock_api.Service.ValueObject
         public string? SavingFunction { get; set; }
         public double? SavingTemperature { get; set; }
         public string? ExpirationDate { get; set; }
+        public string? PackagingStatus { get; set; }
+        public float? OrderQuantity { get; set; }
+        public int? DeadlineRule { get; set; }
 
+        public string? ItemId { get; set; }
     }
 }
