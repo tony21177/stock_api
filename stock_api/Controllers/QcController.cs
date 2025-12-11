@@ -332,6 +332,9 @@ namespace stock_api.Controllers
             var products = _warehouseProductService.GetProductsByProductIdsAndCompId(productIds, compId);
             var purchaseMainIds = qcMainList.Where(m => m.PurchaseMainId != null).Select(m => m.PurchaseMainId!).Distinct().ToList();
             var purchases = _purchaseService.GetPurchaseMainsByMainIdList(purchaseMainIds);
+            var reviewUserIds = flows.Select(f => f.ReviewUserId).Distinct().ToList();
+            var members = _memberService.GetMembersByUserIdList(reviewUserIds);
+
 
 
             qcMainWithDetailAndFlowsList.ForEach(m =>
@@ -353,6 +356,15 @@ namespace stock_api.Controllers
                 var matchedFlowLogs = flowLogs.Where(l => l.MainId == m.MainId).OrderByDescending(l=>l.UpdatedAt).ToList();
                 m.FlowLogs = matchedFlowLogs;
                 m.Flows = matchedFlows;
+                foreach (var flow in m.Flows)
+                {
+                    var matchedMember = members.Where(mem => mem.UserId == flow.ReviewUserId).FirstOrDefault();
+                    if (matchedMember != null)
+                    {
+                        flow.ReviewUserAuthValue = matchedMember.AuthValue;
+                    }
+                }
+
 
                 var productNewLotNumberList = newLotNumberList.Where(i => i.ProductId == m.ProductId).Select(m => new LotNumberAndLotNumberBatch(m.LotNumber, m.LotNumberBatch)).ToList();
                 if (!productNewLotNumberList.Contains(new LotNumberAndLotNumberBatch(m.LotNumber, m.LotNumberBatch)))

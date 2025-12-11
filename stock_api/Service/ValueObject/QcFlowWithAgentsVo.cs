@@ -14,5 +14,6 @@ namespace stock_api.Service.ValueObject
         [JsonIgnore]
         [Column("AgentNames")]
         public string? AgentNames { get; set; }
+        public int? ReviewUserAuthValue { get; set; }
     }
 }
