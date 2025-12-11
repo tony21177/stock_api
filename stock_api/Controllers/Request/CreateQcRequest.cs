@@ -45,7 +45,18 @@ namespace stock_api.Controllers.Request
 
         public string? OldLotResult { get; set; }
 
-        public string? QuantityDiff { get; set; }
+        public string? QuantityDiff
+        {
+            get
+            {
+                if (float.TryParse(NewLotResult, out float newLot) && float.TryParse(OldLotResult, out float oldLot))
+                {
+                    return (newLot - oldLot).ToString();
+                }
+                return null;
+            }
+            set { } // 保留 setter 以支援 JSON 反序列化，但不實際儲存值
+        }
         public string? AcceptableRange { get; set; }
         public string? ValidationResult { get; set; }
     }
