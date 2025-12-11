@@ -49,7 +49,7 @@ namespace stock_api.Controllers.Request
         {
             get
             {
-                if (float.TryParse(NewLotResult, out float newLot) && float.TryParse(OldLotResult, out float oldLot))
+                if (decimal.TryParse(NewLotResult, out decimal newLot) && decimal.TryParse(OldLotResult, out decimal oldLot))
                 {
                     return (newLot - oldLot).ToString();
                 }
