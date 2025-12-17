@@ -731,6 +731,15 @@ namespace stock_api.Service
                     {
                         main.ReceiveStatus = CommonConstants.PurchaseReceiveStatus.DELIVERED;
                     }
+
+                    // 當所有 sub items 只有 NOT_AGREE 和 AGREE 兩種狀態時，將主單結案
+                    if (allPurchaseSubItems.All(s => s.OwnerProcess == CommonConstants.PurchaseMainOwnerProcessStatus.NOT_AGREE 
+                        || s.OwnerProcess == CommonConstants.PurchaseMainOwnerProcessStatus.AGREE))
+                    {
+                        main.ReceiveStatus = CommonConstants.PurchaseReceiveStatus.CLOSE;
+                        main.CurrentStatus = CommonConstants.PurchaseApplyStatus.CLOSE;
+                        var subItems = _dbContext.PurchaseSubItems.Where(s => s.PurchaseMainId == main.PurchaseMainId).ToList();
+                    }
                 }else if(allPurchaseSubItems.All(s => s.OwnerProcess == CommonConstants.PurchaseMainOwnerProcessStatus.NOT_AGREE))
                 {
                     main.OwnerProcess = CommonConstants.PurchaseMainOwnerProcessStatus.NOT_AGREE;
@@ -739,6 +748,8 @@ namespace stock_api.Service
                     var subItems = _dbContext.PurchaseSubItems.Where(s => s.PurchaseMainId == main.PurchaseMainId).ToList();
                     subItems.ForEach(s => s.ReceiveStatus = CommonConstants.PurchaseSubItemReceiveStatus.CLOSE);
                 }
+                
+
 
                 _dbContext.SaveChanges();
                 scope.Complete();

@@ -105,9 +105,10 @@ namespace stock_api.Common.Constant
             public const string IN_ACCEPTANCE_CHECK = "IN_ACCEPTANCE_CHECK";
             public const string PART_ACCEPT = "PART_ACCEPT";
             public const string ALL_ACCEPT = "ALL_ACCEPT";
+            public const string CLOSE = "CLOSE";
             public static List<string> GetAllValues()
             {
-                return new List<string> { NONE, DELIVERED, IN_ACCEPTANCE_CHECK, PART_ACCEPT, ALL_ACCEPT };
+                return new List<string> { NONE, DELIVERED, IN_ACCEPTANCE_CHECK, PART_ACCEPT, ALL_ACCEPT,CLOSE };
             }
         }
 
