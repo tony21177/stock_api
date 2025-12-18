@@ -418,6 +418,12 @@ namespace stock_api.Service
                 {
                     purchaseMain.ReceiveStatus = CommonConstants.PurchaseReceiveStatus.PART_ACCEPT;
                 }
+                else if (otherExistingAcceptanceItems.All(item => item.InStockStatus == CommonConstants.PurchaseSubItemReceiveStatus.DONE|| item.InStockStatus == CommonConstants.PurchaseSubItemReceiveStatus.CLOSE) && existingAcceptanceItem.InStockStatus == CommonConstants.PurchaseSubItemReceiveStatus.DONE)
+                {
+                    purchaseMain.ReceiveStatus = CommonConstants.PurchaseReceiveStatus.ALL_ACCEPT;
+                }
+
+
                 _dbContext.SaveChanges();
                 scope.Complete();
                 return (true, null, qc);

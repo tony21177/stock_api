@@ -710,6 +710,14 @@ namespace stock_api.Service
                     toUpdateSubItems = allPurchaseSubItems.Where(s => request.ItemIds.Contains(s.ItemId)).ToList();
                 }
                 toUpdateSubItems.ForEach(s => { s.OwnerProcess = request.OwnerProcess;s.SplitProcess = CommonConstants.SplitProcess.DONE; });
+                foreach (var item in toUpdateSubItems)
+                {
+                    // 如果 sub item 全部同意，代表該 sub item 已經出貨，更新 sub item 的 ReceiveStatus 為 DELIVERED
+                    if (item.OwnerProcess == CommonConstants.PurchaseMainOwnerProcessStatus.NOT_AGREE)
+                    {
+                        item.ReceiveStatus = CommonConstants.PurchaseSubItemReceiveStatus.CLOSE;
+                    }
+                }
                 if (allPurchaseSubItems.All(s => s.OwnerProcess == CommonConstants.PurchaseMainOwnerProcessStatus.AGREE))
                 {
                     main.OwnerProcess = CommonConstants.PurchaseMainOwnerProcessStatus.AGREE;
@@ -748,8 +756,11 @@ namespace stock_api.Service
                     var subItems = _dbContext.PurchaseSubItems.Where(s => s.PurchaseMainId == main.PurchaseMainId).ToList();
                     subItems.ForEach(s => s.ReceiveStatus = CommonConstants.PurchaseSubItemReceiveStatus.CLOSE);
                 }
-                
 
+                if(allPurchaseSubItems.All(s=>s.ReceiveStatus== CommonConstants.PurchaseSubItemReceiveStatus.CLOSE|| s.ReceiveStatus == CommonConstants.PurchaseSubItemReceiveStatus.DONE))
+                {
+                    main.ReceiveStatus = CommonConstants.PurchaseReceiveStatus.CLOSE;
+                }
 
                 _dbContext.SaveChanges();
                 scope.Complete();
@@ -872,6 +883,7 @@ namespace stock_api.Service
                     {
                         currentFlow.Status = answer;
                         purchaseMain.CurrentStatus = CommonConstants.PurchaseApplyStatus.REJECT;
+                        purchaseMain.ReceiveStatus = CommonConstants.PurchaseReceiveStatus.CLOSE;
                         var subItems = _dbContext.PurchaseSubItems.Where(s => s.PurchaseMainId == purchaseMain.PurchaseMainId).ToList();
                         subItems.ForEach(s => s.ReceiveStatus=CommonConstants.PurchaseSubItemReceiveStatus.CLOSE);
                     }
@@ -888,6 +900,7 @@ namespace stock_api.Service
                         else
                         {
                             purchaseMain.CurrentStatus = CommonConstants.PurchaseApplyStatus.REJECT;
+                            purchaseMain.ReceiveStatus = CommonConstants.PurchaseReceiveStatus.CLOSE;
                             var subItems = _dbContext.PurchaseSubItems.Where(s => s.PurchaseMainId == purchaseMain.PurchaseMainId).ToList();
                             subItems.ForEach(s => s.ReceiveStatus = CommonConstants.PurchaseSubItemReceiveStatus.CLOSE);
                         }
@@ -1225,8 +1238,15 @@ namespace stock_api.Service
                                     matchedUpdateItem.InStockQuantity = matchedAcceptanceItem.AcceptQuantity;
                                     matchedUpdateItem.ReceiveQuantity = matchedUpdateItem.InStockQuantity;
                                 }
-                            }
-                            
+                                else if (matchedAcceptanceItem.OrderQuantity == 0 || subItem.Quantity == 0)
+                                {
+                                    matchedAcceptanceItem.InStockStatus = CommonConstants.PurchaseSubItemReceiveStatus.CLOSE;
+                                    matchedUpdateItem.ReceiveStatus = CommonConstants.PurchaseSubItemReceiveStatus.CLOSE;
+                                    matchedUpdateItem.InStockQuantity = matchedAcceptanceItem.AcceptQuantity;
+                                    matchedUpdateItem.ReceiveQuantity = matchedUpdateItem.InStockQuantity;
+                                }
+
+                            }           
                         }
                     }
                 });
