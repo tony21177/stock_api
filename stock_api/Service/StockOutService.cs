@@ -383,6 +383,11 @@ namespace stock_api.Service
             return _dbContext.LastYearUsages.ToList();
         }
 
+        public List<LastYearUsage> GetLastYearUsages(List<string> productIdList)
+        {
+            return _dbContext.LastYearUsages.Where(e => productIdList.Contains(e.ProductId)).ToList();
+        }
+
         public OutStockRecord? GetOutStockRecordById(string outStockId)
         {
             return _dbContext.OutStockRecords.Where(r => r.OutStockId == outStockId).FirstOrDefault();
@@ -523,52 +528,65 @@ namespace stock_api.Service
 
         public List<OutStockItemForOpenDeadline> SearchByOpenDeadline(string compId, int? daysAfter)
         {
-            var now = DateTime.Now;
-            var products = _dbContext.WarehouseProducts.Where(p => p.CompId == compId  && p.OpenDeadline != null).ToList();
-            var productIds = products.Select(p => p.ProductId).ToList();
-            var outStockRecords = _dbContext.OutStockRecords.Where(o=>o.CompId==compId).ToList()
-                .Where(o => productIds.Contains(o.ProductId))
-                .ToList();
+            var today = DateOnly.FromDateTime(DateTime.Now);
+
+            // 使用單一資料庫查詢: 先取得每個產品的最新出庫記錄 (透過 GroupBy + Max)
+            var latestOutStockPerProduct = _dbContext.OutStockRecords
+                .Where(o => o.CompId == compId)
+                .GroupBy(o => o.ProductId)
+                .Select(g => new
+                {
+                    ProductId = g.Key,
+                    LatestCreatedAt = g.Max(o => o.CreatedAt)
+                });
+
+            // 使用 JOIN 將產品、最新出庫記錄合併查詢
+            var query = from p in _dbContext.WarehouseProducts
+                        where p.CompId == compId && p.OpenDeadline != null && p.OpenDeadline > 0
+                        join latest in latestOutStockPerProduct on p.ProductId equals latest.ProductId
+                        join o in _dbContext.OutStockRecords on new { p.ProductId, CreatedAt = latest.LatestCreatedAt } equals new { o.ProductId, CreatedAt = o.CreatedAt }
+                        where o.CompId == compId
+                        select new
+                        {
+                            Product = p,
+                            OutStockRecord = o
+                        };
+
+            var queryResult = query.ToList();
 
             var result = new List<OutStockItemForOpenDeadline>();
 
-            foreach (var product in products)
+            foreach (var item in queryResult)
             {
-                if(product.OpenDeadline==null||product.OpenDeadline==0) continue;
-                var latestOutStockRecord = outStockRecords
-                    .Where(o => o.ProductId == product.ProductId)
-                    .OrderByDescending(o => o.CreatedAt)
-                    .FirstOrDefault();
+                var product = item.Product;
+                var latestOutStockRecord = item.OutStockRecord;
 
-                if (latestOutStockRecord != null)
+                var openDeadlineDate = latestOutStockRecord.CreatedAt?.AddDays(product.OpenDeadline ?? 0);
+                var openDeadlineDateOnly = openDeadlineDate.HasValue ? DateOnly.FromDateTime(openDeadlineDate.Value) : (DateOnly?)null;
+                var remainDaysFromNow = openDeadlineDateOnly.HasValue ? (openDeadlineDateOnly.Value.DayNumber - today.DayNumber) : (int?)null;
+
+                if (daysAfter == null || remainDaysFromNow <= daysAfter)
                 {
-                    var openDeadlineDate = latestOutStockRecord.CreatedAt?.AddDays(product.OpenDeadline ?? 0);
-                    var openDeadlineDateOnly = openDeadlineDate.HasValue ? DateOnly.FromDateTime(openDeadlineDate.Value) : (DateOnly?)null;
-                    var today = DateOnly.FromDateTime(DateTime.Now);
-                    var remainDaysFromNow = openDeadlineDateOnly.HasValue ? (openDeadlineDateOnly.Value.DayNumber - today.DayNumber)  : (int?)null;
-                    if ((daysAfter == null || remainDaysFromNow <= daysAfter))
+                    result.Add(new OutStockItemForOpenDeadline
                     {
-                        result.Add(new OutStockItemForOpenDeadline
-                        {
-                            OutStockQuantity= latestOutStockRecord.ApplyQuantity,
-                            LotNumberBatch = latestOutStockRecord.LotNumberBatch,
-                            LotNumber = latestOutStockRecord.LotNumber,
-                            ProductName = latestOutStockRecord.ProductName,
-                            ProductId = latestOutStockRecord.ProductId,
-                            ProductCode = latestOutStockRecord.ProductCode,
-                            Type = latestOutStockRecord.Type,
-                            OutStockDate = latestOutStockRecord.CreatedAt,
-                            OpenDeadline = product.OpenDeadline,
-                            OpenDeadlineDate = openDeadlineDate,
-                            LastAbleDate = product.LastAbleDate,
-                            RemainingDays = remainDaysFromNow,
-                            GroupIds = product.GroupIds,
-                            GroupNames = product.GroupNames,
-                            DefaultSupplierId = product.DefaultSupplierId,
-                            DefaultSupplierName = product.DefaultSupplierName,
-                            PackageWay = product.PackageWay,
-                        });
-                    }
+                        OutStockQuantity = latestOutStockRecord.ApplyQuantity,
+                        LotNumberBatch = latestOutStockRecord.LotNumberBatch,
+                        LotNumber = latestOutStockRecord.LotNumber,
+                        ProductName = latestOutStockRecord.ProductName,
+                        ProductId = latestOutStockRecord.ProductId,
+                        ProductCode = latestOutStockRecord.ProductCode,
+                        Type = latestOutStockRecord.Type,
+                        OutStockDate = latestOutStockRecord.CreatedAt,
+                        OpenDeadline = product.OpenDeadline,
+                        OpenDeadlineDate = openDeadlineDate,
+                        LastAbleDate = product.LastAbleDate,
+                        RemainingDays = remainDaysFromNow,
+                        GroupIds = product.GroupIds,
+                        GroupNames = product.GroupNames,
+                        DefaultSupplierId = product.DefaultSupplierId,
+                        DefaultSupplierName = product.DefaultSupplierName,
+                        PackageWay = product.PackageWay,
+                    });
                 }
             }
             return result;

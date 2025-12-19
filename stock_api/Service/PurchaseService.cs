@@ -1420,8 +1420,8 @@ namespace stock_api.Service
             m.CurrentStatus!= CommonConstants.PurchaseCurrentStatus.REJECT).ToList();
             var allEffectivePurchaseMainId = allEffectivePurchaseMain.Select(m => m.PurchaseMainId).ToList();
 
-            var unDoneProcessingSubItem = _dbContext.PurchaseSubItems.Where(s => s.ReceiveStatus != CommonConstants.PurchaseSubItemReceiveStatus.DONE
-            && s.ReceiveStatus != CommonConstants.PurchaseSubItemReceiveStatus.CLOSE
+            var unDoneProcessingSubItem = _dbContext.PurchaseSubItems.Where(s => s.ReceiveStatus != CommonConstants.PurchaseSubItemReceiveStatus.CLOSE
+            && s.ReceiveStatus != CommonConstants.PurchaseSubItemReceiveStatus.DONE
             && s.ProductId == productId&&s.OwnerProcess != CommonConstants.PurchaseMainOwnerProcessStatus.NOT_AGREE
             && allEffectivePurchaseMainId.Contains(s.PurchaseMainId)).ToList();
             return unDoneProcessingSubItem.Select(s => s.Quantity ?? 0.0f).DefaultIfEmpty(0.0f).Sum();
@@ -1437,6 +1437,35 @@ namespace stock_api.Service
             && s.CurrentStatus != CommonConstants.PurchaseCurrentStatus.REJECT
             && s.CurrentStatus != CommonConstants.PurchaseCurrentStatus.CLOSE
             && productIdList.Contains(s.ProductId)).ToList();
+        }
+
+        // 優化版本：直接從原始資料表查詢，避免使用 View
+        public List<PurchaseSubItem> GetNotDonePurchaseSubItemsByProductIdListOptimized(List<string> productIdList)
+        {
+            if (productIdList == null || productIdList.Count == 0)
+            {
+                return new List<PurchaseSubItem>();
+            }
+
+            // 先取得有效的 PurchaseMainSheet IDs
+            var effectiveMainIds = _dbContext.PurchaseMainSheets
+                .Where(m => m.CurrentStatus != CommonConstants.PurchaseCurrentStatus.REJECT
+                         && m.CurrentStatus != CommonConstants.PurchaseCurrentStatus.CLOSE
+                         && m.OwnerProcess != CommonConstants.PurchaseMainOwnerProcessStatus.NOT_AGREE)
+                .Select(m => m.PurchaseMainId)
+                .ToList();
+
+            var effectiveMainIdSet = effectiveMainIds.ToHashSet();
+
+            // 從 PurchaseSubItems 查詢，而非從 View
+            return _dbContext.PurchaseSubItems
+                .Where(s => s.ReceiveStatus != CommonConstants.PurchaseSubItemReceiveStatus.CLOSE
+                         && s.ReceiveStatus != CommonConstants.PurchaseSubItemReceiveStatus.DONE
+                         && s.OwnerProcess != CommonConstants.PurchaseMainOwnerProcessStatus.NOT_AGREE
+                         && productIdList.Contains(s.ProductId))
+                .ToList()
+                .Where(s => effectiveMainIdSet.Contains(s.PurchaseMainId))
+                .ToList();
         }
 
         public List<PurchaseItemListView> GetUndonePurchaseSubItems(string compId, string productId)

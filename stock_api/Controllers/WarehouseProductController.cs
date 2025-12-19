@@ -75,7 +75,10 @@ namespace stock_api.Controllers
         [Authorize]
         public IActionResult SearchWarehouseProduct(WarehouseProductSearchRequest searchRequest)
         {
+            var sw = System.Diagnostics.Stopwatch.StartNew();
             var memberAndPermissionSetting = _authHelpers.GetMemberAndPermissionSetting(User);
+            _logger.LogInformation("[SearchWarehouseProduct] GetMemberAndPermissionSetting 完成: {elapsed}ms", sw.ElapsedMilliseconds);
+            
             var compId = memberAndPermissionSetting.CompanyWithUnit.CompId;
             var compType = memberAndPermissionSetting.CompanyWithUnit.Type;
 
@@ -88,55 +91,82 @@ namespace stock_api.Controllers
             {
                 return BadRequest(CommonResponse<dynamic>.BuildNotAuthorizeResponse());
             }
-            var validationResult = _searchProductRequestValidator.Validate(searchRequest);
-
-            if (!validationResult.IsValid)
+            
+            // 對於 search API，跳過不必要的資料庫驗證
+            // CompId 已經在 JWT 驗證過，且 GroupId 為 null 時不需要驗證
+            if (searchRequest.GroupId != null)
             {
-                return BadRequest(CommonResponse<dynamic>.BuildValidationFailedResponse(validationResult));
+                var validationResult = _searchProductRequestValidator.Validate(searchRequest);
+                if (!validationResult.IsValid)
+                {
+                    return BadRequest(CommonResponse<dynamic>.BuildValidationFailedResponse(validationResult));
+                }
             }
-
+            _logger.LogInformation("[SearchWarehouseProduct] 驗證完成: {elapsed}ms", sw.ElapsedMilliseconds);
 
             var (data, totalPages) = _warehouseProductService.SearchProduct(searchRequest);
+            _logger.LogInformation("[SearchWarehouseProduct] SearchProduct 完成: {elapsed}ms", sw.ElapsedMilliseconds);
+
             var warehouseProductVoList = _mapper.Map<List<WarehouseProductVo>>(data);
             var distictProductCodeList = warehouseProductVoList.Select(x => x.ProductCode).Distinct().ToList();
             var productsInAnotherComp = _warehouseProductService.GetProductByProductCodeList(distictProductCodeList);
+            _logger.LogInformation("[SearchWarehouseProduct] GetProductByProductCodeList 完成: {elapsed}ms", sw.ElapsedMilliseconds);
+
+            // 使用 Dictionary 優化查找效能 (O(n) -> O(1))
+            var productsByCodeLookup = productsInAnotherComp
+                .GroupBy(p => p.ProductCode)
+                .ToDictionary(g => g.Key, g => g.ToList());
 
             if (compType == CommonConstants.CompanyType.OWNER && productsInAnotherComp.Count > 0)
             {
                 foreach (var item in warehouseProductVoList)
                 {
-                    var matchedProdcutsInAnotherComp = productsInAnotherComp.Where(p => p.ProductCode.Contains(item.ProductCode) && p.CompId != compId).ToList();
-                    if (matchedProdcutsInAnotherComp.Count > 0)
+                    if (productsByCodeLookup.TryGetValue(item.ProductCode, out var matchedProducts))
                     {
-                        // 因為金萬林此product的unit在不同醫院單位都會設成一樣,故只取第一筆
-                        var matchedProdcutInAnotherComp = matchedProdcutsInAnotherComp[0];
-                        item.AnotherUnit = matchedProdcutInAnotherComp.Unit;
-                        item.AnotherUnitConversion = matchedProdcutInAnotherComp.UnitConversion;
+                        var matchedProdcutsInAnotherComp = matchedProducts.Where(p => p.CompId != compId).ToList();
+                        if (matchedProdcutsInAnotherComp.Count > 0)
+                        {
+                            var matchedProdcutInAnotherComp = matchedProdcutsInAnotherComp[0];
+                            item.AnotherUnit = matchedProdcutInAnotherComp.Unit;
+                            item.AnotherUnitConversion = matchedProdcutInAnotherComp.UnitConversion;
+                        }
                     }
                 }
             }
 
             var allProductIsList = warehouseProductVoList.Select(p => p.ProductId).ToList();
-            var allSubItems = _purchaseService.GetNotDonePurchaseSubItemByProductIdList(allProductIsList);
-            var allPurchaseMainIdList = allSubItems.Select(p => p.PurchaseMainId).ToList();
-            var allPurchaseMain = _purchaseService.GetPurchaseMainsByMainIdList(allPurchaseMainIdList);
-            var allEffectivePurchaseMain = _purchaseService.GetPurchaseMainsByMainIdList(allPurchaseMainIdList)
-                .Where(m => m.CurrentStatus != CommonConstants.PurchaseCurrentStatus.REJECT && m.CurrentStatus != CommonConstants.PurchaseCurrentStatus.CLOSE)
-                .ToList();
-            var allEffectivePurchaseMainId = allEffectivePurchaseMain.Select(m => m.PurchaseMainId).ToList();
+            // 使用優化版本的方法，直接從原始資料表查詢 (已在方法內過濾無效的 PurchaseMain)
+            var allSubItems = _purchaseService.GetNotDonePurchaseSubItemsByProductIdListOptimized(allProductIsList);
+            _logger.LogInformation("[SearchWarehouseProduct] GetNotDonePurchaseSubItemsByProductIdListOptimized 完成: {elapsed}ms, 筆數: {count}", sw.ElapsedMilliseconds, allSubItems.Count);
+
+            // 使用 Dictionary 優化 SubItems 查找
+            var subItemsByProductId = allSubItems
+                .GroupBy(s => s.ProductId)
+                .ToDictionary(g => g.Key, g => g.ToList());
 
             warehouseProductVoList.ForEach(p =>
             {
-                var matchedOngoingSubItems = allSubItems.Where(s => s.ProductId == p.ProductId&& allEffectivePurchaseMainId.Contains(s.PurchaseMainId)).ToList();
-                var inProcessingOrderQuantity = matchedOngoingSubItems
-                    .Select(s => (s.Quantity - (s.InStockQuantity ?? 0.0f)))
-                    .Sum();
-                var needOrderedQuantity = p.MaxSafeQuantity ?? 0 - p.InStockQuantity ?? 0 - inProcessingOrderQuantity;
-                var needOrderedQuantityUnitFloat = needOrderedQuantity * p.UnitConversion;
-                var needOrderedQuantityUnit = Math.Ceiling((decimal)needOrderedQuantityUnitFloat.Value*100) / 100;  
-                p.InProcessingOrderQuantity = inProcessingOrderQuantity??0.0f ;
-                p.NeedOrderedQuantity = needOrderedQuantity ?? 0.0f;
-                p.NeedOrderedQuantityUnit = (float)needOrderedQuantityUnit;
+                if (subItemsByProductId.TryGetValue(p.ProductId, out var matchedOngoingSubItems))
+                {
+                    var inProcessingOrderQuantity = matchedOngoingSubItems
+                        .Select(s => (s.Quantity - (s.InStockQuantity ?? 0.0f)))
+                        .Sum();
+                    var needOrderedQuantity = p.MaxSafeQuantity ?? 0 - p.InStockQuantity ?? 0 - inProcessingOrderQuantity;
+                    var needOrderedQuantityUnitFloat = needOrderedQuantity * p.UnitConversion;
+                    var needOrderedQuantityUnit = Math.Ceiling((decimal)needOrderedQuantityUnitFloat.Value * 100) / 100;
+                    p.InProcessingOrderQuantity = inProcessingOrderQuantity ?? 0.0f;
+                    p.NeedOrderedQuantity = needOrderedQuantity ?? 0.0f;
+                    p.NeedOrderedQuantityUnit = (float)needOrderedQuantityUnit;
+                }
+                else
+                {
+                    var needOrderedQuantity = (p.MaxSafeQuantity ?? 0) - (p.InStockQuantity ?? 0);
+                    var needOrderedQuantityUnitFloat = needOrderedQuantity * (p.UnitConversion ?? 1);
+                    var needOrderedQuantityUnit = Math.Ceiling((decimal)needOrderedQuantityUnitFloat * 100) / 100;
+                    p.InProcessingOrderQuantity = 0.0f;
+                    p.NeedOrderedQuantity = needOrderedQuantity;
+                    p.NeedOrderedQuantityUnit = (float)needOrderedQuantityUnit;
+                }
             });
 
             // 當過濾欄位為NeedOrderedQuantityUnit 需要特別處理
@@ -144,7 +174,7 @@ namespace stock_api.Controllers
             {
                 if (searchRequest.PaginationCondition.IsDescOrderBy)
                 {
-                    warehouseProductVoList = warehouseProductVoList.OrderByDescending(p=>p.NeedOrderedQuantityUnit).ToList();
+                    warehouseProductVoList = warehouseProductVoList.OrderByDescending(p => p.NeedOrderedQuantityUnit).ToList();
                 }
                 else
                 {
@@ -154,29 +184,55 @@ namespace stock_api.Controllers
                 totalPages = (int)Math.Ceiling((double)totalItems / searchRequest.PaginationCondition.PageSize);
                 warehouseProductVoList = warehouseProductVoList.Skip((searchRequest.PaginationCondition.Page - 1) * searchRequest.PaginationCondition.PageSize).Take(searchRequest.PaginationCondition.PageSize).ToList();
             }
+
+            // 只載入分頁後需要的 productId 相關資料
             var allProductIdListForUsage = warehouseProductVoList.Select(p => p.ProductId).ToList();
-            var productsLastMonthUsage = _stockOutService.GetLastMonthUsages();
-            var productsLastYearUsage = _stockOutService.GetLastYearUsages();
+            var productsLastMonthUsage = _stockOutService.GetLastMonthUsages(allProductIdListForUsage);
+            var productsThisYearAverageMonthUsage = _stockOutService.GetThisAverageMonthUsages(allProductIdListForUsage);
+            var productsLastYearUsage = _stockOutService.GetLastYearUsages(allProductIdListForUsage);
+            _logger.LogInformation("[SearchWarehouseProduct] GetUsages 完成: {elapsed}ms", sw.ElapsedMilliseconds);
 
-            var productsThisYearAverageMonthUsage = _stockOutService.GetThisAverageMonthUsages();
-             
+            // 使用 Dictionary 優化查找
+            var lastMonthUsageLookup = productsLastMonthUsage.ToDictionary(u => u.ProductId, u => u);
+            var thisYearAvgUsageLookup = productsThisYearAverageMonthUsage.ToDictionary(u => u.ProductId, u => u);
+            var lastYearUsageLookup = productsLastYearUsage.ToDictionary(u => u.ProductId, u => u);
 
-            var allProducts = _warehouseProductService.GetAllProducts();
+            // 使用已經查詢到的 productsInAnotherComp 計算 ExistCompIds，而非重新載入全部產品
+            var existCompIdsByProductCode = productsInAnotherComp
+                .Where(p => p.IsActive == true)
+                .GroupBy(p => p.ProductCode)
+                .ToDictionary(g => g.Key, g => g.Select(p => p.CompId).Distinct().ToList());
 
             warehouseProductVoList.ForEach(p =>
             {
-                var matchedLastMonthUsage = productsLastMonthUsage.Where(u => u.ProductId == p.ProductId).FirstOrDefault();
-                if (matchedLastMonthUsage != null) p.LastMonthUsageQuantity = matchedLastMonthUsage?.Quantity;
-                var matchedLastYearUsage = productsLastYearUsage.Where(u => u.ProductId == p.ProductId).FirstOrDefault();
-                if (matchedLastYearUsage != null) p.LastYearUsageQuantity = matchedLastYearUsage?.Quantity;
-                var matchedThisYearAverageMonthUsage = productsThisYearAverageMonthUsage.Where(u => u.ProductId == p.ProductId).FirstOrDefault();
-                if(matchedThisYearAverageMonthUsage!=null) p.ThisYearAverageMonthUsageQuantity = matchedThisYearAverageMonthUsage?.AverageQuantity;
+                if(p.ProductId == "68c05e1d-c6f5-498a-8359-d961359e5875-024")
+                {
+                    var debug = 1;
+                }
+                if (lastMonthUsageLookup.TryGetValue(p.ProductId, out var matchedLastMonthUsage))
+                {
+                    p.LastMonthUsageQuantity = matchedLastMonthUsage.Quantity;
+                }
+                if (thisYearAvgUsageLookup.TryGetValue(p.ProductId, out var matchedThisYearAverageMonthUsage))
+                {
+                    p.ThisYearAverageMonthUsageQuantity = matchedThisYearAverageMonthUsage.AverageQuantity;
+                }
+                if (lastYearUsageLookup.TryGetValue(p.ProductId, out var matchedLastYearUsage))
+                {
+                    p.LastYearUsageQuantity = matchedLastYearUsage.Quantity;
+                }
 
-                var matchedProductOfSameCodeList = allProducts.Where(product=> product.ProductCode==p.ProductCode&&product.IsActive==true).ToList();
-                var distinctCompIds = matchedProductOfSameCodeList.Select(product => product.CompId).Distinct().ToList();
-                p.ExistCompIds = distinctCompIds;
+                if (existCompIdsByProductCode.TryGetValue(p.ProductCode, out var existCompIds))
+                {
+                    p.ExistCompIds = existCompIds;
+                }
+                else
+                {
+                    p.ExistCompIds = new List<string>();
+                }
             });
 
+            _logger.LogInformation("[SearchWarehouseProduct] 全部完成: {elapsed}ms", sw.ElapsedMilliseconds);
 
             var response = new CommonResponse<List<WarehouseProductVo>>()
             {
