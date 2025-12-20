@@ -16,6 +16,7 @@ using stock_api.Service;
 using stock_api.Service.ValueObject;
 using stock_api.Utils;
 using System;
+using System.Diagnostics;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text.Json;
@@ -196,107 +197,122 @@ namespace stock_api.Controllers
         [Authorize]
         public IActionResult ListPurchases(ListPurchaseRequest request)
         {
+            var totalStopwatch = Stopwatch.StartNew();
+            var stepStopwatch = new Stopwatch();
+
+            stepStopwatch.Start();
             var memberAndPermissionSetting = _authHelpers.GetMemberAndPermissionSetting(User);
             var compId = memberAndPermissionSetting.CompanyWithUnit.CompId;
+            stepStopwatch.Stop();
+            _logger.LogInformation("[ListPurchase] Step 1 - GetMemberAndPermissionSetting: {elapsed}ms", stepStopwatch.ElapsedMilliseconds);
 
             if (request.CompId == null) request.CompId = compId;
             if (request.CompId != null && request.CompId != compId && memberAndPermissionSetting.CompanyWithUnit.Type != CommonConstants.CompanyType.OWNER)
             {
                 return BadRequest(CommonResponse<dynamic>.BuildNotAuthorizeResponse());
             }
+
+            stepStopwatch.Restart();
             var validationResult = _listPurchaseRequestValidator.Validate(request);
+            stepStopwatch.Stop();
+            _logger.LogInformation("[ListPurchase] Step 2 - Validation: {elapsed}ms", stepStopwatch.ElapsedMilliseconds);
 
             if (!validationResult.IsValid)
             {
                 return BadRequest(CommonResponse<dynamic>.BuildValidationFailedResponse(validationResult));
             }
+
+            stepStopwatch.Restart();
             var listData = _purchaseService.ListPurchase(request);
-            List<PurchaseMainAndSubItemVo> filterKeywordsData = new();
-            if (request.Keywords != null)
-            {
-                foreach (PurchaseMainAndSubItemVo vo in listData)
-                {
-                    if (vo.IsContainKeywords(request.Keywords))
-                    {
-                        filterKeywordsData.Add(vo);
-                    }
-                }
+            stepStopwatch.Stop();
+            _logger.LogInformation("[ListPurchase] Step 3 - ListPurchase (DB query): {elapsed}ms, Count: {count}", stepStopwatch.ElapsedMilliseconds, listData.Count);
 
-            }
-            else
-            {
-                filterKeywordsData.AddRange(listData);
-            }
+            stepStopwatch.Restart();
+            List<PurchaseMainAndSubItemVo> filterKeywordsData = request.Keywords != null
+                ? listData.Where(vo => vo.IsContainKeywords(request.Keywords)).ToList()
+                : listData;
+            stepStopwatch.Stop();
+            _logger.LogInformation("[ListPurchase] Step 4 - Keywords filter: {elapsed}ms, FilteredCount: {count}", stepStopwatch.ElapsedMilliseconds, filterKeywordsData.Count);
 
+            stepStopwatch.Restart();
             var distinctProductIdList = filterKeywordsData
-            .SelectMany(item => item.Items)
-            .Select(item => item.ProductId)
-            .Distinct()
-            .ToList();
-            _logger.LogInformation("[ListPurchase]---9---{time}", DateTime.Now);
-            var products = _warehouseProductService.GetProductsByCompId(request.CompId);
-            _logger.LogInformation("[ListPurchase]---10---{time}", DateTime.Now);
+                .SelectMany(item => item.Items)
+                .Select(item => item.ProductId)
+                .Distinct()
+                .ToList();
+            stepStopwatch.Stop();
+            _logger.LogInformation("[ListPurchase] Step 5 - Collect distinct ProductIds: {elapsed}ms, ProductIdCount: {count}", stepStopwatch.ElapsedMilliseconds, distinctProductIdList.Count);
+
+            stepStopwatch.Restart();
+            var products = _warehouseProductService.GetProductsByProductIdsAndCompId(distinctProductIdList, request.CompId);
+            stepStopwatch.Stop();
+            _logger.LogInformation("[ListPurchase] Step 6 - GetProductsByProductIdsAndCompId: {elapsed}ms, ProductCount: {count}", stepStopwatch.ElapsedMilliseconds, products.Count);
+
+            stepStopwatch.Restart();
+            var productDict = products.ToDictionary(p => p.ProductId);
+            stepStopwatch.Stop();
+            _logger.LogInformation("[ListPurchase] Step 7 - Build productDict: {elapsed}ms", stepStopwatch.ElapsedMilliseconds);
+
+            stepStopwatch.Restart();
             foreach (var vo in filterKeywordsData)
             {
                 foreach (var item in vo.Items)
                 {
-                    var matchedProduct = products.Where(p => p.ProductId == item.ProductId).FirstOrDefault();
-                    item.MaxSafeQuantity = matchedProduct?.MaxSafeQuantity;
-                    item.ProductModel = matchedProduct?.ProductModel;
-                    item.ManufacturerName = matchedProduct?.ManufacturerName;
-                    item.ProductMachine = matchedProduct?.ProductMachine;
-                    item.ProductUnit = matchedProduct?.Unit;
-                    item.UnitConversion = matchedProduct?.UnitConversion;
-                    item.TestCount = matchedProduct?.TestCount;
-                    item.Delivery = matchedProduct?.Delievery;
-                    item.PackageWay = matchedProduct?.PackageWay;
-                    item.ProductCode = matchedProduct?.ProductCode;
-                    item.SupplierUnitConvertsion = matchedProduct?.SupplierUnitConvertsion;
-                    item.SupplierUnit = matchedProduct?.SupplierUnit;
-                    item.StockLocation = matchedProduct?.StockLocation;
+                    if (productDict.TryGetValue(item.ProductId, out var matchedProduct))
+                    {
+                        item.MaxSafeQuantity = matchedProduct.MaxSafeQuantity;
+                        item.ProductModel = matchedProduct.ProductModel;
+                        item.ManufacturerName = matchedProduct.ManufacturerName;
+                        item.ProductMachine = matchedProduct.ProductMachine;
+                        item.ProductUnit = matchedProduct.Unit;
+                        item.UnitConversion = matchedProduct.UnitConversion;
+                        item.TestCount = matchedProduct.TestCount;
+                        item.Delivery = matchedProduct.Delievery;
+                        item.PackageWay = matchedProduct.PackageWay;
+                        item.ProductCode = matchedProduct.ProductCode;
+                        item.SupplierUnitConvertsion = matchedProduct.SupplierUnitConvertsion;
+                        item.SupplierUnit = matchedProduct.SupplierUnit;
+                        item.StockLocation = matchedProduct.StockLocation;
+                    }
                 }
             }
-            filterKeywordsData = filterKeywordsData.OrderByDescending(item => item.ApplyDate).ToList();
-            _logger.LogInformation("[ListPurchase]---11---{time}", DateTime.Now);
-            //
-            int totalPages = 0;
+            stepStopwatch.Stop();
+            _logger.LogInformation("[ListPurchase] Step 8 - Map product data to items: {elapsed}ms", stepStopwatch.ElapsedMilliseconds);
+
+            stepStopwatch.Restart();
             var orderByField = request.PaginationCondition.OrderByField;
-            if (orderByField != null)
+            if (!string.IsNullOrEmpty(orderByField))
             {
                 orderByField = StringUtils.CapitalizeFirstLetter(orderByField);
-                if (request.PaginationCondition.IsDescOrderBy)
+                filterKeywordsData = (orderByField, request.PaginationCondition.IsDescOrderBy) switch
                 {
-                    switch (orderByField)
-                    {
-                        case "ApplyDate":
-                            filterKeywordsData = filterKeywordsData.OrderByDescending(item => item.ApplyDate).ToList();
-                            break;
-                        case "DemandDate":
-                            filterKeywordsData = filterKeywordsData.OrderByDescending(item => item.DemandDate).ToList();
-                            break;
-                        default:
-                            break;
-                    }
-                }
-                else
-                {
-                    switch (orderByField)
-                    {
-                        case "ApplyDate":
-                            filterKeywordsData = filterKeywordsData.OrderBy(item => item.ApplyDate).ToList();
-                            break;
-                        case "DemandDate":
-                            filterKeywordsData = filterKeywordsData.OrderBy(item => item.DemandDate).ToList();
-                            break;
-                        default:
-                            break;
-                    }
-                }
-                int totalItems = filterKeywordsData.Count;
-                totalPages = (int)Math.Ceiling((double)totalItems / request.PaginationCondition.PageSize);
-                filterKeywordsData = filterKeywordsData.Skip((request.PaginationCondition.Page - 1) * request.PaginationCondition.PageSize).Take(request.PaginationCondition.PageSize).ToList();
+                    ("ApplyDate", true) => filterKeywordsData.OrderByDescending(item => item.ApplyDate).ToList(),
+                    ("ApplyDate", false) => filterKeywordsData.OrderBy(item => item.ApplyDate).ToList(),
+                    ("DemandDate", true) => filterKeywordsData.OrderByDescending(item => item.DemandDate).ToList(),
+                    ("DemandDate", false) => filterKeywordsData.OrderBy(item => item.DemandDate).ToList(),
+                    _ => filterKeywordsData.OrderByDescending(item => item.ApplyDate).ToList()
+                };
             }
-            _logger.LogInformation("[ListPurchase]---12---{time}", DateTime.Now);
+            else
+            {
+                filterKeywordsData = filterKeywordsData.OrderByDescending(item => item.ApplyDate).ToList();
+            }
+            stepStopwatch.Stop();
+            _logger.LogInformation("[ListPurchase] Step 9 - Sorting: {elapsed}ms", stepStopwatch.ElapsedMilliseconds);
+
+            stepStopwatch.Restart();
+            int totalItems = filterKeywordsData.Count;
+            int totalPages = (int)Math.Ceiling((double)totalItems / request.PaginationCondition.PageSize);
+            filterKeywordsData = filterKeywordsData
+                .Skip((request.PaginationCondition.Page - 1) * request.PaginationCondition.PageSize)
+                .Take(request.PaginationCondition.PageSize)
+                .ToList();
+            stepStopwatch.Stop();
+            _logger.LogInformation("[ListPurchase] Step 10 - Pagination: {elapsed}ms, ResultCount: {count}", stepStopwatch.ElapsedMilliseconds, filterKeywordsData.Count);
+
+            totalStopwatch.Stop();
+            _logger.LogInformation("[ListPurchase] TOTAL execution time: {elapsed}ms", totalStopwatch.ElapsedMilliseconds);
+
             var response = new CommonResponse<List<PurchaseMainAndSubItemVo>>
             {
                 Result = true,
@@ -316,23 +332,17 @@ namespace stock_api.Controllers
             {
                 return BadRequest(CommonResponse<dynamic>.BuildNotAuthorizeResponse());
             }
-            // ListPurchaseRequest request = new() { CurrentStatus = CommonConstants.PurchaseFlowAnswer.AGREE,ReceiveStatus= CommonConstants.PurchaseReceiveStatus.NONE };
             ListPurchaseRequest request = new() { CurrentStatus = CommonConstants.PurchaseFlowAnswer.AGREE, Keywords = ownerListPurchasesRequestRequest.Keywords };
 
             var listData = _purchaseService.ListPurchase(request);
-            // 過濾每個 vo 的 Items，移除 OwnerProcess 為 NOT_AGREE 的項目
             foreach (var vo in listData)
             {
                 vo.Items = vo.Items.Where(item => item.OwnerProcess != "NOT_AGREE").ToList();
             }
 
-
             var products = _warehouseProductService.GetAllProducts();
-
             var productsLastMonthUsage = _stockOutService.GetLastMonthUsages();
-
             var productsThisYearAverageMonthUsage = _stockOutService.GetThisAverageMonthUsages();
-
             var productsOfOwner = _warehouseProductService.GetAllProducts(compId);
             var allItemManagers = new HashSet<string>();
 
@@ -340,7 +350,6 @@ namespace stock_api.Controllers
             {
                 foreach (var item in vo.Items)
                 {
-
                     var matchedProduct = products.Where(p => p.ProductId == item.ProductId).FirstOrDefault();
                     item.MaxSafeQuantity = matchedProduct?.MaxSafeQuantity;
                     item.ProductModel = matchedProduct?.ProductModel;
@@ -353,13 +362,10 @@ namespace stock_api.Controllers
                     item.PackageWay = matchedProduct?.PackageWay;
                     item.ProductCode = matchedProduct?.ProductCode;
 
-                    // ProductSpec指的是向上游供應商申請時 對方的出貨單位,所以應該是看金萬林的ProductSpec
-                    // 因為這邊是要給金萬霖採購總清冊用的
-                    // 2024/10/01 Gary改：supplierUnit改成是該品項在金萬林倉的最小出入庫單位
                     var matchedOwnerProduct = productsOfOwner.Where(p => p.ProductCode == item.ProductCode).FirstOrDefault();
-                    item.SupplierUnit = matchedOwnerProduct?.Unit; // 這裡要用這個品項在金萬林的最小出入庫單位（Gary）
-                    item.UnitConversion = matchedProduct?.UnitConversion; // 這裡要用這個品項在原始採購單位的包裝單位轉換（Gary）
-                    item.SupplierUnitConvertsion = matchedOwnerProduct?.UnitConversion; // 這裡要用這個品項在金萬林的包裝單位轉換（Gary）
+                    item.SupplierUnit = matchedOwnerProduct?.Unit;
+                    item.UnitConversion = matchedProduct?.UnitConversion;
+                    item.SupplierUnitConvertsion = matchedOwnerProduct?.UnitConversion;
 
                     item.OpenedSealName = matchedProduct?.OpenedSealName;
                     item.StockLocation = matchedProduct?.StockLocation;
@@ -369,7 +375,7 @@ namespace stock_api.Controllers
 
                     var matchedProductThisYearAverageMonthUsage = productsThisYearAverageMonthUsage.Where(p => p.ProductId == item.ProductId).FirstOrDefault();
                     item.ThisYearAverageMonthUsageQuantity = matchedProductThisYearAverageMonthUsage != null ? matchedProductThisYearAverageMonthUsage.AverageQuantity : 0.0;
-                    if (matchedProduct!=null &&matchedProduct.Manager != null)
+                    if (matchedProduct != null && matchedProduct.Manager != null)
                     {
                         allItemManagers.Add(matchedProduct.Manager);
                     }
@@ -377,26 +383,22 @@ namespace stock_api.Controllers
             }
 
             List<PurchaseMainAndSubItemVo> filterKeywordsData = new();
+            var isKeywordsContainManager = request.Keywords != null && request.Keywords != "" && allItemManagers.Contains(request.Keywords);
 
-            var isKeywordsContainManager = request.Keywords != null&&request.Keywords!=""&&allItemManagers.Contains(request.Keywords);
-
-            // 表示要過濾Manager
             if (isKeywordsContainManager)
             {
-                foreach(PurchaseMainAndSubItemVo vo in listData)
+                foreach (PurchaseMainAndSubItemVo vo in listData)
                 {
-                    var isItemManagerContainsKeyword = vo.Items.Any(e => e.Manager!=null&&e.Manager.Contains(request.Keywords));
+                    var isItemManagerContainsKeyword = vo.Items.Any(e => e.Manager != null && e.Manager.Contains(request.Keywords));
                     if (isItemManagerContainsKeyword)
                     {
                         filterKeywordsData.Add(vo);
-
                     }
                 }
-
             }
             else
             {
-                if (request.Keywords != null&&request.Keywords!="")
+                if (request.Keywords != null && request.Keywords != "")
                 {
                     foreach (PurchaseMainAndSubItemVo vo in listData)
                     {
@@ -405,7 +407,6 @@ namespace stock_api.Controllers
                             filterKeywordsData.Add(vo);
                         }
                     }
-
                 }
                 else
                 {
@@ -414,15 +415,14 @@ namespace stock_api.Controllers
             }
             filterKeywordsData = filterKeywordsData.OrderByDescending(item => item.ApplyDate).ToList();
 
-            foreach(var data in filterKeywordsData)
+            foreach (var data in filterKeywordsData)
             {
                 foreach (var item in data.Items)
                 {
                     var matchedOwnerProduct = productsOfOwner.Where(p => p.ProductCode == item.ProductCode).FirstOrDefault();
-                    item.SupplierSpec = matchedOwnerProduct?.ProductSpec; 
+                    item.SupplierSpec = matchedOwnerProduct?.ProductSpec;
                 }
             }
-
 
             var response = new CommonResponse<dynamic>
             {
@@ -453,18 +453,16 @@ namespace stock_api.Controllers
             {
                 return BadRequest(CommonResponse<dynamic>.BuildNotAuthorizeResponse());
             }
-            if( purchaseComp.Type != CommonConstants.CompanyType.ORGANIZATION_NOSTOCK || memberAndPermissionSetting.Member.IsNoStockReviewer==false)
+            if (purchaseComp.Type != CommonConstants.CompanyType.ORGANIZATION_NOSTOCK || memberAndPermissionSetting.Member.IsNoStockReviewer == false)
             {
                 if (compId != purchaseMain.CompId && memberAndPermissionSetting.CompanyWithUnit.Type != CommonConstants.CompanyType.OWNER)
                 {
-
                     return BadRequest(CommonResponse<dynamic>.BuildNotAuthorizeResponse());
                 }
             }
 
-            if(memberAndPermissionSetting.Member.IsNoStockReviewer != true)
+            if (memberAndPermissionSetting.Member.IsNoStockReviewer != true)
             {
-                
             }
 
             List<PurchaseSubItem> purchaseSubItems = _purchaseService.GetPurchaseSubItemsByMainId(purchaseMainId);
@@ -482,7 +480,6 @@ namespace stock_api.Controllers
             var purchaseAndSubItemVo = _mapper.Map<PurchaseMainAndSubItemVo>(purchaseMain);
             var purchaseSubItemVoList = _mapper.Map<List<PurchaseSubItemVo>>(purchaseSubItems);
 
-            // 取得每個 productId 的上次訂購日期 (排除當前的 purchaseMainId)
             var distinctProductIdListForLastOrder = purchaseSubItems.Select(s => s.ProductId).Distinct().ToList();
             var lastOrderDateMap = _purchaseService.GetLastOrderDateByProductIds(distinctProductIdListForLastOrder, purchaseMainId);
 
@@ -499,7 +496,7 @@ namespace stock_api.Controllers
 
             purchaseSubItemVoList.ForEach(item =>
             {
-                var matchedComp = allComps.Where(c=>c.CompId==item.CompId).FirstOrDefault();
+                var matchedComp = allComps.Where(c => c.CompId == item.CompId).FirstOrDefault();
                 var matchedProduct = products.Where(p => p.ProductId == item.ProductId).FirstOrDefault();
                 item.MaxSafeQuantity = matchedProduct?.MaxSafeQuantity;
                 item.ProductModel = matchedProduct?.ProductModel;
@@ -510,15 +507,15 @@ namespace stock_api.Controllers
                 item.Delivery = matchedProduct?.Delievery;
                 item.PackageWay = matchedProduct?.PackageWay;
                 item.ProductCode = matchedProduct?.ProductCode;
-                item.CompName = matchedComp.Name;  
+                item.CompName = matchedComp.Name;
                 item.Manager = matchedProduct?.Manager;
 
                 var matchedOwnerProduct = productsOfOwner.Where(p => p.ProductCode == item.ProductCode).FirstOrDefault();
 
-                item.SupplierUnit = matchedOwnerProduct?.Unit; // 這裡要用這個品項在金萬林的最小出入庫單位（Gary）
-                item.UnitConversion = matchedProduct?.UnitConversion; // 這裡要用這個品項在原始採購單位的包裝單位轉換（Gary）
-                item.SupplierUnitConvertsion = matchedOwnerProduct?.UnitConversion; // 這裡要用這個品項在金萬林的包裝單位轉換（Gary）
-                item.SupplierSpec = matchedOwnerProduct?.ProductSpec; // 這裡要用這個品項在金萬林的品項規格（Gary）
+                item.SupplierUnit = matchedOwnerProduct?.Unit;
+                item.UnitConversion = matchedProduct?.UnitConversion;
+                item.SupplierUnitConvertsion = matchedOwnerProduct?.UnitConversion;
+                item.SupplierSpec = matchedOwnerProduct?.ProductSpec;
 
                 item.StockLocation = matchedProduct?.StockLocation;
                 var matchedProductThisYearAverageMonthUsage = productsThisYearAverageMonthUsage.Where(e => e.ProductId == item.ProductId).FirstOrDefault();
@@ -535,15 +532,13 @@ namespace stock_api.Controllers
                     }
                 }
 
-                // 設定最近上次訂購日期
                 if (lastOrderDateMap.ContainsKey(item.ProductId))
                 {
                     item.LastOrderDate = lastOrderDateMap[item.ProductId];
                 }
-
             });
 
-            purchaseSubItemVoList = purchaseSubItemVoList.OrderBy(i=>i.ProductCode).ToList();
+            purchaseSubItemVoList = purchaseSubItemVoList.OrderBy(i => i.ProductCode).ToList();
             purchaseAndSubItemVo.Items = purchaseSubItemVoList;
             purchaseAndSubItemVo.flows = purchaseFlowWithAgents;
             purchaseAndSubItemVo.flowLogs = purchaseFlowLogs;
@@ -596,16 +591,14 @@ namespace stock_api.Controllers
             }
             if (purchaseComp.Type != CommonConstants.CompanyType.ORGANIZATION_NOSTOCK || memberAndPermissionSetting.Member.IsNoStockReviewer == false)
             {
-
-                if ( purchaseFlow.CompId != compId)
+                if (purchaseFlow.CompId != compId)
                 {
                     return BadRequest(CommonResponse<dynamic>.BuildNotAuthorizeResponse());
                 }
             }
 
-            if ( memberAndPermissionSetting.CompanyWithUnit.Type == CommonConstants.CompanyType.OWNER && request.Answer == CommonConstants.AnswerPurchaseFlow.BACK)
+            if (memberAndPermissionSetting.CompanyWithUnit.Type == CommonConstants.CompanyType.OWNER && request.Answer == CommonConstants.AnswerPurchaseFlow.BACK)
             {
-                // 金萬林退回
                 var backResult = _purchaseService.AnswerFlow(purchaseFlow, memberAndPermissionSetting, request.Answer, request.Reason, true, false);
                 var backResponse = new CommonResponse<dynamic>
                 {
@@ -613,14 +606,11 @@ namespace stock_api.Controllers
                     Data = null
                 };
                 return Ok(backResponse);
-
             }
 
-            
             bool isVerifiedByAgent = false;
-            if ( purchaseFlow.VerifyUserId != verifier.UserId)
+            if (purchaseFlow.VerifyUserId != verifier.UserId)
             {
-                // 檢查是否為代理人
                 var flowVerifier = _memberService.GetMemberByUserId(purchaseFlow.VerifyUserId);
                 if (flowVerifier.Agents.Contains(verifier.UserId))
                 {
@@ -629,10 +619,9 @@ namespace stock_api.Controllers
                 else
                 {
                     return BadRequest(CommonResponse<dynamic>.BuildNotAuthorizeResponse());
-
                 }
             }
-            if ( !purchaseFlow.Answer.IsNullOrEmpty())
+            if (!purchaseFlow.Answer.IsNullOrEmpty())
             {
                 return BadRequest(new CommonResponse<dynamic>()
                 {
@@ -641,7 +630,6 @@ namespace stock_api.Controllers
                 });
             }
 
-            
             var beforeFlows = _purchaseService.GetBeforeFlows(purchaseFlow);
             if (beforeFlows.Any(f => f.Answer == CommonConstants.PurchaseFlowAnswer.EMPTY))
             {
@@ -653,7 +641,6 @@ namespace stock_api.Controllers
             }
 
             var result = _purchaseService.AnswerFlow(purchaseFlow, memberAndPermissionSetting, request.Answer, request.Reason, false, isVerifiedByAgent);
-
 
             var response = new CommonResponse<dynamic>
             {
@@ -730,7 +717,6 @@ namespace stock_api.Controllers
                 }
             }
 
-
             var result = _purchaseService.OwnerUpdateOrDeleteSubItems(request, purchaseMainSheet, existingSubItemList, memberAndPermissionSetting.Member);
 
             return Ok(new CommonResponse<dynamic>
@@ -746,9 +732,7 @@ namespace stock_api.Controllers
             var memberAndPermissionSetting = _authHelpers.GetMemberAndPermissionSetting(User);
             var compId = memberAndPermissionSetting.CompanyWithUnit.CompId;
 
-
             var purchaseFlowsSignedByMe = _purchaseService.GetFlowsByUserId(memberAndPermissionSetting.Member.UserId);
-
 
             var distinctMainIdList = purchaseFlowsSignedByMe.Select(f => f.PurchaseMainId).Distinct().ToList();
             var purchaseMainList = _purchaseService.GetPurchaseMainsByMainIdList(distinctMainIdList).OrderByDescending(m => m.UpdatedAt).ToList();
@@ -785,7 +769,6 @@ namespace stock_api.Controllers
                 purchaseMainAndSubItemVoList.Add(purchaseMainAndSubItemVo);
             });
             purchaseMainAndSubItemVoList = purchaseMainAndSubItemVoList.OrderBy(m => m.UpdatedAt).ToList();
-
 
             var response = new CommonResponse<List<PurchaseMainAndSubItemVo>>
             {
@@ -867,7 +850,7 @@ namespace stock_api.Controllers
                 var matchedProductThisYearAverageMonthUsage = productsThisYearAverageMonthUsage.Where(p => p.ProductId == item.ProductId).FirstOrDefault();
                 if (matchedProductThisYearAverageMonthUsage != null)
                 {
-                    item.ThisYearAverageMonthUsageQuantity = matchedProductThisYearAverageMonthUsage.AverageQuantity??0.0;
+                    item.ThisYearAverageMonthUsageQuantity = matchedProductThisYearAverageMonthUsage.AverageQuantity ?? 0.0;
                 }
             }
             data = data.OrderBy(e => e.ProductCode).ToList();
@@ -878,7 +861,6 @@ namespace stock_api.Controllers
                 Data = data,
             };
             return Ok(response);
-
         }
 
         [HttpPost("owner/updateOwnerProcess")]
@@ -891,7 +873,6 @@ namespace stock_api.Controllers
             {
                 return BadRequest(CommonResponse<dynamic>.BuildNotAuthorizeResponse());
             }
-
 
             var validationResult = _updateOwnerProcessRequestValidator.Validate(request);
 
@@ -931,17 +912,14 @@ namespace stock_api.Controllers
                 return BadRequest(CommonResponse<dynamic>.BuildNotAuthorizeResponse());
             }
 
-
             PurchaseSubItem subItem = _purchaseService.GetPurchaseSubItemByItemId(request.ItemId);
             if (subItem == null)
             {
+                return BadRequest(new CommonResponse<dynamic>
                 {
-                    return BadRequest(new CommonResponse<dynamic>
-                    {
-                        Result = false,
-                        Message = "採購單項目不存在"
-                    });
-                }
+                    Result = false,
+                    Message = "採購單項目不存在"
+                });
             }
             _purchaseService.UpdateSubItemOwnerComment(subItem, request);
 
@@ -959,19 +937,16 @@ namespace stock_api.Controllers
             var memberAndPermissionSetting = _authHelpers.GetMemberAndPermissionSetting(User);
             var compId = memberAndPermissionSetting.CompanyWithUnit.CompId;
 
-
             PurchaseSubItem subItem = _purchaseService.GetPurchaseSubItemByItemId(request.ItemId);
             if (subItem == null)
             {
+                return BadRequest(new CommonResponse<dynamic>
                 {
-                    return BadRequest(new CommonResponse<dynamic>
-                    {
-                        Result = false,
-                        Message = "採購單項目不存在"
-                    });
-                }
+                    Result = false,
+                    Message = "採購單項目不存在"
+                });
             }
-            if(subItem.CompId!= compId)
+            if (subItem.CompId != compId)
             {
                 return BadRequest(CommonResponse<dynamic>.BuildNotAuthorizeResponse());
             }
@@ -1006,7 +981,6 @@ namespace stock_api.Controllers
                 });
             }
 
-
             _purchaseService.UpdatePurchaseOwnerComment(purchaseMainSheet, request);
 
             var response = new CommonResponse<dynamic>
@@ -1024,7 +998,6 @@ namespace stock_api.Controllers
             var compId = memberAndPermissionSetting.CompanyWithUnit.CompId;
 
             PurchaseMainSheet? purchaseMainSheet = _purchaseService.GetPurchaseMainByMainId(request.PurchaseMainId);
-
 
             var purchaseSubItemHistories = _purchaseService.ListSubItemListHistory(request.PurchaseMainId).OrderByDescending(h => h.CreatedAt).ToList();
 
@@ -1056,7 +1029,6 @@ namespace stock_api.Controllers
                 }
             }
 
-
             return Ok(new CommonResponse<dynamic>
             {
                 Result = true,
@@ -1079,8 +1051,7 @@ namespace stock_api.Controllers
             }
             request.UserId = memberAndPermissionSetting.Member.UserId;
             var listData = _purchaseService.ListMyReviewPurchase(request);
-            // 過濾出不是自己compId的
-            listData = listData.Where(e=>e.CompId!=compId).ToList();
+            listData = listData.Where(e => e.CompId != compId).ToList();
             List<PurchaseMainAndSubItemVo> filterKeywordsData = new();
             if (request.Keywords != null)
             {
@@ -1124,7 +1095,7 @@ namespace stock_api.Controllers
                 }
             }
             filterKeywordsData = filterKeywordsData.OrderByDescending(item => item.ApplyDate).ToList();
-            //
+
             int totalPages = 0;
             var orderByField = request.PaginationCondition.OrderByField;
             if (orderByField != null)

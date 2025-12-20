@@ -11,6 +11,7 @@ using stock_api.Controllers.Request;
 using stock_api.Models;
 using stock_api.Service.ValueObject;
 using stock_api.Utils;
+using System.Diagnostics;
 using System.Drawing;
 using System.Linq;
 using System.Text.Json;
@@ -423,13 +424,17 @@ namespace stock_api.Service
 
         public List<PurchaseMainAndSubItemVo> ListPurchase(ListPurchaseRequest listPurchaseRequest)
         {
-            _logger.LogInformation("[ListPurchase]---1---{time}", DateTime.Now);
+            var totalStopwatch = Stopwatch.StartNew();
+            var stepStopwatch = new Stopwatch();
+
+            // Step 1: 建立查詢條件
+            stepStopwatch.Start();
             IQueryable<PurchaseItemListView> query = _dbContext.PurchaseItemListViews;
             if (listPurchaseRequest.CompId != null)
             {
                 query = query.Where(h => h.CompId == listPurchaseRequest.CompId);
             }
-                        if (listPurchaseRequest.StartDate != null)
+            if (listPurchaseRequest.StartDate != null)
             {
                 var startDateTime = DateTimeHelper.ParseDateString(listPurchaseRequest.StartDate);
                 query = query.Where(h => h.UpdatedAt >= startDateTime);
@@ -459,33 +464,34 @@ namespace stock_api.Service
             {
                 query = query.Where(h => h.IsActive == listPurchaseRequest.IsActive);
             }
+            stepStopwatch.Stop();
+            _logger.LogInformation("[ListPurchase Service] Step 1 - Build query conditions: {elapsed}ms", stepStopwatch.ElapsedMilliseconds);
 
+            // Step 2: 執行 View 查詢
+            stepStopwatch.Restart();
             var result = query.ToList();
-            _logger.LogInformation("[ListPurchase]---2---{time}", DateTime.Now);
-            Dictionary<string, List<PurchaseItemListView>> mainSheetIdMap = new Dictionary<string, List<PurchaseItemListView>>();
+            stepStopwatch.Stop();
+            _logger.LogInformation("[ListPurchase Service] Step 2 - Execute View query (ToList): {elapsed}ms, ResultCount: {count}", stepStopwatch.ElapsedMilliseconds, result.Count);
 
-            foreach (var item in result)
-            {
-                if (!mainSheetIdMap.ContainsKey(item.PurchaseMainId))
-                {
-                    mainSheetIdMap.Add(item.PurchaseMainId, new List<PurchaseItemListView>());
-                }
-                var voList = mainSheetIdMap.GetValueOrDefault(item.PurchaseMainId);
-                if (voList != null)
-                {
-                    voList.Add(item);
-                }
-            }
-            _logger.LogInformation("[ListPurchase]---3---{time}", DateTime.Now);
-            List<PurchaseMainAndSubItemVo> purchaseMainAndSubItemVoList = new List<PurchaseMainAndSubItemVo> { };
-            var flows = GetAllFlowsByCompId(listPurchaseRequest.CompId).OrderBy(f => f.Sequence);
-            _logger.LogInformation("[ListPurchase]---4---{time}", DateTime.Now);
-            _logger.LogInformation("mainSheetIdMap count:{count}", mainSheetIdMap.Count);
+            // Step 3: 使用 Lookup 建立 mainSheetIdMap (優化版)
+            stepStopwatch.Restart();
+            var mainSheetIdLookup = result.ToLookup(item => item.PurchaseMainId);
+            stepStopwatch.Stop();
+            _logger.LogInformation("[ListPurchase Service] Step 3 - Build mainSheetIdLookup: {elapsed}ms, MainSheetCount: {count}", stepStopwatch.ElapsedMilliseconds, mainSheetIdLookup.Count);
 
-            List<PurchaseSubItemVo> allPurchaseSubItemVoList = new List<PurchaseSubItemVo>();
-            foreach (var purchaseItemListView in result)
-            {
-                var subItem = new PurchaseSubItemVo()
+            // Step 4: 取得所有 Flows 並建立 Dictionary (優化版)
+            stepStopwatch.Restart();
+            var flowsList = GetAllFlowsByCompId(listPurchaseRequest.CompId);
+            // 使用 Lookup 以 PurchaseMainId 分組，避免後續 O(n²) 查詢
+            var flowsLookup = flowsList.ToLookup(f => f.PurchaseMainId);
+            stepStopwatch.Stop();
+            _logger.LogInformation("[ListPurchase Service] Step 4 - GetAllFlowsByCompId and build lookup: {elapsed}ms, FlowCount: {count}", stepStopwatch.ElapsedMilliseconds, flowsList.Count);
+
+            // Step 5: 建立 allPurchaseSubItemVoList 並使用 Lookup 分組 (優化版)
+            stepStopwatch.Restart();
+            var allPurchaseSubItemVoLookup = result.ToLookup(
+                purchaseItemListView => purchaseItemListView.PurchaseMainId,
+                purchaseItemListView => new PurchaseSubItemVo()
                 {
                     ItemId = purchaseItemListView.ItemId,
                     Comment = purchaseItemListView.Comment,
@@ -498,52 +504,63 @@ namespace stock_api.Service
                     Quantity = purchaseItemListView.Quantity,
                     ReceiveQuantity = purchaseItemListView.ReceiveQuantity,
                     ReceiveStatus = purchaseItemListView.ItemReceiveStatus,
-                    GroupIds = purchaseItemListView.GroupIds.Split(',').ToList(),
-                    GroupNames = purchaseItemListView.ItemGroupNames.Split(",").ToList(),
+                    GroupIds = purchaseItemListView.GroupIds?.Split(',').ToList() ?? new List<string>(),
+                    GroupNames = purchaseItemListView.ItemGroupNames?.Split(",").ToList() ?? new List<string>(),
                     ArrangeSupplierId = purchaseItemListView.ArrangeSupplierId,
                     ArrangeSupplierName = purchaseItemListView.ArrangeSupplierName,
                     CurrentInStockQuantity = purchaseItemListView.CurrentInStockQuantity,
-                    CreatedAt = purchaseItemListView.CreatedAt.Value,
-                    UpdatedAt = purchaseItemListView.UpdatedAt.Value,
+                    CreatedAt = purchaseItemListView.CreatedAt ?? DateTime.MinValue,
+                    UpdatedAt = purchaseItemListView.UpdatedAt ?? DateTime.MinValue,
                     SplitProcess = purchaseItemListView.SubSplitProcess,
                     OwnerProcess = purchaseItemListView.SubOwnerProcess,
-                };
-                allPurchaseSubItemVoList.Add(subItem);
-            }
-            _logger.LogInformation("[ListPurchase]---5---{time}", DateTime.Now);
+                });
+            stepStopwatch.Stop();
+            _logger.LogInformation("[ListPurchase Service] Step 5 - Build allPurchaseSubItemVoLookup: {elapsed}ms, SubItemCount: {count}", stepStopwatch.ElapsedMilliseconds, result.Count);
 
-            foreach (var kvp in mainSheetIdMap)
+            // Step 6: 建立 purchaseMainAndSubItemVoList (優化版 - 使用 Lookup O(1) 查詢)
+            stepStopwatch.Restart();
+            var purchaseMainAndSubItemVoList = new List<PurchaseMainAndSubItemVo>(mainSheetIdLookup.Count);
+            foreach (var group in mainSheetIdLookup)
             {
-                List<PurchaseSubItemVo> matchedSubItemVoList = allPurchaseSubItemVoList.Where(vo => vo.PurchaseMainId == kvp.Key).ToList();
+                var firstItem = group.First();
+                // 直接從 Lookup 取得，O(1) 複雜度
+                var matchedSubItemVoList = allPurchaseSubItemVoLookup[group.Key].ToList();
 
                 var vo = new PurchaseMainAndSubItemVo
                 {
-                    PurchaseMainId = kvp.Key,
-                    ApplyDate = kvp.Value[0].ApplyDate,
-                    CompId = kvp.Value[0].CompId,
-                    CurrentStatus = kvp.Value[0].CurrentStatus,
-                    DemandDate = kvp.Value[0].DemandDate,
-                    GroupIds = kvp.Value[0].GroupIds.Split(",", StringSplitOptions.None).ToList(),
-                    Remarks = kvp.Value[0].Remarks,
-                    UserId = kvp.Value[0].UserId,
-                    ReceiveStatus = kvp.Value[0].ReceiveStatus,
-                    Type = kvp.Value[0].Type,
-                    CreatedAt = kvp.Value[0].CreatedAt,
-                    UpdatedAt = kvp.Value[0].UpdatedAt,
-                    IsActive = kvp.Value[0].IsActive,
-                    SplitProcess = kvp.Value[0].MainSplitPrcoess,
-                    OwnerProcess = kvp.Value[0].OwnerProcess,   
+                    PurchaseMainId = group.Key,
+                    ApplyDate = firstItem.ApplyDate,
+                    CompId = firstItem.CompId,
+                    CurrentStatus = firstItem.CurrentStatus,
+                    DemandDate = firstItem.DemandDate,
+                    GroupIds = firstItem.GroupIds?.Split(",", StringSplitOptions.None).ToList() ?? new List<string>(),
+                    Remarks = firstItem.Remarks,
+                    UserId = firstItem.UserId,
+                    ReceiveStatus = firstItem.ReceiveStatus,
+                    Type = firstItem.Type,
+                    CreatedAt = firstItem.CreatedAt,
+                    UpdatedAt = firstItem.UpdatedAt,
+                    IsActive = firstItem.IsActive,
+                    SplitProcess = firstItem.MainSplitPrcoess,
+                    OwnerProcess = firstItem.OwnerProcess,
                     Items = matchedSubItemVoList,
                 };
                 purchaseMainAndSubItemVoList.Add(vo);
             }
-            _logger.LogInformation("[ListPurchase]---6---{time}", DateTime.Now);
+            stepStopwatch.Stop();
+            _logger.LogInformation("[ListPurchase Service] Step 6 - Build purchaseMainAndSubItemVoList: {elapsed}ms, VoCount: {count}", stepStopwatch.ElapsedMilliseconds, purchaseMainAndSubItemVoList.Count);
+
+            // Step 7: 處理 Flows (優化版 - 使用 Lookup O(1) 查詢)
+            stepStopwatch.Restart();
             if (listPurchaseRequest.IsNeedFlow == true)
             {
-                var differentMainSheetId = purchaseMainAndSubItemVoList.Select(m => m.PurchaseMainId).Distinct().ToList();
                 foreach (var item in purchaseMainAndSubItemVoList)
                 {
-                    var matchedFlows = flows.Where(f => f.PurchaseMainId == item.PurchaseMainId).ToList();
+                    // 使用 Lookup O(1) 查詢，而非 O(n) 的 Where
+                    var matchedFlows = flowsLookup[item.PurchaseMainId]
+                        .OrderBy(f => f.Sequence)
+                        .ToList();
+                    
                     var rejectedFlowIndex = matchedFlows.FindIndex(f => f.Status == CommonConstants.PurchaseFlowStatus.REJECT);
                     if (rejectedFlowIndex >= 0)
                     {
@@ -552,8 +569,11 @@ namespace stock_api.Service
                     item.flows = _mapper.Map<List<PurchaseFlowWithAgentsVo>>(matchedFlows);
                 }
             }
-            _logger.LogInformation("[ListPurchase]---7---{time}", DateTime.Now);
-            
+            stepStopwatch.Stop();
+            _logger.LogInformation("[ListPurchase Service] Step 7 - Process flows (IsNeedFlow={isNeedFlow}): {elapsed}ms", listPurchaseRequest.IsNeedFlow, stepStopwatch.ElapsedMilliseconds);
+
+            totalStopwatch.Stop();
+            _logger.LogInformation("[ListPurchase Service] TOTAL execution time: {elapsed}ms", totalStopwatch.ElapsedMilliseconds);
 
             return purchaseMainAndSubItemVoList;
         }
