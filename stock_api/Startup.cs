@@ -1,17 +1,19 @@
-﻿using stock_api.Models;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
+﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.ResponseCompression;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using Quartz;
+using Serilog;
+using Serilog.Enrichers.CallerInfo;
 using stock_api.Common.IoC.Configuration.DI;
+using stock_api.Models;
+using stock_api.Scheduler;
+using System.IO.Compression;
 using System.Text;
 using System.Text.Json;
-using Serilog;
-using Microsoft.AspNetCore.Hosting;
-using Serilog.Enrichers.CallerInfo;
 using System.Transactions;
-using stock_api.Scheduler;
-using Quartz;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -44,6 +46,20 @@ var serilogLoggerFactory = LoggerFactory.Create(loggingBuilder =>
     loggingBuilder.AddSerilog(); // 添加 Serilog 作為 Logger
 });
 
+// [Gzip 新增] 1. 註冊 Response Compression 服務
+builder.Services.AddResponseCompression(options =>
+{
+    options.EnableForHttps = true; // 允許 HTTPS 使用壓縮
+    options.Providers.Add<GzipCompressionProvider>(); // 指定使用 Gzip
+});
+
+// [Gzip 新增] 2. 設定 Gzip 壓縮層級 (可選)
+builder.Services.Configure<GzipCompressionProviderOptions>(options =>
+{
+    // Fastest: 速度最快 (CPU 負擔較小，適合 API)
+    // SmallestSize: 壓縮比最高 (CPU 負擔較大)
+    options.Level = CompressionLevel.Fastest;
+});
 
 //services cors
 builder.Services.AddCors(options =>
@@ -212,6 +228,10 @@ app.UseHttpsRedirection();
 app.UseRouting();
 
 app.UseCors();
+
+// [Gzip 新增] 3. 啟用 Middleware
+// 必須放在 UseCors 之後，但在 MapControllers 之前
+app.UseResponseCompression();
 
 app.UseAuthentication();
 
