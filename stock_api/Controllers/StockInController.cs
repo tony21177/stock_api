@@ -2,6 +2,7 @@
 using FluentValidation;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 using stock_api.Auth;
 using stock_api.Common;
 using stock_api.Common.Constant;
@@ -12,6 +13,7 @@ using stock_api.Models;
 using stock_api.Service;
 using stock_api.Service.ValueObject;
 using stock_api.Utils;
+using System.Diagnostics;
 
 namespace stock_api.Controllers
 {
@@ -26,6 +28,7 @@ namespace stock_api.Controllers
         private readonly WarehouseProductService _warehouseProductService;
         private readonly PurchaseService _purchaseService;
         private readonly StockOutService _stockOutService;
+        private readonly ILogger<StockInController> _logger;
         private readonly IValidator<SearchPurchaseAcceptItemRequest> _searchPurchaseAcceptItemValidator;
         private readonly IValidator<UpdateBatchAcceptItemsRequest> _updateBatchAcceptItemsRequestValidator;
         private readonly IValidator<UpdateAcceptItemRequest> _updateAcceptItemRequestValidator;
@@ -36,7 +39,7 @@ namespace stock_api.Controllers
         private readonly IValidator<UpdateInStockRequest> _updateInStockRequestValidator;
         private readonly IValidator<OwnerStockInRequest> _ownerStockInRequestValidator;
 
-        public StockInController(IMapper mapper, AuthHelpers authHelpers, GroupService groupService, StockInService stockInService, WarehouseProductService warehouseProductService, PurchaseService purchaseService, StockOutService stockOutService)
+        public StockInController(IMapper mapper, AuthHelpers authHelpers, GroupService groupService, StockInService stockInService, WarehouseProductService warehouseProductService, PurchaseService purchaseService, StockOutService stockOutService, ILogger<StockInController> logger)
         {
             _mapper = mapper;
             _authHelpers = authHelpers;
@@ -54,12 +57,16 @@ namespace stock_api.Controllers
             _listReturnRecordsValidator = new ListReturnRecordsValidator();
             _updateInStockRequestValidator = new UpdateInStockRequestValidator();
             _ownerStockInRequestValidator = new OwnerStockInRequestValidator();
+            _logger = logger;
         }
 
         [HttpPost("purchaseAndAcceptItems/list")]
         [Authorize]
         public IActionResult ListPurchases(SearchPurchaseAcceptItemRequest request)
         {
+            var totalStopwatch = Stopwatch.StartNew();
+            var stepStopwatch = new Stopwatch();
+
             var memberAndPermissionSetting = _authHelpers.GetMemberAndPermissionSetting(User);
             var compId = memberAndPermissionSetting.CompanyWithUnit.CompId;
 
@@ -71,280 +78,444 @@ namespace stock_api.Controllers
             {
                 return BadRequest(CommonResponse<dynamic>.BuildValidationFailedResponse(validationResult));
             }
-            List<PurchaseAcceptanceItemsView> purchaseAcceptanceItemsViewList = _stockInService.SearchPurchaseAcceptanceItems(request);
+
+            // 判斷是否可以使用 DB 端分頁（沒有 Keywords 和 GroupId 搜尋，且不是 GroupBySupplier 模式）
+            bool canUseDbPagination = request.Keywords == null && request.GroupId == null && request.IsGroupBySupplier != true;
+
+            if (canUseDbPagination)
+            {
+                return ListPurchasesWithDbPagination(request, totalStopwatch, stepStopwatch, compId);
+            }
+
+            // 使用原有的程式端分頁邏輯（有 Keywords 或 GroupId 搜尋時）
+            return ListPurchasesWithMemoryPagination(request, totalStopwatch, stepStopwatch, compId);
+        }
+
+        /// <summary>
+        /// 使用 DB 端分頁的查詢邏輯
+        /// </summary>
+        private IActionResult ListPurchasesWithDbPagination(
+            SearchPurchaseAcceptItemRequest request,
+            Stopwatch totalStopwatch,
+            Stopwatch stepStopwatch,
+            string compId)
+        {
+            // Step 1: 使用 DB 端分頁查詢採購驗收項目
+            stepStopwatch.Restart();
+            var (purchaseAcceptanceItemsViewList, totalPages, totalItems) = _stockInService.SearchPurchaseAcceptanceItemsWithPagination(request);
+            _logger.LogInformation("[ListPurchases-DbPagination] SearchPurchaseAcceptItems: {elapsed}ms, 筆數: {count}, 總筆數: {total}", 
+                stepStopwatch.ElapsedMilliseconds, purchaseAcceptanceItemsViewList.Count, totalItems);
+
+            // Step 2: 查詢產品資料並建立 Dictionary
+            stepStopwatch.Restart();
             List<string> distinctProductIdList = purchaseAcceptanceItemsViewList.Select(x => x.ProductId).Distinct().ToList();
             List<WarehouseProduct> products = _warehouseProductService.GetProductsByProductIdsAndCompId(distinctProductIdList, compId);
+            var productDict = products.ToDictionary(p => p.ProductId);
+            _logger.LogInformation("[ListPurchases-DbPagination] GetProducts: {elapsed}ms, 筆數: {count}", stepStopwatch.ElapsedMilliseconds, products.Count);
 
-            Dictionary<string, List<PurchaseAcceptanceItemsView>> purchaseMainIdAndAcceptionItemListMap = new();
+            // Step 3: 建立 PurchaseMain 分組 Map
+            stepStopwatch.Restart();
+            var purchaseMainIdAndAcceptionItemListMap = purchaseAcceptanceItemsViewList
+                .GroupBy(item => item.PurchaseMainId)
+                .ToDictionary(g => g.Key, g => g.ToList());
+            _logger.LogInformation("[ListPurchases-DbPagination] BuildPurchaseMainMap: {elapsed}ms", stepStopwatch.ElapsedMilliseconds);
 
-            purchaseAcceptanceItemsViewList = purchaseAcceptanceItemsViewList
-                .Where(i => i.OwnerProcess != CommonConstants.PurchaseMainOwnerProcessStatus.NOT_AGREE).ToList();
-            purchaseAcceptanceItemsViewList.ForEach(item =>
-            {
-                if (!purchaseMainIdAndAcceptionItemListMap.ContainsKey(item.PurchaseMainId))
-                {
-                    purchaseMainIdAndAcceptionItemListMap[item.PurchaseMainId] = new List<PurchaseAcceptanceItemsView>();
-                };
-                purchaseMainIdAndAcceptionItemListMap[item.PurchaseMainId].Add(item);
-            });
-
+            // Step 4: 查詢採購子項並建立 Dictionary
+            stepStopwatch.Restart();
             List<string> distinctItemIdList = purchaseAcceptanceItemsViewList.Select(a => a.ItemId).Distinct().ToList();
             List<PurchaseSubItem> purchaseSubItems = _purchaseService.GetPurchaseSubItemByItemIdList(distinctItemIdList);
+            var purchaseSubItemDict = purchaseSubItems.ToDictionary(s => s.ItemId);
+            _logger.LogInformation("[ListPurchases-DbPagination] GetPurchaseSubItems: {elapsed}ms, 筆數: {count}", stepStopwatch.ElapsedMilliseconds, purchaseSubItems.Count);
 
+            // Step 5: 建立資料清單
+            stepStopwatch.Restart();
+            List<PurchaseAcceptItemsVo> data = BuildPurchaseAcceptItemsData(
+                purchaseMainIdAndAcceptionItemListMap,
+                productDict,
+                purchaseSubItemDict,
+                request);
+            _logger.LogInformation("[ListPurchases-DbPagination] BuildDataList: {elapsed}ms, 筆數: {count}", stepStopwatch.ElapsedMilliseconds, data.Count);
+
+            // Step 6: 移除 OwnerProcess == "NOT_AGREE" 的 AcceptItems
+            stepStopwatch.Restart();
+            foreach (var vo in data)
+            {
+                vo.AcceptItems.RemoveAll(a => a.PurchaseSubItem != null && a.PurchaseSubItem.OwnerProcess == CommonConstants.PurchaseMainOwnerProcessStatus.NOT_AGREE);
+            }
+            data = data.Where(e => e.AcceptItems.Count > 0).ToList();
+            _logger.LogInformation("[ListPurchases-DbPagination] FilterAcceptItems: {elapsed}ms", stepStopwatch.ElapsedMilliseconds);
+
+            // Step 7: 查詢入庫紀錄並建立 Dictionary
+            stepStopwatch.Restart();
+            var lotNumberBatchList = data.SelectMany(e => e.AcceptItems)
+                .Where(a => a.LotNumberBatch != null)
+                .Select(a => a.LotNumberBatch)
+                .Distinct()
+                .ToList();
+            var inStockItemRecords = _stockInService.GetInStockItemRecordsByLotNumberBatchList(compId, lotNumberBatchList);
+            var inStockRecordDict = inStockItemRecords
+                .Where(i => i.LotNumberBatch != null)
+                .GroupBy(i => i.LotNumberBatch)
+                .ToDictionary(g => g.Key!, g => g.First());
+            _logger.LogInformation("[ListPurchases-DbPagination] GetInStockRecords: {elapsed}ms, 筆數: {count}", stepStopwatch.ElapsedMilliseconds, inStockItemRecords.Count);
+
+            // Step 8: 排序 AcceptItems
+            stepStopwatch.Restart();
+            data.ForEach(e => e.AcceptItems = e.AcceptItems.OrderBy(a => a.ProductCode).ToList());
+
+            // 套用排序邏輯（資料已在 DB 端排序過，這裡保持一致性）
+            data = ApplySorting(data, request.PaginationCondition);
+            _logger.LogInformation("[ListPurchases-DbPagination] SortAcceptItems: {elapsed}ms", stepStopwatch.ElapsedMilliseconds);
+
+            // Step 9: 指派 InStockId
+            stepStopwatch.Restart();
+            AssignInStockIds(data, inStockRecordDict);
+            _logger.LogInformation("[ListPurchases-DbPagination] AssignInStockIds: {elapsed}ms", stepStopwatch.ElapsedMilliseconds);
+
+            _logger.LogInformation("[ListPurchases-DbPagination] Total: {elapsed}ms", totalStopwatch.ElapsedMilliseconds);
+
+            return Ok(new CommonResponse<List<PurchaseAcceptItemsVo>>
+            {
+                Result = true,
+                Data = data,
+                TotalPages = totalPages
+            });
+        }
+
+        /// <summary>
+        /// 使用程式端分頁的查詢邏輯（有 Keywords 或 GroupId 搜尋時使用）
+        /// </summary>
+        private IActionResult ListPurchasesWithMemoryPagination(
+            SearchPurchaseAcceptItemRequest request,
+            Stopwatch totalStopwatch,
+            Stopwatch stepStopwatch,
+            string compId)
+        {
+            // Step 1: 查詢採購驗收項目
+            stepStopwatch.Restart();
+            List<PurchaseAcceptanceItemsView> purchaseAcceptanceItemsViewList = _stockInService.SearchPurchaseAcceptanceItems(request);
+            _logger.LogInformation("[ListPurchases-MemoryPagination] SearchPurchaseAcceptItems: {elapsed}ms, 筆數: {count}", stepStopwatch.ElapsedMilliseconds, purchaseAcceptanceItemsViewList.Count);
+
+            // Step 2: 查詢產品資料並建立 Dictionary
+            stepStopwatch.Restart();
+            List<string> distinctProductIdList = purchaseAcceptanceItemsViewList.Select(x => x.ProductId).Distinct().ToList();
+            List<WarehouseProduct> products = _warehouseProductService.GetProductsByProductIdsAndCompId(distinctProductIdList, compId);
+            var productDict = products.ToDictionary(p => p.ProductId);
+            _logger.LogInformation("[ListPurchases-MemoryPagination] GetProducts: {elapsed}ms, 筆數: {count}", stepStopwatch.ElapsedMilliseconds, products.Count);
+
+            // Step 3: 過濾並建立 PurchaseMain 分組 Map (使用 GroupBy 取代 ForEach)
+            stepStopwatch.Restart();
+            purchaseAcceptanceItemsViewList = purchaseAcceptanceItemsViewList
+                .Where(i => i.OwnerProcess != CommonConstants.PurchaseMainOwnerProcessStatus.NOT_AGREE).ToList();
+
+            var purchaseMainIdAndAcceptionItemListMap = purchaseAcceptanceItemsViewList
+                .GroupBy(item => item.PurchaseMainId)
+                .ToDictionary(g => g.Key, g => g.ToList());
+            _logger.LogInformation("[ListPurchases-MemoryPagination] BuildPurchaseMainMap: {elapsed}ms", stepStopwatch.ElapsedMilliseconds);
+
+            // Step 4: 查詢採購子項並建立 Dictionary
+            stepStopwatch.Restart();
+            List<string> distinctItemIdList = purchaseAcceptanceItemsViewList.Select(a => a.ItemId).Distinct().ToList();
+            List<PurchaseSubItem> purchaseSubItems = _purchaseService.GetPurchaseSubItemByItemIdList(distinctItemIdList);
+            var purchaseSubItemDict = purchaseSubItems.ToDictionary(s => s.ItemId);
+            _logger.LogInformation("[ListPurchases-MemoryPagination] GetPurchaseSubItems: {elapsed}ms, 筆數: {count}", stepStopwatch.ElapsedMilliseconds, purchaseSubItems.Count);
+
+            // Step 5: 建立資料清單
+            stepStopwatch.Restart();
+            List<PurchaseAcceptItemsVo> data = BuildPurchaseAcceptItemsData(
+                purchaseMainIdAndAcceptionItemListMap,
+                productDict,
+                purchaseSubItemDict,
+                request);
+            _logger.LogInformation("[ListPurchases-MemoryPagination] BuildDataList: {elapsed}ms, 筆數: {count}", stepStopwatch.ElapsedMilliseconds, data.Count);
+
+            // Step 6: 依 GroupId 過濾
+            stepStopwatch.Restart();
+            if (request.GroupId != null)
+            {
+                foreach (var mainAndAccptItems in data)
+                {
+                    mainAndAccptItems.AcceptItems = mainAndAccptItems.AcceptItems
+                        .Where(a => a.PurchaseSubItem != null && a.PurchaseSubItem.GroupIds.Contains(request.GroupId))
+                        .ToList();
+                }
+                data = data.Where(e => e.AcceptItems.Count > 0).ToList();
+            }
+
+            // 移除 OwnerProcess == "NOT_AGREE" 的 AcceptItems
+            foreach (var vo in data)
+            {
+                vo.AcceptItems.RemoveAll(a => a.PurchaseSubItem != null && a.PurchaseSubItem.OwnerProcess == CommonConstants.PurchaseMainOwnerProcessStatus.NOT_AGREE);
+            }
+            _logger.LogInformation("[ListPurchases-MemoryPagination] FilterByGroupId: {elapsed}ms", stepStopwatch.ElapsedMilliseconds);
+
+            // Step 7: 查詢入庫紀錄並建立 Dictionary
+            stepStopwatch.Restart();
+            var lotNumberBatchList = data.SelectMany(e => e.AcceptItems)
+                .Where(a => a.LotNumberBatch != null)
+                .Select(a => a.LotNumberBatch)
+                .Distinct()
+                .ToList();
+            var inStockItemRecords = _stockInService.GetInStockItemRecordsByLotNumberBatchList(compId, lotNumberBatchList);
+            var inStockRecordDict = inStockItemRecords
+                .Where(i => i.LotNumberBatch != null)
+                .GroupBy(i => i.LotNumberBatch)
+                .ToDictionary(g => g.Key!, g => g.First());
+            _logger.LogInformation("[ListPurchases-MemoryPagination] GetInStockRecords: {elapsed}ms, 筆數: {count}", stepStopwatch.ElapsedMilliseconds, inStockItemRecords.Count);
+
+            // Step 8: 處理 GroupBySupplier 情境
+            if (request.IsGroupBySupplier == true)
+            {
+                stepStopwatch.Restart();
+                var result = BuildSupplierGroupedResult(data, inStockRecordDict, request);
+                _logger.LogInformation("[ListPurchases-MemoryPagination] BuildSupplierGroupedResult: {elapsed}ms", stepStopwatch.ElapsedMilliseconds);
+                _logger.LogInformation("[ListPurchases-MemoryPagination] Total: {elapsed}ms", totalStopwatch.ElapsedMilliseconds);
+
+                return Ok(new CommonResponse<List<SupplierAccepItemsVo>>
+                {
+                    Result = true,
+                    Data = result
+                });
+            }
+
+            // Step 9: 排序與分頁
+            stepStopwatch.Restart();
+            data.ForEach(e => e.AcceptItems = e.AcceptItems.OrderBy(a => a.ProductCode).ToList());
+
+            data = ApplySorting(data, request.PaginationCondition);
+
+            // 過濾零數量
+            data = data.Where(e =>
+            {
+                e.AcceptItems.RemoveAll(i => i.OrderQuantity == 0);
+                return e.AcceptItems.Count > 0;
+            }).ToList();
+
+            var totalItems = data.Count;
+            int totalPages = (int)Math.Ceiling((double)totalItems / request.PaginationCondition.PageSize);
+            data = data
+                .Skip((request.PaginationCondition.Page - 1) * request.PaginationCondition.PageSize)
+                .Take(request.PaginationCondition.PageSize)
+                .ToList();
+            _logger.LogInformation("[ListPurchases-MemoryPagination] SortAndPaginate: {elapsed}ms", stepStopwatch.ElapsedMilliseconds);
+
+            // Step 10: 指派 InStockId
+            stepStopwatch.Restart();
+            AssignInStockIds(data, inStockRecordDict);
+            _logger.LogInformation("[ListPurchases-MemoryPagination] AssignInStockIds: {elapsed}ms", stepStopwatch.ElapsedMilliseconds);
+
+            _logger.LogInformation("[ListPurchases-MemoryPagination] Total: {elapsed}ms", totalStopwatch.ElapsedMilliseconds);
+
+            return Ok(new CommonResponse<List<PurchaseAcceptItemsVo>>
+            {
+                Result = true,
+                Data = data,
+                TotalPages = totalPages
+            });
+        }
+
+        /// <summary>
+        /// 建立採購驗收項目資料清單
+        /// </summary>
+        private List<PurchaseAcceptItemsVo> BuildPurchaseAcceptItemsData(
+            Dictionary<string, List<PurchaseAcceptanceItemsView>> purchaseMainIdAndAcceptionItemListMap,
+            Dictionary<string, WarehouseProduct> productDict,
+            Dictionary<string, PurchaseSubItem> purchaseSubItemDict,
+            SearchPurchaseAcceptItemRequest request)
+        {
             List<PurchaseAcceptItemsVo> data = new();
 
-            var allItemSupplierName = purchaseMainIdAndAcceptionItemListMap.SelectMany(entry => entry.Value).Select(item => item.ArrangeSupplierName)
-                                .Where(name => !string.IsNullOrEmpty(name))
-                                .ToList();
-            bool isSearchSupplierNameKeywords = allItemSupplierName.Where(name => name != null && request.Keywords != null && name.Contains(request.Keywords)).Any();
+            // 使用 HashSet 提升搜尋效能
+            var allItemSupplierNames = purchaseMainIdAndAcceptionItemListMap
+                .SelectMany(entry => entry.Value)
+                .Select(item => item.ArrangeSupplierName)
+                .Where(name => !string.IsNullOrEmpty(name))
+                .ToHashSet();
 
+            bool isSearchSupplierNameKeywords = request.Keywords != null &&
+                allItemSupplierNames.Any(name => name != null && name.Contains(request.Keywords));
 
             foreach (var keyValuePair in purchaseMainIdAndAcceptionItemListMap)
             {
                 List<PurchaseAcceptanceItemsView> purchaseAcceptanceItemViewList = keyValuePair.Value;
                 PurchaseAcceptItemsVo purchaseAcceptItemsVo = _mapper.Map<PurchaseAcceptItemsVo>(purchaseAcceptanceItemViewList[0]);
                 List<AcceptItem> acceptItems = _mapper.Map<List<AcceptItem>>(purchaseAcceptanceItemViewList);
+
+                // 使用 Dictionary.TryGetValue 取代 LINQ Where+FirstOrDefault (O(n) -> O(1))
                 foreach (var item in acceptItems)
                 {
-                    var matchedProdcut = products.Where(p => p.ProductId == item.ProductId).FirstOrDefault();
-                    if (matchedProdcut != null)
+                    if (productDict.TryGetValue(item.ProductId, out var matchedProduct))
                     {
-                        item.Unit = matchedProdcut.Unit;
-                        item.ProductCode = matchedProdcut.ProductCode;
-                        item.UDIBatchCode = matchedProdcut.UdibatchCode;
-                        item.UDICreateCode = matchedProdcut.UdicreateCode;
-                        item.UDIVerifyDateCode = matchedProdcut.UdiverifyDateCode;
-                        item.Prod_supplierName = matchedProdcut.DefaultSupplierName;
-                        item.ArrangeSupplierId = item.ArrangeSupplierId;
-                        item.ArrangeSupplierName = item.ArrangeSupplierName;
-                        item.DeliverFunction = matchedProdcut.DeliverFunction;
-                        item.DeliverTemperature = matchedProdcut.DeliverTemperature;
-                        item.SavingFunction = matchedProdcut.SavingFunction;
-                        item.SavingTemperature = matchedProdcut.SavingTemperature;
-                        item.ProductModel = matchedProdcut.ProductModel;
-                        item.OpenDeadline = matchedProdcut.OpenDeadline;
+                        item.Unit = matchedProduct.Unit;
+                        item.ProductCode = matchedProduct.ProductCode;
+                        item.UDIBatchCode = matchedProduct.UdibatchCode;
+                        item.UDICreateCode = matchedProduct.UdicreateCode;
+                        item.UDIVerifyDateCode = matchedProduct.UdiverifyDateCode;
+                        item.Prod_supplierName = matchedProduct.DefaultSupplierName;
+                        item.DeliverFunction = matchedProduct.DeliverFunction;
+                        item.DeliverTemperature = matchedProduct.DeliverTemperature;
+                        item.SavingFunction = matchedProduct.SavingFunction;
+                        item.SavingTemperature = matchedProduct.SavingTemperature;
+                        item.ProductModel = matchedProduct.ProductModel;
+                        item.OpenDeadline = matchedProduct.OpenDeadline;
                     }
-                    var matchedSubItem = purchaseSubItems.Where(s => s.ItemId == item.ItemId).FirstOrDefault();
-                    item.PurchaseSubItem = matchedSubItem;
+
+                    if (purchaseSubItemDict.TryGetValue(item.ItemId, out var matchedSubItem))
+                    {
+                        item.PurchaseSubItem = matchedSubItem;
+                    }
                 }
 
-                if (request.Keywords == null)
+                // 判斷是否應該加入結果
+                if (ShouldIncludeInResult(purchaseAcceptItemsVo, acceptItems, request, isSearchSupplierNameKeywords))
                 {
                     purchaseAcceptItemsVo.AcceptItems = acceptItems;
                     data.Add(purchaseAcceptItemsVo);
-                    continue;
                 }
-
-                if (request.Keywords != null && isSearchSupplierNameKeywords == false && (purchaseAcceptItemsVo.IsContainKeywords(request.Keywords) || acceptItems.Any(acceptItem => acceptItem.IsContainKeywords(request.Keywords))))
-                {
-                    purchaseAcceptItemsVo.AcceptItems = acceptItems;
-                    data.Add(purchaseAcceptItemsVo);
-                    continue;
-                }
-
-                if (request.Keywords != null && isSearchSupplierNameKeywords == true && acceptItems.Any(acceptItem => acceptItem.IsContainSupplierName(request.Keywords)))
-                {
-                    List<AcceptItem> filteredAcceptItems = acceptItems.Where(acceptItem => acceptItem.IsContainKeywords(request.Keywords)).ToList();
-                    var ifAnyAcceptItemContainSupplierName = (filteredAcceptItems.Count > 1);
-                    if (ifAnyAcceptItemContainSupplierName)
-                    {
-                        purchaseAcceptItemsVo.AcceptItems = filteredAcceptItems;
-                        data.Add(purchaseAcceptItemsVo);
-                    }
-                    continue;
-
-                }
-                //if (request.Keywords != null && acceptItems.Any(acceptItem => acceptItem.IsContainKeywords(request.Keywords)))
-                //{
-                //    List<AcceptItem> filteredAcceptItems = acceptItems.Where(acceptItem => acceptItem.IsContainKeywords(request.Keywords)).ToList();
-                //    if (filteredAcceptItems.Any())
-                //    {
-                //        purchaseAcceptItemsVo.AcceptItems = filteredAcceptItems;
-                //        data.Add(purchaseAcceptItemsVo);
-                //    }
-                //}
-
-            }
-            if (request.GroupId != null)
-            {
-                foreach (var mainAndAccptItems in data)
-                {
-                    mainAndAccptItems.AcceptItems = mainAndAccptItems.AcceptItems.Where(a => a.PurchaseSubItem != null && a.PurchaseSubItem.GroupIds.Contains(request.GroupId)).ToList();
-                }
-                data = data.Where(e => e.AcceptItems.Count > 0).ToList();
             }
 
-            // Remove AcceptItems with PurchaseSubItem.OwnerProcess == "NOT_AGREE"
-            foreach (var vo in data)
+            return data;
+        }
+
+        /// <summary>
+        /// 判斷是否應該將資料加入結果
+        /// </summary>
+        private bool ShouldIncludeInResult(
+            PurchaseAcceptItemsVo purchaseAcceptItemsVo,
+            List<AcceptItem> acceptItems,
+            SearchPurchaseAcceptItemRequest request,
+            bool isSearchSupplierNameKeywords)
+        {
+            if (request.Keywords == null)
             {
-                vo.AcceptItems.RemoveAll(a => a.PurchaseSubItem != null && a.PurchaseSubItem.OwnerProcess == CommonConstants.PurchaseMainOwnerProcessStatus.NOT_AGREE);
+                return true;
             }
 
-            List<AcceptItem> allAcceptItemList = new();
-            var lotNumberBatchList = data.SelectMany(e => e.AcceptItems).Select(a => a.LotNumberBatch).ToList();
-            var inStockItemRecords = _stockInService.GetInStockItemRecordsByLotNumberBatchList(compId, lotNumberBatchList);
-
-            if (request.IsGroupBySupplier == true)
+            if (!isSearchSupplierNameKeywords &&
+                (purchaseAcceptItemsVo.IsContainKeywords(request.Keywords) ||
+                 acceptItems.Any(acceptItem => acceptItem.IsContainKeywords(request.Keywords))))
             {
+                return true;
+            }
 
+            if (isSearchSupplierNameKeywords &&
+                acceptItems.Any(acceptItem => acceptItem.IsContainSupplierName(request.Keywords)))
+            {
+                var filteredAcceptItems = acceptItems
+                    .Where(acceptItem => acceptItem.IsContainKeywords(request.Keywords))
+                    .ToList();
+                return filteredAcceptItems.Count > 1;
+            }
 
-                allAcceptItemList = data.SelectMany(item => item.AcceptItems).ToList();
-                Dictionary<int, List<AcceptItem>> supplierIdAndAcceptItemListMap = new();
-                supplierIdAndAcceptItemListMap[-1] = new();
-                allAcceptItemList.ForEach(item =>
-                {
-                    if (item.ArrangeSupplierId != null)
-                    {
-                        if (!supplierIdAndAcceptItemListMap.ContainsKey(item.ArrangeSupplierId.Value))
-                        {
-                            supplierIdAndAcceptItemListMap[item.ArrangeSupplierId.Value] = new();
-                        }
-                        supplierIdAndAcceptItemListMap[item.ArrangeSupplierId.Value].Add(item);
-                    }
-                    else
-                    {
-                        supplierIdAndAcceptItemListMap[-1].Add(item);
-                    }
-                });
+            return false;
+        }
 
-                List<SupplierAccepItemsVo> result = new();
-                foreach (var keyValuePair in supplierIdAndAcceptItemListMap)
-                {
-                    if (keyValuePair.Value.Count > 0)
-                    {
-                        SupplierVo supplierVo = new()
-                        {
-                            ArrangeSupplierId = keyValuePair.Value[0].ArrangeSupplierId ?? -1,
-                            ArrangeSupplierName = keyValuePair.Value[0].ArrangeSupplierName,
-                        };
-                        SupplierAccepItemsVo supplierAccepItemsVo = new()
-                        {
-                            Supplier = supplierVo,
-                            AcceptItems = keyValuePair.Value,
-                        };
-                        result.Add(supplierAccepItemsVo);
-                    }
-                }
-                if (request.SupplierId != null)
-                {
-                    result = result.Where(i => i.Supplier.ArrangeSupplierId == request.SupplierId).ToList();
-                }
-                var purchaseMainIdList = result.SelectMany(e => e.AcceptItems.Where(i => i.PurchaseMainId != null).Select(i => i.PurchaseMainId)).Distinct().ToList();
-                var allPurchaseMainList = _purchaseService.GetPurchaseMainsByMainIdList(purchaseMainIdList);
-                result.ForEach(e => e.AcceptItems.ForEach(i =>
-                {
-                    var matchedPurchaseMain = allPurchaseMainList.Where(m => m.PurchaseMainId == i.PurchaseMainId).FirstOrDefault();
-                    i.PurchaseMainId = matchedPurchaseMain.PurchaseMainId;
-                    i.ApplyDate = matchedPurchaseMain.ApplyDate;
-                }));
+        /// <summary>
+        /// 套用排序邏輯
+        /// </summary>
+        private List<PurchaseAcceptItemsVo> ApplySorting(List<PurchaseAcceptItemsVo> data, PaginationCondition paginationCondition)
+        {
+            paginationCondition.OrderByField ??= "ProductCode";
 
-                // 增加InStockId
-                foreach (var element in result)
-                {
-                    foreach (var item in element.AcceptItems)
-                    {
-                        if (item.LotNumberBatch != null)
-                        {
-                            var matchedInStockItem = inStockItemRecords.Where(i => i.LotNumberBatch == item.LotNumberBatch).FirstOrDefault();
-                            if (matchedInStockItem != null)
-                            {
-                                item.InStockId = matchedInStockItem.InStockId;
-                            }
-                        }
-                    }
-                }
+            var orderByField = StringUtils.CapitalizeFirstLetter(paginationCondition.OrderByField);
+            bool isDesc = paginationCondition.IsDescOrderBy;
 
-                var responseGroup = new CommonResponse<List<SupplierAccepItemsVo>>
+            return orderByField switch
+            {
+                "ApplyDate" => isDesc
+                    ? data.OrderByDescending(item => item.ApplyDate).ToList()
+                    : data.OrderBy(item => item.ApplyDate).ToList(),
+                "DemandDate" => isDesc
+                    ? data.OrderByDescending(item => item.DemandDate).ToList()
+                    : data.OrderBy(item => item.DemandDate).ToList(),
+                "GroupId" => data.OrderBy(item => item.GroupIds).ToList(),
+                _ => data
+            };
+        }
+
+        /// <summary>
+        /// 建立按供應商分組的結果
+        /// </summary>
+        private List<SupplierAccepItemsVo> BuildSupplierGroupedResult(
+            List<PurchaseAcceptItemsVo> data,
+            Dictionary<string, InStockItemRecord> inStockRecordDict,
+            SearchPurchaseAcceptItemRequest request)
+        {
+            var allAcceptItemList = data.SelectMany(item => item.AcceptItems).ToList();
+
+            // 使用 GroupBy 取代手動迴圈
+            var supplierIdAndAcceptItemListMap = allAcceptItemList
+                .GroupBy(item => item.ArrangeSupplierId ?? -1)
+                .ToDictionary(g => g.Key, g => g.ToList());
+
+            // 批次查詢 PurchaseMain
+            var purchaseMainIdList = allAcceptItemList
+                .Where(i => i.PurchaseMainId != null)
+                .Select(i => i.PurchaseMainId)
+                .Distinct()
+                .ToList();
+
+            var allPurchaseMainList = _purchaseService.GetPurchaseMainsByMainIdList(purchaseMainIdList);
+            var purchaseMainDict = allPurchaseMainList.ToDictionary(m => m.PurchaseMainId);
+
+            List<SupplierAccepItemsVo> result = new();
+
+            foreach (var keyValuePair in supplierIdAndAcceptItemListMap)
+            {
+                if (keyValuePair.Value.Count == 0) continue;
+
+                var firstItem = keyValuePair.Value[0];
+                var supplierVo = new SupplierVo
                 {
-                    Result = true,
-                    Data = result
+                    ArrangeSupplierId = firstItem.ArrangeSupplierId ?? -1,
+                    ArrangeSupplierName = firstItem.ArrangeSupplierName,
                 };
-                return Ok(responseGroup);
-            }
-            data.ForEach(e => e.AcceptItems = e.AcceptItems.OrderBy(a => a.ProductCode).ToList());
 
-            int totalPages = 0;
-            if (request.PaginationCondition.OrderByField == null) request.PaginationCondition.OrderByField = "ProductCode";
-            if (request.PaginationCondition.IsDescOrderBy)
-            {
-                var orderByField = StringUtils.CapitalizeFirstLetter(request.PaginationCondition.OrderByField);
+                // 使用 Dictionary.TryGetValue 取代 LINQ Where+FirstOrDefault
+                foreach (var item in keyValuePair.Value)
+                {
+                    if (item.PurchaseMainId != null && purchaseMainDict.TryGetValue(item.PurchaseMainId, out var matchedPurchaseMain))
+                    {
+                        item.ApplyDate = matchedPurchaseMain.ApplyDate;
+                    }
 
-                switch (orderByField)
-                {
-                    case "ApplyDate":
-                        data = data.OrderByDescending(item => item.ApplyDate).ToList();
-                        break;
-                    case "DemandDate":
-                        data = data.OrderByDescending(item => item.DemandDate).ToList();
-                        break;
-                    case "GroupId":
-                        data = data.OrderBy(item => item.GroupIds).ToList();
-                        break;
-                    default:
-                        break;
+                    if (item.LotNumberBatch != null && inStockRecordDict.TryGetValue(item.LotNumberBatch, out var matchedInStockItem))
+                    {
+                        item.InStockId = matchedInStockItem.InStockId;
+                    }
                 }
-            }
-            else
-            {
-                var orderByField = StringUtils.CapitalizeFirstLetter(request.PaginationCondition.OrderByField);
-                switch (orderByField)
+
+                result.Add(new SupplierAccepItemsVo
                 {
-                    case "ApplyDate":
-                        data = data.OrderBy(item => item.ApplyDate).ToList();
-                        break;
-                    case "DemandDate":
-                        data = data.OrderBy(item => item.DemandDate).ToList();
-                        break;
-                    case "GroupId":
-                        data = data.OrderBy(item => item.GroupIds).ToList();
-                        break;
-                    default:
-                        break;
-                }
+                    Supplier = supplierVo,
+                    AcceptItems = keyValuePair.Value,
+                });
             }
 
-            var filteredZeroQuantityOutData = new List<PurchaseAcceptItemsVo>();
-            data.ForEach(e =>
+            if (request.SupplierId != null)
             {
-                e.AcceptItems.RemoveAll(i => i.OrderQuantity == 0);
-                if (e.AcceptItems.Count > 0)
-                {
-                    filteredZeroQuantityOutData.Add(e);
-                }
-            });
-            data = filteredZeroQuantityOutData;
+                result = result.Where(i => i.Supplier.ArrangeSupplierId == request.SupplierId).ToList();
+            }
 
+            return result;
+        }
 
-            var totalItems = data.Count;
-            totalPages = (int)Math.Ceiling((double)totalItems / request.PaginationCondition.PageSize);
-            data = data.Skip((request.PaginationCondition.Page - 1) * request.PaginationCondition.PageSize).Take(request.PaginationCondition.PageSize).ToList();
-
-            // 增加InStockId
+        /// <summary>
+        /// 指派 InStockId 到 AcceptItems
+        /// </summary>
+        private void AssignInStockIds(List<PurchaseAcceptItemsVo> data, Dictionary<string, InStockItemRecord> inStockRecordDict)
+        {
             foreach (var element in data)
             {
                 foreach (var item in element.AcceptItems)
                 {
-                    if (item.LotNumberBatch != null)
+                    if (item.LotNumberBatch != null && inStockRecordDict.TryGetValue(item.LotNumberBatch, out var matchedInStockItem))
                     {
-                        var matchedInStockItem = inStockItemRecords.Where(i => i.LotNumberBatch == item.LotNumberBatch).FirstOrDefault();
-                        if (matchedInStockItem != null)
-                        {
-                            item.InStockId = matchedInStockItem.InStockId;
-                        }
+                        item.InStockId = matchedInStockItem.InStockId;
                     }
                 }
             }
-
-
-            var response = new CommonResponse<List<PurchaseAcceptItemsVo>>
-            {
-                Result = true,
-                Data = data,
-                TotalPages = totalPages
-            };
-            return Ok(response);
         }
-
 
         [HttpPost("acceptItems/search")]
         [Authorize]

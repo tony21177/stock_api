@@ -46,16 +46,6 @@ namespace stock_api.Service
             {
                 query = query.Where(h => h.PurchaseMainId == request.PurchaseMainId);
             }
-            //if (request.DemandDateStart != null)
-            //{
-            //    DateOnly startDate = DateOnly.FromDateTime(DateTimeHelper.ParseDateString(request.DemandDateStart).Value);
-            //    query = query.Where(h => h.DemandDate >= startDate);
-            //}
-            //if (request.DemandDateEnd != null)
-            //{
-            //    DateOnly endDate = DateOnly.FromDateTime(DateTimeHelper.ParseDateString(request.DemandDateStart).Value).AddDays(1);
-            //    query = query.Where(h => h.DemandDate < endDate);
-            //}
             if (request.DemandDateStart != null)
             {
                 var startDateTime = DateTimeHelper.ParseDateString(request.DemandDateStart).Value;
@@ -85,11 +75,6 @@ namespace stock_api.Service
                 DateTime endDateTime = DateTimeHelper.ParseDateString(request.ApplyDateEnd).Value.AddDays(1);
                 query = query.Where(h => h.ApplyDate < endDateTime);
             }
-            // 是要過濾SubItems的
-            //if (request.GroupId != null)
-            //{
-            //    query = query.Where(h => h.GroupIds.Contains(request.GroupId));
-            //}
             if (request.Type != null)
             {
                 query = query.Where(h => h.Type == request.Type);
@@ -98,6 +83,120 @@ namespace stock_api.Service
 
 
             return query.ToList();
+        }
+
+        /// <summary>
+        /// 在資料庫端進行分頁的查詢方法
+        /// </summary>
+        /// <param name="request">查詢條件</param>
+        /// <returns>分頁後的資料和總頁數</returns>
+        public (List<PurchaseAcceptanceItemsView> Data, int TotalPages, int TotalItems) SearchPurchaseAcceptanceItemsWithPagination(SearchPurchaseAcceptItemRequest request)
+        {
+            IQueryable<PurchaseAcceptanceItemsView> query = _dbContext.PurchaseAcceptanceItemsViews;
+
+            // 套用基本過濾條件
+            if (request.ReceiveStatus != null)
+            {
+                query = query.Where(h => request.ReceiveStatus == h.ReceiveStatus);
+            }
+            if (request.ReceiveStatusList != null)
+            {
+                query = query.Where(h => request.ReceiveStatusList.Contains(h.ReceiveStatus));
+            }
+            if (request.InStockStatusList != null)
+            {
+                query = query.Where(h => h.InStockStatus != null && request.InStockStatusList.Contains(h.InStockStatus));
+            }
+            if (request.PurchaseMainId != null)
+            {
+                query = query.Where(h => h.PurchaseMainId == request.PurchaseMainId);
+            }
+            if (request.DemandDateStart != null)
+            {
+                var startDateTime = DateTimeHelper.ParseDateString(request.DemandDateStart).Value;
+                query = query.Where(h => h.DemandDate.Value.ToDateTime(new TimeOnly(0, 0)) >= startDateTime);
+            }
+            if (request.DemandDateEnd != null)
+            {
+                var endDateTime = DateTimeHelper.ParseDateString(request.DemandDateEnd).Value.AddDays(1);
+                query = query.Where(h => h.DemandDate.Value.ToDateTime(new TimeOnly(0, 0)) < endDateTime);
+            }
+            if (request.VerifyAtStart != null)
+            {
+                var startDateTime = DateTimeHelper.ParseDateString(request.VerifyAtStart).Value;
+                query = query.Where(h => h.VerifyAt >= startDateTime);
+            }
+            if (request.VerifyAtEnd != null)
+            {
+                var endDateTime = DateTimeHelper.ParseDateString(request.VerifyAtEnd).Value.AddDays(1);
+                query = query.Where(h => h.VerifyAt < endDateTime);
+            }
+            if (request.ApplyDateStart != null)
+            {
+                query = query.Where(h => h.ApplyDate >= DateTimeHelper.ParseDateString(request.ApplyDateStart).Value);
+            }
+            if (request.ApplyDateEnd != null)
+            {
+                DateTime endDateTime = DateTimeHelper.ParseDateString(request.ApplyDateEnd).Value.AddDays(1);
+                query = query.Where(h => h.ApplyDate < endDateTime);
+            }
+            if (request.Type != null)
+            {
+                query = query.Where(h => h.Type == request.Type);
+            }
+            query = query.Where(h => h.CompId == request.CompId);
+
+            // 過濾掉 OwnerProcess 為 NOT_AGREE 的項目
+            query = query.Where(h => h.OwnerProcess != CommonConstants.PurchaseMainOwnerProcessStatus.NOT_AGREE);
+
+            // 過濾掉 OrderQuantity 為 0 的項目
+            query = query.Where(h => h.OrderQuantity > 0);
+
+            // 取得分頁後的 PurchaseMainId 列表（先分組再分頁）
+            var orderByField = request.PaginationCondition.OrderByField ?? "ApplyDate";
+            orderByField = StringUtils.CapitalizeFirstLetter(orderByField);
+            bool isDesc = request.PaginationCondition.IsDescOrderBy;
+
+            // 依 PurchaseMainId 分組並排序
+            IQueryable<IGrouping<string, PurchaseAcceptanceItemsView>> groupedQuery = query.GroupBy(h => h.PurchaseMainId);
+
+            // 先建立排序後的 PurchaseMainId 查詢
+            IQueryable<string> orderedPurchaseMainIds;
+            switch (orderByField)
+            {
+                case "ApplyDate":
+                    orderedPurchaseMainIds = isDesc
+                        ? groupedQuery.OrderByDescending(g => g.Max(x => x.ApplyDate)).Select(g => g.Key)
+                        : groupedQuery.OrderBy(g => g.Min(x => x.ApplyDate)).Select(g => g.Key);
+                    break;
+                case "DemandDate":
+                    orderedPurchaseMainIds = isDesc
+                        ? groupedQuery.OrderByDescending(g => g.Max(x => x.DemandDate)).Select(g => g.Key)
+                        : groupedQuery.OrderBy(g => g.Min(x => x.DemandDate)).Select(g => g.Key);
+                    break;
+                default:
+                    orderedPurchaseMainIds = isDesc
+                        ? groupedQuery.OrderByDescending(g => g.Max(x => x.ApplyDate)).Select(g => g.Key)
+                        : groupedQuery.OrderBy(g => g.Min(x => x.ApplyDate)).Select(g => g.Key);
+                    break;
+            }
+
+            // 計算總數
+            int totalItems = orderedPurchaseMainIds.Count();
+            int totalPages = (int)Math.Ceiling((double)totalItems / request.PaginationCondition.PageSize);
+
+            // 分頁取得 PurchaseMainId
+            var pagedPurchaseMainIds = orderedPurchaseMainIds
+                .Skip((request.PaginationCondition.Page - 1) * request.PaginationCondition.PageSize)
+                .Take(request.PaginationCondition.PageSize)
+                .ToList();
+
+            // 只查詢分頁後的 PurchaseMainId 對應的完整資料
+            var result = query
+                .Where(h => pagedPurchaseMainIds.Contains(h.PurchaseMainId))
+                .ToList();
+
+            return (result, totalPages, totalItems);
         }
 
         public List<AcceptanceItem> GetAcceptanceItemsByAccepIdList(List<string> acceptIdList, string compId)
@@ -131,9 +230,6 @@ namespace stock_api.Service
                 {
                     existingAcceptanceItem.LotNumber = updateAcceptItem.LotNumber;
                 }
-                //var now = DateTime.Now;
-                //var nowDateTimeString = DateTimeHelper.FormatDateString(now, "yyyyMMddHHmm");
-                //existingAcceptanceItem.LotNumberBatch = $"{product.ProductCode}{nowDateTimeString}";
                 if (existingInStockRecord == null)
                 {
                     existingAcceptanceItem.LotNumberBatch = existingAcceptanceItem.LotNumberBatchSeq.ToString("D12");
@@ -152,7 +248,7 @@ namespace stock_api.Service
                 }
                 if (existingAcceptanceItem.AcceptQuantity != null && existingAcceptanceItem.QcStatus != CommonConstants.QcStatus.FAIL)
                 {
-                    existingAcceptanceItem.CurrentTotalQuantity = product.InStockQuantity + existingAcceptanceItem.AcceptQuantity; // 驗收入庫後，當下該品項的總庫存數量
+                    existingAcceptanceItem.CurrentTotalQuantity = product.InStockQuantity + existingAcceptanceItem.AcceptQuantity;
                 }
 
                 if (updateAcceptItem.Comment != null)
@@ -176,7 +272,6 @@ namespace stock_api.Service
                     existingAcceptanceItem.SavingTemperature = updateAcceptItem.SavingTemperature;
                 }
 
-                // 判斷是否全部驗收完
                 if (existingAcceptanceItem.AcceptQuantity != null && existingAcceptanceItem.AcceptQuantity >= existingAcceptanceItem.OrderQuantity)
                 {
                     existingAcceptanceItem.InStockStatus = CommonConstants.PurchaseSubItemReceiveStatus.DONE;
@@ -187,7 +282,6 @@ namespace stock_api.Service
                 }
                 else if (existingAcceptanceItem.AcceptQuantity != null && existingAcceptanceItem.AcceptQuantity > 0 && existingAcceptanceItem.AcceptQuantity < existingAcceptanceItem.OrderQuantity)
                 {
-                    // 判斷是否部分驗收
                     _logger.LogInformation("[品項部分驗收] AcceptId:${acceptId},AcceptQuantity:${AcceptQuantity},OrderQuantity:${OrderQuantity}", existingAcceptanceItem.AcceptId, existingAcceptanceItem.AcceptQuantity, existingAcceptanceItem.OrderQuantity);
                     existingAcceptanceItem.InStockStatus = CommonConstants.PurchaseSubItemReceiveStatus.PART;
                     existingAcceptanceItem.VerifyAt = DateTime.Now;
@@ -214,8 +308,6 @@ namespace stock_api.Service
 
                 if (updateAcceptItem.AcceptQuantity != null)
                 {
-
-
                     var tempInStockItemRecord = new TempInStockItemRecord()
                     {
                         InStockId = Guid.NewGuid().ToString(),
@@ -240,18 +332,17 @@ namespace stock_api.Service
                         SavingTemperature = updateAcceptItem.SavingTemperature,
                     };
 
-
-                    var qcTestStatus = CommonConstants.QcTestStatus.NONE;   
+                    var qcTestStatus = CommonConstants.QcTestStatus.NONE;
                     if (product.IsNeedAcceptProcess == true)
                     {
-                        if (updateAcceptItem.LotNumber !=null && product.QcType == CommonConstants.QcTypeConstants.LOT_NUMBER )
+                        if (updateAcceptItem.LotNumber != null && product.QcType == CommonConstants.QcTypeConstants.LOT_NUMBER)
                         {
                             if (IsThisLotNumberAlreadyQc(updateAcceptItem.LotNumber) == true)
                             {
                                 qcTestStatus = CommonConstants.QcTestStatus.DONE;
                             }
                         }
-                        if (lotNumberBatch!=null&& product.QcType == CommonConstants.QcTypeConstants.LOT_NUMBER_BATCH)
+                        if (lotNumberBatch != null && product.QcType == CommonConstants.QcTypeConstants.LOT_NUMBER_BATCH)
                         {
                             if (IsThisLotNumberBatchAlreadyQc(lotNumberBatch) == true)
                             {
@@ -259,7 +350,7 @@ namespace stock_api.Service
                             }
                         }
                     }
-                        var inStockItemRecord = new InStockItemRecord()
+                    var inStockItemRecord = new InStockItemRecord()
                     {
                         InStockId = Guid.NewGuid().ToString(),
                         LotNumberBatch = lotNumberBatch,
@@ -292,12 +383,10 @@ namespace stock_api.Service
 
                     if (isDirectOutStock)
                     {
-
                         var outStockId = Guid.NewGuid().ToString();
                         var outStockRecord = new OutStockRecord()
                         {
                             OutStockId = outStockId,
-                            //AbnormalReason = request.AbnormalReason,
                             ApplyQuantity = updateAcceptItem.AcceptQuantity.Value,
                             LotNumber = updateAcceptItem.LotNumber,
                             LotNumberBatch = lotNumberBatch,
@@ -329,10 +418,7 @@ namespace stock_api.Service
                             Quantity = updateAcceptItem.AcceptQuantity.Value,
                         };
                         _dbContext.OutstockRelatetoInstocks.Add(outStockRelateToInStock);
-
-
                     }
-
 
                     if (inStockItemRecord.IsNeedQc == true)
                     {
@@ -341,7 +427,6 @@ namespace stock_api.Service
                             var lastInStockedRecord = _dbContext.InStockItemRecords.Where(i => i.LotNumber == inStockItemRecord.LotNumber).OrderByDescending(i => i.CreatedAt).FirstOrDefault();
                             if (lastInStockedRecord != null && (lastInStockedRecord.QcTestStatus == CommonConstants.QcTestStatus.DONE))
                             {
-                                // 上一批同批號的已經檢驗pass,表示此批號已經QC過了,不需再QC
                                 inStockItemRecord.QcTestStatus = CommonConstants.QcTestStatus.DONE;
                             }
                         }
@@ -350,7 +435,6 @@ namespace stock_api.Service
                             var lastInStockedRecord = _dbContext.InStockItemRecords.Where(i => i.LotNumberBatch == inStockItemRecord.LotNumberBatch).OrderByDescending(i => i.CreatedAt).FirstOrDefault();
                             if (lastInStockedRecord != null && (lastInStockedRecord.QcTestStatus == CommonConstants.QcTestStatus.DONE))
                             {
-                                // 上一批同批次的已經檢驗pass,表示此批號已經QC過了,不需再QC
                                 inStockItemRecord.QcTestStatus = CommonConstants.QcTestStatus.DONE;
                             }
                         }
@@ -365,17 +449,13 @@ namespace stock_api.Service
                             ProductName = inStockItemRecord.ProductName,
                         };
                         qc.Lot = lot;
-
                     }
 
-
-                    //更新庫存品項
-                    if (isDirectOutStock == false) //入庫直接出庫等於庫存數量不變
+                    if (isDirectOutStock == false)
                     {
                         product.InStockQuantity = inStockItemRecord.AfterQuantity;
                     }
 
-                    //入庫直接出庫
                     if (isDirectOutStock == true)
                     {
                         product.LotNumber = updateAcceptItem.LotNumber;
@@ -388,18 +468,11 @@ namespace stock_api.Service
                         product.LastOutStockDate = nowDate;
                         product.OriginalDeadline = inStockItemRecord.ExpirationDate;
                     }
-                    // 2024/09/19通常由金萬林設定
-                    //product.DeliverFunction = updateAcceptItem.DeliverFunction;
-                    //product.DeliverTemperature = updateAcceptItem.DeliverTemperature;
-                    //product.SavingFunction = updateAcceptItem.SavingFunction;
-                    //product.SavingTemperature = updateAcceptItem.SavingTemperature;
-
-
 
                     _dbContext.TempInStockItemRecords.Add(tempInStockItemRecord);
                     _dbContext.InStockItemRecords.Add(inStockItemRecord);
                 }
-                //更新採購主單
+
                 List<AcceptanceItem> allExistingAcceptanceItems = _dbContext.AcceptanceItems.Where(i => i.PurchaseMainId == purchaseMain.PurchaseMainId && i.CompId == compId).ToList();
                 List<AcceptanceItem> otherExistingAcceptanceItems = allExistingAcceptanceItems.Where(i => i.AcceptId != existingAcceptanceItem.AcceptId).ToList();
                 var acceptIds = otherExistingAcceptanceItems.Select(i => i.AcceptId).ToList();
@@ -418,11 +491,10 @@ namespace stock_api.Service
                 {
                     purchaseMain.ReceiveStatus = CommonConstants.PurchaseReceiveStatus.PART_ACCEPT;
                 }
-                else if (otherExistingAcceptanceItems.All(item => item.InStockStatus == CommonConstants.PurchaseSubItemReceiveStatus.DONE|| item.InStockStatus == CommonConstants.PurchaseSubItemReceiveStatus.CLOSE) && existingAcceptanceItem.InStockStatus == CommonConstants.PurchaseSubItemReceiveStatus.DONE)
+                else if (otherExistingAcceptanceItems.All(item => item.InStockStatus == CommonConstants.PurchaseSubItemReceiveStatus.DONE || item.InStockStatus == CommonConstants.PurchaseSubItemReceiveStatus.CLOSE) && existingAcceptanceItem.InStockStatus == CommonConstants.PurchaseSubItemReceiveStatus.DONE)
                 {
                     purchaseMain.ReceiveStatus = CommonConstants.PurchaseReceiveStatus.ALL_ACCEPT;
                 }
-
 
                 _dbContext.SaveChanges();
                 scope.Complete();
@@ -433,7 +505,6 @@ namespace stock_api.Service
                 _logger.LogError("事務失敗[UpdateAccepItem]：{msg}", ex);
                 return (false, ex.Message, null);
             }
-
         }
 
         public List<AcceptanceItem> AcceptanceItemsByUdiSerialCode(string udiserialCode, string compId)
@@ -706,16 +777,8 @@ namespace stock_api.Service
             return _dbContext.AcceptanceItems.Where(record => itemIdList.Contains(record.ItemId)).ToList();
         }
 
-        //public List<InStockItemRecord> GetProductInStockRecordsHistoryNotAllOutFIFO(string productCode, string compId)
-        //{
-        //    return _dbContext.InStockItemRecords.Where(record => record.CompId == compId && record.ProductCode == productCode
-        //    &&record.OutStockStatus!=CommonConstants.OutStockStatus.ALL).OrderBy(record=>record.CreatedAt).ToList();
-        //}
-
-
         public List<InStockItemRecord> GetProductInStockRecordsHistoryNotAllOutExpirationFIFO(string productCode, string compId)
         {
-            // 先挑效期最早的相同的再依據FIFO
             return _dbContext.InStockItemRecords.Where(record => record.CompId == compId && record.ProductCode == productCode
             && record.OutStockStatus != CommonConstants.OutStockStatus.ALL).OrderBy(record => record.ExpirationDate).ThenBy(record => record.CreatedAt).ToList();
         }
@@ -745,52 +808,46 @@ namespace stock_api.Service
             {
                 var inStockRecord = _dbContext.InStockItemRecords.Where(i => i.LotNumberBatch == outStockRecord.LotNumberBatch).FirstOrDefault();
 
-                var inStockQuantityBefore = inStockRecord?.InStockQuantity ?? 0+inStockRecord?.AdjustInQuantity??0;
+                var inStockQuantityBefore = inStockRecord?.InStockQuantity ?? 0 + inStockRecord?.AdjustInQuantity ?? 0;
                 var outStockQuantityBefore = outStockRecord.ApplyQuantity;
                 var outStockRecordsAfter = _dbContext.OutStockRecords.Where(r => r.ProductId == outStockRecord.ProductId && r.CreatedAt > outStockRecord.CreatedAt).ToList();
 
-
-                // 退庫回去 只需要庫存量+回來 不需要再修改入庫紀錄的數量
                 if (inStockRecord != null)
                 {
                     inStockRecord.OutStockQuantity = inStockRecord.OutStockQuantity - returnQuantity;
-                    if ((inStockRecord.InStockQuantity+inStockRecord.AdjustInQuantity) - (inStockRecord.OutStockQuantity+inStockRecord.AdjustOutQuantity) > 0)
+                    if ((inStockRecord.InStockQuantity + inStockRecord.AdjustInQuantity) - (inStockRecord.OutStockQuantity + inStockRecord.AdjustOutQuantity) > 0)
                     {
                         inStockRecord.OutStockStatus = CommonConstants.OutStockStatus.PART;
                     }
-                    if ((inStockRecord.OutStockQuantity+inStockRecord.AdjustOutQuantity) == 0)
+                    if ((inStockRecord.OutStockQuantity + inStockRecord.AdjustOutQuantity) == 0)
                     {
                         inStockRecord.OutStockStatus = CommonConstants.OutStockStatus.NONE;
                     }
-                    if (inStockRecord.InStockQuantity+inStockRecord.AdjustInQuantity - inStockRecord.OutStockQuantity - inStockRecord.AdjustOutQuantity-inStockRecord.RejectQuantity <= 0)
+                    if (inStockRecord.InStockQuantity + inStockRecord.AdjustInQuantity - inStockRecord.OutStockQuantity - inStockRecord.AdjustOutQuantity - inStockRecord.RejectQuantity <= 0)
                     {
                         inStockRecord.OutStockStatus = CommonConstants.OutStockStatus.ALL;
                     }
                     inStockRecord.ReturnOutStockId = outStockRecord.OutStockId;
                 }
 
-                
-
                 outStockRecord.ApplyQuantity = outStockRecord.ApplyQuantity - returnQuantity;
                 outStockRecord.IsReturned = true;
 
-
                 product.InStockQuantity = product.InStockQuantity + returnQuantity;
 
-
                 var afterQuantityBefore = outStockRecord.AfterQuantity;
-                var afterQuantityAfter = product.InStockQuantity; // 退庫後的現有庫存量
+                var afterQuantityAfter = product.InStockQuantity;
 
                 string? inStockId = null;
-                if(inStockRecord!=null) inStockId = inStockRecord.InStockId;
- 
+                if (inStockRecord != null) inStockId = inStockRecord.InStockId;
+
                 var returnStockRecord = new ReturnStockRecord()
                 {
                     InStockId = inStockId,
                     OutStockId = outStockRecord.OutStockId,
                     ReturnQuantity = returnQuantity,
                     InStockQuantityBefore = inStockQuantityBefore,
-                    InStockQuantityAfter = inStockRecord?.InStockQuantity??0+inStockRecord?.AdjustInQuantity??0,
+                    InStockQuantityAfter = inStockRecord?.InStockQuantity ?? 0 + inStockRecord?.AdjustInQuantity ?? 0,
                     OutStockApplyQuantityBefore = outStockQuantityBefore,
                     OutStockApplyQuantityAfter = outStockRecord.ApplyQuantity,
                     AfterQuantityBefore = afterQuantityBefore,
@@ -816,68 +873,6 @@ namespace stock_api.Service
                 return (false, ex.Message);
             }
         }
-
-
-        //public (bool, string?) Return(OutStockRecord outStockRecord, WarehouseProduct product, WarehouseMember user,float returnQuantity)
-        //{
-        //    using var scope = new TransactionScope();
-        //    try
-        //    {
-        //        var sameLotNumberBatchLastOutStockRecord = _dbContext.OutStockRecords.Where(r => r.LotNumberBatch == outStockRecord.LotNumberBatch&&r.IsReturned==true)
-        //            .OrderByDescending(i => i.CreatedAt).FirstOrDefault();
-        //        InStockItemRecord? lastSameInstock = null; 
-        //        if (sameLotNumberBatchLastOutStockRecord != null)
-        //        {
-        //            var lastOutStockRecordId = sameLotNumberBatchLastOutStockRecord.OutStockId;
-        //            lastSameInstock = _dbContext.InStockItemRecords.Where(i=>i.ReturnOutStockId!=null&&i.ReturnOutStockId==lastOutStockRecordId).FirstOrDefault();
-        //        }
-
-
-        //        outStockRecord.IsReturned = true;
-        //        var inStockLotNumberBatch = outStockRecord.LotNumberBatch + "-R1";
-        //        if (lastSameInstock != null && lastSameInstock.LotNumberBatch.Contains("-R"))
-        //        {
-        //            var lotNumberBatchSplited = lastSameInstock.LotNumberBatch.Split("-R");
-        //            var nowSeqString = lotNumberBatchSplited[1];
-        //            var nowSeqInt = int.Parse(nowSeqString);
-        //            inStockLotNumberBatch = sameLotNumberBatchLastOutStockRecord.LotNumberBatch.Split("-R")[0] + "-R" + (nowSeqInt + 1).ToString();
-        //        }
-        //        float afterQuantity = (product.InStockQuantity ?? 0) + outStockRecord.ApplyQuantity;
-
-        //        var inStockRecord = new InStockItemRecord
-        //        {
-        //            InStockId = Guid.NewGuid().ToString(),
-        //            LotNumberBatch = inStockLotNumberBatch,
-        //            LotNumber = outStockRecord.LotNumber,
-        //            CompId = outStockRecord.CompId,
-        //            OriginalQuantity = product.InStockQuantity ?? 0.0f,
-        //            ExpirationDate = outStockRecord.ExpirationDate,
-        //            ItemId = outStockRecord.ItemId,
-        //            InStockQuantity = outStockRecord.ApplyQuantity,
-        //            ProductId = outStockRecord.ProductId,
-        //            ProductCode = outStockRecord.ProductCode,
-        //            ProductName = outStockRecord.ProductName,
-        //            ProductSpec = outStockRecord.ProductSpec,
-        //            Type = CommonConstants.StockInType.RETURN,
-        //            BarCodeNumber = outStockRecord.BarCodeNumber,
-        //            UserId = user.UserId,
-        //            UserName = user.DisplayName,
-        //            AfterQuantity = afterQuantity,
-        //            QcType = product.QcType,
-        //            ReturnOutStockId = outStockRecord.OutStockId
-        //        };
-        //        _dbContext.InStockItemRecords.Add( inStockRecord );
-        //        product.InStockQuantity = afterQuantity;
-        //        _dbContext.SaveChanges();
-        //        scope.Complete();
-        //        return (true, null);
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        _logger.LogError("事務失敗[Return]：{msg}", ex);
-        //        return (false, ex.Message);
-        //    }
-        //}
 
         public List<ReturnStockRecord> ListReturnRecords(ListReturnRecordsRequest request)
         {
@@ -913,8 +908,6 @@ namespace stock_api.Service
             return query.ToList();
         }
 
-
-
         public List<NearExpiredProductVo> GetNearExpiredProductList(string compId, DateOnly compareDate, int? preDeadline)
         {
             var activeProducts = _dbContext.WarehouseProducts.Where(p => p.CompId == compId && p.IsActive == true).ToList();
@@ -924,7 +917,6 @@ namespace stock_api.Service
 
             foreach (var product in nearExpireProductVoList)
             {
-                
                 var matchedAllUnAllOutInStockItemList = allUnAllOutInStockItemList.Where(i => i.ProductId == product.ProductId).ToList();
                 if (product.PreDeadline == null) continue;
                 if (preDeadline != null)
@@ -949,11 +941,10 @@ namespace stock_api.Service
                         product.NearExpiredLotNumberBatch.Add(inStockItem.LotNumberBatch);
                     }
                 }
-                product.NearExpiredQuantity = product.InStockItemList.Sum(i => (i.InStockQuantity+i.AdjustInQuantity - i.OutStockQuantity - i.AdjustOutQuantity));
-                
+                product.NearExpiredQuantity = product.InStockItemList.Sum(i => (i.InStockQuantity + i.AdjustInQuantity - i.OutStockQuantity - i.AdjustOutQuantity));
             }
 
-            return nearExpireProductVoList.Where(p => p.InStockItemList.Count > 0&&p.NearExpiredQuantity > 0).ToList();
+            return nearExpireProductVoList.Where(p => p.InStockItemList.Count > 0 && p.NearExpiredQuantity > 0).ToList();
         }
 
         public PurchaseMainSheet GetPurchaseMainByInStockId(InStockItemRecord inStockItemRecord)
@@ -1016,12 +1007,11 @@ namespace stock_api.Service
 
         public List<InStockItemRecord> GetInStockRecordsNotAllOutOrReject(string productId)
         {
-            return _dbContext.InStockItemRecords.Where(i => i.ProductId == productId && (i.InStockQuantity+i.AdjustInQuantity - i.OutStockQuantity-i.AdjustOutQuantity - i.RejectQuantity) > 0).ToList();
+            return _dbContext.InStockItemRecords.Where(i => i.ProductId == productId && (i.InStockQuantity + i.AdjustInQuantity - i.OutStockQuantity - i.AdjustOutQuantity - i.RejectQuantity) > 0).ToList();
         }
 
         public (bool, string?) DeleteInStockRecord(InStockItemRecord inStockItemRecord)
         {
-
             using var scope = new TransactionScope();
             try
             {
@@ -1047,7 +1037,6 @@ namespace stock_api.Service
                 }
                 else
                 {
-                    // 表示有之前的入庫
                     var beforeInStockItemRecord = _dbContext.InStockItemRecords.Where(i => i.InStockId != inStockItemRecord.InStockId &&
                     i.ItemId == inStockItemRecord.ItemId).OrderByDescending(i => i.CreatedAt).FirstOrDefault();
                     acceptItem.AcceptUserId = beforeInStockItemRecord.UserId;
@@ -1062,24 +1051,20 @@ namespace stock_api.Service
                     acceptItem.SavingFunction = beforeInStockItemRecord.SavingFunction;
                     acceptItem.SavingTemperature = beforeInStockItemRecord.SavingTemperature;
                     acceptItem.VerifyAt = beforeInStockItemRecord.CreatedAt;
-
                 }
 
-                // 判斷是否全部驗收完
                 if (acceptItem.AcceptQuantity != null && acceptItem.AcceptQuantity >= acceptItem.OrderQuantity)
                 {
                     acceptItem.InStockStatus = CommonConstants.PurchaseSubItemReceiveStatus.DONE;
                     purchaseSubItem.ReceiveStatus = CommonConstants.PurchaseSubItemReceiveStatus.DONE;
-
                 }
                 else if (acceptItem.AcceptQuantity != null && acceptItem.AcceptQuantity > 0 && acceptItem.AcceptQuantity < acceptItem.OrderQuantity)
                 {
-                    // 判斷是否部分驗收
                     _logger.LogInformation("[刪除部分驗收] AcceptId:${acceptId},AcceptQuantity:${AcceptQuantity},OrderQuantity:${}", acceptItem.AcceptId, acceptItem.AcceptQuantity, acceptItem.OrderQuantity);
                     acceptItem.InStockStatus = CommonConstants.PurchaseSubItemReceiveStatus.PART;
                     purchaseSubItem.ReceiveStatus = CommonConstants.PurchaseSubItemReceiveStatus.PART;
-
-                } else if (acceptItem.AcceptQuantity != null && acceptItem.AcceptQuantity == 0)
+                }
+                else if (acceptItem.AcceptQuantity != null && acceptItem.AcceptQuantity == 0)
                 {
                     acceptItem.InStockStatus = CommonConstants.PurchaseSubItemReceiveStatus.NONE;
                     purchaseSubItem.ReceiveStatus = CommonConstants.PurchaseSubItemReceiveStatus.NONE;
@@ -1097,7 +1082,6 @@ namespace stock_api.Service
                 _logger.LogError("事務失敗[DeleteInStockRecord]：{msg}", ex);
                 return (false, ex.Message);
             }
-
         }
 
         public List<InStockItemRecord> GetInStockItemRecordsByLotNumberBatchList(string compId, List<string> lotNumberBatchList)
@@ -1105,7 +1089,7 @@ namespace stock_api.Service
             return _dbContext.InStockItemRecords.Where(i => lotNumberBatchList.Contains(i.LotNumberBatch) && i.CompId == compId).ToList();
         }
 
-        public (bool, string?,string?) OwnerStockInService(OwnerStockInRequest request, WarehouseProduct product, WarehouseMember user)
+        public (bool, string?, string?) OwnerStockInService(OwnerStockInRequest request, WarehouseProduct product, WarehouseMember user)
         {
             using var scope = new TransactionScope();
             try
@@ -1113,7 +1097,6 @@ namespace stock_api.Service
                 string lotNumberBatch = DateTime.Now.ToString("yyyyMMddHHmmssfff");
                 var inStockItemRecord = new InStockItemRecord()
                 {
-
                     InStockId = Guid.NewGuid().ToString(),
                     LotNumberBatch = lotNumberBatch,
                     CompId = request.CompId,
@@ -1140,25 +1123,23 @@ namespace stock_api.Service
                 _dbContext.InStockItemRecords.Add(inStockItemRecord);
                 _dbContext.SaveChanges();
                 scope.Complete();
-                return (true,null,lotNumberBatch);
+                return (true, null, lotNumberBatch);
             }
             catch (Exception ex)
             {
                 _logger.LogError("事務失敗[OwnerStockInService]：{msg}", ex);
-                return (false, ex.Message,null);
+                return (false, ex.Message, null);
             }
         }
 
-        // 傳進來的product其IsNeedAcceptProcess必定為true
         public bool IsThisLotNumberAlreadyQc(string lotNumber)
         {
             return _dbContext.InStockItemRecords.Where(i => i.LotNumber == lotNumber && i.QcTestStatus == CommonConstants.QcTestStatus.DONE).Any();
         }
-        // 傳進來的product其IsNeedAcceptProcess必定為true
+
         public bool IsThisLotNumberBatchAlreadyQc(string lotNumberBatch)
         {
             return _dbContext.InStockItemRecords.Where(i => i.LotNumberBatch == lotNumberBatch && i.QcTestStatus == CommonConstants.QcTestStatus.DONE).Any();
         }
     }
-
 }
