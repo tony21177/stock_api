@@ -222,83 +222,58 @@ namespace stock_api.Controllers
                 return BadRequest(CommonResponse<dynamic>.BuildValidationFailedResponse(validationResult));
             }
 
+            // Determine if DB pagination can be used
+            bool canUseDbPagination = request.Keywords == null;
+
+            if (canUseDbPagination)
+            {
+                return ListPurchasesWithDbPagination(request, totalStopwatch, stepStopwatch, compId);
+            }
+
+            // Fallback to in-memory pagination
+            return ListPurchasesWithMemoryPagination(request, totalStopwatch, stepStopwatch, compId);
+        }
+
+        private IActionResult ListPurchasesWithDbPagination(
+            ListPurchaseRequest request,
+            Stopwatch totalStopwatch,
+            Stopwatch stepStopwatch,
+            string compId)
+        {
+            stepStopwatch.Restart();
+            var (listData, totalPages) = _purchaseService.ListPurchasesWithPagination(request);
+            stepStopwatch.Stop();
+            _logger.LogInformation("[ListPurchase-DbPagination] ListPurchasesWithPagination: {elapsed}ms, TotalPages: {totalPages}", stepStopwatch.ElapsedMilliseconds, totalPages);
+
+            totalStopwatch.Stop();
+            _logger.LogInformation("[ListPurchase-DbPagination] TOTAL execution time: {elapsed}ms", totalStopwatch.ElapsedMilliseconds);
+
+            var response = new CommonResponse<List<PurchaseMainAndSubItemVo>>
+            {
+                Result = true,
+                Data = listData,
+                TotalPages = totalPages
+            };
+            return Ok(response);
+        }
+
+        private IActionResult ListPurchasesWithMemoryPagination(
+            ListPurchaseRequest request,
+            Stopwatch totalStopwatch,
+            Stopwatch stepStopwatch,
+            string compId)
+        {
             stepStopwatch.Restart();
             var listData = _purchaseService.ListPurchase(request);
             stepStopwatch.Stop();
-            _logger.LogInformation("[ListPurchase] Step 3 - ListPurchase (DB query): {elapsed}ms, Count: {count}", stepStopwatch.ElapsedMilliseconds, listData.Count);
+            _logger.LogInformation("[ListPurchase-MemoryPagination] ListPurchase (DB query): {elapsed}ms, Count: {count}", stepStopwatch.ElapsedMilliseconds, listData.Count);
 
             stepStopwatch.Restart();
             List<PurchaseMainAndSubItemVo> filterKeywordsData = request.Keywords != null
                 ? listData.Where(vo => vo.IsContainKeywords(request.Keywords)).ToList()
                 : listData;
             stepStopwatch.Stop();
-            _logger.LogInformation("[ListPurchase] Step 4 - Keywords filter: {elapsed}ms, FilteredCount: {count}", stepStopwatch.ElapsedMilliseconds, filterKeywordsData.Count);
-
-            stepStopwatch.Restart();
-            var distinctProductIdList = filterKeywordsData
-                .SelectMany(item => item.Items)
-                .Select(item => item.ProductId)
-                .Distinct()
-                .ToList();
-            stepStopwatch.Stop();
-            _logger.LogInformation("[ListPurchase] Step 5 - Collect distinct ProductIds: {elapsed}ms, ProductIdCount: {count}", stepStopwatch.ElapsedMilliseconds, distinctProductIdList.Count);
-
-            stepStopwatch.Restart();
-            var products = _warehouseProductService.GetProductsByProductIdsAndCompId(distinctProductIdList, request.CompId);
-            stepStopwatch.Stop();
-            _logger.LogInformation("[ListPurchase] Step 6 - GetProductsByProductIdsAndCompId: {elapsed}ms, ProductCount: {count}", stepStopwatch.ElapsedMilliseconds, products.Count);
-
-            stepStopwatch.Restart();
-            var productDict = products.ToDictionary(p => p.ProductId);
-            stepStopwatch.Stop();
-            _logger.LogInformation("[ListPurchase] Step 7 - Build productDict: {elapsed}ms", stepStopwatch.ElapsedMilliseconds);
-
-            stepStopwatch.Restart();
-            foreach (var vo in filterKeywordsData)
-            {
-                foreach (var item in vo.Items)
-                {
-                    if (productDict.TryGetValue(item.ProductId, out var matchedProduct))
-                    {
-                        item.MaxSafeQuantity = matchedProduct.MaxSafeQuantity;
-                        item.ProductModel = matchedProduct.ProductModel;
-                        item.ManufacturerName = matchedProduct.ManufacturerName;
-                        item.ProductMachine = matchedProduct.ProductMachine;
-                        item.ProductUnit = matchedProduct.Unit;
-                        item.UnitConversion = matchedProduct.UnitConversion;
-                        item.TestCount = matchedProduct.TestCount;
-                        item.Delivery = matchedProduct.Delievery;
-                        item.PackageWay = matchedProduct.PackageWay;
-                        item.ProductCode = matchedProduct.ProductCode;
-                        item.SupplierUnitConvertsion = matchedProduct.SupplierUnitConvertsion;
-                        item.SupplierUnit = matchedProduct.SupplierUnit;
-                        item.StockLocation = matchedProduct.StockLocation;
-                    }
-                }
-            }
-            stepStopwatch.Stop();
-            _logger.LogInformation("[ListPurchase] Step 8 - Map product data to items: {elapsed}ms", stepStopwatch.ElapsedMilliseconds);
-
-            stepStopwatch.Restart();
-            var orderByField = request.PaginationCondition.OrderByField;
-            if (!string.IsNullOrEmpty(orderByField))
-            {
-                orderByField = StringUtils.CapitalizeFirstLetter(orderByField);
-                filterKeywordsData = (orderByField, request.PaginationCondition.IsDescOrderBy) switch
-                {
-                    ("ApplyDate", true) => filterKeywordsData.OrderByDescending(item => item.ApplyDate).ToList(),
-                    ("ApplyDate", false) => filterKeywordsData.OrderBy(item => item.ApplyDate).ToList(),
-                    ("DemandDate", true) => filterKeywordsData.OrderByDescending(item => item.DemandDate).ToList(),
-                    ("DemandDate", false) => filterKeywordsData.OrderBy(item => item.DemandDate).ToList(),
-                    _ => filterKeywordsData.OrderByDescending(item => item.ApplyDate).ToList()
-                };
-            }
-            else
-            {
-                filterKeywordsData = filterKeywordsData.OrderByDescending(item => item.ApplyDate).ToList();
-            }
-            stepStopwatch.Stop();
-            _logger.LogInformation("[ListPurchase] Step 9 - Sorting: {elapsed}ms", stepStopwatch.ElapsedMilliseconds);
+            _logger.LogInformation("[ListPurchase-MemoryPagination] Keywords filter: {elapsed}ms, FilteredCount: {count}", stepStopwatch.ElapsedMilliseconds, filterKeywordsData.Count);
 
             stepStopwatch.Restart();
             int totalItems = filterKeywordsData.Count;
@@ -308,15 +283,16 @@ namespace stock_api.Controllers
                 .Take(request.PaginationCondition.PageSize)
                 .ToList();
             stepStopwatch.Stop();
-            _logger.LogInformation("[ListPurchase] Step 10 - Pagination: {elapsed}ms, ResultCount: {count}", stepStopwatch.ElapsedMilliseconds, filterKeywordsData.Count);
+            _logger.LogInformation("[ListPurchase-MemoryPagination] Pagination: {elapsed}ms, ResultCount: {count}", stepStopwatch.ElapsedMilliseconds, filterKeywordsData.Count);
 
             totalStopwatch.Stop();
-            _logger.LogInformation("[ListPurchase] TOTAL execution time: {elapsed}ms", totalStopwatch.ElapsedMilliseconds);
+            _logger.LogInformation("[ListPurchase-MemoryPagination] TOTAL execution time: {elapsed}ms", totalStopwatch.ElapsedMilliseconds);
 
             var response = new CommonResponse<List<PurchaseMainAndSubItemVo>>
             {
                 Result = true,
-                Data = filterKeywordsData
+                Data = filterKeywordsData,
+                TotalPages = totalPages
             };
             return Ok(response);
         }
