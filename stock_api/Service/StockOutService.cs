@@ -10,6 +10,7 @@ using System.Diagnostics.Eventing.Reader;
 using System.Linq;
 using System.Security.AccessControl;
 using System.Transactions;
+using System.Diagnostics;
 
 namespace stock_api.Service
 {
@@ -400,11 +401,19 @@ namespace stock_api.Service
 
         public List<OutStockRecord> GetOutStockRecordsByLotNumberList(List<string> lotNumberList)
         {
-            return _dbContext.OutStockRecords.Where(r=>r.LotNumber!=null&&lotNumberList.Contains(r.LotNumber)).ToList();
+            var sw = Stopwatch.StartNew();
+            var result = _dbContext.OutStockRecords.Where(r=>r.LotNumber!=null&&lotNumberList.Contains(r.LotNumber)).ToList();
+            sw.Stop();
+            _logger.LogInformation("[StockOutService.GetOutStockRecordsByLotNumberList] elapsed: {ms}ms, count: {count}", sw.ElapsedMilliseconds, result.Count);
+            return result;
         }
         public List<OutStockRecord> GetOutStockRecordsByLotNumberBatchList(List<string> lotNumberBatchList)
         {
-            return _dbContext.OutStockRecords.Where(r => r.LotNumberBatch != null && lotNumberBatchList.Contains(r.LotNumberBatch)).ToList();
+            var sw = Stopwatch.StartNew();
+            var result = _dbContext.OutStockRecords.Where(r => r.LotNumberBatch != null && lotNumberBatchList.Contains(r.LotNumberBatch)).ToList();
+            sw.Stop();
+            _logger.LogInformation("[StockOutService.GetOutStockRecordsByLotNumberBatchList] elapsed: {ms}ms, count: {count}", sw.ElapsedMilliseconds, result.Count);
+            return result;
         }
 
         public List<ReturnStockRecord> GetReturnStockRecords(string compId)

@@ -10,6 +10,7 @@ using stock_api.Models;
 using stock_api.Service.ValueObject;
 using stock_api.Utils;
 using System.Transactions;
+using System.Diagnostics;
 
 namespace stock_api.Service
 {
@@ -35,6 +36,8 @@ namespace stock_api.Service
 
         public (List<UnDoneQcLot>, int) ListUnDoneQcLotList(ListUnDoneQcLotRequest request)
         {
+            var sw = Stopwatch.StartNew();
+
             var needQcProductList = _dbContext.WarehouseProducts.Where(p => p.IsActive == true && p.IsNeedAcceptProcess == true && p.QcType != CommonConstants.QcTypeConstants.NONE).ToList();
             var needQcProductIdList = needQcProductList.Select(p => p.ProductId).ToList();
             var unDoneLotNumberQcInStockRecords = _dbContext.InStockItemRecords.Where(i => i.CompId == request.CompId && i.QcTestStatus == CommonConstants.QcTestStatus.NONE
@@ -184,6 +187,9 @@ namespace stock_api.Service
             int totalItems = unDoneQcLotList.Count;
             totalPages = (int)Math.Ceiling((double)totalItems / request.PaginationCondition.PageSize);
             unDoneQcLotList = unDoneQcLotList.Skip((request.PaginationCondition.Page - 1) * request.PaginationCondition.PageSize).Take(request.PaginationCondition.PageSize).ToList();
+
+            sw.Stop();
+            _logger.LogInformation("[QcService.ListUnDoneQcLotList] elapsed: {ms}ms, resultCount: {count}", sw.ElapsedMilliseconds, unDoneQcLotList.Count);
             
             return (unDoneQcLotList, totalPages);
         }
@@ -638,7 +644,7 @@ namespace stock_api.Service
 
                 using (var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled))
                 {
-                    title = "以下品質確效需要審核";
+                    title = "品質確效單需要審核";
                     var purchaseNumber = qcValidationMain.MainId;
                     var receiver = _memberService.GetMembersByUserId(nextFlow.ReviewUserId);
                     EmailNotify emailNotify = new EmailNotify()
@@ -713,12 +719,16 @@ namespace stock_api.Service
 
         public List<QcValidationMain?> GetLastQcValidationMainsByProductIdList(List<string> productIdList)
         {
-            return _dbContext.QcValidationMains
+            var sw = Stopwatch.StartNew();
+            var result = _dbContext.QcValidationMains
                 .Where(m => productIdList.Contains(m.ProductId))
                 .AsEnumerable() // Switch to client-side evaluation
                 .GroupBy(m => m.ProductId)
                 .Select(g => g.OrderByDescending(m => m.CreatedAt).FirstOrDefault())
                 .ToList();
+            sw.Stop();
+            _logger.LogInformation("[QcService.GetLastQcValidationMainsByProductIdList] elapsed: {ms}ms, count: {count}", sw.ElapsedMilliseconds, result.Count);
+            return result;
         }
     }
 }

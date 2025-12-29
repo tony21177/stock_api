@@ -10,6 +10,7 @@ using stock_api.Service.ValueObject;
 using System.Linq;
 using System.Security.AccessControl;
 using System.Transactions;
+using System.Diagnostics;
 
 namespace stock_api.Service
 {
@@ -735,7 +736,20 @@ namespace stock_api.Service
 
         public List<InStockItemRecord> GetInStockRecordsHistory(string prodcutId, string compId)
         {
-            return _dbContext.InStockItemRecords.Where(record => record.CompId == compId && record.ProductId == prodcutId).ToList();
+            var sw = Stopwatch.StartNew();
+            var result = _dbContext.InStockItemRecords.Where(record => record.CompId == compId && record.ProductId == prodcutId).ToList();
+            sw.Stop();
+            _logger.LogInformation("[StockInService.GetInStockRecordsHistory] elapsed: {ms}ms, count: {count}", sw.ElapsedMilliseconds, result.Count);
+            return result;
+        }
+
+        public Dictionary<string, List<InStockItemRecord>> GetInStockRecordsHistoryByProductIdList(List<string> productIdList, string compId)
+        {
+            var sw = Stopwatch.StartNew();
+            var result = _dbContext.InStockItemRecords.Where(record => record.CompId == compId && productIdList.Contains(record.ProductId)).ToList();
+            sw.Stop();
+            _logger.LogInformation("[StockInService.GetInStockRecordsHistoryByProductIdList] elapsed: {ms}ms, count: {count}", sw.ElapsedMilliseconds, result.Count);
+            return result.GroupBy(r => r.ProductId).ToDictionary(g => g.Key, g => g.ToList());
         }
 
         public InStockItemRecord? GetInStockRecordByLotNumberBatch(string lotNumberBatch, string compId)
@@ -745,12 +759,20 @@ namespace stock_api.Service
 
         public List<InStockItemRecord> GetInStockRecordListByLotNumber(string lotNumber, string compId)
         {
-            return _dbContext.InStockItemRecords.Where(record => record.CompId == compId && record.LotNumber == lotNumber).ToList();
+            var sw = Stopwatch.StartNew();
+            var result = _dbContext.InStockItemRecords.Where(record => record.CompId == compId && record.LotNumber == lotNumber).ToList();
+            sw.Stop();
+            _logger.LogInformation("[StockInService.GetInStockRecordListByLotNumber] elapsed: {ms}ms, count: {count}", sw.ElapsedMilliseconds, result.Count);
+            return result;
         }
 
         public List<InStockItemRecord> GetInStockRecordByLotNumberBatchList(List<string> lotNumberBatchList, string compId)
         {
-            return _dbContext.InStockItemRecords.Where(record => record.CompId == compId && lotNumberBatchList.Contains(record.LotNumberBatch)).ToList();
+            var sw = Stopwatch.StartNew();
+            var result = _dbContext.InStockItemRecords.Where(record => record.CompId == compId && lotNumberBatchList.Contains(record.LotNumberBatch)).ToList();
+            sw.Stop();
+            _logger.LogInformation("[StockInService.GetInStockRecordByLotNumberBatchList] elapsed: {ms}ms, count: {count}", sw.ElapsedMilliseconds, result.Count);
+            return result;
         }
 
         public List<InStockItemRecord> GetInStockRecordsHistoryByLotNumberBatch(string lotNumberBatch, string compId)
@@ -961,17 +983,47 @@ namespace stock_api.Service
 
         public List<ProductNewLotnumberView> GetProductsNewLotNumberList()
         {
-            return _dbContext.ProductNewLotnumberViews.ToList().Where(e => e.LotNumber != "N/A").ToList();
+            var sw = Stopwatch.StartNew();
+            var result = _dbContext.ProductNewLotnumberViews.ToList().Where(e => e.LotNumber != "N/A").ToList();
+            sw.Stop();
+            _logger.LogInformation("[StockInService.GetProductsNewLotNumberList] elapsed: {ms}ms, count: {count}", sw.ElapsedMilliseconds, result.Count);
+            return result;
         }
 
         public List<InStockItemRecordNewLotNumberVew> GetInStockItemRecordNewLotNumberViews()
         {
-            return _dbContext.InStockItemRecordNewLotNumberVews.ToList();
+            var sw = Stopwatch.StartNew();
+            var result = _dbContext.InStockItemRecordNewLotNumberVews.ToList();
+            sw.Stop();
+            _logger.LogInformation("[StockInService.GetInStockItemRecordNewLotNumberViews] elapsed: {ms}ms, count: {count}", sw.ElapsedMilliseconds, result.Count);
+            return result;
+        }
+
+        public List<InStockItemRecordNewLotNumberVew> GetInStockItemRecordNewLotNumberViewsByProductIds(List<string> productIds)
+        {
+            var sw = Stopwatch.StartNew();
+            var result = _dbContext.InStockItemRecordNewLotNumberVews.Where(v => productIds.Contains(v.ProductId)).ToList();
+            sw.Stop();
+            _logger.LogInformation("[StockInService.GetInStockItemRecordNewLotNumberViewsByProductIds] elapsed: {ms}ms, count: {count}", sw.ElapsedMilliseconds, result.Count);
+            return result;
         }
 
         public List<ProductNewLotnumberbatchView> GetProductsNewLotNumberBatchList()
         {
-            return _dbContext.ProductNewLotnumberbatchViews.ToList();
+            var sw = Stopwatch.StartNew();
+            var result = _dbContext.ProductNewLotnumberbatchViews.ToList();
+            sw.Stop();
+            _logger.LogInformation("[StockInService.GetProductsNewLotNumberBatchList] elapsed: {ms}ms, count: {count}", sw.ElapsedMilliseconds, result.Count);
+            return result;
+        }
+
+        public List<ProductNewLotnumberbatchView> GetProductsNewLotNumberBatchListByProductIds(List<string> productIds)
+        {
+            var sw = Stopwatch.StartNew();
+            var result = _dbContext.ProductNewLotnumberbatchViews.Where(v => productIds.Contains(v.ProductId)).ToList();
+            sw.Stop();
+            _logger.LogInformation("[StockInService.GetProductsNewLotNumberBatchListByProductIds] elapsed: {ms}ms, count: {count}", sw.ElapsedMilliseconds, result.Count);
+            return result;
         }
 
         public List<InStockItemRecord> GetAllInStockItemRecordsByCompId(string compId)
@@ -1143,3 +1195,4 @@ namespace stock_api.Service
         }
     }
 }
+
