@@ -444,6 +444,16 @@ namespace stock_api.Service
                 var endDateTime = DateTimeHelper.ParseDateString(listPurchaseRequest.EndDate).Value.AddDays(1);
                 query = query.Where(h => h.UpdatedAt < endDateTime);
             }
+            if (listPurchaseRequest.ApplyDateStart != null)
+            {
+                var applyStart = DateTimeHelper.ParseDateString(listPurchaseRequest.ApplyDateStart).Value;
+                query = query.Where(h => h.ApplyDate >= applyStart);
+            }
+            if (listPurchaseRequest.ApplyDateEnd != null)
+            {
+                var applyEnd = DateTimeHelper.ParseDateString(listPurchaseRequest.ApplyDateEnd).Value.AddDays(1);
+                query = query.Where(h => h.ApplyDate < applyEnd);
+            }
             if (listPurchaseRequest.GroupId != null)
             {
                 query = query.Where(h => h.GroupIds.Contains(listPurchaseRequest.GroupId));
@@ -599,6 +609,16 @@ namespace stock_api.Service
             {
                 var endDateTime = DateTimeHelper.ParseDateString(request.EndDate).Value.AddDays(1);
                 query = query.Where(m => m.UpdatedAt < endDateTime);
+            }
+            if (request.ApplyDateStart != null)
+            {
+                var applyStart = DateTimeHelper.ParseDateString(request.ApplyDateStart).Value;
+                query = query.Where(m => m.ApplyDate >= applyStart);
+            }
+            if (request.ApplyDateEnd != null)
+            {
+                var applyEnd = DateTimeHelper.ParseDateString(request.ApplyDateEnd).Value.AddDays(1);
+                query = query.Where(m => m.ApplyDate < applyEnd);
             }
             if (request.GroupId != null)
             {

@@ -2,6 +2,7 @@
 using FluentValidation;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
 using MySqlX.XDevAPI.Common;
 using Org.BouncyCastle.Asn1.Ocsp;
@@ -20,6 +21,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text.Json;
+using System.Threading.Tasks;
 
 namespace stock_api.Controllers
 {
@@ -44,11 +46,11 @@ namespace stock_api.Controllers
         private readonly IValidator<UpdateOwnerProcessRequest> _updateOwnerProcessRequestValidator;
         private readonly ILogger<PurchaseController> _logger;
         private readonly StockOutService _stockOutService;
-
+        private readonly IServiceProvider _serviceProvider;
 
         public PurchaseController(IMapper mapper, AuthHelpers authHelpers, PurchaseFlowSettingService purchaseFlowSettingService, MemberService memberService, CompanyService companyService
             , SupplierService supplierService, PurchaseService purchaseService, WarehouseProductService warehouseProductService,
-            GroupService groupService, ApplyProductFlowSettingService applyProductFlowSettingService, ILogger<PurchaseController> logger, StockOutService stockOutService)
+            GroupService groupService, ApplyProductFlowSettingService applyProductFlowSettingService, ILogger<PurchaseController> logger, StockOutService stockOutService, IServiceProvider serviceProvider)
         {
             _mapper = mapper;
             _authHelpers = authHelpers;
@@ -67,6 +69,7 @@ namespace stock_api.Controllers
             _applyProductFlowSettingService = applyProductFlowSettingService;
             _logger = logger;
             _stockOutService = stockOutService;
+            _serviceProvider = serviceProvider;
         }
 
         [HttpPost("create")]
@@ -299,8 +302,10 @@ namespace stock_api.Controllers
 
         [HttpPost("owner/list")]
         [Authorize]
-        public IActionResult OwnerListPurchases(OwnerListPurchasesRequest ownerListPurchasesRequestRequest)
+        public async Task<IActionResult> OwnerListPurchases(OwnerListPurchasesRequest ownerListPurchasesRequestRequest)
         {
+            var totalSw = Stopwatch.StartNew();
+            var sw = Stopwatch.StartNew();
             var memberAndPermissionSetting = _authHelpers.GetMemberAndPermissionSetting(User);
             var compId = memberAndPermissionSetting.CompanyWithUnit.CompId;
 
@@ -308,55 +313,120 @@ namespace stock_api.Controllers
             {
                 return BadRequest(CommonResponse<dynamic>.BuildNotAuthorizeResponse());
             }
-            ListPurchaseRequest request = new() { CurrentStatus = CommonConstants.PurchaseFlowAnswer.AGREE, Keywords = ownerListPurchasesRequestRequest.Keywords };
+            ListPurchaseRequest request = new()
+            {
+                CurrentStatus = CommonConstants.PurchaseFlowAnswer.AGREE,
+                Keywords = ownerListPurchasesRequestRequest.Keywords,
+                ApplyDateStart = ownerListPurchasesRequestRequest.ApplyDateStart,
+                ApplyDateEnd = ownerListPurchasesRequestRequest.ApplyDateEnd
+            };
 
+            // fetch list (ApplyDate filtering moved into service)
+            sw.Restart();
             var listData = _purchaseService.ListPurchase(request);
+            sw.Stop();
+            _logger.LogInformation("[OwnerListPurchases] Fetched listData elapsed: {ms}ms, count: {count}", sw.ElapsedMilliseconds, listData?.Count ?? 0);
+
+            // Remove NOT_AGREE items in-place
             foreach (var vo in listData)
             {
                 vo.Items = vo.Items.Where(item => item.OwnerProcess != "NOT_AGREE").ToList();
             }
 
-            var products = _warehouseProductService.GetAllProducts();
-            var productsLastMonthUsage = _stockOutService.GetLastMonthUsages();
-            var productsThisYearAverageMonthUsage = _stockOutService.GetThisAverageMonthUsages();
-            var productsOfOwner = _warehouseProductService.GetAllProducts(compId);
-            var allItemManagers = new HashSet<string>();
+            // gather product ids needed
+            var distinctProductIdList = listData.SelectMany(l => l.Items).Select(i => i.ProductId).Distinct().ToList();
 
+            // parallelize independent calls with scope-per-task
+            sw.Restart();
+            var taskProducts = Task.Run(() =>
+            {
+                using var scope = _serviceProvider.CreateScope();
+                var s = scope.ServiceProvider.GetRequiredService<WarehouseProductService>();
+                return s.GetProductsByProductIds(distinctProductIdList);
+            });
+            var taskProductsOfOwner = Task.Run(() =>
+            {
+                using var scope = _serviceProvider.CreateScope();
+                var s = scope.ServiceProvider.GetRequiredService<WarehouseProductService>();
+                return s.GetAllProducts(compId);
+            });
+            var taskLastMonthUsage = Task.Run(() =>
+            {
+                using var scope = _serviceProvider.CreateScope();
+                var s = scope.ServiceProvider.GetRequiredService<StockOutService>();
+                return s.GetLastMonthUsages(distinctProductIdList);
+            });
+            var taskThisYearAvg = Task.Run(() =>
+            {
+                using var scope = _serviceProvider.CreateScope();
+                var s = scope.ServiceProvider.GetRequiredService<StockOutService>();
+                return s.GetThisAverageMonthUsages(distinctProductIdList);
+            });
+
+            await Task.WhenAll(taskProducts, taskProductsOfOwner, taskLastMonthUsage, taskThisYearAvg);
+            sw.Stop();
+            _logger.LogInformation("[OwnerListPurchases] Parallel fetch elapsed: {ms}ms", sw.ElapsedMilliseconds);
+
+            var products = taskProducts.Result ?? new List<WarehouseProduct>();
+            var productsOfOwner = taskProductsOfOwner.Result ?? new List<WarehouseProduct>();
+            var productsLastMonthUsage = taskLastMonthUsage.Result ?? new List<LastMonthUsage>();
+            var productsThisYearAverageMonthUsage = taskThisYearAvg.Result ?? new List<AverageMonthUsageThisYear>();
+
+            _logger.LogInformation("[OwnerListPurchases] Parallel fetch counts - products: {p}, productsOfOwner: {po}, lastMonthUsage: {lm}, thisYearAvg: {ty}", products.Count, productsOfOwner.Count, productsLastMonthUsage.Count, productsThisYearAverageMonthUsage.Count);
+
+            // build lookups
+            sw.Restart();
+            var productsById = products.ToDictionary(p => p.ProductId, p => p);
+            var productsOfOwnerByCode = productsOfOwner.GroupBy(p => p.ProductCode).ToDictionary(g => g.Key, g => g.First());
+            var lastMonthUsageLookup = productsLastMonthUsage.ToDictionary(u => u.ProductId, u => u);
+            var thisYearAvgLookup = productsThisYearAverageMonthUsage.ToDictionary(u => u.ProductId, u => u);
+            sw.Stop();
+            _logger.LogInformation("[OwnerListPurchases] Build lookups elapsed: {ms}ms", sw.ElapsedMilliseconds);
+
+            // fill item fields using lookup dictionaries
+            sw.Restart();
+            var allItemManagers = new HashSet<string>();
             foreach (var vo in listData)
             {
                 foreach (var item in vo.Items)
                 {
-                    var matchedProduct = products.Where(p => p.ProductId == item.ProductId).FirstOrDefault();
-                    item.MaxSafeQuantity = matchedProduct?.MaxSafeQuantity;
-                    item.ProductModel = matchedProduct?.ProductModel;
-                    item.ManufacturerName = matchedProduct?.ManufacturerName;
-                    item.ProductMachine = matchedProduct?.ProductMachine;
-                    item.ProductUnit = matchedProduct?.Unit;
-                    item.UnitConversion = matchedProduct?.UnitConversion;
-                    item.TestCount = matchedProduct?.TestCount;
-                    item.Delivery = matchedProduct?.Delievery;
-                    item.PackageWay = matchedProduct?.PackageWay;
-                    item.ProductCode = matchedProduct?.ProductCode;
-
-                    var matchedOwnerProduct = productsOfOwner.Where(p => p.ProductCode == item.ProductCode).FirstOrDefault();
-                    item.SupplierUnit = matchedOwnerProduct?.Unit;
-                    item.UnitConversion = matchedProduct?.UnitConversion;
-                    item.SupplierUnitConvertsion = matchedOwnerProduct?.UnitConversion;
-
-                    item.OpenedSealName = matchedProduct?.OpenedSealName;
-                    item.StockLocation = matchedProduct?.StockLocation;
-                    var matchedProductLastMonthUsage = productsLastMonthUsage.Where(p => p.ProductId == item.ProductId).FirstOrDefault();
-                    item.Manager = matchedProduct?.Manager;
-                    item.LastMonthUsageQuantity = matchedProductLastMonthUsage != null ? matchedProductLastMonthUsage.Quantity : 0.0;
-
-                    var matchedProductThisYearAverageMonthUsage = productsThisYearAverageMonthUsage.Where(p => p.ProductId == item.ProductId).FirstOrDefault();
-                    item.ThisYearAverageMonthUsageQuantity = matchedProductThisYearAverageMonthUsage != null ? matchedProductThisYearAverageMonthUsage.AverageQuantity : 0.0;
-                    if (matchedProduct != null && matchedProduct.Manager != null)
+                    if (productsById.TryGetValue(item.ProductId, out var matchedProduct))
                     {
-                        allItemManagers.Add(matchedProduct.Manager);
+                        item.MaxSafeQuantity = matchedProduct?.MaxSafeQuantity;
+                        item.ProductModel = matchedProduct?.ProductModel;
+                        item.ManufacturerName = matchedProduct?.ManufacturerName;
+                        item.ProductMachine = matchedProduct?.ProductMachine;
+                        item.ProductUnit = matchedProduct?.Unit;
+                        item.UnitConversion = matchedProduct?.UnitConversion;
+                        item.TestCount = matchedProduct?.TestCount;
+                        item.Delivery = matchedProduct?.Delievery;
+                        item.PackageWay = matchedProduct?.PackageWay;
+                        item.ProductCode = matchedProduct?.ProductCode;
+                        item.OpenedSealName = matchedProduct?.OpenedSealName;
+                        item.StockLocation = matchedProduct?.StockLocation;
+                        item.Manager = matchedProduct?.Manager;
+                        if (matchedProduct?.Manager != null) allItemManagers.Add(matchedProduct.Manager);
+                    }
+
+                    if (productsOfOwnerByCode.TryGetValue(item.ProductCode ?? string.Empty, out var matchedOwnerProduct))
+                    {
+                        item.SupplierUnit = matchedOwnerProduct?.Unit;
+                        item.SupplierUnitConvertsion = matchedOwnerProduct?.UnitConversion;
+                        item.SupplierSpec = matchedOwnerProduct?.ProductSpec;
+                    }
+
+                    if (lastMonthUsageLookup.TryGetValue(item.ProductId, out var lastUsage))
+                    {
+                        item.LastMonthUsageQuantity = lastUsage.Quantity ?? 0.0;
+                    }
+                    if (thisYearAvgLookup.TryGetValue(item.ProductId, out var avg))
+                    {
+                        item.ThisYearAverageMonthUsageQuantity = avg.AverageQuantity;
                     }
                 }
             }
+            sw.Stop();
+            _logger.LogInformation("[OwnerListPurchases] Fill items elapsed: {ms}ms", sw.ElapsedMilliseconds);
 
             List<PurchaseMainAndSubItemVo> filterKeywordsData = new();
             var isKeywordsContainManager = request.Keywords != null && request.Keywords != "" && allItemManagers.Contains(request.Keywords);
@@ -389,16 +459,25 @@ namespace stock_api.Controllers
                     filterKeywordsData.AddRange(listData);
                 }
             }
+
+            sw.Restart();
             filterKeywordsData = filterKeywordsData.OrderByDescending(item => item.ApplyDate).ToList();
+            sw.Stop();
+            _logger.LogInformation("[OwnerListPurchases] Filter & sort elapsed: {ms}ms, resultCount: {count}", sw.ElapsedMilliseconds, filterKeywordsData.Count);
 
             foreach (var data in filterKeywordsData)
             {
                 foreach (var item in data.Items)
                 {
-                    var matchedOwnerProduct = productsOfOwner.Where(p => p.ProductCode == item.ProductCode).FirstOrDefault();
-                    item.SupplierSpec = matchedOwnerProduct?.ProductSpec;
+                    if (productsOfOwnerByCode.TryGetValue(item.ProductCode ?? string.Empty, out var matchedOwnerProduct))
+                    {
+                        item.SupplierSpec = matchedOwnerProduct?.ProductSpec;
+                    }
                 }
             }
+
+            totalSw.Stop();
+            _logger.LogInformation("[OwnerListPurchases] TOTAL elapsed: {ms}ms", totalSw.ElapsedMilliseconds);
 
             var response = new CommonResponse<dynamic>
             {
@@ -407,7 +486,6 @@ namespace stock_api.Controllers
             };
             return Ok(response);
         }
-
 
         [HttpGet("detail/{purchaseMainId}")]
         [Authorize]

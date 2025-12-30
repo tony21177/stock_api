@@ -12,5 +12,9 @@
         public bool? IsActive { get; set; }
         public bool? IsNeedFlow { get; set; }
 
+        // New: filter by ApplyDate (format: yyyy/MM/dd)
+        public string? ApplyDateStart { get; set; }
+        public string? ApplyDateEnd { get; set; }
+
      }
 }
