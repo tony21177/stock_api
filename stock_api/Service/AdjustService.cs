@@ -159,6 +159,7 @@ namespace stock_api.Service
                         inventoryAdjustItems.Add(adjustItem);
                         if (item.BatchAssignList.Count > 0)
                         {
+                            var applyQuntitySum = 0f; 
                             foreach (var assign in item.BatchAssignList)
                             {
                                 var matchedInStockRecord = allInStockRecords.FirstOrDefault(r => r.InStockId == assign.InStockId);
@@ -167,6 +168,7 @@ namespace stock_api.Service
                                     if (assign?.Adjust_calculate_qty != null && matchedInStockRecord?.AdjustOutQuantity != null)
                                     {
                                         matchedInStockRecord.AdjustOutQuantity += (float)Math.Abs(assign.Adjust_calculate_qty.Value);
+                                        applyQuntitySum += (float)Math.Abs(assign.Adjust_calculate_qty.Value);
                                         OutStockRecord outStockRecord = new()
                                         {
                                             OutStockId = Guid.NewGuid().ToString(),
@@ -182,8 +184,8 @@ namespace stock_api.Service
                                             Type = CommonConstants.OutStockType.ADJUST_OUT,
                                             UserId = user.UserId,
                                             UserName = user.DisplayName,
-                                            OriginalQuantity = item.BeforeQuantity,
-                                            AfterQuantity = item.AfterQuantity,
+                                            OriginalQuantity = matchedProduct.InStockQuantity??0f,
+                                            AfterQuantity = (matchedProduct.InStockQuantity ?? 0f)-(float)Math.Abs(assign.Adjust_calculate_qty.Value),
                                             BarCodeNumber = matchedInStockRecord.LotNumberBatch,
                                             AdjustItemId = adjustItem.AdjustItemId
                                         };
@@ -195,6 +197,7 @@ namespace stock_api.Service
                                     }
                                 }
                             }
+                            matchedProduct.InStockQuantity = matchedProduct.InStockQuantity - applyQuntitySum;
                         }
                         else
                         {
@@ -219,8 +222,9 @@ namespace stock_api.Service
                                 AdjustItemId = adjustItem.AdjustItemId
                             };
                             outStockRecords.Add(outStockRecord);
+                            matchedProduct.InStockQuantity = item.AfterQuantity;
                         }
-                        matchedProduct.InStockQuantity = item.AfterQuantity;
+                        
                     }
                     if(item.BeforeQuantity == item.AfterQuantity)
                     {
