@@ -46,20 +46,34 @@ var serilogLoggerFactory = LoggerFactory.Create(loggingBuilder =>
     loggingBuilder.AddSerilog(); // 添加 Serilog 作為 Logger
 });
 
-// [Gzip 新增] 1. 註冊 Response Compression 服務
+// [Response Compression] 1. 註冊 Response Compression 服務
 builder.Services.AddResponseCompression(options =>
 {
     options.EnableForHttps = true; // 允許 HTTPS 使用壓縮
-    options.Providers.Add<GzipCompressionProvider>(); // 指定使用 Gzip
+    options.Providers.Add<BrotliCompressionProvider>(); // 優先使用 Brotli (壓縮率更高)
+    options.Providers.Add<GzipCompressionProvider>();   // 備用 Gzip
+    // 指定要壓縮的 MIME 類型
+    options.MimeTypes = ResponseCompressionDefaults.MimeTypes.Concat(
+        new[] { "application/json", "application/json; charset=utf-8" });
 });
 
-// [Gzip 新增] 2. 設定 Gzip 壓縮層級 (可選)
-builder.Services.Configure<GzipCompressionProviderOptions>(options =>
+// [Response Compression] 2. 設定 Brotli 壓縮層級
+builder.Services.Configure<BrotliCompressionProviderOptions>(options =>
 {
     // Fastest: 速度最快 (CPU 負擔較小，適合 API)
+    // Optimal: 平衡速度與壓縮比
     // SmallestSize: 壓縮比最高 (CPU 負擔較大)
     options.Level = CompressionLevel.Fastest;
 });
+
+// [Response Compression] 3. 設定 Gzip 壓縮層級 (備用)
+builder.Services.Configure<GzipCompressionProviderOptions>(options =>
+{
+    options.Level = CompressionLevel.Fastest;
+});
+
+// 註冊 MemoryCache 服務
+builder.Services.AddMemoryCache();
 
 //services cors
 builder.Services.AddCors(options =>
@@ -95,23 +109,21 @@ builder.Services.AddCors(options =>
 
 // 配置 MySQL 和 Entity Framework
 var serverVersion = new MySqlServerVersion(new Version(5, 7, 29));
+// Register DbContext. Set options lifetime to Singleton so IDbContextFactory (registered as singleton) can consume options.
 builder.Services.AddDbContext<StockDbContext>(options =>
-
 {
-    //options.UseMySql(builder.Configuration.GetConnectionString("DefaultConnection"), serverVersion, mySqlOptions =>
-    //{
-    //    mySqlOptions.EnableRetryOnFailure(
-    //        maxRetryCount: 5, // 最大重试次数
-    //        maxRetryDelay: TimeSpan.FromSeconds(30), // 重试之间的最大延迟
-    //        errorNumbersToAdd: null // 要添加的错误编号（可选）
-    //    );
-    //});
     options.UseMySql(builder.Configuration.GetConnectionString("DefaultConnection"), serverVersion);
-    options.UseLoggerFactory(serilogLoggerFactory) // 使用 Serilog 的 LoggerFactory
-           .EnableSensitiveDataLogging(); // 如果需要敏感數據記錄
+    options.UseLoggerFactory(serilogLoggerFactory)
+           .EnableSensitiveDataLogging();
+}, contextLifetime: ServiceLifetime.Scoped, optionsLifetime: ServiceLifetime.Singleton);
 
-}, ServiceLifetime.Scoped);
-
+// Register IDbContextFactory to allow creating DbContext instances for parallel/async queries
+builder.Services.AddDbContextFactory<StockDbContext>(options =>
+{
+    options.UseMySql(builder.Configuration.GetConnectionString("DefaultConnection"), serverVersion);
+    options.UseLoggerFactory(serilogLoggerFactory)
+           .EnableSensitiveDataLogging();
+});
 
 builder.Services
     .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
@@ -216,6 +228,87 @@ builder.Services.AddQuartz(q =>
 builder.Services.AddQuartzHostedService(q => q.WaitForJobsToComplete = true);
 
 var app = builder.Build();
+
+// Log effective connection string (masked) to confirm what the app uses
+try
+{
+    var effectiveConn = builder.Configuration.GetConnectionString("DefaultConnection") ?? string.Empty;
+    string MaskConnectionString(string cs)
+    {
+        if (string.IsNullOrEmpty(cs)) return cs;
+        try
+        {
+            var parts = cs.Split(';');
+            for (int i = 0; i < parts.Length; i++)
+            {
+                var kvPos = parts[i].IndexOf('=');
+                if (kvPos <= 0) continue;
+                var key = parts[i].Substring(0, kvPos).Trim().ToLowerInvariant();
+                if (key.Contains("password") || key == "pwd" || key == "user id" || key == "uid")
+                {
+                    var k = parts[i].Substring(0, kvPos + 1);
+                    parts[i] = k + "***";
+                }
+            }
+            return string.Join(';', parts);
+        }
+        catch
+        {
+            return "(unable to mask connstr)";
+        }
+    }
+
+    Log.Information("Using DefaultConnection (masked): {conn}", MaskConnectionString(effectiveConn));
+}
+catch (Exception ex)
+{
+    Log.Warning(ex, "Failed to read or log connection string");
+}
+
+// Optional: warm-up connection pool to pre-create connections
+try
+{
+    var warmupSize = builder.Configuration.GetValue<int?>("ConnectionPoolWarmup:Size") ?? 0;
+    if (warmupSize > 0)
+    {
+        Log.Information("Starting DB connection pool warm-up, size={size}", warmupSize);
+        using (var scope = app.Services.CreateScope())
+        {
+            var factory = scope.ServiceProvider.GetService<IDbContextFactory<stock_api.Models.StockDbContext>>();
+            if (factory != null)
+            {
+                for (int i = 0; i < warmupSize; i++)
+                {
+                    try
+                    {
+                        using var ctx = factory.CreateDbContext();
+                        ctx.Database.OpenConnection();
+                        // quick small query to ensure connection is established and authenticated
+                        using (var cmd = ctx.Database.GetDbConnection().CreateCommand())
+                        {
+                            cmd.CommandText = "SELECT 1";
+                            cmd.ExecuteScalar();
+                        }
+                        ctx.Database.CloseConnection();
+                    }
+                    catch (Exception ex)
+                    {
+                        Log.Warning(ex, "Warm-up connection {i} failed", i);
+                    }
+                }
+                Log.Information("DB connection pool warm-up completed");
+            }
+            else
+            {
+                Log.Information("IDbContextFactory<StockDbContext> not registered; skipping warm-up");
+            }
+        }
+    }
+}
+catch (Exception ex)
+{
+    Log.Warning(ex, "Failed during DB warm-up procedure");
+}
 
 app.UseMiddleware<RequestLoggingMiddleware>();
 

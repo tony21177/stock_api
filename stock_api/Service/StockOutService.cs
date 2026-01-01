@@ -11,38 +11,60 @@ using System.Linq;
 using System.Security.AccessControl;
 using System.Transactions;
 using System.Diagnostics;
+using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace stock_api.Service
 {
     public class StockOutService
     {
         private readonly StockDbContext _dbContext;
+        private readonly IDbContextFactory<StockDbContext> _dbContextFactory;
         private readonly IMapper _mapper;
         private readonly ILogger<StockOutService> _logger;
-        private readonly WarehouseProductService _warehouseProductService;  
+        private readonly WarehouseProductService _warehouseProductService;
+        private readonly IMemoryCache _memoryCache;
 
-        public StockOutService(StockDbContext dbContext, IMapper mapper, ILogger<StockOutService> logger,WarehouseProductService warehouseProductService)
+        // Cache keys
+        private const string CacheKeyLastMonthUsage = "usage_last_month";
+        private const string CacheKeyThisYearAvgUsage = "usage_this_year_avg";
+        private const string CacheKeyLastYearUsage = "usage_last_year";
+        
+        // Cache duration settings
+        // AbsoluteExpiration: 12 小時後強制失效
+        private static readonly TimeSpan CacheAbsoluteExpiration = TimeSpan.FromHours(12);
+        // SlidingExpiration: 2 小時沒人讀取就失效
+        private static readonly TimeSpan CacheSlidingExpiration = TimeSpan.FromHours(2);
+
+        public StockOutService(StockDbContext dbContext, IMapper mapper, ILogger<StockOutService> logger, WarehouseProductService warehouseProductService, IDbContextFactory<StockDbContext> dbContextFactory, IMemoryCache memoryCache)
         {
             _dbContext = dbContext;
             _mapper = mapper;
             _logger = logger;
             _warehouseProductService = warehouseProductService;
+            _dbContextFactory = dbContextFactory;
+            _memoryCache = memoryCache;
         }
 
-        public (bool,string?,NotifyProductQuantity?) OutStock(string outType,OutboundRequest request,InStockItemRecord inStockItem,WarehouseProduct product,WarehouseMember applyUser,string compId)
+        // Batching helper size
+        private const int InClauseBatchSize = 200;
+
+        public (bool, string?, NotifyProductQuantity?) OutStock(string outType, OutboundRequest request, InStockItemRecord inStockItem, WarehouseProduct product, WarehouseMember applyUser, string compId)
         {
             using var scope = new TransactionScope();
             try
             {
 
-                float inStockQuantity = inStockItem.InStockQuantity+ inStockItem.AdjustInQuantity;
-                float existingOutQuantity = inStockItem.OutStockQuantity + inStockItem.AdjustOutQuantity+inStockItem.RejectQuantity;
+                float inStockQuantity = inStockItem.InStockQuantity + inStockItem.AdjustInQuantity;
+                float existingOutQuantity = inStockItem.OutStockQuantity + inStockItem.AdjustOutQuantity + inStockItem.RejectQuantity;
                 existingOutQuantity += request.ApplyQuantity;
                 inStockItem.OutStockQuantity = existingOutQuantity;
                 if (existingOutQuantity >= inStockQuantity)
                 {
                     inStockItem.OutStockStatus = CommonConstants.OutStockStatus.ALL;
-                }else if (existingOutQuantity < inStockQuantity)
+                }
+                else if (existingOutQuantity < inStockQuantity)
                 {
                     inStockItem.OutStockStatus = CommonConstants.OutStockStatus.PART;
                 }
@@ -91,11 +113,11 @@ namespace stock_api.Service
                     ItemId = inStockItem.ItemId,
                     BarCodeNumber = inStockItem.BarCodeNumber,
                     ExpirationDate = inStockItem.ExpirationDate,
-                    SkipQcCommnet = request.IsSkipQc?request.SkipQcComment:"",
+                    SkipQcCommnet = request.IsSkipQc ? request.SkipQcComment : "",
                     Remark = request.Remark,
                     InstrumentId = request.InstrumentId,
                 };
-               
+
 
                 _dbContext.TempOutStockRecords.Add(tempOutStockRecord);
                 _dbContext.OutStockRecords.Add(outStockRecord);
@@ -109,14 +131,14 @@ namespace stock_api.Service
                 };
                 _dbContext.OutstockRelatetoInstocks.Add(outStockRelateToInStock);
                 // 更新庫存
-                
+
                 product.InStockQuantity = product.InStockQuantity - request.ApplyQuantity;
                 DateOnly nowDate = DateOnly.FromDateTime(DateTime.Now);
-                if (product.OpenDeadline != null&& outType==CommonConstants.OutStockType.PURCHASE_OUT)
+                if (product.OpenDeadline != null && outType == CommonConstants.OutStockType.PURCHASE_OUT)
                 {
                     product.LastAbleDate = nowDate.AddDays(product.OpenDeadline.Value);
                 }
-                if(outType == CommonConstants.OutStockType.PURCHASE_OUT)
+                if (outType == CommonConstants.OutStockType.PURCHASE_OUT)
                 {
                     product.LotNumber = inStockItem.LotNumber;
                     product.LotNumberBatch = request.LotNumberBatch;
@@ -124,14 +146,14 @@ namespace stock_api.Service
                     product.OriginalDeadline = inStockItem.ExpirationDate;
                 }
 
-                    
+
                 NotifyProductQuantity notifyProductQuantity = new()
                 {
                     ProductCode = product.ProductCode,
                     ProductId = product.ProductId,
                     ProductName = product.ProductName,
-                    InStockQuantity = product.InStockQuantity??0.0f,
-                    SafeQuantity = product.SafeQuantity??0.0f,
+                    InStockQuantity = product.InStockQuantity ?? 0.0f,
+                    SafeQuantity = product.SafeQuantity ?? 0.0f,
                     MaxSafeQuantity = product.MaxSafeQuantity,
                     OutStockQuantity = request.ApplyQuantity,
                     CompId = product.CompId,
@@ -139,24 +161,24 @@ namespace stock_api.Service
 
                 _dbContext.SaveChanges();
                 scope.Complete();
-                return (true,null,notifyProductQuantity);
+                return (true, null, notifyProductQuantity);
             }
             catch (Exception ex)
             {
                 _logger.LogError("事務失敗[OutStock]：{msg}", ex);
-                return (false,ex.Message,null);
+                return (false, ex.Message, null);
             }
         }
 
 
-        public (bool,string?,NotifyProductQuantity?) OwnerOutStock(string outType,OwnerOutboundRequest request, InStockItemRecord inStockItem, WarehouseProduct product, WarehouseMember applyUser,AcceptanceItem? toCompAcceptanceItem,string compId)
+        public (bool, string?, NotifyProductQuantity?) OwnerOutStock(string outType, OwnerOutboundRequest request, InStockItemRecord inStockItem, WarehouseProduct product, WarehouseMember applyUser, AcceptanceItem? toCompAcceptanceItem, string compId)
         {
             using var scope = new TransactionScope();
             try
             {
 
-                float inStockQuantity = inStockItem.InStockQuantity+inStockItem.AdjustInQuantity;
-                float existingOutQuantity = inStockItem.OutStockQuantity + inStockItem.AdjustOutQuantity+ inStockItem.RejectQuantity;
+                float inStockQuantity = inStockItem.InStockQuantity + inStockItem.AdjustInQuantity;
+                float existingOutQuantity = inStockItem.OutStockQuantity + inStockItem.AdjustOutQuantity + inStockItem.RejectQuantity;
                 existingOutQuantity += request.ApplyQuantity;
                 inStockItem.OutStockQuantity = existingOutQuantity;
                 if (existingOutQuantity >= inStockQuantity)
@@ -238,11 +260,11 @@ namespace stock_api.Service
                 product.LastOutStockDate = nowDate;
                 product.OriginalDeadline = inStockItem.ExpirationDate;
 
-                if(outType == CommonConstants.OutStockType.SHIFT_OUT && toCompAcceptanceItem != null)
+                if (outType == CommonConstants.OutStockType.SHIFT_OUT && toCompAcceptanceItem != null)
                 {
-                    var toProduct = _warehouseProductService.GetProductByProductCodeAndCompId(product.ProductCode,toCompAcceptanceItem.CompId);
+                    var toProduct = _warehouseProductService.GetProductByProductCodeAndCompId(product.ProductCode, toCompAcceptanceItem.CompId);
                     // TODO:跟Gary確認這樣轉換對不對
-                    toCompAcceptanceItem.AcceptQuantity = request.ApplyQuantity* (toProduct.UnitConversion??1);
+                    toCompAcceptanceItem.AcceptQuantity = request.ApplyQuantity * (toProduct.UnitConversion ?? 1);
                     toCompAcceptanceItem.LotNumber = inStockItem.LotNumber;
                     toCompAcceptanceItem.LotNumberBatch = request.LotNumberBatch;
                     toCompAcceptanceItem.ExpirationDate = inStockItem.ExpirationDate;
@@ -263,12 +285,12 @@ namespace stock_api.Service
 
                 _dbContext.SaveChanges();
                 scope.Complete();
-                return (true,null,notifyProductQuantity);
+                return (true, null, notifyProductQuantity);
             }
             catch (Exception ex)
             {
                 _logger.LogError("事務失敗[OutStock]：{msg}", ex);
-                return (false,ex.Message,null);
+                return (false, ex.Message, null);
             }
         }
 
@@ -324,7 +346,7 @@ namespace stock_api.Service
                 || h.UserName.Contains(request.Keywords)
                 );
             }
-            if(request.PaginationCondition.OrderByField==null) request.PaginationCondition.OrderByField = "UpdatedAt";
+            if (request.PaginationCondition.OrderByField == null) request.PaginationCondition.OrderByField = "UpdatedAt";
             if (request.PaginationCondition.IsDescOrderBy)
             {
                 var orderByField = StringUtils.CapitalizeFirstLetter(request.PaginationCondition.OrderByField);
@@ -361,7 +383,30 @@ namespace stock_api.Service
 
         public List<LastMonthUsage> GetLastMonthUsages(List<string> productIdList)
         {
-            return _dbContext.LastMonthUsages.Where(e=>productIdList.Contains(e.ProductId)).ToList();
+            return _dbContext.LastMonthUsages.Where(e => productIdList.Contains(e.ProductId)).ToList();
+        }
+
+        // Async version using DbContextFactory and ToListAsync
+        public async Task<List<LastMonthUsage>> GetLastMonthUsagesAsync(List<string> productIdList)
+        {
+            if (productIdList == null || productIdList.Count == 0)
+            {
+                return new List<LastMonthUsage>();
+            }
+
+            var sw = Stopwatch.StartNew();
+            var results = new List<LastMonthUsage>();
+            // split into batches to avoid huge IN(...) lists
+            for (int i = 0; i < productIdList.Count; i += InClauseBatchSize)
+            {
+                var batch = productIdList.Skip(i).Take(InClauseBatchSize).ToList();
+                using var ctx = _dbContextFactory.CreateDbContext();
+                var res = await ctx.LastMonthUsages.AsNoTracking().Where(e => batch.Contains(e.ProductId)).ToListAsync();
+                if (res != null && res.Count > 0) results.AddRange(res);
+            }
+            sw.Stop();
+            _logger.LogInformation("[StockOutService] GetLastMonthUsagesAsync elapsed: {ms}ms, count: {count}", sw.ElapsedMilliseconds, results?.Count ?? 0);
+            return results;
         }
 
         public List<LastMonthUsage> GetLastMonthUsages()
@@ -369,9 +414,39 @@ namespace stock_api.Service
             return _dbContext.LastMonthUsages.ToList();
         }
 
+        public async Task<List<LastMonthUsage>> GetLastMonthUsagesAsync()
+        {
+            using var ctx = _dbContextFactory.CreateDbContext();
+            var sw = Stopwatch.StartNew();
+            var res = await ctx.LastMonthUsages.AsNoTracking().ToListAsync();
+            sw.Stop();
+            _logger.LogInformation("[StockOutService] GetLastMonthUsagesAsync (all) elapsed: {ms}ms, count: {count}", sw.ElapsedMilliseconds, res?.Count ?? 0);
+            return res;
+        }
+
         public List<AverageMonthUsageThisYear> GetThisAverageMonthUsages(List<string> productIdList)
         {
             return _dbContext.AverageMonthUsageThisYears.Where(e => productIdList.Contains(e.ProductId)).ToList();
+        }
+
+        public async Task<List<AverageMonthUsageThisYear>> GetThisAverageMonthUsagesAsync(List<string> productIdList)
+        {
+            if (productIdList == null || productIdList.Count == 0)
+            {
+                return new List<AverageMonthUsageThisYear>();
+            }
+            var sw = Stopwatch.StartNew();
+            var results = new List<AverageMonthUsageThisYear>();
+            for (int i = 0; i < productIdList.Count; i += InClauseBatchSize)
+            {
+                var batch = productIdList.Skip(i).Take(InClauseBatchSize).ToList();
+                using var ctx = _dbContextFactory.CreateDbContext();
+                var res = await ctx.AverageMonthUsageThisYears.AsNoTracking().Where(e => batch.Contains(e.ProductId)).ToListAsync();
+                if (res != null && res.Count > 0) results.AddRange(res);
+            }
+            sw.Stop();
+            _logger.LogInformation("[StockOutService] GetThisAverageMonthUsagesAsync elapsed: {ms}ms, count: {count}", sw.ElapsedMilliseconds, results?.Count ?? 0);
+            return results;
         }
 
         public List<AverageMonthUsageThisYear> GetThisAverageMonthUsages()
@@ -379,14 +454,155 @@ namespace stock_api.Service
             return _dbContext.AverageMonthUsageThisYears.ToList();
         }
 
+        public async Task<List<AverageMonthUsageThisYear>> GetThisAverageMonthUsagesAsync()
+        {
+            using var ctx = _dbContextFactory.CreateDbContext();
+            var sw = Stopwatch.StartNew();
+            var res = await ctx.AverageMonthUsageThisYears.AsNoTracking().ToListAsync();
+            sw.Stop();
+            _logger.LogInformation("[StockOutService] GetThisAverageMonthUsagesAsync (all) elapsed: {ms}ms, count: {count}", sw.ElapsedMilliseconds, res?.Count ?? 0);
+            return res;
+        }
+
         public List<LastYearUsage> GetLastYearUsages()
         {
             return _dbContext.LastYearUsages.ToList();
         }
 
+        public async Task<List<LastYearUsage>> GetLastYearUsagesAsync()
+        {
+            using var ctx = _dbContextFactory.CreateDbContext();
+            var sw = Stopwatch.StartNew();
+            var res = await ctx.LastYearUsages.AsNoTracking().ToListAsync();
+            sw.Stop();
+            _logger.LogInformation("[StockOutService] GetLastYearUsagesAsync (all) elapsed: {ms}ms, count: {count}", sw.ElapsedMilliseconds, res?.Count ?? 0);
+            return res;
+        }
+
         public List<LastYearUsage> GetLastYearUsages(List<string> productIdList)
         {
             return _dbContext.LastYearUsages.Where(e => productIdList.Contains(e.ProductId)).ToList();
+        }
+
+        public async Task<List<LastYearUsage>> GetLastYearUsagesAsync(List<string> productIdList)
+        {
+            if (productIdList == null || productIdList.Count == 0)
+            {
+                return new List<LastYearUsage>();
+            }
+            var sw = Stopwatch.StartNew();
+            var results = new List<LastYearUsage>();
+            for (int i = 0; i < productIdList.Count; i += InClauseBatchSize)
+            {
+                var batch = productIdList.Skip(i).Take(InClauseBatchSize).ToList();
+                using var ctx = _dbContextFactory.CreateDbContext();
+                var res = await ctx.LastYearUsages.AsNoTracking().Where(e => batch.Contains(e.ProductId)).ToListAsync();
+                if (res != null && res.Count > 0) results.AddRange(res);
+            }
+            sw.Stop();
+            _logger.LogInformation("[StockOutService] GetLastYearUsagesAsync elapsed: {ms}ms, count: {count}", sw.ElapsedMilliseconds, results?.Count ?? 0);
+            return results;
+        }
+
+        /// <summary>
+        /// Combined async query to fetch last month, this year average and last year usages in parallel and return a single list per product.
+        /// Optimized version: Uses MemoryCache with 12-hour absolute expiration and 2-hour sliding expiration, SELECT ALL from each view, then filter in memory using HashSet for O(1) lookup.
+        /// </summary>
+        public async Task<List<CombinedUsageVo>> GetCombinedUsagesAsync(List<string> productIdList)
+        {
+            if (productIdList == null || productIdList.Count == 0)
+            {
+                return new List<CombinedUsageVo>();
+            }
+
+            var sw = Stopwatch.StartNew();
+
+            // Build HashSet for O(1) lookup
+            var productIdSet = new HashSet<string>(productIdList);
+
+            // Try get from cache, or load from DB
+            var lastMonthList = await _memoryCache.GetOrCreateAsync(CacheKeyLastMonthUsage, async entry =>
+            {
+                entry.AbsoluteExpirationRelativeToNow = CacheAbsoluteExpiration;
+                entry.SlidingExpiration = CacheSlidingExpiration;
+                using var ctx = _dbContextFactory.CreateDbContext();
+                var swDb = Stopwatch.StartNew();
+                var data = await ctx.LastMonthUsages.AsNoTracking().ToListAsync();
+                swDb.Stop();
+                _logger.LogInformation("[StockOutService] Cache MISS - LastMonthUsage loaded from DB: {ms}ms, count: {count}", swDb.ElapsedMilliseconds, data?.Count ?? 0);
+                return data ?? new List<LastMonthUsage>();
+            });
+
+            var thisYearList = await _memoryCache.GetOrCreateAsync(CacheKeyThisYearAvgUsage, async entry =>
+            {
+                entry.AbsoluteExpirationRelativeToNow = CacheAbsoluteExpiration;
+                entry.SlidingExpiration = CacheSlidingExpiration;
+                using var ctx = _dbContextFactory.CreateDbContext();
+                var swDb = Stopwatch.StartNew();
+                var data = await ctx.AverageMonthUsageThisYears.AsNoTracking().ToListAsync();
+                swDb.Stop();
+                _logger.LogInformation("[StockOutService] Cache MISS - ThisYearAvgUsage loaded from DB: {ms}ms, count: {count}", swDb.ElapsedMilliseconds, data?.Count ?? 0);
+                return data ?? new List<AverageMonthUsageThisYear>();
+            });
+
+            var lastYearList = await _memoryCache.GetOrCreateAsync(CacheKeyLastYearUsage, async entry =>
+            {
+                entry.AbsoluteExpirationRelativeToNow = CacheAbsoluteExpiration;
+                entry.SlidingExpiration = CacheSlidingExpiration;
+                using var ctx = _dbContextFactory.CreateDbContext();
+                var swDb = Stopwatch.StartNew();
+                var data = await ctx.LastYearUsages.AsNoTracking().ToListAsync();
+                swDb.Stop();
+                _logger.LogInformation("[StockOutService] Cache MISS - LastYearUsage loaded from DB: {ms}ms, count: {count}", swDb.ElapsedMilliseconds, data?.Count ?? 0);
+                return data ?? new List<LastYearUsage>();
+            });
+
+            var swFilter = Stopwatch.StartNew();
+
+            // Filter in memory using HashSet (O(1) per lookup)
+            var lastMonthLookup = lastMonthList
+                .Where(u => productIdSet.Contains(u.ProductId))
+                .ToDictionary(u => u.ProductId, u => u.Quantity);
+            var thisYearLookup = thisYearList
+                .Where(u => productIdSet.Contains(u.ProductId))
+                .ToDictionary(u => u.ProductId, u => u.AverageQuantity);
+            var lastYearLookup = lastYearList
+                .Where(u => productIdSet.Contains(u.ProductId))
+                .ToDictionary(u => u.ProductId, u => u.Quantity);
+
+            // Build result
+            var result = new List<CombinedUsageVo>(productIdList.Count);
+            foreach (var pid in productIdList)
+            {
+                lastMonthLookup.TryGetValue(pid, out var lm);
+                thisYearLookup.TryGetValue(pid, out var ty);
+                lastYearLookup.TryGetValue(pid, out var ly);
+
+                result.Add(new CombinedUsageVo
+                {
+                    ProductId = pid,
+                    LastMonthQuantity = lm,
+                    ThisYearAverageQuantity = ty,
+                    LastYearQuantity = ly,
+                });
+            }
+
+            swFilter.Stop();
+            sw.Stop();
+            _logger.LogInformation("[StockOutService] GetCombinedUsagesAsync(cached) elapsed: {ms}ms (filter: {filterMs}ms), productCount: {count}, lastMonth: {lm}, thisYear: {ty}, lastYear: {ly}",
+                sw.ElapsedMilliseconds, swFilter.ElapsedMilliseconds, productIdList.Count, lastMonthList.Count, thisYearList.Count, lastYearList.Count);
+            return result;
+        }
+
+        /// <summary>
+        /// 清除 usage cache (可在出庫後呼叫，確保下次查詢時會重新載入)
+        /// </summary>
+        public void InvalidateUsageCache()
+        {
+            _memoryCache.Remove(CacheKeyLastMonthUsage);
+            _memoryCache.Remove(CacheKeyThisYearAvgUsage);
+            _memoryCache.Remove(CacheKeyLastYearUsage);
+            _logger.LogInformation("[StockOutService] Usage cache invalidated");
         }
 
         public OutStockRecord? GetOutStockRecordById(string outStockId)
@@ -396,17 +612,28 @@ namespace stock_api.Service
 
         public List<OutStockRecord> GetOutStockRecordsByLotNumberBatch(string lotNumberBatch)
         {
-            return _dbContext.OutStockRecords.Where(r => r.LotNumberBatch==lotNumberBatch).ToList();
+            return _dbContext.OutStockRecords.Where(r => r.LotNumberBatch == lotNumberBatch).ToList();
         }
 
         public List<OutStockRecord> GetOutStockRecordsByLotNumberList(List<string> lotNumberList)
         {
             var sw = Stopwatch.StartNew();
-            var result = _dbContext.OutStockRecords.Where(r=>r.LotNumber!=null&&lotNumberList.Contains(r.LotNumber)).ToList();
+            var result = _dbContext.OutStockRecords.Where(r => r.LotNumber != null && lotNumberList.Contains(r.LotNumber)).ToList();
             sw.Stop();
             _logger.LogInformation("[StockOutService.GetOutStockRecordsByLotNumberList] elapsed: {ms}ms, count: {count}", sw.ElapsedMilliseconds, result.Count);
             return result;
         }
+
+        public async Task<List<OutStockRecord>> GetOutStockRecordsByLotNumberListAsync(List<string> lotNumberList)
+        {
+            using var ctx = _dbContextFactory.CreateDbContext();
+            var sw = Stopwatch.StartNew();
+            var result = await ctx.OutStockRecords.AsNoTracking().Where(r => r.LotNumber != null && lotNumberList.Contains(r.LotNumber)).ToListAsync();
+            sw.Stop();
+            _logger.LogInformation("[StockOutService] GetOutStockRecordsByLotNumberListAsync elapsed: {ms}ms, count: {count}", sw.ElapsedMilliseconds, result?.Count ?? 0);
+            return result;
+        }
+
         public List<OutStockRecord> GetOutStockRecordsByLotNumberBatchList(List<string> lotNumberBatchList)
         {
             var sw = Stopwatch.StartNew();
@@ -418,10 +645,10 @@ namespace stock_api.Service
 
         public List<ReturnStockRecord> GetReturnStockRecords(string compId)
         {
-            return _dbContext.ReturnStockRecords.Where(r=>r.CompId==compId).OrderByDescending(r=>r.CreatedAt).ToList();
+            return _dbContext.ReturnStockRecords.Where(r => r.CompId == compId).OrderByDescending(r => r.CreatedAt).ToList();
         }
 
-        public (bool,string?) OwnerDirectBatchOut(OwnerDirectBatchOutboundRequest request,List<WarehouseProduct> products,WarehouseMember user)
+        public (bool, string?) OwnerDirectBatchOut(OwnerDirectBatchOutboundRequest request, List<WarehouseProduct> products, WarehouseMember user)
         {
 
             using var scope = new TransactionScope();
@@ -475,7 +702,7 @@ namespace stock_api.Service
         }
 
 
-        public (bool, string?) OwnerPurchaseSubItemsBatchOut(OwnerPurchaseSubItemsOutRequest request, List<PurchaseSubItem> subItems,List<WarehouseProduct> ownerProducts, WarehouseMember user)
+        public (bool, string?) OwnerPurchaseSubItemsBatchOut(OwnerPurchaseSubItemsOutRequest request, List<PurchaseSubItem> subItems, List<WarehouseProduct> ownerProducts, WarehouseMember user)
         {
 
             using var scope = new TransactionScope();
@@ -485,7 +712,7 @@ namespace stock_api.Service
 
                 foreach (var item in request.PurchaseSubOutItems)
                 {
-                    var matchedSubItem = subItems.Where(i=>i.ItemId==item.SubItemId).FirstOrDefault();
+                    var matchedSubItem = subItems.Where(i => i.ItemId == item.SubItemId).FirstOrDefault();
                     var matchedProduct = ownerProducts.Where(p => p.ProductCode == matchedSubItem.ProductCode).FirstOrDefault();
 
 
@@ -600,5 +827,13 @@ namespace stock_api.Service
             }
             return result;
         }
+    }
+
+    public class CombinedUsageVo
+    {
+        public string ProductId { get; set; }
+        public double? LastMonthQuantity { get; set; }
+        public double? ThisYearAverageQuantity { get; set; }
+        public double? LastYearQuantity { get; set; }
     }
 }

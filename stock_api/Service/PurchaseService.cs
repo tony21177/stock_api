@@ -16,21 +16,22 @@ using System.Drawing;
 using System.Linq;
 using System.Text.Json;
 using System.Transactions;
+using System.Threading.Tasks;
 
 namespace stock_api.Service
 {
     public class PurchaseService
     {
         private readonly StockDbContext _dbContext;
+        private readonly IDbContextFactory<StockDbContext> _dbContextFactory;
         private readonly IMapper _mapper;
         private readonly ILogger<PurchaseService> _logger;
         private readonly EmailService _emailService;
         private readonly MemberService _memberService;
         private readonly SmtpSettings _smtpSettings;
-        
+        private const int InClauseBatchSize = 200;
 
-
-        public PurchaseService(StockDbContext dbContext, IMapper mapper, ILogger<PurchaseService> logger, EmailService emailService,MemberService memberService,SmtpSettings smtpSettings)
+        public PurchaseService(StockDbContext dbContext, IMapper mapper, ILogger<PurchaseService> logger, EmailService emailService,MemberService memberService,SmtpSettings smtpSettings, IDbContextFactory<StockDbContext> dbContextFactory)
         {
             _dbContext = dbContext;
             _mapper = mapper;
@@ -38,6 +39,7 @@ namespace stock_api.Service
             _emailService = emailService;
             _memberService = memberService;
             _smtpSettings = smtpSettings;
+            _dbContextFactory = dbContextFactory;
         }
 
         public PurchaseMainSheet? GetPurchaseMainByMainId(string purchaseMainId)
@@ -50,6 +52,15 @@ namespace stock_api.Service
             return _dbContext.PurchaseMainSheets.Where(m => purchaseMainIdList.Contains(m.PurchaseMainId)).ToList();
         }
 
+        public async Task<List<PurchaseMainSheet>> GetPurchaseMainsByMainIdListAsync(List<string> purchaseMainIdList)
+        {
+            using var ctx = _dbContextFactory.CreateDbContext();
+            var sw = Stopwatch.StartNew();
+            var res = await ctx.PurchaseMainSheets.AsNoTracking().Where(m => purchaseMainIdList.Contains(m.PurchaseMainId)).ToListAsync();
+            sw.Stop();
+            _logger.LogInformation("[PurchaseService] GetPurchaseMainsByMainIdListAsync elapsed: {ms}ms, count: {count}", sw.ElapsedMilliseconds, res?.Count ?? 0);
+            return res;
+        }
 
         public List<PurchaseSubItem> GetPurchaseSubItemsByMainId(string purchaseMainId)
         {
@@ -70,6 +81,16 @@ namespace stock_api.Service
         public List<PurchaseSubItem> GetPurchaseSubItemsByMainIdList(List<string> purchaseMainIdList)
         {
             return _dbContext.PurchaseSubItems.Where(s => purchaseMainIdList.Contains(s.PurchaseMainId)).ToList();
+        }
+
+        public async Task<List<PurchaseSubItem>> GetPurchaseSubItemsByMainIdListAsync(List<string> purchaseMainIdList)
+        {
+            using var ctx = _dbContextFactory.CreateDbContext();
+            var sw = Stopwatch.StartNew();
+            var res = await ctx.PurchaseSubItems.AsNoTracking().Where(s => purchaseMainIdList.Contains(s.PurchaseMainId)).ToListAsync();
+            sw.Stop();
+            _logger.LogInformation("[PurchaseService] GetPurchaseSubItemsByMainIdListAsync elapsed: {ms}ms, count: {count}", sw.ElapsedMilliseconds, res?.Count ?? 0);
+            return res;
         }
 
         public List<PurchaseFlow> GetPurchaseFlowsByMainId(string purchaseMainId)
@@ -408,7 +429,6 @@ namespace stock_api.Service
                             };
                             _emailService.AddEmailNotify(emailNotify);
                         }
-                        
                     }
                     _dbContext.SaveChanges();
                     scope.Complete();
@@ -1631,17 +1651,61 @@ namespace stock_api.Service
 
         public List<PurchaseItemListView> GetNotDonePurchaseSubItemByProductIdList(List<string> productIdList)
         {
-            return _dbContext.PurchaseItemListViews.Where(s => s.ReceiveStatus != CommonConstants.PurchaseSubItemReceiveStatus.CLOSE
-            //&& s.ReceiveStatus != CommonConstants.PurchaseSubItemReceiveStatus.DONE 
-            && s.ItemReceiveStatus != CommonConstants.PurchaseSubItemReceiveStatus.DONE
-            && s.OwnerProcess != CommonConstants.PurchaseMainOwnerProcessStatus.NOT_AGREE
-            && s.SubOwnerProcess != CommonConstants.PurchaseMainOwnerProcessStatus.NOT_AGREE
-            && s.CurrentStatus != CommonConstants.PurchaseCurrentStatus.REJECT
-            && s.CurrentStatus != CommonConstants.PurchaseCurrentStatus.CLOSE
-            && productIdList.Contains(s.ProductId)).ToList();
+            if (productIdList == null || productIdList.Count == 0)
+            {
+                return new List<PurchaseItemListView>();
+            }
+
+            var sw = Stopwatch.StartNew();
+            var results = new List<PurchaseItemListView>();
+            for (int i = 0; i < productIdList.Count; i += InClauseBatchSize)
+            {
+                var batch = productIdList.Skip(i).Take(InClauseBatchSize).ToList();
+                var res = _dbContext.PurchaseItemListViews
+                    .Where(s => s.ReceiveStatus != CommonConstants.PurchaseSubItemReceiveStatus.CLOSE
+                        && s.ItemReceiveStatus != CommonConstants.PurchaseSubItemReceiveStatus.DONE
+                        && s.OwnerProcess != CommonConstants.PurchaseMainOwnerProcessStatus.NOT_AGREE
+                        && s.SubOwnerProcess != CommonConstants.PurchaseMainOwnerProcessStatus.NOT_AGREE
+                        && s.CurrentStatus != CommonConstants.PurchaseCurrentStatus.REJECT
+                        && s.CurrentStatus != CommonConstants.PurchaseCurrentStatus.CLOSE
+                        && batch.Contains(s.ProductId))
+                    .ToList();
+                if (res != null && res.Count > 0) results.AddRange(res);
+            }
+            sw.Stop();
+            _logger.LogInformation("[PurchaseService] GetNotDonePurchaseSubItemByProductIdList elapsed: {ms}ms, count: {count}", sw.ElapsedMilliseconds, results?.Count ?? 0);
+            return results;
         }
 
-        // 優化版本：直接從原始資料表查詢，避免使用 View
+        public async Task<List<PurchaseItemListView>> GetNotDonePurchaseSubItemByProductIdListAsync(List<string> productIdList)
+        {
+            if (productIdList == null || productIdList.Count == 0)
+            {
+                return new List<PurchaseItemListView>();
+            }
+
+            using var ctx = _dbContextFactory.CreateDbContext();
+            var sw = Stopwatch.StartNew();
+            var results = new List<PurchaseItemListView>();
+            for (int i = 0; i < productIdList.Count; i += InClauseBatchSize)
+            {
+                var batch = productIdList.Skip(i).Take(InClauseBatchSize).ToList();
+                var res = await ctx.PurchaseItemListViews.AsNoTracking()
+                    .Where(s => s.ReceiveStatus != CommonConstants.PurchaseSubItemReceiveStatus.CLOSE
+                        && s.ItemReceiveStatus != CommonConstants.PurchaseSubItemReceiveStatus.DONE
+                        && s.OwnerProcess != CommonConstants.PurchaseMainOwnerProcessStatus.NOT_AGREE
+                        && s.SubOwnerProcess != CommonConstants.PurchaseMainOwnerProcessStatus.NOT_AGREE
+                        && s.CurrentStatus != CommonConstants.PurchaseCurrentStatus.REJECT
+                        && s.CurrentStatus != CommonConstants.PurchaseCurrentStatus.CLOSE
+                        && batch.Contains(s.ProductId))
+                    .ToListAsync();
+                if (res != null && res.Count > 0) results.AddRange(res);
+            }
+            sw.Stop();
+            _logger.LogInformation("[PurchaseService] GetNotDonePurchaseSubItemByProductIdListAsync elapsed: {ms}ms, count: {count}", sw.ElapsedMilliseconds, results?.Count ?? 0);
+            return results;
+        }
+
         public List<PurchaseSubItem> GetNotDonePurchaseSubItemsByProductIdListOptimized(List<string> productIdList)
         {
             if (productIdList == null || productIdList.Count == 0)
@@ -1649,6 +1713,7 @@ namespace stock_api.Service
                 return new List<PurchaseSubItem>();
             }
 
+            var sw = Stopwatch.StartNew();
             // 先取得有效的 PurchaseMainSheet IDs
             var effectiveMainIds = _dbContext.PurchaseMainSheets
                 .Where(m => m.CurrentStatus != CommonConstants.PurchaseCurrentStatus.REJECT
@@ -1659,15 +1724,68 @@ namespace stock_api.Service
 
             var effectiveMainIdSet = effectiveMainIds.ToHashSet();
 
-            // 從 PurchaseSubItems 查詢，而非從 View
-            return _dbContext.PurchaseSubItems
+            var results = new List<PurchaseSubItem>();
+            for (int i = 0; i < productIdList.Count; i += InClauseBatchSize)
+            {
+                var batch = productIdList.Skip(i).Take(InClauseBatchSize).ToList();
+                var subItems = _dbContext.PurchaseSubItems
+                    .Where(s => s.ReceiveStatus != CommonConstants.PurchaseSubItemReceiveStatus.CLOSE
+                             && s.ReceiveStatus != CommonConstants.PurchaseSubItemReceiveStatus.DONE
+                             && s.OwnerProcess != CommonConstants.PurchaseMainOwnerProcessStatus.NOT_AGREE
+                             && batch.Contains(s.ProductId))
+                    .ToList();
+                if (subItems != null && subItems.Count > 0)
+                {
+                    var filtered = subItems.Where(s => effectiveMainIdSet.Contains(s.PurchaseMainId)).ToList();
+                    if (filtered.Count > 0) results.AddRange(filtered);
+                }
+            }
+            sw.Stop();
+            _logger.LogInformation("[PurchaseService] GetNotDonePurchaseSubItemsByProductIdListOptimized elapsed: {ms}ms, purchaseMainCount: {mCount}, resultCount: {rCount}", sw.ElapsedMilliseconds, effectiveMainIds.Count, results?.Count ?? 0);
+            return results;
+        }
+
+        public async Task<List<PurchaseSubItem>> GetNotDonePurchaseSubItemsByProductIdListOptimizedAsync(List<string> productIdList)
+        {
+            if (productIdList == null || productIdList.Count == 0)
+            {
+                return new List<PurchaseSubItem>();
+            }
+            using var ctx = _dbContextFactory.CreateDbContext();
+            var sw = Stopwatch.StartNew();
+            
+            // 使用兩個獨立的 DbContext 平行查詢
+            using var ctx1 = _dbContextFactory.CreateDbContext();
+            using var ctx2 = _dbContextFactory.CreateDbContext();
+            
+            // 平行執行兩個查詢
+            var taskMainIds = ctx1.PurchaseMainSheets.AsNoTracking()
+                .Where(m => m.CurrentStatus != CommonConstants.PurchaseCurrentStatus.REJECT
+                         && m.CurrentStatus != CommonConstants.PurchaseCurrentStatus.CLOSE
+                         && m.OwnerProcess != CommonConstants.PurchaseMainOwnerProcessStatus.NOT_AGREE)
+                .Select(m => m.PurchaseMainId)
+                .ToListAsync();
+            
+            // 產品 ID 可能很多，使用批次查詢子項
+            var taskSubItems = ctx2.PurchaseSubItems.AsNoTracking()
                 .Where(s => s.ReceiveStatus != CommonConstants.PurchaseSubItemReceiveStatus.CLOSE
                          && s.ReceiveStatus != CommonConstants.PurchaseSubItemReceiveStatus.DONE
                          && s.OwnerProcess != CommonConstants.PurchaseMainOwnerProcessStatus.NOT_AGREE
                          && productIdList.Contains(s.ProductId))
-                .ToList()
-                .Where(s => effectiveMainIdSet.Contains(s.PurchaseMainId))
-                .ToList();
+                .ToListAsync();
+            
+            await Task.WhenAll(taskMainIds, taskSubItems);
+            
+            var effectiveMainIdSet = taskMainIds.Result.ToHashSet();
+            var subItems = taskSubItems.Result;
+            
+            // 在記憶體過濾
+            var results = subItems.Where(s => effectiveMainIdSet.Contains(s.PurchaseMainId)).ToList();
+            
+            sw.Stop();
+            _logger.LogInformation("[PurchaseService] GetNotDonePurchaseSubItemsByProductIdListOptimizedAsync elapsed: {ms}ms, purchaseMainCount: {mCount}, subItemCount: {sCount}, resultCount: {rCount}", 
+                sw.ElapsedMilliseconds, effectiveMainIdSet.Count, subItems.Count, results.Count);
+            return results;
         }
 
         public List<PurchaseItemListView> GetUndonePurchaseSubItems(string compId, string productId)
