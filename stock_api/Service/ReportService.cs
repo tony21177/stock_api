@@ -97,7 +97,7 @@ namespace stock_api.Service
             {
                 var matchedProduct = matchedProducts.Where(p => p.ProductId == item.ProductId).FirstOrDefault();
                 item.Unit = matchedProduct?.Unit;
-                item.OpenDeadline = matchedProduct?.OpenDeadline ?? 0;
+                item.OpenDeadline = matchedProduct?.OpenDeadline ;
 
                 var matchedReturnRecords = allReturnStockRecordList.Where(r => r.OutStockId == item.OutStockId).ToList();
                 var returnInfoList = matchedReturnRecords.Select(r => new ReturnStockInfo
