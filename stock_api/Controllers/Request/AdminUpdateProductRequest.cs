@@ -4,7 +4,9 @@
     {
         public string?   ManufacturerId { get; set; }
         public string? DeadlineRule { get; set; }
-        public int? OpenDeadline { get; set; }
+        // For AdminUpdateProductRequest we inherit OpenDeadline behavior; keep property to allow admin to set.
+        // Note: AdminUpdateProductRequest previously declared OpenDeadline again; remove duplicate to use base class tracking.
+        // public int? OpenDeadline { get; set; }
         public string? ProductName { get; set; }
         public string?  ProductCode { get; set; }
         public string? ProductModel { get; set; }

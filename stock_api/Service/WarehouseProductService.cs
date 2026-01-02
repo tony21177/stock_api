@@ -294,9 +294,24 @@ namespace stock_api.Service
                 {
                     updateProduct.PreDeadline = existingProduct.PreDeadline;
                 }
-                if (request.OpenDeadline == null)
+                // Handle OpenDeadline: if caller did not include OpenDeadline in JSON, keep existing value; if included (even null), apply it.
+                if (request is Controllers.Request.UpdateProductRequest upr)
                 {
-                    updateProduct.OpenDeadline = existingProduct.OpenDeadline;
+                    if (!upr.IsOpenDeadlineSet)
+                    {
+                        updateProduct.OpenDeadline = existingProduct.OpenDeadline;
+                    }
+                    else
+                    {
+                        updateProduct.OpenDeadline = upr.OpenDeadline; // could be null to clear
+                    }
+                }
+                else
+                {
+                    if (request.OpenDeadline == null)
+                    {
+                        updateProduct.OpenDeadline = existingProduct.OpenDeadline;
+                    }
                 }
                 if (request.PreOrderDays == null)
                 {
@@ -317,11 +332,6 @@ namespace stock_api.Service
                 updateProduct.TestCount = existingProduct.TestCount;
                 updateProduct.UnitConversion = existingProduct.UnitConversion;
                 updateProduct.IsActive = existingProduct.IsActive;
-                //updateProduct.OpenDeadline = existingProduct.OpenDeadline;
-                if (request.OpenDeadline == null)
-                {
-                    updateProduct.OpenDeadline = existingProduct.OpenDeadline;
-                }
                 if (request.IsPrintSticker == null)
                 {
                     updateProduct.IsPrintSticker = existingProduct.IsPrintSticker;
@@ -348,6 +358,11 @@ namespace stock_api.Service
 
                 updateProduct.CompId = existingProduct.CompId;
                 _mapper.Map(updateProduct, existingProduct);
+                // After mapping, apply explicit OpenDeadline from request (even null) so AutoMapper null-ignore configuration won't prevent clearing the DB value
+                if (request is Controllers.Request.UpdateProductRequest uprExplicit && uprExplicit.IsOpenDeadlineSet)
+                {
+                    existingProduct.OpenDeadline = uprExplicit.OpenDeadline;
+                }
                 if (groups.Count > 0)
                 {
                     var matchedGroups = groups.Where(g => groupIds.Contains(g.GroupId)).ToList();
@@ -397,9 +412,24 @@ namespace stock_api.Service
                 {
                     updateProduct.MaxSafeQuantity = existingProduct.MaxSafeQuantity;
                 }
-                if (request.OpenDeadline == null)
+                // Handle OpenDeadline for AdminUpdateProductRequest: respect presence flag from base class
+                if (request is Controllers.Request.UpdateProductRequest uprAdmin)
                 {
-                    updateProduct.OpenDeadline = existingProduct.OpenDeadline;
+                    if (!uprAdmin.IsOpenDeadlineSet)
+                    {
+                        updateProduct.OpenDeadline = existingProduct.OpenDeadline;
+                    }
+                    else
+                    {
+                        updateProduct.OpenDeadline = uprAdmin.OpenDeadline;
+                    }
+                }
+                else
+                {
+                    if (request.OpenDeadline == null)
+                    {
+                        updateProduct.OpenDeadline = existingProduct.OpenDeadline;
+                    }
                 }
                 if (request.PreDeadline == null)
                 {
@@ -469,6 +499,11 @@ namespace stock_api.Service
 
                 updateProduct.CompId = existingProduct.CompId;
                 _mapper.Map(updateProduct, existingProduct);
+                // Apply explicit OpenDeadline after mapping for AdminUpdateProduct as well
+                if (request is Controllers.Request.UpdateProductRequest uprAdminExplicit && uprAdminExplicit.IsOpenDeadlineSet)
+                {
+                    existingProduct.OpenDeadline = uprAdminExplicit.OpenDeadline;
+                }
                 var groupIds = request.GroupIds;
                 if (groupIds != null)
                 {

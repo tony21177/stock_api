@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations.Schema;
 using System.ComponentModel.DataAnnotations;
+using System.Text.Json.Serialization;
 
 namespace stock_api.Controllers.Request
 {
@@ -23,7 +24,14 @@ namespace stock_api.Controllers.Request
         public bool? IsNeedAcceptProcess { get; set; }
         public string? StockLocation { get; set; }
         public string? DeadlineRule { get; set; }
-        public int? OpenDeadline { get; set; }
+        // Track whether OpenDeadline was provided in request JSON. If provided with null => clear DB; if omitted => do not update.
+        [JsonIgnore]
+        private bool _openDeadlineSet = false;
+        private int? _openDeadline;
+        public int? OpenDeadline { get => _openDeadline; set { _openDeadline = value; _openDeadlineSet = true; } }
+        [JsonIgnore]
+        public bool IsOpenDeadlineSet => _openDeadlineSet;
+
         public string? Unit { get; set; }
         public string? QcType { get; set; }
         public bool? IsPrintSticker { get; set; }
