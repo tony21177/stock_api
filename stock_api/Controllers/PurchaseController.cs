@@ -198,7 +198,7 @@ namespace stock_api.Controllers
 
         [HttpPost("list")]
         [Authorize]
-        public IActionResult ListPurchases(ListPurchaseRequest request)
+        public async Task<IActionResult> ListPurchases(ListPurchaseRequest request)
         {
             var totalStopwatch = Stopwatch.StartNew();
             var stepStopwatch = new Stopwatch();
@@ -230,11 +230,34 @@ namespace stock_api.Controllers
 
             if (canUseDbPagination)
             {
-                return ListPurchasesWithDbPagination(request, totalStopwatch, stepStopwatch, compId);
+                return await ListPurchasesWithDbPaginationAsync(request, totalStopwatch, stepStopwatch, compId);
             }
 
             // Fallback to in-memory pagination
             return ListPurchasesWithMemoryPagination(request, totalStopwatch, stepStopwatch, compId);
+        }
+
+        private async Task<IActionResult> ListPurchasesWithDbPaginationAsync(
+            ListPurchaseRequest request,
+            Stopwatch totalStopwatch,
+            Stopwatch stepStopwatch,
+            string compId)
+        {
+            stepStopwatch.Restart();
+            var (listData, totalPages) = await _purchaseService.ListPurchasesWithPaginationAsync(request);
+            stepStopwatch.Stop();
+            _logger.LogInformation("[ListPurchase-DbPaginationAsync] ListPurchasesWithPaginationAsync: {elapsed}ms, TotalPages: {totalPages}", stepStopwatch.ElapsedMilliseconds, totalPages);
+
+            totalStopwatch.Stop();
+            _logger.LogInformation("[ListPurchase-DbPaginationAsync] TOTAL execution time: {elapsed}ms", totalStopwatch.ElapsedMilliseconds);
+
+            var response = new CommonResponse<List<PurchaseMainAndSubItemVo>>
+            {
+                Result = true,
+                Data = listData,
+                TotalPages = totalPages
+            };
+            return Ok(response);
         }
 
         private IActionResult ListPurchasesWithDbPagination(

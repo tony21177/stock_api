@@ -777,6 +777,180 @@ namespace stock_api.Service
             return (purchaseMainAndSubItemVoList, totalPages);
         }
 
+        public async Task<(List<PurchaseMainAndSubItemVo>, int)> ListPurchasesWithPaginationAsync(ListPurchaseRequest request)
+        {
+            using var ctx = _dbContextFactory.CreateDbContext();
+            var totalStopwatch = Stopwatch.StartNew();
+            var stepStopwatch = new Stopwatch();
+
+            // Step 1: Build query conditions for the main table
+            stepStopwatch.Start();
+            IQueryable<PurchaseMainSheet> query = ctx.PurchaseMainSheets.AsNoTracking();
+            if (request.CompId != null)
+            {
+                query = query.Where(m => m.CompId == request.CompId);
+            }
+            if (request.StartDate != null)
+            {
+                var startDateTime = DateTimeHelper.ParseDateString(request.StartDate);
+                query = query.Where(m => m.UpdatedAt >= startDateTime);
+            }
+            if (request.EndDate != null)
+            {
+                var endDateTime = DateTimeHelper.ParseDateString(request.EndDate).Value.AddDays(1);
+                query = query.Where(m => m.UpdatedAt < endDateTime);
+            }
+            if (request.ApplyDateStart != null)
+            {
+                var applyStart = DateTimeHelper.ParseDateString(request.ApplyDateStart).Value;
+                query = query.Where(m => m.ApplyDate >= applyStart);
+            }
+            if (request.ApplyDateEnd != null)
+            {
+                var applyEnd = DateTimeHelper.ParseDateString(request.ApplyDateEnd).Value.AddDays(1);
+                query = query.Where(m => m.ApplyDate < applyEnd);
+            }
+            if (request.GroupId != null)
+            {
+                query = query.Where(m => m.GroupIds.Contains(request.GroupId));
+            }
+            if (request.Type != null)
+            {
+                query = query.Where(m => m.Type == request.Type);
+            }
+            if (request.CurrentStatus != null)
+            {
+                query = query.Where(m => m.CurrentStatus == request.CurrentStatus);
+            }
+            if (request.ReceiveStatus != null)
+            {
+                query = query.Where(m => m.ReceiveStatus == request.ReceiveStatus);
+            }
+            if (request.IsActive != null)
+            {
+                query = query.Where(m => m.IsActive == request.IsActive);
+            }
+
+            // Exclude PurchaseMainSheet entries without associated PurchaseSubItems
+            query = query.Where(m => ctx.PurchaseSubItems.Any(s => s.PurchaseMainId == m.PurchaseMainId));
+
+            stepStopwatch.Stop();
+            _logger.LogInformation("[ListPurchasesWithPaginationAsync] Step 1 - Build query conditions: {elapsed}ms", stepStopwatch.ElapsedMilliseconds);
+
+            // Step 2: Calculate total items and apply pagination
+            stepStopwatch.Restart();
+            int totalItems = await query.CountAsync();
+            int totalPages = (int)Math.Ceiling((double)totalItems / request.PaginationCondition.PageSize);
+            query = query
+                .Skip((request.PaginationCondition.Page - 1) * request.PaginationCondition.PageSize)
+                .Take(request.PaginationCondition.PageSize);
+            var mainSheets = await query.ToListAsync();
+            stepStopwatch.Stop();
+            _logger.LogInformation("[ListPurchasesWithPaginationAsync] Step 2 - Pagination: {elapsed}ms, TotalItems: {totalItems}, TotalPages: {totalPages}", stepStopwatch.ElapsedMilliseconds, totalItems, totalPages);
+
+            // Step 3 & 4: Fetch sub-items and flows in parallel
+            stepStopwatch.Restart();
+            var mainIds = mainSheets.Select(m => m.PurchaseMainId).ToList();
+
+            using var ctx2 = _dbContextFactory.CreateDbContext();
+            using var ctx3 = _dbContextFactory.CreateDbContext();
+
+            var taskSubItems = ctx2.PurchaseSubItems.AsNoTracking()
+                .Where(s => mainIds.Contains(s.PurchaseMainId))
+                .ToListAsync();
+
+            var taskFlows = ctx3.PurchaseFlows.AsNoTracking()
+                .Where(f => mainIds.Contains(f.PurchaseMainId))
+                .OrderBy(f => f.Sequence)
+                .ToListAsync();
+
+            await Task.WhenAll(taskSubItems, taskFlows);
+
+            var subItems = taskSubItems.Result;
+            var flows = taskFlows.Result;
+            var subItemsLookup = subItems.ToLookup(s => s.PurchaseMainId);
+            var flowsLookup = flows.ToLookup(f => f.PurchaseMainId);
+            stepStopwatch.Stop();
+            _logger.LogInformation("[ListPurchasesWithPaginationAsync] Step 3&4 - Parallel fetch sub-items & flows: {elapsed}ms, SubItemCount: {subCount}, FlowCount: {flowCount}", stepStopwatch.ElapsedMilliseconds, subItems.Count, flows.Count);
+
+            // Step 5: Build VO list
+            stepStopwatch.Restart();
+            var purchaseMainAndSubItemVoList = mainSheets.Select(main => new PurchaseMainAndSubItemVo
+            {
+                PurchaseMainId = main.PurchaseMainId,
+                ApplyDate = main.ApplyDate,
+                CompId = main.CompId,
+                CurrentStatus = main.CurrentStatus,
+                DemandDate = main.DemandDate,
+                GroupIds = main.GroupIds?.Split(",", StringSplitOptions.None).ToList() ?? new List<string>(),
+                Remarks = main.Remarks,
+                UserId = main.UserId,
+                ReceiveStatus = main.ReceiveStatus,
+                Type = main.Type,
+                CreatedAt = main.CreatedAt,
+                UpdatedAt = main.UpdatedAt,
+                IsActive = main.IsActive,
+                SplitProcess = main.SplitPrcoess,
+                OwnerProcess = main.OwnerProcess,
+                Items = subItemsLookup[main.PurchaseMainId].Select(sub => new PurchaseSubItemVo
+                {
+                    ItemId = sub.ItemId,
+                    Comment = sub.Comment,
+                    CompId = sub.CompId,
+                    ProductCategory = sub.ProductCategory,
+                    ProductName = sub.ProductName,
+                    ProductId = sub.ProductId,
+                    ProductSpec = sub.ProductSpec,
+                    PurchaseMainId = sub.PurchaseMainId,
+                    Quantity = sub.Quantity,
+                    ReceiveQuantity = sub.ReceiveQuantity,
+                    ReceiveStatus = sub.ReceiveStatus,
+                    GroupIds = sub.GroupIds?.Split(",").ToList() ?? new List<string>(),
+                    GroupNames = sub.GroupNames?.Split(",").ToList() ?? new List<string>(),
+                    ArrangeSupplierId = sub.ArrangeSupplierId,
+                    ArrangeSupplierName = sub.ArrangeSupplierName,
+                    CurrentInStockQuantity = sub.CurrentInStockQuantity,
+                    CreatedAt = sub.CreatedAt,
+                    UpdatedAt = sub.UpdatedAt,
+                    SplitProcess = sub.SplitProcess,
+                    OwnerProcess = sub.OwnerProcess,
+                }).ToList(),
+                flows = flowsLookup[main.PurchaseMainId]
+                    .OrderBy(f => f.Sequence)
+                    .TakeWhile(f => f.Status != CommonConstants.PurchaseFlowStatus.REJECT)
+                    .Select(flow => _mapper.Map<PurchaseFlowWithAgentsVo>(flow))
+                    .ToList(),
+            }).ToList();
+            stepStopwatch.Stop();
+            _logger.LogInformation("[ListPurchasesWithPaginationAsync] Step 5 - Build VO list: {elapsed}ms, Count: {count}", stepStopwatch.ElapsedMilliseconds, purchaseMainAndSubItemVoList.Count);
+
+            // Step 6: Process Flows (Optimized - Using Lookup O(1) Query)
+            stepStopwatch.Restart();
+            if (request.IsNeedFlow == true)
+            {
+                foreach (var item in purchaseMainAndSubItemVoList)
+                {
+                    var matchedFlows = flowsLookup[item.PurchaseMainId]
+                        .OrderBy(f => f.Sequence)
+                        .ToList();
+
+                    var rejectedFlowIndex = matchedFlows.FindIndex(f => f.Status == CommonConstants.PurchaseFlowStatus.REJECT);
+                    if (rejectedFlowIndex >= 0)
+                    {
+                        matchedFlows = matchedFlows.GetRange(0, rejectedFlowIndex + 1);
+                    }
+                    item.flows = _mapper.Map<List<PurchaseFlowWithAgentsVo>>(matchedFlows);
+                }
+            }
+            stepStopwatch.Stop();
+            _logger.LogInformation("[ListPurchasesWithPaginationAsync] Step 6 - Process flows (IsNeedFlow={isNeedFlow}): {elapsed}ms", request.IsNeedFlow, stepStopwatch.ElapsedMilliseconds);
+
+            totalStopwatch.Stop();
+            _logger.LogInformation("[ListPurchasesWithPaginationAsync] TOTAL execution time: {elapsed}ms", totalStopwatch.ElapsedMilliseconds);
+
+            return (purchaseMainAndSubItemVoList, totalPages);
+        }
+
         public List<PurchaseMainAndSubItemVo> ListMyReviewPurchase(ListMyReviewPurchaseRequest listMyReviewPurchaseRequest)
         {
             IQueryable<PurchaseItemListView> query = _dbContext.PurchaseItemListViews;
