@@ -115,7 +115,8 @@ namespace stock_api.Controllers
                 .GroupBy(p => p.ProductCode)
                 .ToDictionary(g => g.Key, g => g.ToList());
 
-            if (compType == CommonConstants.CompanyType.OWNER && productsInAnotherComp.Count > 0)
+            //if (compType == CommonConstants.CompanyType.OWNER && productsInAnotherComp.Count > 0)
+            if ( productsInAnotherComp.Count > 0)
             {
                 foreach (var item in warehouseProductVoList)
                 {
