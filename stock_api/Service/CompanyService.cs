@@ -179,5 +179,10 @@ namespace stock_api.Service
             return;
         }
 
+        public Company? GetOwnerComp()
+        {
+            return _dbContext.Companies.ToList().Where(c=>c.Type==CommonConstants.CompanyType.OWNER).FirstOrDefault();
+        }
+
     }
 }

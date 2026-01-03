@@ -81,6 +81,7 @@ namespace stock_api.Controllers
             
             var compId = memberAndPermissionSetting.CompanyWithUnit.CompId;
             var compType = memberAndPermissionSetting.CompanyWithUnit.Type;
+            var ownerComp = _companyService.GetOwnerComp(); 
 
             if (searchRequest.CompId == null)
             {
@@ -121,7 +122,22 @@ namespace stock_api.Controllers
                 {
                     if (productsByCodeLookup.TryGetValue(item.ProductCode, out var matchedProducts))
                     {
+                        
                         var matchedProdcutInAnotherComp = matchedProducts.FirstOrDefault(p => p.CompId != compId);
+                        if (matchedProdcutInAnotherComp != null)
+                        {
+                            item.AnotherUnit = matchedProdcutInAnotherComp.Unit;
+                            item.AnotherUnitConversion = matchedProdcutInAnotherComp.UnitConversion;
+                        }
+                    }
+                }
+            }else if (compType != CommonConstants.CompanyType.OWNER && productsInAnotherComp.Count > 0)
+            {
+                foreach (var item in warehouseProductVoList)
+                {
+                    if (productsByCodeLookup.TryGetValue(item.ProductCode, out var matchedProducts))
+                    {
+                        var matchedProdcutInAnotherComp = matchedProducts.FirstOrDefault(p => p.CompId == ownerComp.CompId);
                         if (matchedProdcutInAnotherComp != null)
                         {
                             item.AnotherUnit = matchedProdcutInAnotherComp.Unit;
