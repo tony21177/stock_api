@@ -667,27 +667,8 @@ namespace stock_api.Service
             stepStopwatch.Stop();
             _logger.LogInformation("[ListPurchasesWithPagination] Step 1 - Build query conditions: {elapsed}ms", stepStopwatch.ElapsedMilliseconds);
 
-            // Step 2: Apply sorting, calculate total items and apply pagination
+            // Step 2: Calculate total items and apply pagination
             stepStopwatch.Restart();
-            
-            // Apply sorting based on OrderByField and IsDescOrderBy
-            var orderByField = request.PaginationCondition.OrderByField ?? "ApplyDate";
-            orderByField = StringUtils.CapitalizeFirstLetter(orderByField);
-            bool isDesc = request.PaginationCondition.IsDescOrderBy;
-
-            query = (orderByField, isDesc) switch
-            {
-                ("ApplyDate", true) => query.OrderByDescending(m => m.ApplyDate),
-                ("ApplyDate", false) => query.OrderBy(m => m.ApplyDate),
-                ("UpdatedAt", true) => query.OrderByDescending(m => m.UpdatedAt),
-                ("UpdatedAt", false) => query.OrderBy(m => m.UpdatedAt),
-                ("CreatedAt", true) => query.OrderByDescending(m => m.CreatedAt),
-                ("CreatedAt", false) => query.OrderBy(m => m.CreatedAt),
-                ("DemandDate", true) => query.OrderByDescending(m => m.DemandDate),
-                ("DemandDate", false) => query.OrderBy(m => m.DemandDate),
-                _ => isDesc ? query.OrderByDescending(m => m.ApplyDate) : query.OrderBy(m => m.ApplyDate)
-            };
-
             int totalItems = query.Count();
             int totalPages = (int)Math.Ceiling((double)totalItems / request.PaginationCondition.PageSize);
             query = query
@@ -695,7 +676,7 @@ namespace stock_api.Service
                 .Take(request.PaginationCondition.PageSize);
             var mainSheets = query.ToList();
             stepStopwatch.Stop();
-            _logger.LogInformation("[ListPurchasesWithPagination] Step 2 - Sorting & Pagination: {elapsed}ms, TotalItems: {totalItems}, TotalPages: {totalPages}, OrderBy: {orderBy}, IsDesc: {isDesc}", stepStopwatch.ElapsedMilliseconds, totalItems, totalPages, orderByField, isDesc);
+            _logger.LogInformation("[ListPurchasesWithPagination] Step 2 - Pagination: {elapsed}ms, TotalItems: {totalItems}, TotalPages: {totalPages}", stepStopwatch.ElapsedMilliseconds, totalItems, totalPages);
 
             // Step 3: Fetch associated sub-items
             stepStopwatch.Restart();
@@ -856,27 +837,8 @@ namespace stock_api.Service
             stepStopwatch.Stop();
             _logger.LogInformation("[ListPurchasesWithPaginationAsync] Step 1 - Build query conditions: {elapsed}ms", stepStopwatch.ElapsedMilliseconds);
 
-            // Step 2: Apply sorting, calculate total items and apply pagination
+            // Step 2: Calculate total items and apply pagination
             stepStopwatch.Restart();
-            
-            // Apply sorting based on OrderByField and IsDescOrderBy
-            var orderByField = request.PaginationCondition.OrderByField ?? "ApplyDate";
-            orderByField = StringUtils.CapitalizeFirstLetter(orderByField);
-            bool isDesc = request.PaginationCondition.IsDescOrderBy;
-
-            query = (orderByField, isDesc) switch
-            {
-                ("ApplyDate", true) => query.OrderByDescending(m => m.ApplyDate),
-                ("ApplyDate", false) => query.OrderBy(m => m.ApplyDate),
-                ("UpdatedAt", true) => query.OrderByDescending(m => m.UpdatedAt),
-                ("UpdatedAt", false) => query.OrderBy(m => m.UpdatedAt),
-                ("CreatedAt", true) => query.OrderByDescending(m => m.CreatedAt),
-                ("CreatedAt", false) => query.OrderBy(m => m.CreatedAt),
-                ("DemandDate", true) => query.OrderByDescending(m => m.DemandDate),
-                ("DemandDate", false) => query.OrderBy(m => m.DemandDate),
-                _ => isDesc ? query.OrderByDescending(m => m.ApplyDate) : query.OrderBy(m => m.ApplyDate)
-            };
-
             int totalItems = await query.CountAsync();
             int totalPages = (int)Math.Ceiling((double)totalItems / request.PaginationCondition.PageSize);
             query = query
@@ -884,7 +846,7 @@ namespace stock_api.Service
                 .Take(request.PaginationCondition.PageSize);
             var mainSheets = await query.ToListAsync();
             stepStopwatch.Stop();
-            _logger.LogInformation("[ListPurchasesWithPaginationAsync] Step 2 - Sorting & Pagination: {elapsed}ms, TotalItems: {totalItems}, TotalPages: {totalPages}, OrderBy: {orderBy}, IsDesc: {isDesc}", stepStopwatch.ElapsedMilliseconds, totalItems, totalPages, orderByField, isDesc);
+            _logger.LogInformation("[ListPurchasesWithPaginationAsync] Step 2 - Pagination: {elapsed}ms, TotalItems: {totalItems}, TotalPages: {totalPages}", stepStopwatch.ElapsedMilliseconds, totalItems, totalPages);
 
             // Step 3 & 4: Fetch sub-items and flows in parallel
             stepStopwatch.Restart();

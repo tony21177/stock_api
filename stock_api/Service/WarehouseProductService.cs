@@ -677,6 +677,40 @@ namespace stock_api.Service
                     if (modifyProductDto.IsPrintSticker.HasValue)
                         updateProducts.ForEach(p => p.IsPrintSticker = modifyProductDto.IsPrintSticker);
 
+                    // 20260104新增欄位
+                    if (!string.IsNullOrWhiteSpace(modifyProductDto.DeliverFunction))
+                        updateProducts.ForEach(p => p.DeliverFunction = modifyProductDto.DeliverFunction);
+
+                    if (!string.IsNullOrWhiteSpace(modifyProductDto.Delivery))
+                        updateProducts.ForEach(p => p.Delievery = modifyProductDto.Delivery);
+
+                    if (modifyProductDto.IsActive.HasValue)
+                        updateProducts.ForEach(p => p.IsActive = modifyProductDto.IsActive);
+
+                    if (!string.IsNullOrWhiteSpace(modifyProductDto.PackageWay))
+                        updateProducts.ForEach(p => p.PackageWay = modifyProductDto.PackageWay);
+
+                    if (!string.IsNullOrWhiteSpace(modifyProductDto.ProductModel))
+                        updateProducts.ForEach(p => p.ProductModel = modifyProductDto.ProductModel);
+
+                    if (!string.IsNullOrWhiteSpace(modifyProductDto.ProductName))
+                        updateProducts.ForEach(p => p.ProductName = modifyProductDto.ProductName);
+
+                    if (!string.IsNullOrWhiteSpace(modifyProductDto.ProductSpec))
+                        updateProducts.ForEach(p => p.ProductSpec = modifyProductDto.ProductSpec);
+
+                    if (modifyProductDto.SafeQuantity.HasValue)
+                        updateProducts.ForEach(p => p.SafeQuantity = modifyProductDto.SafeQuantity.Value);
+
+                    if (!string.IsNullOrWhiteSpace(modifyProductDto.SavingFunction))
+                        updateProducts.ForEach(p => p.SavingFunction = modifyProductDto.SavingFunction);
+
+                    if (!string.IsNullOrWhiteSpace(modifyProductDto.UdiSerialCode))
+                        updateProducts.ForEach(p => p.UdiserialCode = modifyProductDto.UdiSerialCode);
+
+                    if (modifyProductDto.UnitConversion.HasValue)
+                        updateProducts.ForEach(p => p.UnitConversion = modifyProductDto.UnitConversion.Value);
+
                 }
                 _dbContext.SaveChanges();
                 scope.Complete();
@@ -832,6 +866,40 @@ namespace stock_api.Service
                         updateProducts.ForEach(p => p.StockLocation = modifyProductDto.StockLocation);
                     if (modifyProductDto.IsPrintSticker.HasValue)
                         updateProducts.ForEach(p => p.IsPrintSticker = modifyProductDto.IsPrintSticker);
+
+                    // 20260104新增欄位
+                    if (!string.IsNullOrWhiteSpace(modifyProductDto.DeliverFunction))
+                        updateProducts.ForEach(p => p.DeliverFunction = modifyProductDto.DeliverFunction);
+
+                    if (!string.IsNullOrWhiteSpace(modifyProductDto.Delivery))
+                        updateProducts.ForEach(p => p.Delievery = modifyProductDto.Delivery);
+
+                    if (modifyProductDto.IsActive.HasValue)
+                        updateProducts.ForEach(p => p.IsActive = modifyProductDto.IsActive);
+
+                    if (!string.IsNullOrWhiteSpace(modifyProductDto.PackageWay))
+                        updateProducts.ForEach(p => p.PackageWay = modifyProductDto.PackageWay);
+
+                    if (!string.IsNullOrWhiteSpace(modifyProductDto.ProductModel))
+                        updateProducts.ForEach(p => p.ProductModel = modifyProductDto.ProductModel);
+
+                    if (!string.IsNullOrWhiteSpace(modifyProductDto.ProductName))
+                        updateProducts.ForEach(p => p.ProductName = modifyProductDto.ProductName);
+
+                    if (!string.IsNullOrWhiteSpace(modifyProductDto.ProductSpec))
+                        updateProducts.ForEach(p => p.ProductSpec = modifyProductDto.ProductSpec);
+
+                    if (modifyProductDto.SafeQuantity.HasValue)
+                        updateProducts.ForEach(p => p.SafeQuantity = modifyProductDto.SafeQuantity.Value);
+
+                    if (!string.IsNullOrWhiteSpace(modifyProductDto.SavingFunction))
+                        updateProducts.ForEach(p => p.SavingFunction = modifyProductDto.SavingFunction);
+
+                    if (!string.IsNullOrWhiteSpace(modifyProductDto.UdiSerialCode))
+                        updateProducts.ForEach(p => p.UdiserialCode = modifyProductDto.UdiSerialCode);
+
+                    if (modifyProductDto.UnitConversion.HasValue)
+                        updateProducts.ForEach(p => p.UnitConversion = modifyProductDto.UnitConversion.Value);
                 }
 
                 _dbContext.SaveChanges();

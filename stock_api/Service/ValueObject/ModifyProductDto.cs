@@ -17,5 +17,22 @@
         public bool? IsNeedAcceptProcess { get; set; }
         public string? StockLocation { get; set; } 
         public bool? IsPrintSticker { get; set; }
+
+        // 20260104新增
+        public string? DeliverFunction { get; set; }
+        public string? Delivery { get; set; }
+        public bool? IsActive { get; set; }
+        public string? PackageWay { get; set; }
+        public string? ProductModel { get; set; }
+        public string? ProductName { get; set; }
+        public string? ProductSpec { get; set; }
+        public float? SafeQuantity { get; set; }
+        public string? SavingFunction { get; set; }
+        public string? UdiSerialCode { get; set; }
+        public float? UnitConversion { get; set; }
+
+
+
+
     }
 }
