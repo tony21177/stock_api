@@ -667,6 +667,24 @@ namespace stock_api.Service
             stepStopwatch.Stop();
             _logger.LogInformation("[ListPurchasesWithPagination] Step 1 - Build query conditions: {elapsed}ms", stepStopwatch.ElapsedMilliseconds);
 
+            // Step 1.5: Apply sorting
+            stepStopwatch.Restart();
+            var orderByField = request.PaginationCondition.OrderByField ?? "UpdatedAt";
+            orderByField = StringUtils.CapitalizeFirstLetter(orderByField);
+            bool isDesc = request.PaginationCondition.IsDescOrderBy;
+
+            query = orderByField switch
+            {
+                "ApplyDate" => isDesc ? query.OrderByDescending(m => m.ApplyDate) : query.OrderBy(m => m.ApplyDate),
+                "DemandDate" => isDesc ? query.OrderByDescending(m => m.DemandDate) : query.OrderBy(m => m.DemandDate),
+                "CreatedAt" => isDesc ? query.OrderByDescending(m => m.CreatedAt) : query.OrderBy(m => m.CreatedAt),
+                "UpdatedAt" => isDesc ? query.OrderByDescending(m => m.UpdatedAt) : query.OrderBy(m => m.UpdatedAt),
+                "GroupId" => isDesc ? query.OrderByDescending(m => m.GroupIds) : query.OrderBy(m => m.GroupIds),
+                _ => isDesc ? query.OrderByDescending(m => m.UpdatedAt) : query.OrderBy(m => m.UpdatedAt)
+            };
+            stepStopwatch.Stop();
+            _logger.LogInformation("[ListPurchasesWithPagination] Step 1.5 - Apply sorting (OrderByField={orderByField}, IsDesc={isDesc}): {elapsed}ms", orderByField, isDesc, stepStopwatch.ElapsedMilliseconds);
+
             // Step 2: Calculate total items and apply pagination
             stepStopwatch.Restart();
             int totalItems = query.Count();
@@ -836,6 +854,24 @@ namespace stock_api.Service
 
             stepStopwatch.Stop();
             _logger.LogInformation("[ListPurchasesWithPaginationAsync] Step 1 - Build query conditions: {elapsed}ms", stepStopwatch.ElapsedMilliseconds);
+
+            // Step 1.5: Apply sorting
+            stepStopwatch.Restart();
+            var orderByField = request.PaginationCondition.OrderByField ?? "UpdatedAt";
+            orderByField = StringUtils.CapitalizeFirstLetter(orderByField);
+            bool isDesc = request.PaginationCondition.IsDescOrderBy;
+
+            query = orderByField switch
+            {
+                "ApplyDate" => isDesc ? query.OrderByDescending(m => m.ApplyDate) : query.OrderBy(m => m.ApplyDate),
+                "DemandDate" => isDesc ? query.OrderByDescending(m => m.DemandDate) : query.OrderBy(m => m.DemandDate),
+                "CreatedAt" => isDesc ? query.OrderByDescending(m => m.CreatedAt) : query.OrderBy(m => m.CreatedAt),
+                "UpdatedAt" => isDesc ? query.OrderByDescending(m => m.UpdatedAt) : query.OrderBy(m => m.UpdatedAt),
+                "GroupId" => isDesc ? query.OrderByDescending(m => m.GroupIds) : query.OrderBy(m => m.GroupIds),
+                _ => isDesc ? query.OrderByDescending(m => m.UpdatedAt) : query.OrderBy(m => m.UpdatedAt)
+            };
+            stepStopwatch.Stop();
+            _logger.LogInformation("[ListPurchasesWithPaginationAsync] Step 1.5 - Apply sorting (OrderByField={orderByField}, IsDesc={isDesc}): {elapsed}ms", orderByField, isDesc, stepStopwatch.ElapsedMilliseconds);
 
             // Step 2: Calculate total items and apply pagination
             stepStopwatch.Restart();

@@ -341,7 +341,8 @@ namespace stock_api.Controllers
                 CurrentStatus = CommonConstants.PurchaseFlowAnswer.AGREE,
                 Keywords = ownerListPurchasesRequestRequest.Keywords,
                 ApplyDateStart = ownerListPurchasesRequestRequest.ApplyDateStart,
-                ApplyDateEnd = ownerListPurchasesRequestRequest.ApplyDateEnd
+                ApplyDateEnd = ownerListPurchasesRequestRequest.ApplyDateEnd,
+                PaginationCondition = ownerListPurchasesRequestRequest.PaginationCondition
             };
 
             // fetch list (ApplyDate filtering moved into service)
@@ -483,10 +484,32 @@ namespace stock_api.Controllers
                 }
             }
 
+            // Apply sorting based on PaginationCondition
             sw.Restart();
-            filterKeywordsData = filterKeywordsData.OrderByDescending(item => item.ApplyDate).ToList();
+            var orderByField = ownerListPurchasesRequestRequest.PaginationCondition.OrderByField ?? "ApplyDate";
+            orderByField = StringUtils.CapitalizeFirstLetter(orderByField);
+            bool isDesc = ownerListPurchasesRequestRequest.PaginationCondition.IsDescOrderBy;
+
+            filterKeywordsData = orderByField switch
+            {
+                "ApplyDate" => isDesc
+                    ? filterKeywordsData.OrderByDescending(item => item.ApplyDate).ToList()
+                    : filterKeywordsData.OrderBy(item => item.ApplyDate).ToList(),
+                "DemandDate" => isDesc
+                    ? filterKeywordsData.OrderByDescending(item => item.DemandDate).ToList()
+                    : filterKeywordsData.OrderBy(item => item.DemandDate).ToList(),
+                "CreatedAt" => isDesc
+                    ? filterKeywordsData.OrderByDescending(item => item.CreatedAt).ToList()
+                    : filterKeywordsData.OrderBy(item => item.CreatedAt).ToList(),
+                "UpdatedAt" => isDesc
+                    ? filterKeywordsData.OrderByDescending(item => item.UpdatedAt).ToList()
+                    : filterKeywordsData.OrderBy(item => item.UpdatedAt).ToList(),
+                _ => isDesc
+                    ? filterKeywordsData.OrderByDescending(item => item.ApplyDate).ToList()
+                    : filterKeywordsData.OrderBy(item => item.ApplyDate).ToList()
+            };
             sw.Stop();
-            _logger.LogInformation("[OwnerListPurchases] Filter & sort elapsed: {ms}ms, resultCount: {count}", sw.ElapsedMilliseconds, filterKeywordsData.Count);
+            _logger.LogInformation("[OwnerListPurchases] Sort (OrderByField={orderByField}, IsDesc={isDesc}) elapsed: {ms}ms, resultCount: {count}", orderByField, isDesc, sw.ElapsedMilliseconds, filterKeywordsData.Count);
 
             foreach (var data in filterKeywordsData)
             {
@@ -499,13 +522,26 @@ namespace stock_api.Controllers
                 }
             }
 
+            // Apply pagination
+            sw.Restart();
+            int totalItems = filterKeywordsData.Count;
+            int totalPages = (int)Math.Ceiling((double)totalItems / ownerListPurchasesRequestRequest.PaginationCondition.PageSize);
+            filterKeywordsData = filterKeywordsData
+                .Skip((ownerListPurchasesRequestRequest.PaginationCondition.Page - 1) * ownerListPurchasesRequestRequest.PaginationCondition.PageSize)
+                .Take(ownerListPurchasesRequestRequest.PaginationCondition.PageSize)
+                .ToList();
+            sw.Stop();
+            _logger.LogInformation("[OwnerListPurchases] Pagination elapsed: {ms}ms, Page: {page}, PageSize: {pageSize}, ResultCount: {count}", 
+                sw.ElapsedMilliseconds, ownerListPurchasesRequestRequest.PaginationCondition.Page, ownerListPurchasesRequestRequest.PaginationCondition.PageSize, filterKeywordsData.Count);
+
             totalSw.Stop();
             _logger.LogInformation("[OwnerListPurchases] TOTAL elapsed: {ms}ms", totalSw.ElapsedMilliseconds);
 
             var response = new CommonResponse<dynamic>
             {
                 Result = true,
-                Data = filterKeywordsData
+                Data = filterKeywordsData,
+                TotalPages = totalPages
             };
             return Ok(response);
         }
