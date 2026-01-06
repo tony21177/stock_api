@@ -30,7 +30,8 @@
         public string? SavingFunction { get; set; }
         public string? UdiSerialCode { get; set; }
         public float? UnitConversion { get; set; }
-
+        public bool? IsAllowDiscard { get; set; }
+        public int? OpenDeadline { get; set; }
 
 
 
