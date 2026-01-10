@@ -655,30 +655,122 @@ namespace stock_api.Service
             try
             {
                 List<OutStockRecord> outStockRecords = new List<OutStockRecord>();
+                List<OutstockRelatetoInstock> outStockRelateToInStocks = new List<OutstockRelatetoInstock>();
+
+                // 取得所有相關產品的入庫紀錄，依照 CreatedAt 排序 (FIFO: 先進先出)
+                var productIds = request.OutItems.Select(i => i.ProductId).ToList();
+                var allInStockRecords = _dbContext.InStockItemRecords
+                    .Where(r => productIds.Contains(r.ProductId) 
+                           && r.CompId == request.CompId 
+                           && r.OutStockStatus != CommonConstants.OutStockStatus.ALL)
+                    .OrderBy(r => r.CreatedAt)
+                    .ToList();
+
                 foreach (var item in request.OutItems)
                 {
                     var matchedProduct = products.Where(p => p.ProductId == item.ProductId).FirstOrDefault();
-                    string lotNumberBatch = DateTime.Now.ToString("yyyyMMddHHmmssfff");
-                    OutStockRecord outStockRecord = new OutStockRecord()
+                    
+                    // 取得該產品的入庫紀錄 (已按 CreatedAt 排序，FIFO)
+                    var productInStockRecords = allInStockRecords
+                        .Where(r => r.ProductId == item.ProductId)
+                        .ToList();
+
+                    float remainingOutQuantity = item.OutQuantity;
+                    float originalProductQuantity = matchedProduct.InStockQuantity.Value;
+                    
+                    // 追蹤當前庫存量，每次出庫後遞減
+                    float currentProductQuantity = originalProductQuantity;
+                    
+                    // 用來記錄最後出庫的批號資訊 (用於更新 product)
+                    string? lastLotNumber = null;
+                    string? lastLotNumberBatch = null;
+                    DateOnly? lastExpirationDate = null;
+
+                    // FIFO: 依序從最早的入庫紀錄扣除出庫數量
+                    foreach (var inStockRecord in productInStockRecords)
                     {
-                        OutStockId = Guid.NewGuid().ToString(),
-                        ApplyQuantity = item.OutQuantity,
-                        LotNumberBatch = lotNumberBatch,
-                        CompId = request.CompId,
-                        IsAbnormal = false,
-                        ProductId = item.ProductId,
-                        ProductCode = matchedProduct.ProductCode,
-                        ProductName = matchedProduct.ProductName,
-                        ProductSpec = matchedProduct.ProductSpec,
-                        Type = CommonConstants.OutStockType.OWNER_DIRECT_OUT,
-                        UserId = user.UserId,
-                        UserName = user.DisplayName,
-                        OriginalQuantity = matchedProduct.InStockQuantity.Value,
-                        AfterQuantity = (matchedProduct.InStockQuantity.Value - item.OutQuantity),
-                        BarCodeNumber = lotNumberBatch,
-                    };
-                    matchedProduct.LotNumberBatch = lotNumberBatch;
-                    matchedProduct.InStockQuantity = outStockRecord.AfterQuantity;
+                        if (remainingOutQuantity <= 0) break;
+
+                        // 計算該批次可用的數量
+                        float availableQuantity = inStockRecord.InStockQuantity + inStockRecord.AdjustInQuantity 
+                                                 - inStockRecord.OutStockQuantity - inStockRecord.AdjustOutQuantity 
+                                                 - inStockRecord.RejectQuantity;
+
+                        if (availableQuantity <= 0) continue;
+
+                        // 計算這批要出多少
+                        float quantityToOutFromThisBatch = Math.Min(remainingOutQuantity, availableQuantity);
+
+                        // 更新 in_stock_item_record 的 OutStockQuantity
+                        inStockRecord.OutStockQuantity += quantityToOutFromThisBatch;
+
+                        // 更新 OutStockStatus
+                        float totalInQuantity = inStockRecord.InStockQuantity + inStockRecord.AdjustInQuantity;
+                        float totalOutQuantity = inStockRecord.OutStockQuantity + inStockRecord.AdjustOutQuantity + inStockRecord.RejectQuantity;
+                        if (totalOutQuantity >= totalInQuantity)
+                        {
+                            inStockRecord.OutStockStatus = CommonConstants.OutStockStatus.ALL;
+                        }
+                        else if (totalOutQuantity > 0)
+                        {
+                            inStockRecord.OutStockStatus = CommonConstants.OutStockStatus.PART;
+                        }
+
+                        // 計算該筆出庫後的庫存量
+                        float afterQuantityForThisBatch = currentProductQuantity - quantityToOutFromThisBatch;
+
+                        // 建立出庫紀錄
+                        var outStockId = Guid.NewGuid().ToString();
+                        OutStockRecord outStockRecord = new OutStockRecord()
+                        {
+                            OutStockId = outStockId,
+                            ApplyQuantity = quantityToOutFromThisBatch,
+                            LotNumber = inStockRecord.LotNumber,
+                            LotNumberBatch = inStockRecord.LotNumberBatch,
+                            CompId = request.CompId,
+                            IsAbnormal = false,
+                            ProductId = item.ProductId,
+                            ProductCode = matchedProduct.ProductCode,
+                            ProductName = matchedProduct.ProductName,
+                            ProductSpec = matchedProduct.ProductSpec,
+                            Type = CommonConstants.OutStockType.OWNER_DIRECT_OUT,
+                            UserId = user.UserId,
+                            UserName = user.DisplayName,
+                            OriginalQuantity = currentProductQuantity,  // 該筆出庫前的當前庫存
+                            AfterQuantity = afterQuantityForThisBatch,  // 該筆出庫後的庫存
+                            BarCodeNumber = inStockRecord.BarCodeNumber,
+                            ItemId = inStockRecord.ItemId,
+                            ExpirationDate = inStockRecord.ExpirationDate,
+                            Remark = item.Remark,
+                        };
+                        outStockRecords.Add(outStockRecord);
+
+                        // 建立出庫與入庫的關聯
+                        var outStockRelateToInStock = new OutstockRelatetoInstock()
+                        {
+                            OutStockId = outStockId,
+                            InStockId = inStockRecord.InStockId,
+                            LotNumber = inStockRecord.LotNumber,
+                            LotNumberBatch = inStockRecord.LotNumberBatch,
+                            Quantity = quantityToOutFromThisBatch,
+                        };
+                        outStockRelateToInStocks.Add(outStockRelateToInStock);
+
+                        // 記錄最後出庫的批號資訊
+                        lastLotNumber = inStockRecord.LotNumber;
+                        lastLotNumberBatch = inStockRecord.LotNumberBatch;
+                        lastExpirationDate = inStockRecord.ExpirationDate;
+
+                        // 更新當前庫存量和剩餘待出數量
+                        currentProductQuantity = afterQuantityForThisBatch;
+                        remainingOutQuantity -= quantityToOutFromThisBatch;
+                    }
+
+                    // 更新庫存品項
+                    matchedProduct.InStockQuantity = originalProductQuantity - item.OutQuantity;
+                    if (lastLotNumber != null) matchedProduct.LotNumber = lastLotNumber;
+                    if (lastLotNumberBatch != null) matchedProduct.LotNumberBatch = lastLotNumberBatch;
+                    if (lastExpirationDate.HasValue) matchedProduct.OriginalDeadline = lastExpirationDate;
 
                     DateOnly nowDate = DateOnly.FromDateTime(DateTime.Now);
                     if (matchedProduct.OpenDeadline != null)
@@ -686,9 +778,10 @@ namespace stock_api.Service
                         matchedProduct.LastAbleDate = nowDate.AddDays(matchedProduct.OpenDeadline.Value);
                     }
                     matchedProduct.LastOutStockDate = nowDate;
-                    outStockRecords.Add(outStockRecord);
                 }
+
                 _dbContext.OutStockRecords.AddRange(outStockRecords);
+                _dbContext.OutstockRelatetoInstocks.AddRange(outStockRelateToInStocks);
                 _dbContext.SaveChanges();
                 scope.Complete();
                 return (true, null);
@@ -700,7 +793,6 @@ namespace stock_api.Service
                 return (false, ex.Message);
             }
         }
-
 
         public (bool, string?) OwnerPurchaseSubItemsBatchOut(OwnerPurchaseSubItemsOutRequest request, List<PurchaseSubItem> subItems, List<WarehouseProduct> ownerProducts, WarehouseMember user)
         {

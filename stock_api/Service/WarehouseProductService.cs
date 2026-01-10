@@ -711,13 +711,6 @@ namespace stock_api.Service
                     if (modifyProductDto.UnitConversion.HasValue)
                         updateProducts.ForEach(p => p.UnitConversion = modifyProductDto.UnitConversion.Value);
 
-                    // 新增欄位
-                    if (modifyProductDto.IsAllowDiscard.HasValue)
-                        updateProducts.ForEach(p => p.IsAllowDiscard = modifyProductDto.IsAllowDiscard);
-
-                    if (modifyProductDto.OpenDeadline.HasValue)
-                        updateProducts.ForEach(p => p.OpenDeadline = modifyProductDto.OpenDeadline.Value);
-
                 }
                 _dbContext.SaveChanges();
                 scope.Complete();
@@ -907,13 +900,6 @@ namespace stock_api.Service
 
                     if (modifyProductDto.UnitConversion.HasValue)
                         updateProducts.ForEach(p => p.UnitConversion = modifyProductDto.UnitConversion.Value);
-
-                    // 新增欄位
-                    if (modifyProductDto.IsAllowDiscard.HasValue)
-                        updateProducts.ForEach(p => p.IsAllowDiscard = modifyProductDto.IsAllowDiscard);
-
-                    if (modifyProductDto.OpenDeadline.HasValue)
-                        updateProducts.ForEach(p => p.OpenDeadline = modifyProductDto.OpenDeadline.Value);
                 }
 
                 _dbContext.SaveChanges();

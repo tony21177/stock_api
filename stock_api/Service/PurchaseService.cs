@@ -1677,6 +1677,9 @@ namespace stock_api.Service
                                 }
 
                             }           
+                            var allSubItems = _dbContext.PurchaseSubItems.Where(s => s.PurchaseMainId == purchaseMainSheet.PurchaseMainId).ToList();
+
+
                         }
                     }
                 });
