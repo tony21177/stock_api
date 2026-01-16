@@ -837,7 +837,7 @@ namespace stock_api.Service
                 if (inStockRecord != null)
                 {
                     inStockRecord.OutStockQuantity = inStockRecord.OutStockQuantity - returnQuantity;
-                    if ((inStockRecord.InStockQuantity + inStockRecord.AdjustInQuantity) - (inStockRecord.OutStockQuantity + inStockRecord.AdjustOutQuantity) > 0)
+                    if ((inStockRecord.InStockQuantity + inStockRecord.AdjustInQuantity) - (inStockRecord.OutStockQuantity + inStockRecord.AdjustOutQuantity+inStockRecord.RejectQuantity) > 0)
                     {
                         inStockRecord.OutStockStatus = CommonConstants.OutStockStatus.PART;
                     }

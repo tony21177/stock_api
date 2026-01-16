@@ -397,7 +397,17 @@ namespace stock_api.Controllers
             {
                 var matchedInStockRecords = allInStockRecords.Where(r => r.ProductCode == vo.ProductCode).OrderByDescending(r => r.UpdatedAt).ToList();
                 var matchedOutStockRecords = allOutStockRecords.Where(r => r.ProductCode == vo.ProductCode).OrderByDescending(r => r.UpdatedAt).ToList();
-                vo.InStockRecords = matchedInStockRecords;
+                
+                // 調整 InStockRecords 的數量並過濾結餘量 > 0 的記錄
+                foreach (var record in matchedInStockRecords)
+                {
+                    // InStockQuantity = InStockQuantity + AdjustInQuantity
+                    record.InStockQuantity = record.InStockQuantity + record.AdjustInQuantity;
+                    // OutStockQuantity = OutStockQuantity + AdjustOutQuantity + RejectQuantity
+                    record.OutStockQuantity = record.OutStockQuantity + record.AdjustOutQuantity + record.RejectQuantity;
+                }
+                // 只保留 InStockQuantity - OutStockQuantity > 0 的記錄
+                vo.InStockRecords = matchedInStockRecords.Where(r => r.InStockQuantity - r.OutStockQuantity > 0).ToList();
                 vo.OutStockRecords = matchedOutStockRecords;
             });
 
