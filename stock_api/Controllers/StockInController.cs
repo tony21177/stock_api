@@ -803,14 +803,25 @@ namespace stock_api.Controllers
             }
 
 
-            if(memberAndPermissionSetting.CompanyWithUnit.UnitId== "Changhua-unit")
+            //if(memberAndPermissionSetting.CompanyWithUnit.UnitId== "Changhua-unit")
+            //{
+            //    // 彰化醫院婉君要求 設定無的不需要顯示
+            //    stockInRecordVoList.RemoveAll(vo =>
+            //    {
+            //        if (noNeedDisplayProducts.Find(p => p.ProductId == vo.ProductId) != null) return true;
+            //        return false;
+            //    });
+            //}
+
+            // 改用IsOnlyDisplayNeedAcceptProcessItems要顯示所有入庫還是只顯示需要驗收的品項
+            if (request.IsOnlyDisplayNeedAcceptProcessItems == true)
             {
-                // 彰化醫院婉君要求 設定無的不需要顯示
                 stockInRecordVoList.RemoveAll(vo =>
                 {
                     if (noNeedDisplayProducts.Find(p => p.ProductId == vo.ProductId) != null) return true;
                     return false;
                 });
+
             }
             
 

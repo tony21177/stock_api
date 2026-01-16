@@ -13,5 +13,6 @@
         public string? EndDate { get; set; }
         public int? SupplierId { get; set; }
         public bool? IsNewLotNumber {  get; set; }
+        public bool IsOnlyDisplayNeedAcceptProcessItems { get; set; } = false;
     }
 }
