@@ -183,14 +183,21 @@ namespace stock_api.Controllers
                         Message = "無對應的庫存品項"
                     });
                 }
-                if (request.ApplyQuantity > (requestLot.InStockQuantity + requestLot.AdjustInQuantity))
+
+                // 計算該批次剩餘可出庫數量
+                var remainingQuantity = requestLot.InStockQuantity + requestLot.AdjustInQuantity
+                                        - requestLot.OutStockQuantity - requestLot.AdjustOutQuantity
+                                        - requestLot.RejectQuantity;
+                if (request.ApplyQuantity > remainingQuantity)
                 {
                     return BadRequest(new CommonResponse<dynamic>
                     {
                         Result = false,
-                        Message = "出庫數量超過入庫數量"
+                        Message = $"出庫數量超過該批次剩餘數量 批次:{requestLot.LotNumberBatch},剩餘數量:{remainingQuantity}"
                     });
                 }
+
+
                 List<string> printStickerLotBatchList = new();
                 List<string> isNewLotNumberList = new();
                 List<string> isNewLotNumberBatchList = new();
@@ -366,12 +373,16 @@ namespace stock_api.Controllers
                 {
                     var product = lotNumberBatchAndProductMap[outItem.LotNumberBatch];
                     var requestLot = lotNumberBatchRequestLotMap[outItem.LotNumberBatch];
-                    if (outItem.ApplyQuantity > (requestLot.InStockQuantity+requestLot.AdjustInQuantity))
+                    // 計算該批次剩餘可出庫數量
+                    var remainingQuantity = requestLot.InStockQuantity + requestLot.AdjustInQuantity
+                                            - requestLot.OutStockQuantity - requestLot.AdjustOutQuantity
+                                            - requestLot.RejectQuantity;
+                    if (outItem.ApplyQuantity > remainingQuantity)
                     {
                         return BadRequest(new CommonResponse<dynamic>
                         {
                             Result = false,
-                            Message = $"出庫數量超過入庫數量 批次:{outItem.LotNumberBatch},入庫數量:{requestLot.InStockQuantity + requestLot.AdjustInQuantity}"
+                            Message = $"出庫數量超過該批次剩餘數量 批次:{outItem.LotNumberBatch},剩餘數量:{remainingQuantity}"
                         });
                     }
 
@@ -522,6 +533,18 @@ namespace stock_api.Controllers
                 });
             }
 
+            var remainingQuantity = requestLot.InStockQuantity + requestLot.AdjustInQuantity
+                                            - requestLot.OutStockQuantity - requestLot.AdjustOutQuantity
+                                            - requestLot.RejectQuantity;
+            if (request.ApplyQuantity > remainingQuantity)
+            {
+                return BadRequest(new CommonResponse<dynamic>
+                {
+                    Result = false,
+                    Message = $"出庫數量超過該批次剩餘數量 批次:{requestLot.LotNumberBatch},剩餘數量:{remainingQuantity}"
+                });
+            }
+
             if (request.Type == CommonConstants.OutStockType.SHIFT_OUT && request.ToCompId == null)
             {
                 return BadRequest(new CommonResponse<dynamic>
@@ -640,6 +663,19 @@ namespace stock_api.Controllers
                 var product = lotNumberBatchAndProductMap[outItem.LotNumberBatch];
                 var requestLot = lotNumberBatchRequestLotMap[outItem.LotNumberBatch];
                 var toCompAcceptanceItem = lotNumberBatchAndToCompAcceptanceItem[outItem.LotNumberBatch];
+
+                var remainingQuantity = requestLot.InStockQuantity + requestLot.AdjustInQuantity
+                                            - requestLot.OutStockQuantity - requestLot.AdjustOutQuantity
+                                            - requestLot.RejectQuantity;
+                if (outItem.ApplyQuantity > remainingQuantity)
+                {
+                    return BadRequest(new CommonResponse<dynamic>
+                    {
+                        Result = false,
+                        Message = $"出庫數量超過該批次剩餘數量 批次:{requestLot.LotNumberBatch},剩餘數量:{remainingQuantity}"
+                    });
+                }
+
                 var (successful,msg, notifyProductQuantity) = _stockOutService.OwnerOutStock(request.Type,outItem, requestLot, product, memberAndPermissionSetting.Member, toCompAcceptanceItem, compId);
                 if (!successful)
                 {
@@ -653,6 +689,8 @@ namespace stock_api.Controllers
                 {
                     //CalculateForQuantityToNotity(notifyProductQuantityList);
                 }
+
+                
             }
             return Ok(new CommonResponse<dynamic>
             {
