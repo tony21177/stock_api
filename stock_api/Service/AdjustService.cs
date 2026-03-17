@@ -98,6 +98,16 @@ namespace stock_api.Service
                                         UserName = user.DisplayName,
                                         AfterQuantity = item.AfterQuantity,
                                         AdjustItemId = adjustItem.AdjustItemId,
+                                        ProductModel = matchedInStockRecord.ProductModel,
+                                        Unit = matchedInStockRecord.Unit,
+                                        GroupIds = matchedInStockRecord.GroupIds,
+                                        GroupNames = matchedInStockRecord.GroupNames,
+                                        PreDeadline = matchedInStockRecord.PreDeadline,
+                                        OpenDeadline = matchedInStockRecord.OpenDeadline,
+                                        IsAllowDiscard = matchedInStockRecord.IsAllowDiscard,
+                                        DefaultSupplierId = matchedInStockRecord.DefaultSupplierId,
+                                        DefaultSupplierName = matchedInStockRecord.DefaultSupplierName,
+                                        PackageWay = matchedInStockRecord.PackageWay,
                                     };
                                     inStockItemRecords.Add(record);
                                 }
@@ -105,8 +115,8 @@ namespace stock_api.Service
                         }
                         else
                         {
-                            InStockItemRecord record = new() 
-                            { 
+                            InStockItemRecord record = new()
+                            {
                                 InStockId = Guid.NewGuid().ToString(),
                                 CompId = user.CompId,
                                 OriginalQuantity = item.BeforeQuantity,
@@ -123,6 +133,16 @@ namespace stock_api.Service
                                 UserName = user.DisplayName,
                                 AfterQuantity = item.AfterQuantity,
                                 AdjustItemId = adjustItem.AdjustItemId,
+                                ProductModel = matchedProduct.ProductModel,
+                                Unit = matchedProduct.Unit,
+                                GroupIds = matchedProduct.GroupIds,
+                                GroupNames = matchedProduct.GroupNames,
+                                PreDeadline = matchedProduct.PreDeadline,
+                                OpenDeadline = matchedProduct.OpenDeadline,
+                                IsAllowDiscard = matchedProduct.IsAllowDiscard,
+                                DefaultSupplierId = matchedProduct.DefaultSupplierId,
+                                DefaultSupplierName = matchedProduct.DefaultSupplierName,
+                                PackageWay = matchedProduct.PackageWay,
                             };
                             inStockItemRecords.Add(record);
                         }
@@ -178,16 +198,25 @@ namespace stock_api.Service
                                             CompId = user.CompId,
                                             IsAbnormal = false,
                                             ProductId = item.ProductId,
-                                            ProductCode = matchedProduct.ProductCode,
-                                            ProductName = matchedProduct.ProductName,
-                                            ProductSpec = matchedProduct.ProductSpec,
+                                            ProductCode = matchedInStockRecord.ProductCode,
+                                            ProductName = matchedInStockRecord.ProductName,
+                                            ProductSpec = matchedInStockRecord.ProductSpec,
                                             Type = CommonConstants.OutStockType.ADJUST_OUT,
                                             UserId = user.UserId,
                                             UserName = user.DisplayName,
                                             OriginalQuantity = matchedProduct.InStockQuantity??0f,
                                             AfterQuantity = (matchedProduct.InStockQuantity ?? 0f)-(float)Math.Abs(assign.Adjust_calculate_qty.Value),
                                             BarCodeNumber = matchedInStockRecord.LotNumberBatch,
-                                            AdjustItemId = adjustItem.AdjustItemId
+                                            AdjustItemId = adjustItem.AdjustItemId,
+                                            Unit = matchedInStockRecord.Unit,
+                                            OpenDeadline = matchedInStockRecord.OpenDeadline,
+                                            ProductModel = matchedInStockRecord.ProductModel,
+                                            GroupIds = matchedInStockRecord.GroupIds,
+                                            GroupNames = matchedInStockRecord.GroupNames,
+                                            IsAllowDiscard = matchedInStockRecord.IsAllowDiscard,
+                                            DefaultSupplierId = matchedInStockRecord.DefaultSupplierId,
+                                            DefaultSupplierName = matchedInStockRecord.DefaultSupplierName,
+                                            PackageWay = matchedInStockRecord.PackageWay,
                                         };
                                         outStockRecords.Add(outStockRecord);
                                     }
@@ -219,7 +248,16 @@ namespace stock_api.Service
                                 OriginalQuantity = item.BeforeQuantity,
                                 AfterQuantity = item.AfterQuantity,
                                 BarCodeNumber = matchedProduct.ProductCode + "AO" + nowDateTimeString,
-                                AdjustItemId = adjustItem.AdjustItemId
+                                AdjustItemId = adjustItem.AdjustItemId,
+                                Unit = matchedProduct.Unit,
+                                OpenDeadline = matchedProduct.OpenDeadline,
+                                ProductModel = matchedProduct.ProductModel,
+                                GroupIds = matchedProduct.GroupIds,
+                                GroupNames = matchedProduct.GroupNames,
+                                IsAllowDiscard = matchedProduct.IsAllowDiscard,
+                                DefaultSupplierId = matchedProduct.DefaultSupplierId,
+                                DefaultSupplierName = matchedProduct.DefaultSupplierName,
+                                PackageWay = matchedProduct.PackageWay,
                             };
                             outStockRecords.Add(outStockRecord);
                             matchedProduct.InStockQuantity = item.AfterQuantity;

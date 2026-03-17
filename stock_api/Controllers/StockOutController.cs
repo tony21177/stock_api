@@ -725,8 +725,6 @@ namespace stock_api.Controllers
             }
 
             var (data, totalPages) = _stockOutService.ListStockOutRecords(request);
-            var distinctProductIds = data.Select(x => x.ProductId).Distinct().ToList();
-            var products = _warehouseProductService.GetProductsByProductIdsAndCompId(distinctProductIds, request.CompId);
 
             var outStockRecordVoList = _mapper.Map<List<OutStockRecordVo>>(data);
 
@@ -737,12 +735,6 @@ namespace stock_api.Controllers
 
             foreach (var item in outStockRecordVoList)
             {
-                var matchedProdcut = products.Where(p => p.ProductId == item.ProductId).FirstOrDefault();
-                item.Unit = matchedProdcut?.Unit;
-                item.OpenDeadline = matchedProdcut?.OpenDeadline;
-                item.ProductModel = matchedProdcut?.ProductModel;
-                item.GroupIds = matchedProdcut.GroupIds;
-                item.GroupNames = matchedProdcut.GroupNames;
                 if (item.IsReturned == true)
                 {
                     var matchedReturnRecords = allReturnStockRecordList.Where(r=>r.OutStockId==item.OutStockId).ToList();
@@ -757,7 +749,6 @@ namespace stock_api.Controllers
                     }).ToList();
                     item.ReturnStockInfoList = returnInfoList;
                 }
-                item.IsAllowDiscard = matchedProdcut.IsAllowDiscard;
                 var matchedDiscardRecords = discardRecords.Where(d => d.OutStockId == item.OutStockId).OrderBy(r=>r.CreatedAt).ToList();
                 if (matchedDiscardRecords.Count > 0)
                 {
@@ -773,10 +764,6 @@ namespace stock_api.Controllers
                 }
 
             }
-
-            // 補上丟棄相關資訊
-            outStockIds = outStockRecordVoList.Select(o => o.OutStockId).ToList();
-            var discordRecors = _discardService.ListDiscardRecordsByOutStockIds(outStockIds, request.CompId);
 
 
 
@@ -814,18 +801,11 @@ namespace stock_api.Controllers
 
             var (data, totalPages) = _stockOutService.ListStockOutRecords(request);
 
-            var distinctProductIds = data.Select(x => x.ProductId).Distinct().ToList();
-            var products = _warehouseProductService.GetProductsByProductIdsAndCompId(distinctProductIds, request.CompId);
-
             var outStockRecordVoList = _mapper.Map<List<OutStockRecordVo>>(data);
             var outStockIds = outStockRecordVoList.Select(o => o.OutStockId).ToList();
             var discardRecords = _discardService.ListDiscardRecordsByOutStockIds(outStockIds, null);
             foreach (var item in outStockRecordVoList)
             {
-                var matchedProdcut = products.Where(p => p.ProductId == item.ProductId).FirstOrDefault();
-                item.Unit = matchedProdcut?.Unit;
-                item.IsAllowDiscard = matchedProdcut.IsAllowDiscard;
-
                 var matchedDiscardRecords = discardRecords.Where(d => d.OutStockId == item.OutStockId).OrderBy(r => r.CreatedAt).ToList();
                 if (matchedDiscardRecords.Count > 0)
                 {
@@ -833,8 +813,6 @@ namespace stock_api.Controllers
                     item.DiscardReasonList = matchedDiscardRecords.Select(d => d.DiscardReason ?? string.Empty).ToList();
                     item.DiscardTimeList = matchedDiscardRecords.Select(d => d.CreatedAt).ToList();
                     item.DiscardUserNameList = matchedDiscardRecords.Select(d => d.DiscardUserName).ToList();
-                    item.GroupIds = matchedProdcut.GroupIds;
-                    item.GroupNames = matchedProdcut.GroupNames;
                 }
             }
 

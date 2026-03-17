@@ -116,6 +116,15 @@ namespace stock_api.Service
                     SkipQcCommnet = request.IsSkipQc ? request.SkipQcComment : "",
                     Remark = request.Remark,
                     InstrumentId = request.InstrumentId,
+                    Unit = inStockItem.Unit,
+                    OpenDeadline = inStockItem.OpenDeadline,
+                    ProductModel = inStockItem.ProductModel,
+                    GroupIds = inStockItem.GroupIds,
+                    GroupNames = inStockItem.GroupNames,
+                    IsAllowDiscard = inStockItem.IsAllowDiscard,
+                    DefaultSupplierId = inStockItem.DefaultSupplierId,
+                    DefaultSupplierName = inStockItem.DefaultSupplierName,
+                    PackageWay = inStockItem.PackageWay,
                 };
 
 
@@ -730,9 +739,9 @@ namespace stock_api.Service
                             CompId = request.CompId,
                             IsAbnormal = false,
                             ProductId = item.ProductId,
-                            ProductCode = matchedProduct.ProductCode,
-                            ProductName = matchedProduct.ProductName,
-                            ProductSpec = matchedProduct.ProductSpec,
+                            ProductCode = inStockRecord.ProductCode,
+                            ProductName = inStockRecord.ProductName,
+                            ProductSpec = inStockRecord.ProductSpec,
                             Type = CommonConstants.OutStockType.OWNER_DIRECT_OUT,
                             UserId = user.UserId,
                             UserName = user.DisplayName,
@@ -742,6 +751,15 @@ namespace stock_api.Service
                             ItemId = inStockRecord.ItemId,
                             ExpirationDate = inStockRecord.ExpirationDate,
                             Remark = item.Remark,
+                            Unit = inStockRecord.Unit,
+                            OpenDeadline = inStockRecord.OpenDeadline,
+                            ProductModel = inStockRecord.ProductModel,
+                            GroupIds = inStockRecord.GroupIds,
+                            GroupNames = inStockRecord.GroupNames,
+                            IsAllowDiscard = inStockRecord.IsAllowDiscard,
+                            DefaultSupplierId = inStockRecord.DefaultSupplierId,
+                            DefaultSupplierName = inStockRecord.DefaultSupplierName,
+                            PackageWay = inStockRecord.PackageWay,
                         };
                         outStockRecords.Add(outStockRecord);
 
@@ -828,6 +846,15 @@ namespace stock_api.Service
                         AfterQuantity = (matchedProduct.InStockQuantity.Value - item.OutQuantity),
                         BarCodeNumber = lotNumberBatch,
                         ItemId = item.SubItemId,
+                        Unit = matchedProduct.Unit,
+                        OpenDeadline = matchedProduct.OpenDeadline,
+                        ProductModel = matchedProduct.ProductModel,
+                        GroupIds = matchedProduct.GroupIds,
+                        GroupNames = matchedProduct.GroupNames,
+                        IsAllowDiscard = matchedProduct.IsAllowDiscard,
+                        DefaultSupplierId = matchedProduct.DefaultSupplierId,
+                        DefaultSupplierName = matchedProduct.DefaultSupplierName,
+                        PackageWay = matchedProduct.PackageWay,
                     };
                     matchedProduct.LotNumberBatch = lotNumberBatch;
                     matchedProduct.InStockQuantity = outStockRecord.AfterQuantity;
@@ -858,9 +885,9 @@ namespace stock_api.Service
         {
             var today = DateOnly.FromDateTime(DateTime.Now);
 
-            // 使用單一資料庫查詢: 先取得每個產品的最新出庫記錄 (透過 GroupBy + Max)
+            // 取得每個產品的最新出庫記錄 (透過 GroupBy + Max)
             var latestOutStockPerProduct = _dbContext.OutStockRecords
-                .Where(o => o.CompId == compId)
+                .Where(o => o.CompId == compId && o.OpenDeadline != null && o.OpenDeadline > 0)
                 .GroupBy(o => o.ProductId)
                 .Select(g => new
                 {
@@ -868,33 +895,32 @@ namespace stock_api.Service
                     LatestCreatedAt = g.Max(o => o.CreatedAt)
                 });
 
-            // 使用 JOIN 將產品、最新出庫記錄合併查詢
-            var query = from p in _dbContext.WarehouseProducts
-                        where p.CompId == compId && p.OpenDeadline != null && p.OpenDeadline > 0
-                        join latest in latestOutStockPerProduct on p.ProductId equals latest.ProductId
-                        join o in _dbContext.OutStockRecords on new { p.ProductId, CreatedAt = latest.LatestCreatedAt } equals new { o.ProductId, CreatedAt = o.CreatedAt }
+            var query = from latest in latestOutStockPerProduct
+                        join o in _dbContext.OutStockRecords
+                            on new { latest.ProductId, CreatedAt = latest.LatestCreatedAt }
+                            equals new { o.ProductId, CreatedAt = o.CreatedAt }
                         where o.CompId == compId
-                        select new
-                        {
-                            Product = p,
-                            OutStockRecord = o
-                        };
+                        select o;
 
             var queryResult = query.ToList();
 
+            // 取得 LastAbleDate (仍需從 WarehouseProduct 取得，因為是動態計算值)
+            var productIds = queryResult.Select(o => o.ProductId).Distinct().ToList();
+            var products = _dbContext.WarehouseProducts
+                .Where(p => p.CompId == compId && productIds.Contains(p.ProductId))
+                .ToList();
+
             var result = new List<OutStockItemForOpenDeadline>();
 
-            foreach (var item in queryResult)
+            foreach (var latestOutStockRecord in queryResult)
             {
-                var product = item.Product;
-                var latestOutStockRecord = item.OutStockRecord;
-
-                var openDeadlineDate = latestOutStockRecord.CreatedAt?.AddDays(product.OpenDeadline ?? 0);
+                var openDeadlineDate = latestOutStockRecord.CreatedAt?.AddDays(latestOutStockRecord.OpenDeadline ?? 0);
                 var openDeadlineDateOnly = openDeadlineDate.HasValue ? DateOnly.FromDateTime(openDeadlineDate.Value) : (DateOnly?)null;
                 var remainDaysFromNow = openDeadlineDateOnly.HasValue ? (openDeadlineDateOnly.Value.DayNumber - today.DayNumber) : (int?)null;
 
                 if (daysAfter == null || remainDaysFromNow <= daysAfter)
                 {
+                    var matchedProduct = products.FirstOrDefault(p => p.ProductId == latestOutStockRecord.ProductId);
                     result.Add(new OutStockItemForOpenDeadline
                     {
                         OutStockQuantity = latestOutStockRecord.ApplyQuantity,
@@ -905,15 +931,15 @@ namespace stock_api.Service
                         ProductCode = latestOutStockRecord.ProductCode,
                         Type = latestOutStockRecord.Type,
                         OutStockDate = latestOutStockRecord.CreatedAt,
-                        OpenDeadline = product.OpenDeadline,
+                        OpenDeadline = latestOutStockRecord.OpenDeadline,
                         OpenDeadlineDate = openDeadlineDate,
-                        LastAbleDate = product.LastAbleDate,
+                        LastAbleDate = matchedProduct?.LastAbleDate,
                         RemainingDays = remainDaysFromNow,
-                        GroupIds = product.GroupIds,
-                        GroupNames = product.GroupNames,
-                        DefaultSupplierId = product.DefaultSupplierId,
-                        DefaultSupplierName = product.DefaultSupplierName,
-                        PackageWay = product.PackageWay,
+                        GroupIds = latestOutStockRecord.GroupIds,
+                        GroupNames = latestOutStockRecord.GroupNames,
+                        DefaultSupplierId = latestOutStockRecord.DefaultSupplierId,
+                        DefaultSupplierName = latestOutStockRecord.DefaultSupplierName,
+                        PackageWay = latestOutStockRecord.PackageWay,
                     });
                 }
             }

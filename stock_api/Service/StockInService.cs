@@ -380,6 +380,16 @@ namespace stock_api.Service
                         PackagingStatus = updateAcceptItem.PackagingStatus,
                         Comment = updateAcceptItem.Comment,
                         QcComment = updateAcceptItem.QcComment,
+                        ProductModel = product.ProductModel,
+                        Unit = product.Unit,
+                        GroupIds = product.GroupIds,
+                        GroupNames = product.GroupNames,
+                        PreDeadline = product.PreDeadline,
+                        OpenDeadline = product.OpenDeadline,
+                        IsAllowDiscard = product.IsAllowDiscard,
+                        DefaultSupplierId = product.DefaultSupplierId,
+                        DefaultSupplierName = product.DefaultSupplierName,
+                        PackageWay = product.PackageWay,
                     };
 
                     if (isDirectOutStock)
@@ -394,10 +404,10 @@ namespace stock_api.Service
                             CompId = compId,
                             ExpirationDate = DateOnly.FromDateTime(DateTimeHelper.ParseDateString(updateAcceptItem.ExpirationDate).Value),
                             IsAbnormal = false,
-                            ProductId = product.ProductId,
-                            ProductCode = product.ProductCode,
-                            ProductName = product.ProductName,
-                            ProductSpec = product.ProductSpec,
+                            ProductId = inStockItemRecord.ProductId,
+                            ProductCode = inStockItemRecord.ProductCode,
+                            ProductName = inStockItemRecord.ProductName,
+                            ProductSpec = inStockItemRecord.ProductSpec,
                             Type = CommonConstants.OutStockType.PURCHASE_OUT,
                             UserId = acceptMember.UserId,
                             UserName = acceptMember.DisplayName,
@@ -405,6 +415,15 @@ namespace stock_api.Service
                             AfterQuantity = product.InStockQuantity.Value,
                             ItemId = existingAcceptanceItem.ItemId,
                             BarCodeNumber = existingAcceptanceItem.LotNumberBatch,
+                            Unit = inStockItemRecord.Unit,
+                            OpenDeadline = inStockItemRecord.OpenDeadline,
+                            ProductModel = inStockItemRecord.ProductModel,
+                            GroupIds = inStockItemRecord.GroupIds,
+                            GroupNames = inStockItemRecord.GroupNames,
+                            IsAllowDiscard = inStockItemRecord.IsAllowDiscard,
+                            DefaultSupplierId = inStockItemRecord.DefaultSupplierId,
+                            DefaultSupplierName = inStockItemRecord.DefaultSupplierName,
+                            PackageWay = inStockItemRecord.PackageWay,
                         };
                         _dbContext.OutStockRecords.Add(outStockRecord);
 
@@ -1168,6 +1187,16 @@ namespace stock_api.Service
                     QcType = product.QcType,
                     QcTestStatus = CommonConstants.QcTestStatus.NONE,
                     Comment = request.Comment,
+                    ProductModel = product.ProductModel,
+                    Unit = product.Unit,
+                    GroupIds = product.GroupIds,
+                    GroupNames = product.GroupNames,
+                    PreDeadline = product.PreDeadline,
+                    OpenDeadline = product.OpenDeadline,
+                    IsAllowDiscard = product.IsAllowDiscard,
+                    DefaultSupplierId = product.DefaultSupplierId,
+                    DefaultSupplierName = product.DefaultSupplierName,
+                    PackageWay = product.PackageWay,
                 };
 
                 product.InStockQuantity = inStockItemRecord.AfterQuantity;

@@ -69,23 +69,14 @@ namespace stock_api.Service
             var resultOutStockRecords = outStockQuery.ToList();
 
             var inStockRecordVoList = _mapper.Map<List<InStockItemRecordVo>>(resultInStockRecords);
-            inStockRecordVoList.ForEach(vo =>
+            if (group != null)
             {
-                var matchedProduct = allProducts.Where(p => p.ProductId == vo.ProductId).FirstOrDefault();
-                if (group != null)
+                inStockRecordVoList.ForEach(vo =>
                 {
                     vo.GroupIds = group.GroupId;
                     vo.GroupNames = group.GroupName;
-                }
-                else
-                {
-                    
-                    vo.GroupIds = matchedProduct.GroupIds;
-                    vo.GroupNames = matchedProduct.GroupNames;
-
-                }
-                vo.ProductModel = matchedProduct.ProductModel; 
-            });
+                });
+            }
             inStockRecordVoList = inStockRecordVoList.OrderBy(vo => vo.CreatedAt).ToList();
             var outStockRecordVoList = _mapper.Map<List<OutStockRecordVo>>(resultOutStockRecords);
 
@@ -95,9 +86,11 @@ namespace stock_api.Service
 
             foreach (var item in outStockRecordVoList)
             {
-                var matchedProduct = matchedProducts.Where(p => p.ProductId == item.ProductId).FirstOrDefault();
-                item.Unit = matchedProduct?.Unit;
-                item.OpenDeadline = matchedProduct?.OpenDeadline ;
+                if (group != null)
+                {
+                    item.GroupIds = group.GroupId;
+                    item.GroupNames = group.GroupName;
+                }
 
                 var matchedReturnRecords = allReturnStockRecordList.Where(r => r.OutStockId == item.OutStockId).ToList();
                 var returnInfoList = matchedReturnRecords.Select(r => new ReturnStockInfo
@@ -110,9 +103,6 @@ namespace stock_api.Service
                     ReturnStockDateTime = r.CreatedAt.Value,
                 }).ToList();
                 item.ReturnStockInfoList = returnInfoList;
-                item.ProductModel = matchedProduct.ProductModel;
-                item.GroupIds = matchedProduct.GroupIds;
-                item.GroupNames = matchedProduct.GroupNames;
 
                 if (item.InstrumentId.HasValue && item.InstrumentId != 0)
                 {

@@ -164,4 +164,56 @@ public partial class OutStockRecord
     public float? DiscardQuantity { get; set; }
 
     public int? InstrumentId { get; set; }
+
+    /// <summary>
+    /// 庫存單位 (快照自 WarehouseProduct)
+    /// </summary>
+    [StringLength(100)]
+    public string? Unit { get; set; }
+
+    /// <summary>
+    /// 開封有效期限天數 (快照自 WarehouseProduct)
+    /// </summary>
+    public int? OpenDeadline { get; set; }
+
+    /// <summary>
+    /// 品項型號 (快照自 WarehouseProduct)
+    /// </summary>
+    [StringLength(200)]
+    public string? ProductModel { get; set; }
+
+    /// <summary>
+    /// 組別IDs (快照自 WarehouseProduct)
+    /// </summary>
+    [StringLength(2000)]
+    public string? GroupIds { get; set; }
+
+    /// <summary>
+    /// 組別名稱 (快照自 WarehouseProduct)
+    /// </summary>
+    [StringLength(2000)]
+    public string? GroupNames { get; set; }
+
+    /// <summary>
+    /// 是否允許丟棄 (快照自 WarehouseProduct)
+    /// </summary>
+    public bool? IsAllowDiscard { get; set; }
+
+    /// <summary>
+    /// 預設供應商ID (快照自 WarehouseProduct)
+    /// </summary>
+    [Column("DefaultSupplierID")]
+    public int? DefaultSupplierId { get; set; }
+
+    /// <summary>
+    /// 預設供應商名稱 (快照自 WarehouseProduct)
+    /// </summary>
+    [StringLength(200)]
+    public string? DefaultSupplierName { get; set; }
+
+    /// <summary>
+    /// 包裝方式 (快照自 WarehouseProduct)
+    /// </summary>
+    [StringLength(100)]
+    public string? PackageWay { get; set; }
 }

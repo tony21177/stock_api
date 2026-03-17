@@ -1,12 +1,8 @@
-﻿using stock_api.Models;
-using System.ComponentModel.DataAnnotations;
+using stock_api.Models;
 
 namespace stock_api.Service.ValueObject
 {
-    public class InStockItemRecordVo: InStockItemRecord
+    public class InStockItemRecordVo : InStockItemRecord
     {
-        public string? GroupIds { get; set; }
-        public string? GroupNames { get; set; }
-        public string? ProductModel {  get; set; }
     }
 }
