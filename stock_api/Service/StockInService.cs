@@ -336,13 +336,14 @@ namespace stock_api.Service
                     var qcTestStatus = CommonConstants.QcTestStatus.NONE;
                     if (product.IsNeedAcceptProcess == true)
                     {
-                        if (updateAcceptItem.LotNumber != null && product.QcType == CommonConstants.QcTypeConstants.LOT_NUMBER)
-                        {
-                            if (IsThisLotNumberAlreadyQc(updateAcceptItem.LotNumber) == true)
-                            {
-                                qcTestStatus = CommonConstants.QcTestStatus.DONE;
-                            }
-                        }
+                        // 同批號即使做過QC，仍需品管（不需做檢體品管），所以不自動設DONE
+                        //if (updateAcceptItem.LotNumber != null && product.QcType == CommonConstants.QcTypeConstants.LOT_NUMBER)
+                        //{
+                        //    if (IsThisLotNumberAlreadyQc(updateAcceptItem.LotNumber) == true)
+                        //    {
+                        //        qcTestStatus = CommonConstants.QcTestStatus.DONE;
+                        //    }
+                        //}
                         if (lotNumberBatch != null && product.QcType == CommonConstants.QcTypeConstants.LOT_NUMBER_BATCH)
                         {
                             if (IsThisLotNumberBatchAlreadyQc(lotNumberBatch) == true)
@@ -442,14 +443,15 @@ namespace stock_api.Service
 
                     if (inStockItemRecord.IsNeedQc == true)
                     {
-                        if (inStockItemRecord.QcType == CommonConstants.QcTypeConstants.LOT_NUMBER)
-                        {
-                            var lastInStockedRecord = _dbContext.InStockItemRecords.Where(i => i.LotNumber == inStockItemRecord.LotNumber).OrderByDescending(i => i.CreatedAt).FirstOrDefault();
-                            if (lastInStockedRecord != null && (lastInStockedRecord.QcTestStatus == CommonConstants.QcTestStatus.DONE))
-                            {
-                                inStockItemRecord.QcTestStatus = CommonConstants.QcTestStatus.DONE;
-                            }
-                        }
+                        // 同批號即使做過QC，仍需品管（不需做檢體品管），所以不自動設DONE
+                        //if (inStockItemRecord.QcType == CommonConstants.QcTypeConstants.LOT_NUMBER)
+                        //{
+                        //    var lastInStockedRecord = _dbContext.InStockItemRecords.Where(i => i.LotNumber == inStockItemRecord.LotNumber).OrderByDescending(i => i.CreatedAt).FirstOrDefault();
+                        //    if (lastInStockedRecord != null && (lastInStockedRecord.QcTestStatus == CommonConstants.QcTestStatus.DONE))
+                        //    {
+                        //        inStockItemRecord.QcTestStatus = CommonConstants.QcTestStatus.DONE;
+                        //    }
+                        //}
                         if (inStockItemRecord.QcType == CommonConstants.QcTypeConstants.LOT_NUMBER_BATCH)
                         {
                             var lastInStockedRecord = _dbContext.InStockItemRecords.Where(i => i.LotNumberBatch == inStockItemRecord.LotNumberBatch).OrderByDescending(i => i.CreatedAt).FirstOrDefault();
