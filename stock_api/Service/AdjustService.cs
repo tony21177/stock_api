@@ -77,23 +77,24 @@ namespace stock_api.Service
                                 if (matchedInStockRecord != null)
                                 {
                                     matchedInStockRecord.AdjustInQuantity += (float)Math.Abs(assign.Adjust_calculate_qty ?? 0);
-                                    InStockItemRecord record = new() 
-                                    { 
+                                    var adjustBatch = GetNextAdjustLotNumberBatch(matchedInStockRecord.LotNumberBatch, inStockItemRecords);
+                                    InStockItemRecord record = new()
+                                    {
                                         InStockId = Guid.NewGuid().ToString(),
                                         CompId = user.CompId,
                                         OriginalQuantity = item.BeforeQuantity,
                                         InStockQuantity = (float)Math.Abs(assign.Adjust_calculate_qty ?? 0),
                                         ExpirationDate = matchedInStockRecord.ExpirationDate,
                                         ProductId = item.ProductId,
-                                        ProductCode = matchedProduct.ProductCode,
-                                        ProductName = matchedProduct.ProductName,
-                                        ProductSpec = matchedProduct.ProductSpec,
+                                        ProductCode = matchedInStockRecord.ProductCode,
+                                        ProductName = matchedInStockRecord.ProductName,
+                                        ProductSpec = matchedInStockRecord.ProductSpec,
                                         Type = CommonConstants.StockInType.ADJUST,
                                         SavingFunction = matchedInStockRecord.SavingFunction,
                                         SavingTemperature = matchedInStockRecord.SavingTemperature,
                                         LotNumber = matchedInStockRecord.LotNumber,
-                                        LotNumberBatch = matchedInStockRecord.LotNumberBatch+":A",
-                                        BarCodeNumber = matchedInStockRecord.LotNumberBatch+ ":A",
+                                        LotNumberBatch = adjustBatch,
+                                        BarCodeNumber = adjustBatch,
                                         UserId = user.UserId,
                                         UserName = user.DisplayName,
                                         AfterQuantity = item.AfterQuantity,
@@ -302,6 +303,40 @@ namespace stock_api.Service
                 _logger.LogError("事務失敗[AdjustItems]：{msg}", ex);
                 return (false,ex.Message);
             }
+        }
+
+        private string GetNextAdjustLotNumberBatch(string baseLotNumberBatch, List<InStockItemRecord> pendingRecords)
+        {
+            var candidate = baseLotNumberBatch + ":A";
+
+            // 一次撈出 DB 中所有 :A 開頭的批次
+            var existingBatches = _dbContext.InStockItemRecords
+                .Where(r => r.LotNumberBatch.StartsWith(candidate))
+                .Select(r => r.LotNumberBatch)
+                .ToHashSet();
+
+            // 也檢查同一筆交易中尚未存檔的紀錄
+            foreach (var r in pendingRecords.Where(r => r.LotNumberBatch != null && r.LotNumberBatch.StartsWith(candidate)))
+            {
+                existingBatches.Add(r.LotNumberBatch);
+            }
+
+            // :A → :A2 → :A3 ...
+            if (!existingBatches.Contains(candidate))
+            {
+                return candidate;
+            }
+
+            for (int i = 2; i <= 100; i++)
+            {
+                var next = candidate + i;
+                if (!existingBatches.Contains(next))
+                {
+                    return next;
+                }
+            }
+
+            return candidate + DateTime.Now.ToString("yyyyMMddHHmmssfff");
         }
 
         public (List<AdjustMainWithItemsVo>,int) ListAdjustMainWithItemsByCondition(ListAdjustItemsRequest request)
