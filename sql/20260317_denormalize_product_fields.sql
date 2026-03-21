@@ -2,30 +2,30 @@
 -- in_stock_item_record: 新增品項基本資料快照欄位
 -- ============================================================
 ALTER TABLE `in_stock_item_record`
-  ADD COLUMN IF NOT EXISTS `ProductModel` varchar(200) DEFAULT NULL COMMENT '品項型號',
-  ADD COLUMN IF NOT EXISTS `Unit` varchar(100) DEFAULT NULL COMMENT '庫存單位',
-  ADD COLUMN IF NOT EXISTS `GroupIds` varchar(2000) DEFAULT NULL COMMENT '組別IDs',
-  ADD COLUMN IF NOT EXISTS `GroupNames` varchar(2000) DEFAULT NULL COMMENT '組別名稱',
-  ADD COLUMN IF NOT EXISTS `PreDeadline` int DEFAULT NULL COMMENT '末效期前幾天通知',
-  ADD COLUMN IF NOT EXISTS `OpenDeadline` int DEFAULT NULL COMMENT '開封有效期限(天數)',
-  ADD COLUMN IF NOT EXISTS `IsAllowDiscard` tinyint(1) DEFAULT NULL COMMENT '是否允許丟棄',
-  ADD COLUMN IF NOT EXISTS `DefaultSupplierID` int DEFAULT NULL COMMENT '預設供應商ID',
-  ADD COLUMN IF NOT EXISTS `DefaultSupplierName` varchar(200) DEFAULT NULL COMMENT '預設供應商名稱',
-  ADD COLUMN IF NOT EXISTS `PackageWay` varchar(100) DEFAULT NULL COMMENT '包裝方式';
+  ADD COLUMN `ProductModel` varchar(200) DEFAULT NULL COMMENT '品項型號',
+  ADD COLUMN `Unit` varchar(100) DEFAULT NULL COMMENT '庫存單位',
+  ADD COLUMN `GroupIds` varchar(2000) DEFAULT NULL COMMENT '組別IDs',
+  ADD COLUMN `GroupNames` varchar(2000) DEFAULT NULL COMMENT '組別名稱',
+  ADD COLUMN `PreDeadline` int DEFAULT NULL COMMENT '末效期前幾天通知',
+  ADD COLUMN `OpenDeadline` int DEFAULT NULL COMMENT '開封有效期限(天數)',
+  ADD COLUMN `IsAllowDiscard` tinyint(1) DEFAULT NULL COMMENT '是否允許丟棄',
+  ADD COLUMN `DefaultSupplierID` int DEFAULT NULL COMMENT '預設供應商ID',
+  ADD COLUMN `DefaultSupplierName` varchar(200) DEFAULT NULL COMMENT '預設供應商名稱',
+  ADD COLUMN `PackageWay` varchar(100) DEFAULT NULL COMMENT '包裝方式';
 
 -- ============================================================
 -- out_stock_record: 新增品項基本資料快照欄位
 -- ============================================================
 ALTER TABLE `out_stock_record`
-  ADD COLUMN IF NOT EXISTS `Unit` varchar(100) DEFAULT NULL COMMENT '庫存單位',
-  ADD COLUMN IF NOT EXISTS `OpenDeadline` int DEFAULT NULL COMMENT '開封有效期限(天數)',
-  ADD COLUMN IF NOT EXISTS `ProductModel` varchar(200) DEFAULT NULL COMMENT '品項型號',
-  ADD COLUMN IF NOT EXISTS `GroupIds` varchar(2000) DEFAULT NULL COMMENT '組別IDs',
-  ADD COLUMN IF NOT EXISTS `GroupNames` varchar(2000) DEFAULT NULL COMMENT '組別名稱',
-  ADD COLUMN IF NOT EXISTS `IsAllowDiscard` tinyint(1) DEFAULT NULL COMMENT '是否允許丟棄',
-  ADD COLUMN IF NOT EXISTS `DefaultSupplierID` int DEFAULT NULL COMMENT '預設供應商ID',
-  ADD COLUMN IF NOT EXISTS `DefaultSupplierName` varchar(200) DEFAULT NULL COMMENT '預設供應商名稱',
-  ADD COLUMN IF NOT EXISTS `PackageWay` varchar(100) DEFAULT NULL COMMENT '包裝方式';
+  ADD COLUMN `Unit` varchar(100) DEFAULT NULL COMMENT '庫存單位',
+  ADD COLUMN `OpenDeadline` int DEFAULT NULL COMMENT '開封有效期限(天數)',
+  ADD COLUMN `ProductModel` varchar(200) DEFAULT NULL COMMENT '品項型號',
+  ADD COLUMN `GroupIds` varchar(2000) DEFAULT NULL COMMENT '組別IDs',
+  ADD COLUMN `GroupNames` varchar(2000) DEFAULT NULL COMMENT '組別名稱',
+  ADD COLUMN `IsAllowDiscard` tinyint(1) DEFAULT NULL COMMENT '是否允許丟棄',
+  ADD COLUMN `DefaultSupplierID` int DEFAULT NULL COMMENT '預設供應商ID',
+  ADD COLUMN `DefaultSupplierName` varchar(200) DEFAULT NULL COMMENT '預設供應商名稱',
+  ADD COLUMN `PackageWay` varchar(100) DEFAULT NULL COMMENT '包裝方式';
 
 -- ============================================================
 -- 回填歷史資料 (用當前 warehouse_product 值)
