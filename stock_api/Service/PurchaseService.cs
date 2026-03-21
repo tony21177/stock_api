@@ -1571,8 +1571,13 @@ namespace stock_api.Service
                         var matchedProduct = products.Where(p => p.ProductId == matchedPurchaseSubItem.ProductId && p.CompId == matchedPurchaseSubItem.CompId).FirstOrDefault();
                         if (matchedProduct != null)
                         {
-                            matchedProduct.DefaultSupplierId = matchedSupplier.Id;
-                            matchedProduct.DefaultSupplierName = matchedSupplier.Name;
+                            //20260318
+                            //在更新更應商下拉選單搜尋框後，金萬林的採購單審核若變更供應商，基本資料的供應商就會連動改變(更新前不會)。
+                            //舉例說明2026031839af7草療送來的訂單，編碼029因需求變大，供應商由金萬林改為杏全，庫存資訊的供應商資料就連動變杏全
+                            //    ，這裡要維持原本設定"不連動"，因為訂單變更供應商是單次個案。
+
+                            //matchedProduct.DefaultSupplierId = matchedSupplier.Id;
+                            //matchedProduct.DefaultSupplierName = matchedSupplier.Name;
                         }
 
                     }
