@@ -198,7 +198,6 @@ namespace stock_api.Controllers
                 {
                     lot.LastMainId = matchedLastQcMain.MainId;
                     lot.LastFinalResult = matchedLastQcMain.FinalResult;
-                    lot.LastInStockLotNumberBatch = matchedLastQcMain.LotNumberBatch;
                 }
 
                 if (!string.IsNullOrEmpty(lot.LotNumberBatch) && lotNumberBatchAndItemIdMap.ContainsKey(lot.LotNumberBatch))
@@ -221,6 +220,7 @@ namespace stock_api.Controllers
                         {
                             var prev = productHistory.Where(i => i.CreatedAt < matchedInStock.CreatedAt).OrderByDescending(i => i.CreatedAt).FirstOrDefault();
                             lot.PrevLotNumber = prev?.LotNumber;
+                            lot.LastInStockLotNumberBatch = prev?.LotNumber;
                         }
 
                         lot.VerifyAt = matchedInStock.CreatedAt;
