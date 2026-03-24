@@ -159,6 +159,11 @@ namespace stock_api.Controllers.Request
         public string? QcType { get; set; }
 
         /// <summary>
+        /// 檢驗屬性
+        /// </summary>
+        public string? ValidationMethod { get; set; }
+
+        /// <summary>
         /// 該品項期限距離現在的最小天數
         /// </summary>
         public int? AllowReceiveDateRange { get; set; }

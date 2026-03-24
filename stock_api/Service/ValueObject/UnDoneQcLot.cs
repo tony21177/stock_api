@@ -10,6 +10,7 @@ namespace stock_api.Service.ValueObject
         public string? LotNumber { get; set; }
         public string? LotNumberBatch { get; set; }
         public string QcType { get; set; } = null!;
+        public string? ValidationMethod { get; set; }
         public string? QcTestStatus { get; set; }
         public string? PurchaseMainId { get; set; } = null!;
         public DateTime? ApplyDate { get; set; } 

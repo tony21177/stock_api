@@ -34,6 +34,7 @@ namespace stock_api.Controllers.Request
 
         public string? Unit { get; set; }
         public string? QcType { get; set; }
+        public string? ValidationMethod { get; set; }
         public bool? IsPrintSticker { get; set; }
         public string? PreDeadline {get;set;}
 
