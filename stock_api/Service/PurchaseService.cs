@@ -1816,6 +1816,13 @@ namespace stock_api.Service
                                     matchedUpdateItem.InStockQuantity = matchedAcceptanceItem.AcceptQuantity;
                                     matchedUpdateItem.ReceiveQuantity = matchedUpdateItem.InStockQuantity;
                                 }
+                                else if (matchedAcceptanceItem.OrderQuantity == 0 || subItem.Quantity == 0)
+                                {
+                                    matchedAcceptanceItem.InStockStatus = CommonConstants.PurchaseSubItemReceiveStatus.CLOSE;
+                                    matchedUpdateItem.ReceiveStatus = CommonConstants.PurchaseSubItemReceiveStatus.CLOSE;
+                                    matchedUpdateItem.InStockQuantity = matchedAcceptanceItem.AcceptQuantity;
+                                    matchedUpdateItem.ReceiveQuantity = matchedUpdateItem.InStockQuantity;
+                                }
                             }
                         }
                     }
@@ -1833,7 +1840,8 @@ namespace stock_api.Service
             try
             {
                 var allAcceptItems = _dbContext.AcceptanceItems.Where(i => i.PurchaseMainId == purchaseMainSheet.PurchaseMainId).ToList();
-                if (allAcceptItems.All(item => item.InStockStatus == CommonConstants.PurchaseSubItemReceiveStatus.DONE))
+                if (allAcceptItems.All(item => item.InStockStatus == CommonConstants.PurchaseSubItemReceiveStatus.DONE
+                    || item.InStockStatus == CommonConstants.PurchaseSubItemReceiveStatus.CLOSE))
                 {
                     purchaseMainSheet.ReceiveStatus = CommonConstants.PurchaseReceiveStatus.ALL_ACCEPT;
                 }

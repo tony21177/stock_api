@@ -153,6 +153,19 @@ namespace stock_api.Service
             // 過濾掉 OrderQuantity 為 0 的項目
             query = query.Where(h => h.OrderQuantity > 0);
 
+            // 過濾掉所有有效品項都已入庫完成的採購單（整單入庫完成就隱藏）
+            // 僅當有傳 ReceiveStatusList 且不包含 ALL_ACCEPT 或 CLOSE 時才套用
+            if (request.ReceiveStatusList != null
+                && !request.ReceiveStatusList.Contains(CommonConstants.PurchaseReceiveStatus.ALL_ACCEPT)
+                && !request.ReceiveStatusList.Contains(CommonConstants.PurchaseReceiveStatus.CLOSE))
+            {
+                var completedPurchaseMainIds = query
+                    .GroupBy(h => h.PurchaseMainId)
+                    .Where(g => g.All(h => h.InStockStatus == CommonConstants.PurchaseSubItemReceiveStatus.DONE))
+                    .Select(g => g.Key);
+                query = query.Where(h => !completedPurchaseMainIds.Contains(h.PurchaseMainId));
+            }
+
             // 取得分頁後的 PurchaseMainId 列表（先分組再分頁）
             var orderByField = request.PaginationCondition.OrderByField ?? "ApplyDate";
             orderByField = StringUtils.CapitalizeFirstLetter(orderByField);

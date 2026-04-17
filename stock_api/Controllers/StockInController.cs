@@ -208,6 +208,21 @@ namespace stock_api.Controllers
             purchaseAcceptanceItemsViewList = purchaseAcceptanceItemsViewList
                 .Where(i => i.OwnerProcess != CommonConstants.PurchaseMainOwnerProcessStatus.NOT_AGREE).ToList();
 
+            // 過濾掉所有有效品項(OrderQuantity>0)都已入庫完成的採購單（整單入庫完成就隱藏）
+            // 僅當有傳 ReceiveStatusList 且不包含 ALL_ACCEPT 或 CLOSE 時才套用
+            if (request.ReceiveStatusList != null
+                && !request.ReceiveStatusList.Contains(CommonConstants.PurchaseReceiveStatus.ALL_ACCEPT)
+                && !request.ReceiveStatusList.Contains(CommonConstants.PurchaseReceiveStatus.CLOSE))
+            {
+                var completedMainIds = purchaseAcceptanceItemsViewList
+                    .GroupBy(i => i.PurchaseMainId)
+                    .Where(g => g.Where(h => h.OrderQuantity > 0).All(h => h.InStockStatus == CommonConstants.PurchaseSubItemReceiveStatus.DONE))
+                    .Select(g => g.Key)
+                    .ToHashSet();
+                purchaseAcceptanceItemsViewList = purchaseAcceptanceItemsViewList
+                    .Where(i => !completedMainIds.Contains(i.PurchaseMainId)).ToList();
+            }
+
             var purchaseMainIdAndAcceptionItemListMap = purchaseAcceptanceItemsViewList
                 .GroupBy(item => item.PurchaseMainId)
                 .ToDictionary(g => g.Key, g => g.ToList());
