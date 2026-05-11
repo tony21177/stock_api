@@ -973,7 +973,12 @@ namespace stock_api.Service
 
             foreach (var product in nearExpireProductVoList)
             {
-                var matchedAllUnAllOutInStockItemList = allUnAllOutInStockItemList.Where(i => i.ProductId == product.ProductId).ToList();
+                // :A 結尾的批號為院批號的子批，結餘量已計入院批號內 (參見 WarehouseProductController),
+                // 為避免重複提醒，效期將至列表排除這些子批
+                var matchedAllUnAllOutInStockItemList = allUnAllOutInStockItemList
+                    .Where(i => i.ProductId == product.ProductId
+                                && (i.LotNumberBatch == null || !i.LotNumberBatch.Contains(":A")))
+                    .ToList();
                 if (product.PreDeadline == null) continue;
                 if (preDeadline != null)
                 {
