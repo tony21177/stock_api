@@ -50,6 +50,39 @@ public class EmailService
         }
     }
 
+    public async Task<(bool success, string? error)> SendWithResultAsync(string title, string content, string email)
+    {
+        var message = new MimeMessage();
+        message.From.Add(new MailboxAddress("庫存系統", _smtpSettings.User));
+        message.To.Add(new MailboxAddress("庫存系統成員", email));
+        message.Subject = title;
+
+        var bodyBuilder = new BodyBuilder
+        {
+            HtmlBody = content
+        };
+        message.Body = bodyBuilder.ToMessageBody();
+
+        using var client = new SmtpClient();
+        try
+        {
+            client.Connect(_smtpSettings.Server, _smtpSettings.Port, true);
+            client.Authenticate(_smtpSettings.User, _smtpSettings.Password);
+            var sendResult = await client.SendAsync(message);
+            _logger.LogInformation($"[SendWithResultAsync] sendResult {sendResult}");
+            return (true, null);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError($"[SendWithResultAsync] An error occurred while sending an email to {email}: {ex.Message}");
+            return (false, ex.Message);
+        }
+        finally
+        {
+            await client.DisconnectAsync(true);
+        }
+    }
+
     public void AddEmailNotify(EmailNotify newEmailNotify)
     {
         _dbContext.EmailNotifies.Add(newEmailNotify);
