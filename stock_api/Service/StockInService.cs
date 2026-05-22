@@ -835,8 +835,12 @@ namespace stock_api.Service
 
         public List<InStockItemRecord> GetProductInStockRecordsHistoryNotAllOutExpirationFIFO(string productCode, string compId)
         {
+            // :A 結尾的批號為院批號的子批 (adjustIn 虛擬記錄)，其結餘量已計入院批號內，
+            // 不可參與 FIFO 最早批號判斷，否則會被誤判為比真正的入庫批號更早
             return _dbContext.InStockItemRecords.Where(record => record.CompId == compId && record.ProductCode == productCode
-            && record.OutStockStatus != CommonConstants.OutStockStatus.ALL).OrderBy(record => record.ExpirationDate).ThenBy(record => record.CreatedAt).ToList();
+            && record.OutStockStatus != CommonConstants.OutStockStatus.ALL
+            && (record.LotNumberBatch == null || !record.LotNumberBatch.Contains(":A")))
+            .OrderBy(record => record.ExpirationDate).ThenBy(record => record.CreatedAt).ToList();
         }
 
         public List<InStockItemRecord> GetProductInStockRecordsByAcceptId(string itemId)
