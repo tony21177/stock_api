@@ -77,6 +77,7 @@ namespace stock_api.Service
                                 if (matchedInStockRecord != null)
                                 {
                                     matchedInStockRecord.AdjustInQuantity += (float)Math.Abs(assign.Adjust_calculate_qty ?? 0);
+                                    RecalcOutStockStatus(matchedInStockRecord);
                                     var adjustBatch = GetNextAdjustLotNumberBatch(matchedInStockRecord.LotNumberBatch, inStockItemRecords);
                                     InStockItemRecord record = new()
                                     {
@@ -189,6 +190,7 @@ namespace stock_api.Service
                                     if (assign?.Adjust_calculate_qty != null && matchedInStockRecord?.AdjustOutQuantity != null)
                                     {
                                         matchedInStockRecord.AdjustOutQuantity += (float)Math.Abs(assign.Adjust_calculate_qty.Value);
+                                        RecalcOutStockStatus(matchedInStockRecord);
                                         applyQuntitySum += (float)Math.Abs(assign.Adjust_calculate_qty.Value);
                                         OutStockRecord outStockRecord = new()
                                         {
@@ -302,6 +304,24 @@ namespace stock_api.Service
             {
                 _logger.LogError("事務失敗[AdjustItems]：{msg}", ex);
                 return (false,ex.Message);
+            }
+        }
+
+        private static void RecalcOutStockStatus(InStockItemRecord record)
+        {
+            float totalIn = record.InStockQuantity + record.AdjustInQuantity;
+            float totalOut = record.OutStockQuantity + record.AdjustOutQuantity + record.RejectQuantity;
+            if (totalOut >= totalIn)
+            {
+                record.OutStockStatus = CommonConstants.OutStockStatus.ALL;
+            }
+            else if (totalOut > 0)
+            {
+                record.OutStockStatus = CommonConstants.OutStockStatus.PART;
+            }
+            else
+            {
+                record.OutStockStatus = CommonConstants.OutStockStatus.NONE;
             }
         }
 

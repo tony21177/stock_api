@@ -72,9 +72,19 @@ namespace stock_api.Service
                     RejectReason = request.RejectReason,
                 };
                 inStockItemRecord.RejectQuantity = rejectQuantity;
-                if(inStockItemRecord.InStockQuantity+inStockItemRecord.AdjustInQuantity-inStockItemRecord.OutStockQuantity-inStockItemRecord.AdjustInQuantity - rejectQuantity == 0)
+                float totalInQuantity = inStockItemRecord.InStockQuantity + inStockItemRecord.AdjustInQuantity;
+                float totalOutQuantity = inStockItemRecord.OutStockQuantity + inStockItemRecord.AdjustOutQuantity + inStockItemRecord.RejectQuantity;
+                if (totalOutQuantity >= totalInQuantity)
                 {
                     inStockItemRecord.OutStockStatus = CommonConstants.OutStockStatus.ALL;
+                }
+                else if (totalOutQuantity > 0)
+                {
+                    inStockItemRecord.OutStockStatus = CommonConstants.OutStockStatus.PART;
+                }
+                else
+                {
+                    inStockItemRecord.OutStockStatus = CommonConstants.OutStockStatus.NONE;
                 }
                 product.InStockQuantity -= rejectQuantity;
 

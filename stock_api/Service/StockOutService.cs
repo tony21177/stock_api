@@ -56,17 +56,20 @@ namespace stock_api.Service
             try
             {
 
-                float inStockQuantity = inStockItem.InStockQuantity + inStockItem.AdjustInQuantity;
-                float existingOutQuantity = inStockItem.OutStockQuantity + inStockItem.AdjustOutQuantity + inStockItem.RejectQuantity;
-                existingOutQuantity += request.ApplyQuantity;
-                inStockItem.OutStockQuantity = existingOutQuantity;
-                if (existingOutQuantity >= inStockQuantity)
+                inStockItem.OutStockQuantity += request.ApplyQuantity;
+                float totalInQuantity = inStockItem.InStockQuantity + inStockItem.AdjustInQuantity;
+                float totalOutQuantity = inStockItem.OutStockQuantity + inStockItem.AdjustOutQuantity + inStockItem.RejectQuantity;
+                if (totalOutQuantity >= totalInQuantity)
                 {
                     inStockItem.OutStockStatus = CommonConstants.OutStockStatus.ALL;
                 }
-                else if (existingOutQuantity < inStockQuantity)
+                else if (totalOutQuantity > 0)
                 {
                     inStockItem.OutStockStatus = CommonConstants.OutStockStatus.PART;
+                }
+                else
+                {
+                    inStockItem.OutStockStatus = CommonConstants.OutStockStatus.NONE;
                 }
 
                 var outStockId = Guid.NewGuid().ToString();
@@ -186,17 +189,20 @@ namespace stock_api.Service
             try
             {
 
-                float inStockQuantity = inStockItem.InStockQuantity + inStockItem.AdjustInQuantity;
-                float existingOutQuantity = inStockItem.OutStockQuantity + inStockItem.AdjustOutQuantity + inStockItem.RejectQuantity;
-                existingOutQuantity += request.ApplyQuantity;
-                inStockItem.OutStockQuantity = existingOutQuantity;
-                if (existingOutQuantity >= inStockQuantity)
+                inStockItem.OutStockQuantity += request.ApplyQuantity;
+                float totalInQuantity = inStockItem.InStockQuantity + inStockItem.AdjustInQuantity;
+                float totalOutQuantity = inStockItem.OutStockQuantity + inStockItem.AdjustOutQuantity + inStockItem.RejectQuantity;
+                if (totalOutQuantity >= totalInQuantity)
                 {
                     inStockItem.OutStockStatus = CommonConstants.OutStockStatus.ALL;
                 }
-                else if (existingOutQuantity < inStockQuantity)
+                else if (totalOutQuantity > 0)
                 {
                     inStockItem.OutStockStatus = CommonConstants.OutStockStatus.PART;
+                }
+                else
+                {
+                    inStockItem.OutStockStatus = CommonConstants.OutStockStatus.NONE;
                 }
 
                 var outStockId = Guid.NewGuid().ToString();
