@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(grep -iA6 smtp)"
+    ]
+  }
+}

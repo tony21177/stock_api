@@ -34,8 +34,8 @@ public class EmailService
         using var client = new SmtpClient();
         try
         {
-            client.Connect(_smtpSettings.Server, _smtpSettings.Port, true);
-            client.Authenticate(_smtpSettings.User, _smtpSettings.Password);
+            await client.ConnectAsync(_smtpSettings.Server, _smtpSettings.Port, true);
+            await client.AuthenticateAsync(_smtpSettings.User, _smtpSettings.Password);
             var sendResult = await client.SendAsync(message);
             _logger.LogInformation($"sendResult {sendResult}");
         }
@@ -66,8 +66,8 @@ public class EmailService
         using var client = new SmtpClient();
         try
         {
-            client.Connect(_smtpSettings.Server, _smtpSettings.Port, true);
-            client.Authenticate(_smtpSettings.User, _smtpSettings.Password);
+            await client.ConnectAsync(_smtpSettings.Server, _smtpSettings.Port, true);
+            await client.AuthenticateAsync(_smtpSettings.User, _smtpSettings.Password);
             var sendResult = await client.SendAsync(message);
             _logger.LogInformation($"[SendWithResultAsync] sendResult {sendResult}");
             return (true, null);
