@@ -109,6 +109,7 @@ namespace stock_api.Service.ValueObject
         public string? UDIBatchCode { get; set; }
         public string? UDICreateCode { get; set; }
         public string? UDIVerifyDateCode { get; set; }
+        public string? PackageWay { get; set; }
         public string? Prod_supplierName { get; set; }
         public int? ArrangeSupplierId { get; set; }
         public string? ArrangeSupplierName { get; set; }

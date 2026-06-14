@@ -373,6 +373,7 @@ namespace stock_api.Controllers
                         item.SavingTemperature = matchedProduct.SavingTemperature;
                         item.ProductModel = matchedProduct.ProductModel;
                         item.OpenDeadline = matchedProduct.OpenDeadline;
+                        item.PackageWay = matchedProduct.PackageWay;
                     }
 
                     if (purchaseSubItemDict.TryGetValue(item.ItemId, out var matchedSubItem))
