@@ -287,7 +287,7 @@ namespace stock_api.Controllers
             List<InStockItemRecord> inStockItemRecordList = new List<InStockItemRecord>();
             if (!string.IsNullOrEmpty(request.LotNumber))
             {
-                inStockItemRecordList = _stockInService.GetInStockRecordListByLotNumber(request.LotNumber, compId).OrderByDescending(i => i.CreatedAt).ToList();
+                inStockItemRecordList = _stockInService.GetInStockRecordListByLotNumber(request.LotNumber, compId).Where(i=>i.QcTestStatus==CommonConstants.QcTestStatus.NONE).OrderBy(i => i.CreatedAt).ToList();
                 if (inStockItemRecordList.Count == 0)
                 {
                     return BadRequest(new CommonResponse<dynamic>
@@ -305,7 +305,7 @@ namespace stock_api.Controllers
                     return BadRequest(new CommonResponse<dynamic>
                     {
                         Result = false,
-                        Message = "此批號沒有對應的入庫資料"
+                        Message = "此批次沒有對應的入庫資料"
                     });
                 }
                 inStockItemRecordList = new List<InStockItemRecord> { inStockItemRecord };
@@ -366,7 +366,7 @@ namespace stock_api.Controllers
             newQcDetailList.ForEach(detail => detail.MainId = newQcMain.MainId);
             newAcceptanceList.ForEach(detail => detail.MainId = newQcMain.MainId);
 
-            var (result, erroMsg) = _qcService.CreateQcValidation(newQcMain, newQcDetailList, newAcceptanceList, qcValidationFlowSettingList, inStockItemRecordList[0]);
+            var (result, erroMsg) = _qcService.CreateQcValidation(newQcMain, newQcDetailList, newAcceptanceList, qcValidationFlowSettingList, inStockItemRecordList[0],request);
             var response = new CommonResponse<List<UnDoneQcLot>>
             {
                 Result = result,

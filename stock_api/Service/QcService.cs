@@ -197,7 +197,7 @@ namespace stock_api.Service
         }
 
         public (bool, string?) CreateQcValidation(QcValidationMain newQcValidationMain, List<QcValidationDetail> newQcValidationDetailList
-            , List<QcAcceptanceDetail> newQcAcceptanceDetail, List<QcValidationFlowSettingVo> qcValidationFlowSettings,InStockItemRecord inStockItemRecord)
+            , List<QcAcceptanceDetail> newQcAcceptanceDetail, List<QcValidationFlowSettingVo> qcValidationFlowSettings,InStockItemRecord inStockItemRecord, CreateQcRequest request)
         {
             using var scope = new TransactionScope();
             try
@@ -279,12 +279,12 @@ namespace stock_api.Service
                 //        .ExecuteUpdate(item => item.SetProperty(x => x.QcTestStatus, CommonConstants.QcTestStatus.DONE));
                 //}
 
-                if (newQcValidationMain.LotNumberBatch != null)
+                if (!string.IsNullOrEmpty(request.LotNumber))
                 {
                     _dbContext.InStockItemRecords.Where(i=> i.LotNumberBatch == newQcValidationMain.LotNumberBatch)
                         .ExecuteUpdate(item => item.SetProperty(x => x.QcTestStatus, CommonConstants.QcTestStatus.DONE));
                 }
-                if (newQcValidationMain.LotNumber != null)
+                if (request.LotNumber != null)
                 {
                     _dbContext.InStockItemRecords.Where(i => i.LotNumber == newQcValidationMain.LotNumber)
                         .ExecuteUpdate(item => item.SetProperty(x => x.QcTestStatus, CommonConstants.QcTestStatus.DONE));

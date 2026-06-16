@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace stock_api.Controllers.Request
 {
-    public class CreateQcRequest
+    public class  CreateQcRequest
     {
         public string? MainId { get; set; }
         public string? CompId {  get; set; }
