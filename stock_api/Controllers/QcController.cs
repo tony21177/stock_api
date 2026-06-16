@@ -791,6 +791,8 @@ namespace stock_api.Controllers
                 {
                     m.ApplyDate = matchedPurchase.ApplyDate;
                 }
+
+                m.VerifyAt = m.CreatedAt; //由於前端拿VerifyAt當成測試者QC送出時間
             }
 
             var response = new CommonResponse<List<QcMainWithDetailAndFlows>>
